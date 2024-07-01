@@ -57,6 +57,7 @@ const pillarsData = [
     img: background1Img,
     text: "we do what we do",
     dot: 3,
+    // test
   },
 ];
 
