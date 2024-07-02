@@ -11,13 +11,14 @@ export const Header = () => {
     setMenuOpen(!menuOpen);
   };
 
-  const LinkComp = ({ label, link, newPage }) => {
+  const LinkComp = ({ label, link, newPage, toggleMenu }) => {
     return (
       <a
         href={link}
         target={newPage ? "_blank" : "_self"}
         rel={newPage ? "noopener noreferrer" : ""}
         className="bg-black block px-4 py-2 md:py-0 md:px-6"
+        onClick={toggleMenu}
       >
         {label}
       </a>
@@ -66,7 +67,7 @@ export const Header = () => {
   ];
 
   return (
-    <header className="sticky top-0 bg-white shadow-md z-50 bg-black">
+    <header className="sticky top-0 bg-black shadow-md z-50 bg-black">
       <div className="container mx-auto flex items-center justify-between p-4">
         <div>
           <Image src={logoImg} height={40} width={100} alt="Logo" />
@@ -81,7 +82,7 @@ export const Header = () => {
             } absolute top-full left-0 w-full  md:flex md:flex-row md:static md:w-auto`}
           >
             {links.map((link, index) => (
-              <LinkComp key={index} {...link} />
+              <LinkComp toggleMenu={toggleMenu} key={index} {...link} />
             ))}
           </nav>
         </div>

@@ -11,7 +11,6 @@ export default function RootLayout({ children }) {
       <head></head>
       <body className={orbitron.className}>
         <ThemeProvider attribute="class" defaultTheme="system">
-          {/* <ReusableLayout>{children}</ReusableLayout> */}
           {children}
         </ThemeProvider>
       </body>
