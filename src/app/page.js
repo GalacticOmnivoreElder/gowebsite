@@ -356,7 +356,7 @@ const socialMedia = [
     icon: <Facebook />,
     src: "https://www.facebook.com/profile.php?id=100088917386120",
   },
-  { icon: <Twitter />, src: "https://twitter.com/GalcticOmnivore" },
+  { icon: <Twitter />, src: "https://twitter.com/GalacticOmnivore" },
   { icon: <Instagram />, src: "https://www.instagram.com/galacticomnivore/" },
   {
     icon: <Linkedin />,
