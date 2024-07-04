@@ -27,11 +27,6 @@ export const Header = () => {
 
   const links = [
     {
-      label: "GODISCORD",
-      link: "https://discord.com/invite/ZbSShxu6K4",
-      newPage: true,
-    },
-    {
       label: "HOME",
       link: "#home",
     },
@@ -43,22 +38,23 @@ export const Header = () => {
       label: "GO PILLARS",
       link: "#pillars",
     },
-    {
-      label: "TESTEMONIALS",
-      link: "#testemonials",
-    },
+
     {
       label: "EVENTS",
       link: "#events",
     },
 
     {
+      label: "OPEN HOURS",
+      link: "#openhours",
+    },
+    {
       label: "JOIN DISCORD",
       link: "#discord",
     },
     {
-      label: "OPEN HOURS",
-      link: "#openhours",
+      label: "TESTEMONIALS",
+      link: "#testemonials",
     },
     {
       label: "CONTACT",

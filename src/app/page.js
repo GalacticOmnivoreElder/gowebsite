@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import background1Img from "@/assets/background1.png";
 import heroImg from "@/assets/hero1.png";
@@ -73,7 +73,7 @@ const EduBox = ({ isFull, img, text }) => {
           height={100}
           width={50}
           className="
-        h-[250px] w-[30px]"
+        h-[300px] w-[30px]"
         ></Image>
       </div>
       <div className="text-white flex flex-col justify-start p-2">
@@ -83,11 +83,11 @@ const EduBox = ({ isFull, img, text }) => {
   );
 };
 
-const EduBoxLarge = ({ title, jsx }) => {
+const EduBoxLarge = ({ title, jsx, img }) => {
   return (
     <div className="flex flex-col bg-[#CA2380] p-8 pt-4 justify-center items-center">
       <div className="text-[32px] text-center mb-4">{title}</div>
-      <EduBox img={edu1Img} isFull text={jsx} />
+      <EduBox img={img} isFull text={jsx} />
     </div>
   );
 };
@@ -178,7 +178,7 @@ const EventCard = ({ title, instructor, date, location, image, hook, cta }) => {
       <div className="flex justify-between p-2">
         <div className=" text-center">{instructor}</div>
         <div className="flex gap-2">
-          <div>{date}</div>
+          {date && <div>{date}</div>}
           <div>{location}</div>
         </div>
       </div>
@@ -194,7 +194,7 @@ const eventSlidesData = [
     location: "G.O. HQ ",
     image: event1Img,
     hook: "MAKE YOUR OWN TTRPG",
-    cta: "BOOK YOUR SIT",
+    cta: "COMING SOON",
   },
 ];
 
@@ -383,8 +383,41 @@ const ContactUs = () => {
 };
 
 const HqOpenhours = () => {
+  useEffect(() => {
+    const loadGoogleCalendarScript = () => {
+      if (!document.getElementById("google-calendar-script")) {
+        const script = document.createElement("script");
+        script.id = "google-calendar-script";
+        script.src =
+          "https://calendar.google.com/calendar/scheduling-button-script.js";
+        script.async = true;
+        script.onload = () => {
+          const target = document.getElementById("calendar-scheduling-button");
+          window.calendar.schedulingButton.load({
+            url: "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3VDpBu45xKIza2MVgLs_P0lsiN6y7sCWbBpU5mBYOlulceCJawKoonMNvGBP2Paj3y1G0kD3_w?gv=true",
+            color: "#c82484",
+            label: "Schedule a visit!",
+            target,
+          });
+        };
+        document.body.appendChild(script);
+      }
+    };
+
+    if (!document.getElementById("google-calendar-css")) {
+      const link = document.createElement("link");
+      link.id = "google-calendar-css";
+      link.href =
+        "https://calendar.google.com/calendar/scheduling-button-script.css";
+      link.rel = "stylesheet";
+      document.head.appendChild(link);
+    }
+
+    loadGoogleCalendarScript();
+  }, []);
+
   return (
-    <div className="relative h-[450px] mb-16 w-full">
+    <div className="relative h-[450px] mb-8 w-full">
       <Image
         src={hqImg}
         layout="fill"
@@ -395,7 +428,7 @@ const HqOpenhours = () => {
         src={transparentImg}
         layout="fill"
         objectFit="cover"
-        alt="transparent image"
+        alt="Transparent Image"
       />
       <div className="absolute inset-0 flex flex-col p-4 top-0">
         <div className="text-4xl text-center my-4">HQ OPEN HOURS:</div>
@@ -405,9 +438,6 @@ const HqOpenhours = () => {
           community space with a cool view to stimulate the best game creation
           ideas.
         </div>
-        <Button className="w-full bg-white text-black p-4 hover:bg-[gray-100]">
-          BOOK YOUR SEAT
-        </Button>
       </div>
     </div>
   );
@@ -434,7 +464,8 @@ const SocialFooter = () => {
 
 const About = () => {
   return (
-    <>
+    <div className="relative">
+      <div id="about" className="absolute top-[-80px]"></div>
       <div className="text-4xl mb-8 text-center">ABOUT</div>
       <div className="text-center mb-4">
         Galactic Omnivore is the only Game Dev. Community in North Macedonia
@@ -455,7 +486,7 @@ const About = () => {
         width={1920}
         height={1080}
       />
-    </>
+    </div>
   );
 };
 
@@ -466,7 +497,7 @@ const HomePage = () => {
 
       <Image src={heroImg} alt="Hero Image" width={1920} height={1080} />
 
-      <section id="about" className="bg-black p-4 flex flex-col justify-center">
+      <section className="bg-black p-4 flex flex-col justify-center">
         <About />
       </section>
 
@@ -480,6 +511,7 @@ const HomePage = () => {
 
       <EduBoxLarge
         title="EDUCATION"
+        img={edu1Img}
         jsx={
           <div className="text-center flex flex-col gap-2">
             <div>As a community, we offer everyone an opportunity to</div>
@@ -501,6 +533,7 @@ const HomePage = () => {
       />
       <EduBoxLarge
         title="PORTFOLIO"
+        img={edu2Img}
         jsx={
           <div className="text-center flex flex-col gap-2">
             <div>
@@ -525,6 +558,7 @@ const HomePage = () => {
       />
       <EduBoxLarge
         title="OUTSOURCING"
+        img={edu3Img}
         jsx={
           <div className="text-center flex flex-col gap-2">
             <div>
@@ -551,8 +585,9 @@ const HomePage = () => {
         <SwipeableSection slides={pillarSlidesData} />
       </section> */}
 
-      <div className="flex justify-center bg-[#CA2380]" id="events">
-        <div className="text-3xl mb-4 text-center text-white">
+      <div className="flex justify-center bg-[#CA2380]">
+        <div className="relative text-3xl mb-4 text-center text-white">
+          <div id="events" className="absolute top-[-80px]"></div>
           UPCOMING EVENTS:
         </div>
       </div>
@@ -571,16 +606,19 @@ const HomePage = () => {
         <div className="text-center text-4xl">WANT TO VISIT US?</div>
       </div>
 
-      <section id="openhours">
+      <section className="relative">
+        <div id="openhours" className="absolute top-[-80px]"></div>
         <HqOpenhours />
       </section>
 
-      <section id="discord">
+      <section className="relative">
+        <div id="discord" className="absolute top-[-80px]"></div>
         <DiscordJoin />
       </section>
 
-      <section className="bg-black" id="testemonials">
-        <div className="text-4xl my-8 text-center text-white bg-black">
+      <section className="bg-black">
+        <div className="relative text-4xl my-8 text-center text-white bg-black">
+          <div id="testemonials" className="absolute top-[-80px]"></div>
           TESTEMONIALS:
         </div>
         <SwipeableSection slides={testemonialSlides} />
@@ -588,7 +626,8 @@ const HomePage = () => {
 
       <Image src={pixelUpImg} alt="pixel section" width={1920} height={1080} />
 
-      <section id="contact">
+      <section className="relative">
+        <div id="contact" className="absolute top-[-80px]"></div>
         <ContactUs />
       </section>
 
