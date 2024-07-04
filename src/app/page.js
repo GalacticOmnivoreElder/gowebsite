@@ -18,12 +18,7 @@ import pixelUpImg from "@/assets/pixelup.png";
 import driveTruImg from "@/assets/drivetru.png";
 
 import event1Img from "@/assets/event.png";
-
 import hqImg from "@/assets/openhours.png";
-import { useEffect, useRef } from "react";
-import Image from "next/image";
-import transparentImg from "@/assets/transparent.png";
-
 import transparentImg from "@/assets/transparent.png";
 
 import Link from "next/link";
@@ -387,12 +382,28 @@ const ContactUs = () => {
   );
 };
 
-
 const HqOpenhours = () => {
-  const calendarRef = useRef(null);
-
   useEffect(() => {
-    // Load the Google Calendar CSS
+    const loadGoogleCalendarScript = () => {
+      if (!document.getElementById("google-calendar-script")) {
+        const script = document.createElement("script");
+        script.id = "google-calendar-script";
+        script.src =
+          "https://calendar.google.com/calendar/scheduling-button-script.js";
+        script.async = true;
+        script.onload = () => {
+          const target = document.getElementById("calendar-scheduling-button");
+          window.calendar.schedulingButton.load({
+            url: "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3VDpBu45xKIza2MVgLs_P0lsiN6y7sCWbBpU5mBYOlulceCJawKoonMNvGBP2Paj3y1G0kD3_w?gv=true",
+            color: "#c82484",
+            label: "Schedule a visit!",
+            target,
+          });
+        };
+        document.body.appendChild(script);
+      }
+    };
+
     if (!document.getElementById("google-calendar-css")) {
       const link = document.createElement("link");
       link.id = "google-calendar-css";
@@ -402,31 +413,23 @@ const HqOpenhours = () => {
       document.head.appendChild(link);
     }
 
-    // Load the Google Calendar script
-    if (!document.getElementById("google-calendar-script")) {
-      const script = document.createElement("script");
-      script.id = "google-calendar-script";
-      script.src =
-        "https://calendar.google.com/calendar/scheduling-button-script.js";
-      script.async = true;
-      script.onload = () => {
-        if (window.calendar && window.calendar.schedulingButton) {
-          window.calendar.schedulingButton.load({
-            url: 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ3VDpBu45xKIza2MVgLs_P0lsiN6y7sCWbBpU5mBYOlulceCJawKoonMNvGBP2Paj3y1G0kD3_w?gv=true',
-            color: '#c82484',
-            label: "Schedule a visit!",
-            target: calendarRef.current,
-          });
-        }
-      };
-      document.body.appendChild(script);
-    }
+    loadGoogleCalendarScript();
   }, []);
 
   return (
     <div className="relative h-[450px] mb-8 w-full">
-      <Image src={hqImg} layout="fill" objectFit="cover" alt="Background Image" />
-      <Image src={transparentImg} layout="fill" objectFit="cover" alt="Transparent Image" />
+      <Image
+        src={hqImg}
+        layout="fill"
+        objectFit="cover"
+        alt="Background Image"
+      />
+      <Image
+        src={transparentImg}
+        layout="fill"
+        objectFit="cover"
+        alt="Transparent Image"
+      />
       <div className="absolute inset-0 flex flex-col p-4 top-0">
         <div className="text-4xl text-center my-4">HQ OPEN HOURS:</div>
         <div className="mb-16 text-center">
@@ -435,7 +438,6 @@ const HqOpenhours = () => {
           community space with a cool view to stimulate the best game creation
           ideas.
         </div>
-        <div ref={calendarRef} id="calendar-scheduling-button"></div>
       </div>
     </div>
   );
