@@ -189,7 +189,7 @@ const EventCard = ({ title, instructor, date, location, image, hook, cta }) => {
 const eventSlidesData = [
   {
     title: "ZINKA WORKSHOP # 3",
-    instructor: "Andreja Popovik",
+    instructor: "Mentor: Andreja Popovik",
     date: "",
     location: "",
     image: event1Img,
