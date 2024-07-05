@@ -206,13 +206,6 @@ const eventSlides = [
       </div>
     ),
   },
-  {
-    node: (
-      <div className="flex justify-center flex-col h-[350px]">
-        <EventCard {...eventSlidesData[0]} />
-      </div>
-    ),
-  },
 ];
 
 const testemonialsData = [
@@ -223,8 +216,8 @@ const testemonialsData = [
     text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN’Play games was borne. ",
   },
   {
-    img: avatar1Img,
-    fullName: "Andreja Popovik",
+  img: avatar1Img,
+  fullName: "Andreja Popovik",
     role: "Founder",
     text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN’Play games was borne. ",
   },
@@ -249,28 +242,7 @@ const testemonialSlides = [
         <TestemonialCard {...testemonialsData[0]} />
       </div>
     ),
-  },
-  {
-    node: (
-      <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
-        <TestemonialCard {...testemonialsData[1]} />
-      </div>
-    ),
-  },
-  {
-    node: (
-      <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
-        <TestemonialCard {...testemonialsData[2]} />
-      </div>
-    ),
-  },
-  {
-    node: (
-      <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
-        <TestemonialCard {...testemonialsData[3]} />
-      </div>
-    ),
-  },
+  }
 ];
 
 const pillarSlidesData = [
