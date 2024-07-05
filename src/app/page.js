@@ -190,8 +190,8 @@ const eventSlidesData = [
   {
     title: "ZINKA WORKSHOP # 3",
     instructor: "Andreja Popovik",
-    date: "5 July, 19:00",
-    location: "G.O. HQ ",
+    date: "",
+    location: "",
     image: event1Img,
     hook: "MAKE YOUR OWN TTRPG",
     cta: "COMING SOON",
