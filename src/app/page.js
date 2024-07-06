@@ -6,7 +6,7 @@ import heroImg from "@/assets/hero1.png";
 import avatar1Img from "@/assets/avatar1.png";
 import avatar2Img from "@/assets/avatar2.png";
 import avatar3Img from "@/assets/avatar3.png";
-// import avatar4Img from "@/assets/avatar4.gif";
+import avatar4Img from "@/assets/avatar4.gif";
 
 import joinusImg from "@/assets/joinus.png";
 import discordImg from "@/assets/discord.png";
@@ -34,7 +34,6 @@ import {
   Twitch,
   Twitter,
   Youtube,
-  ItchIO,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
