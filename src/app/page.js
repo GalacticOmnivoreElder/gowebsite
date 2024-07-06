@@ -211,9 +211,7 @@ const EventCard = ({
         />
         <div className="absolute flex p-4 flex-col items-center justify-center w-full top-10 gap-4">
           <div className="text-3xl text-center">{hook}</div>
-          <Button
-            className={`text-white bg-[${magenta}] hover:bg-[${magenta}]`}
-          >
+          <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
             {cta}
           </Button>
         </div>
