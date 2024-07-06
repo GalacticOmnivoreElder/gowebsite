@@ -18,6 +18,7 @@ import pixelUpImg from "@/assets/pixelup.png";
 import driveTruImg from "@/assets/drivetru.png";
 
 import event1Img from "@/assets/event.png";
+import event2Img from "@/assets/event2Img.png";
 import hqImg from "@/assets/openhours.png";
 import transparentImg from "@/assets/transparent.png";
 
@@ -238,19 +239,19 @@ const eventSlidesData = [
     location: "",
     image: event1Img,
     hook: "MAKE YOUR OWN TTRPG",
-    cta: "Sign Up",
+    cta: "SIGN UP & ROLL THE DICE",
     link: "https://forms.gle/kGjR45M2FGczKHUw8",
   },
-  // {
-  //   title: "ROGUE, ROGUELIKES, ROGUELIGHTS",
-  //   instructor: "Mentor: Ivan Kikerkov",
-  //   date: "TBD",
-  //   location: "TBD",
-  //   image: event1Img,
-  //   hook: "MAKE YOUR OWN TTRPG",
-  //   cta: "COMING SOON",
-  //   link: "https://example.com/workshop3",
-  // },
+  {
+    title: "ROGUE, ROGUELIKES, ROGUELIGHTS",
+    instructor: "Mentor: Ivan Kikerkov",
+    date: "TBD",
+    location: "TBD",
+    image: event2Img,
+    hook: "GAME DESIGN LESSONS:LEARN ABOUT THE ROGUE GENRE",
+    cta: "SIGN UP & GIT GUD",
+    link: "https://forms.gle/uJCoqUCnoyNGyg6V7",
+  },
 ];
 
 const eventSlides = [
