@@ -192,6 +192,7 @@ const EventCard = ({
   image,
   hook,
   cta,
+  link,
   noData,
 }) => {
   return (
@@ -211,9 +212,11 @@ const EventCard = ({
         />
         <div className="absolute flex p-4 flex-col items-center justify-center w-full top-10 gap-4">
           <div className="text-3xl text-center">{hook}</div>
-          <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
-            {cta}
-          </Button>
+          <a href={link}>
+            <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
+              {cta}
+            </Button>
+          </a>
         </div>
       </div>
       <div className="flex justify-between p-2">
@@ -235,8 +238,19 @@ const eventSlidesData = [
     location: "",
     image: event1Img,
     hook: "MAKE YOUR OWN TTRPG",
-    cta: "COMING SOON",
+    cta: "Sign Up",
+    link: "https://forms.gle/kGjR45M2FGczKHUw8",
   },
+  // {
+  //   title: "ROGUE, ROGUELIKES, ROGUELIGHTS",
+  //   instructor: "Mentor: Ivan Kikerkov",
+  //   date: "TBD",
+  //   location: "TBD",
+  //   image: event1Img,
+  //   hook: "MAKE YOUR OWN TTRPG",
+  //   cta: "COMING SOON",
+  //   link: "https://example.com/workshop3",
+  // },
 ];
 
 const eventSlides = [
