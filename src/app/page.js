@@ -274,10 +274,31 @@ const eventSlides = [
 const testemonialsData = [
   {
     img: avatar1Img,
-    fullName: "Andreja Popovik",
+    fullName: "Ivan Kikerkov",
     role: "Founder",
+    text: "I love making games every day, and that's why I founded Galactic Omnivore.",
+    link: "https://linktr.ee/PrintNplay",
+  },
+  {
+    img: avatar1Img,
+    fullName: "Andreja Popovik",
+    role: "Community Member",
     text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN’Play games was borne. ",
     link: "https://linktr.ee/PrintNplay",
+  },
+  {
+    img: avatar1Img,
+    fullName: "Andrej Burovski ",
+    role: "Community Member",
+    text: "The game development community has been an exceptional source of inspiration and support, fueling my creativity and enhancing my skills. The collaborative environment and wealth of knowledge I've found here have made my journey in game development truly rewarding.",
+    link: "https://k32n31-p4n1c.github.io/Index.html",
+  },
+  {
+    img: avatar1Img,
+    fullName: "ROGUE TANKS",
+    role: "Product",
+    text: "A roguelike inspired by old NES-era games with a modern design twist. Developed by Game Development Community Galactic Omnivore Skopje. Early Access Password 'rogueTanksBetaTesting'",
+    link: "https://galactic-omnivore.itch.io/rogue-tanks",
   },
 ];
 
@@ -286,6 +307,20 @@ const testemonialSlides = [
     node: (
       <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
         <TestemonialCard {...testemonialsData[0]} />
+      </div>
+    ),
+  },
+  {
+    node: (
+      <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
+        <TestemonialCard {...testemonialsData[1]} />
+      </div>
+    ),
+  },
+  {
+    node: (
+      <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
+        <TestemonialCard {...testemonialsData[2]} />
       </div>
     ),
   },
