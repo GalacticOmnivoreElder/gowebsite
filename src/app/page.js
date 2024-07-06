@@ -216,8 +216,8 @@ const testemonialsData = [
     text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN’Play games was borne. ",
   },
   {
-  img: avatar1Img,
-  fullName: "Andreja Popovik",
+    img: avatar1Img,
+    fullName: "Andreja Popovik",
     role: "Founder",
     text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN’Play games was borne. ",
   },
@@ -242,7 +242,7 @@ const testemonialSlides = [
         <TestemonialCard {...testemonialsData[0]} />
       </div>
     ),
-  }
+  },
 ];
 
 const pillarSlidesData = [
@@ -348,8 +348,11 @@ const ContactUs = () => {
         you have a unique skill set that you want to direct towards game
         development or you just want to hang out with a bunch of nerds.
       </div>
-      <a href="mailto:firstcontact@galacticomnivore.com"></a>
-      <Button className="bg-white text-black p-4 mt-4">CONTACT US</Button>
+      <a href="mailto:firstcontact@galacticomnivore.com" className="w-full">
+        <Button className="bg-white text-black p-4 mt-4 w-full">
+          CONTACT US
+        </Button>
+      </a>
     </div>
   );
 };
