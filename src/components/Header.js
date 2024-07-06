@@ -60,6 +60,10 @@ export const Header = () => {
       label: "CONTACT",
       link: "#contact",
     },
+    // {
+    //   label: "BLOG",
+    //   link: "https://www.notion.so/"
+    // }
   ];
 
   return (
