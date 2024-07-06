@@ -211,9 +211,7 @@ const EventCard = ({
         />
         <div className="absolute flex p-4 flex-col items-center justify-center w-full top-10 gap-4">
           <div className="text-3xl text-center">{hook}</div>
-          <Button
-            className={`text-white bg-[${magenta}] hover:bg-[${magenta}]`}
-          >
+          <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
             {cta}
           </Button>
         </div>
@@ -381,7 +379,7 @@ const ContactUs = () => {
         you have a unique skill set that you want to direct towards game
         development or you just want to hang out with a bunch of nerds.
       </div>
-      <a href="mailto:firstcontact@galacticomnivore.com" className="w-full">
+      <a href="mailto:galacticomnivore@gmail.com" className="w-full">
         <Button className="bg-white text-black p-4 mt-4 w-full">
           CONTACT US
         </Button>
