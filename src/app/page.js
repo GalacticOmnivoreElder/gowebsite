@@ -4,6 +4,9 @@ import React, { useEffect, useState } from "react";
 import background1Img from "@/assets/background1.png";
 import heroImg from "@/assets/hero1.png";
 import avatar1Img from "@/assets/avatar1.png";
+import avatar2Img from "@/assets/avatar2.png";
+import avatar3Img from "@/assets/avatar3.png";
+import avatar4Img from "@/assets/avatar4.png";
 
 import joinusImg from "@/assets/joinus.png";
 import discordImg from "@/assets/discord.png";
@@ -280,21 +283,21 @@ const testemonialsData = [
     link: "https://linktr.ee/PrintNplay",
   },
   {
-    img: avatar1Img,
+    img: avatar2Img,
     fullName: "Andreja Popovik",
     role: "Community Member",
     text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN’Play games was borne. ",
     link: "https://linktr.ee/PrintNplay",
   },
   {
-    img: avatar1Img,
+    img: avatar3Img,
     fullName: "Andrej Burovski ",
     role: "Community Member",
     text: "The game development community has been an exceptional source of inspiration and support, fueling my creativity and enhancing my skills. The collaborative environment and wealth of knowledge I've found here have made my journey in game development truly rewarding.",
     link: "https://k32n31-p4n1c.github.io/Index.html",
   },
   {
-    img: avatar1Img,
+    img: avatar4Img,
     fullName: "ROGUE TANKS",
     role: "Product",
     text: "A roguelike inspired by old NES-era games with a modern design twist. Developed by Game Development Community Galactic Omnivore Skopje. Early Access Password 'rogueTanksBetaTesting'",
@@ -321,6 +324,13 @@ const testemonialSlides = [
     node: (
       <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
         <TestemonialCard {...testemonialsData[2]} />
+      </div>
+    ),
+  },
+  {
+    node: (
+      <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
+        <TestemonialCard {...testemonialsData[3]} />
       </div>
     ),
   },
