@@ -235,8 +235,8 @@ const eventSlidesData = [
   {
     title: "ZINKA WORKSHOP # 3",
     instructor: "Mentor: Andreja Popovik",
-    date: "",
-    location: "",
+    date: "TBD",
+    location: "TBD",
     image: event1Img,
     hook: "MAKE YOUR OWN TTRPG",
     cta: "SIGN UP & ROLL THE DICE",
