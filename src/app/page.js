@@ -34,6 +34,7 @@ import {
   Twitch,
   Twitter,
   Youtube,
+  ItchIO,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -428,7 +429,10 @@ const socialMedia = [
 
   { icon: <Youtube />, src: "https://www.youtube.com/@galacticomnivore" },
   { icon: <Twitch />, src: "https://www.twitch.tv/galactic_omnivore" },
-  { icon: <ITCH.IO />, src: "https://galactic-omnivore.itch.io" },
+  { 
+    icon: <ITCH.IO />, src: "https://galactic-omnivore.itch.io",
+    src: "https://galactic-omnivore.itch.io"
+   },
 ];
 
 const ContactUs = () => {
