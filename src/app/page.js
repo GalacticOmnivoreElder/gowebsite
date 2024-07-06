@@ -434,9 +434,6 @@ const socialMedia = [
   { 
     icon: <Twitch />,
     src: "https://www.twitch.tv/galactic_omnivore"},
-  { 
-    icon: <ITCH.IO />,
-    src: "https://galactic-omnivore.itch.io"},
 ];
 
 const ContactUs = () => {
