@@ -265,7 +265,7 @@ const eventSlides = [
   {
     node: (
       <div className="flex justify-center flex-col h-[350px]">
-        <EventCard {...eventSlidesData[0]} />
+        <EventCard {...eventSlidesData[1]} />
       </div>
     ),
   },
