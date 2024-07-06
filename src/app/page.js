@@ -357,102 +357,80 @@ const ContactUs = () => {
   );
 };
 
-const CalendarButton = () => {
-  useEffect(() => {
-    const loadGoogleCalendarScript = () => {
-      if (
-        typeof window !== "undefined" &&
-        !document.getElementById("google-calendar-script")
-      ) {
-        const script = document.createElement("script");
-        script.id = "google-calendar-script";
-        script.src =
-          "https://calendar.google.com/calendar/scheduling-button-script.js";
-        script.async = true;
-        script.onload = () => {
-          const target = document.getElementById("calendar-scheduling-button");
-          if (window.calendar && window.calendar.schedulingButton) {
-            window.calendar.schedulingButton.load({
-              url: "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3VDpBu45xKIza2MVgLs_P0lsiN6y7sCWbBpU5mBYOlulceCJawKoonMNvGBP2Paj3y1G0kD3_w?gv=true",
-              color: "#c82484",
-              label: "Schedule a visit!",
-              target,
-            });
-          } else {
-            console.error("Google Calendar schedulingButton is not available.");
-          }
-        };
-        script.onerror = () => {
-          console.error("Failed to load the Google Calendar script.");
-        };
-        document.body.appendChild(script);
-      }
-    };
+// const CalendarButton = () => {
+//   useEffect(() => {
+//     const loadGoogleCalendarScript = () => {
+//       if (
+//         typeof window !== "undefined" &&
+//         !document.getElementById("google-calendar-script")
+//       ) {
+//         const script = document.createElement("script");
+//         script.id = "google-calendar-script";
+//         script.src =
+//           "https://calendar.google.com/calendar/scheduling-button-script.js";
+//         script.async = true;
+//         script.onload = () => {
+//           const target = document.getElementById("calendar-scheduling-button");
+//           if (window.calendar && window.calendar.schedulingButton) {
+//             window.calendar.schedulingButton.load({
+//               url: "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3VDpBu45xKIza2MVgLs_P0lsiN6y7sCWbBpU5mBYOlulceCJawKoonMNvGBP2Paj3y1G0kD3_w?gv=true",
+//               color: "#c82484",
+//               label: "SCHEDULE A VISIT",
+//               target,
+//             });
 
-    const loadGoogleCalendarCSS = () => {
-      if (
-        typeof window !== "undefined" &&
-        !document.getElementById("google-calendar-css")
-      ) {
-        const link = document.createElement("link");
-        link.id = "google-calendar-css";
-        link.href =
-          "https://calendar.google.com/calendar/scheduling-button-script.css";
-        link.rel = "stylesheet";
-        link.onload = () => {
-          console.log("Google Calendar CSS loaded.");
-        };
-        link.onerror = () => {
-          console.error("Failed to load the Google Calendar CSS.");
-        };
-        document.head.appendChild(link);
-      }
-    };
+//             const applyCustomStyles = () => {
+//               const button = target.querySelector("button");
+//               if (button) {
+//                 button.style.width = "100%";
+//                 button.style.fontFamily = orbitron.style.fontFamily;
+//                 button.style.boxSizing = "border-box";
+//                 button.style.display = "block";
+//               }
+//             };
+//             applyCustomStyles();
+//           } else {
+//             console.error("Google Calendar schedulingButton is not available.");
+//           }
+//         };
+//         script.onerror = () => {
+//           console.error("Failed to load the Google Calendar script.");
+//         };
+//         document.body.appendChild(script);
+//       }
+//     };
 
-    // Only execute in the browser
-    if (typeof window !== "undefined") {
-      loadGoogleCalendarScript();
-      loadGoogleCalendarCSS();
-    }
-  }, []);
+//     const loadGoogleCalendarCSS = () => {
+//       if (
+//         typeof window !== "undefined" &&
+//         !document.getElementById("google-calendar-css")
+//       ) {
+//         const link = document.createElement("link");
+//         link.id = "google-calendar-css";
+//         link.href =
+//           "https://calendar.google.com/calendar/scheduling-button-script.css";
+//         link.rel = "stylesheet";
+//         link.onload = () => {
+//           console.log("Google Calendar CSS loaded.");
+//         };
+//         link.onerror = () => {
+//           console.error("Failed to load the Google Calendar CSS.");
+//         };
+//         document.head.appendChild(link);
+//       }
+//     };
 
-  return <div id="calendar-scheduling-button"></div>;
-};
+//     // Only execute in the browser
+//     if (typeof window !== "undefined") {
+//       loadGoogleCalendarScript();
+//       loadGoogleCalendarCSS();
+//     }
+//   }, []);
+
+//   return <div id="calendar-scheduling-button"></div>;
+// };
 
 const HqOpenhours = () => {
-  // useEffect(() => {
-  //   const loadGoogleCalendarScript = () => {
-  //     if (!document.getElementById("google-calendar-script")) {
-  //       const script = document.createElement("script");
-  //       script.id = "google-calendar-script";
-  //       script.src =
-  //         "https://calendar.google.com/calendar/scheduling-button-script.js";
-  //       script.async = true;
-  //       script.onload = () => {
-  //         const target = document.getElementById("calendar-scheduling-button");
-  //         window.calendar.schedulingButton.load({
-  //           url: "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3VDpBu45xKIza2MVgLs_P0lsiN6y7sCWbBpU5mBYOlulceCJawKoonMNvGBP2Paj3y1G0kD3_w?gv=true",
-  //           color: "#c82484",
-  //           label: "Schedule a visit!",
-  //           target,
-  //         });
-  //       };
-  //       document.body.appendChild(script);
-  //     }
-  //   };
-
-  //   if (!document.getElementById("google-calendar-css")) {
-  //     const link = document.createElement("link");
-  //     link.id = "google-calendar-css";
-  //     link.href =
-  //       "https://calendar.google.com/calendar/scheduling-button-script.css";
-  //     link.rel = "stylesheet";
-  //     document.head.appendChild(link);
-  //   }
-
-  //   loadGoogleCalendarScript();
-  // }, []);
-
   return (
     <div className="relative h-[450px] mb-8 w-full">
       <Image
@@ -475,9 +453,16 @@ const HqOpenhours = () => {
           community space with a cool view to stimulate the best game creation
           ideas.
         </div>
-        <div className="flex justify-center">
-          <CalendarButton />
-        </div>
+
+        <Link
+          target="blank"
+          className="w-full"
+          href="https://calendar.app.google/H7Zwkwm81SMrbp7F9"
+        >
+          <Button className="w-full bg-[#c82484] text-white hover:bg-[#c82484]">
+            SCHEDULE A VISIT
+          </Button>
+        </Link>
       </div>
     </div>
   );
