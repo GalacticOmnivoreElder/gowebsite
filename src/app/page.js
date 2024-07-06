@@ -6,7 +6,7 @@ import heroImg from "@/assets/hero1.png";
 import avatar1Img from "@/assets/avatar1.png";
 import avatar2Img from "@/assets/avatar2.png";
 import avatar3Img from "@/assets/avatar3.png";
-import avatar4Img from "@/assets/avatar4.png";
+import avatar4Img from "@/assets/avatar4.gif";
 
 import joinusImg from "@/assets/joinus.png";
 import discordImg from "@/assets/discord.png";
@@ -428,6 +428,7 @@ const socialMedia = [
 
   { icon: <Youtube />, src: "https://www.youtube.com/@galacticomnivore" },
   { icon: <Twitch />, src: "https://www.twitch.tv/galactic_omnivore" },
+  { icon: <ITCH.IO />, src: "https://www.twitch.tv/galactic_omnivore" },
 ];
 
 const ContactUs = () => {
