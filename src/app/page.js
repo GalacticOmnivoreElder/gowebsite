@@ -348,7 +348,7 @@ const ContactUs = () => {
         you have a unique skill set that you want to direct towards game
         development or you just want to hang out with a bunch of nerds.
       </div>
-      <a href="mailto:firstcontact@galacticomnivore.com" className="w-full">
+      <a href="mailto:galacticomnivore@gmail.com" className="w-full">
         <Button className="bg-white text-black p-4 mt-4 w-full">
           CONTACT US
         </Button>
