@@ -17,7 +17,7 @@ export const Header = () => {
         href={link}
         target={newPage ? "_blank" : "_self"}
         rel={newPage ? "noopener noreferrer" : ""}
-        className="bg-black block px-4 py-2 md:py-0 md:px-6"
+        className="bg-black block px-4 py-2 lg:py-0 sm:px-3 lg:text-[14px]"
         onClick={toggleMenu}
       >
         {label}
@@ -69,13 +69,13 @@ export const Header = () => {
           <Image src={logoImg} height={40} width={100} alt="Logo" />
         </div>
         <div className="flex items-center">
-          <button onClick={toggleMenu} className="md:hidden">
+          <button onClick={toggleMenu} className="lg:hidden">
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
           <nav
             className={`flex-col ${
               menuOpen ? "flex" : "hidden"
-            } absolute top-full left-0 w-full  md:flex md:flex-row md:static md:w-auto`}
+            } absolute top-full left-0 w-full  lg:flex lg:flex-row lg:static lg:w-auto`}
           >
             {links.map((link, index) => (
               <LinkComp toggleMenu={toggleMenu} key={index} {...link} />

@@ -1,31 +1,3 @@
 # Feedback 06.07.2024
 
-From top down 
 
-- HOHQ  - “Schedule a visit!” button is missing
-
-```jsx
-<!-- Google Calendar Appointment Scheduling begin -->
-<link href="https://calendar.google.com/calendar/scheduling-button-script.css" rel="stylesheet">
-<script src="https://calendar.google.com/calendar/scheduling-button-script.js" async></script>
-<script>
-(function() {
-  var target = document.currentScript;
-  window.addEventListener('load', function() {
-    calendar.schedulingButton.load({
-      url: 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ3VDpBu45xKIza2MVgLs_P0lsiN6y7sCWbBpU5mBYOlulceCJawKoonMNvGBP2Paj3y1G0kD3_w?gv=true',
-      color: '#c82484',
-      label: "Schedule a visit!",
-      target,
-    });
-  });
-})();
-</script>
-<!-- end Google Calendar Appointment Scheduling -->
-```
-
-- Contact us button is not working
-- Vertical words to be stretched to the end (pillars)
-- Boxes on sliders to be dynamic based on how many sliders exist
-- The button “our games” is not working
-- Fix header for desktop

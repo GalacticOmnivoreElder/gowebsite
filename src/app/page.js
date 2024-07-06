@@ -34,6 +34,8 @@ import {
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 
+const magenta = "#CA2280";
+
 const pillarsData = [
   {
     img: background1Img,
@@ -72,8 +74,7 @@ const EduBox = ({ isFull, img, text }) => {
           src={img}
           height={100}
           width={50}
-          className="
-        h-[300px] w-[30px]"
+          className=" h-full w-[30px]"
         ></Image>
       </div>
       <div className="text-white flex flex-col justify-start p-2">
@@ -92,7 +93,11 @@ const EduBoxLarge = ({ title, jsx, img }) => {
   );
 };
 
-const SwipeableSection = ({ slides, color = "#FF2768" }) => {
+const SwipeableSection = ({
+  slides,
+  slideType = "event",
+  color = "#FF2768",
+}) => {
   const [activeSlide, setActiveSlide] = useState(0);
 
   const handleScroll = (e) => {
@@ -106,6 +111,23 @@ const SwipeableSection = ({ slides, color = "#FF2768" }) => {
     <div className="flex-none w-full md:w-1/4 snap-center">{children}</div>
   );
 
+  if (!slides.length && slideType == "event") {
+    return (
+      <div className="flex justify-center flex-col h-[350px]">
+        <EventCard
+          title=""
+          instructor=""
+          date=""
+          location=""
+          image={event1Img}
+          hook="More events"
+          cta="COMING SOON"
+          noData
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="relative overflow-hidden">
       <div
@@ -117,18 +139,20 @@ const SwipeableSection = ({ slides, color = "#FF2768" }) => {
           <Slide key={index}>{slide.node}</Slide>
         ))}
       </div>
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center">
-        <div className="flex gap-2">
-          {[0, 1, 2, 3].map((index) => (
-            <Dot key={index} isActive={index === activeSlide} />
-          ))}
+      {slides.length > 0 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center">
+          <div className="flex gap-2">
+            {Array.from({ length: slides.length }).map((_, index) => (
+              <Dot key={index} isActive={index === activeSlide} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
-const TestemonialCard = ({ img, fullName, role, text }) => {
+const TestemonialCard = ({ img, fullName, role, text, link }) => {
   return (
     <div className="flex  bg-black gap-2">
       <div className="flex flex-col min-w-[35%]">
@@ -147,19 +171,36 @@ const TestemonialCard = ({ img, fullName, role, text }) => {
           {text}
         </div>
         <div className="flex justify-center items-center">
-          <Button className="bg-black text-white rounded-sm hover:bg-gray-700 w-full">
-            OUR GAMES
-          </Button>
+          <Link href={link} target="_blank">
+            <Button
+              className={`bg-white  text-black rounded-sm hover:bg-[${magenta}] w-full `}
+            >
+              OUR GAMES
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
   );
 };
 
-const EventCard = ({ title, instructor, date, location, image, hook, cta }) => {
+const EventCard = ({
+  title,
+  instructor,
+  date,
+  location,
+  image,
+  hook,
+  cta,
+  noData,
+}) => {
   return (
-    <div className="flex flex-col gap-2 bg-black h-[360px]">
-      <div className="text-[24px] text-center">{title}</div>
+    <div
+      className={`flex flex-col gap-2   ${
+        noData ? `bg-[${magenta}] h-[360px]` : "bg-black h-[360px]"
+      }`}
+    >
+      <div className="text-[24px] min-h-[28px] text-center">{title}</div>
       <div className="relative">
         <Image
           src={image}
@@ -170,13 +211,15 @@ const EventCard = ({ title, instructor, date, location, image, hook, cta }) => {
         />
         <div className="absolute flex p-4 flex-col items-center justify-center w-full top-10 gap-4">
           <div className="text-3xl text-center">{hook}</div>
-          <Button className="text-white bg-[#CA2280] hover:bg-[#CA2280]">
+          <Button
+            className={`text-white bg-[${magenta}] hover:bg-[${magenta}]`}
+          >
             {cta}
           </Button>
         </div>
       </div>
       <div className="flex justify-between p-2">
-        <div className=" text-center">{instructor}</div>
+        <div className="min-h-[28px] text-center">{instructor}</div>
         <div className="flex gap-2">
           {date && <div>{date}</div>}
           <div>{location}</div>
@@ -206,6 +249,13 @@ const eventSlides = [
       </div>
     ),
   },
+  {
+    node: (
+      <div className="flex justify-center flex-col h-[350px]">
+        <EventCard {...eventSlidesData[0]} />
+      </div>
+    ),
+  },
 ];
 
 const testemonialsData = [
@@ -214,24 +264,7 @@ const testemonialsData = [
     fullName: "Andreja Popovik",
     role: "Founder",
     text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN’Play games was borne. ",
-  },
-  {
-    img: avatar1Img,
-    fullName: "Andreja Popovik",
-    role: "Founder",
-    text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN’Play games was borne. ",
-  },
-  {
-    img: avatar1Img,
-    fullName: "Andreja Popovik",
-    role: "Founder",
-    text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN’Play games was borne. ",
-  },
-  {
-    img: avatar1Img,
-    fullName: "Andreja Popovik",
-    role: "Founder",
-    text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN’Play games was borne. ",
+    link: "https://linktr.ee/PrintNplay",
   },
 ];
 
@@ -341,7 +374,7 @@ const socialMedia = [
 
 const ContactUs = () => {
   return (
-    <div className="flex justify-center flex-col p-4 bg-[#CA2280]">
+    <div className={`flex justify-center flex-col p-4 bg-[${magenta}]`}>
       <div className="text-4xl text-center mb-4">CONTACT US</div>
       <div className="text-center">
         No matter if you have a secret idea for a game you always dreamed of or
