@@ -280,7 +280,7 @@ const testemonialsData = [
     fullName: "Ivan Kikerkov",
     role: "Founder",
     text: "I love making games every day, and that's why I founded Galactic Omnivore.",
-    link: "https://linktr.ee/PrintNplay",
+    link: "https://kikerkov.itch.io/",
   },
   {
     img: avatar2Img,
