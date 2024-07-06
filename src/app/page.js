@@ -419,19 +419,24 @@ const socialMedia = [
     icon: <Facebook />,
     src: "https://www.facebook.com/profile.php?id=100088917386120",
   },
-  { icon: <Twitter />, src: "https://twitter.com/GalacticOmnivor" },
-  { icon: <Instagram />, src: "https://www.instagram.com/galacticomnivore/" },
+  { icon: <Twitter />,
+    src: "https://twitter.com/GalacticOmnivor"},
+  { 
+    icon: <Instagram />,
+     src: "https://www.instagram.com/galacticomnivore/"},
   {
     icon: <Linkedin />,
     src: "https://www.linkedin.com/company/galactic-omnivore/",
   },
-
-  { icon: <Youtube />, src: "https://www.youtube.com/@galacticomnivore" },
-  { icon: <Twitch />, src: "https://www.twitch.tv/galactic_omnivore" },
   { 
-    icon: <ITCH.IO />, src: "https://galactic-omnivore.itch.io",
-    src: "https://galactic-omnivore.itch.io"
-   },
+    icon: <Youtube />, 
+    src: "https://www.youtube.com/@galacticomnivore"},
+  { 
+    icon: <Twitch />,
+    src: "https://www.twitch.tv/galactic_omnivore"},
+  { 
+    icon: <ITCH.IO />,
+    src: "https://galactic-omnivore.itch.io"},
 ];
 
 const ContactUs = () => {
