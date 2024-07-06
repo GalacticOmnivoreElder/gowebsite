@@ -17,8 +17,8 @@ import pixelUpImg from "@/assets/pixelup.png";
 
 import driveTruImg from "@/assets/drivetru.png";
 
-import event1Img from "@/assets/event.png";
-import event2Img from "@/assets/event2Img.png";
+import event1Img from "@/assets/event1.png";
+import event2Img from "@/assets/event2.png";
 import hqImg from "@/assets/openhours.png";
 import transparentImg from "@/assets/transparent.png";
 
