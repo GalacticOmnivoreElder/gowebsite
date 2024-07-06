@@ -428,7 +428,7 @@ const socialMedia = [
 
   { icon: <Youtube />, src: "https://www.youtube.com/@galacticomnivore" },
   { icon: <Twitch />, src: "https://www.twitch.tv/galactic_omnivore" },
-  { icon: <ITCH.IO />, src: "https://www.twitch.tv/galactic_omnivore" },
+  { icon: <ITCH.IO />, src: "https://galactic-omnivore.itch.io" },
 ];
 
 const ContactUs = () => {
