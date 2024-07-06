@@ -179,7 +179,7 @@ const TestemonialCard = ({ img, fullName, role, text, link }) => {
             <Button
               className={`bg-white  text-black rounded-sm hover:bg-[${magenta}] w-full `}
             >
-              OUR GAMES
+              MORE
             </Button>
           </Link>
         </div>
