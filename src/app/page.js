@@ -251,7 +251,7 @@ const eventSlidesData = [
     date: "TBD",
     location: "TBD",
     image: event2Img,
-    hook: "GAME DESIGN LESSONS:LEARN ABOUT THE ROGUE GENRE",
+    hook: "",
     cta: "SIGN UP & GIT GUD",
     link: "https://forms.gle/uJCoqUCnoyNGyg6V7",
   },
