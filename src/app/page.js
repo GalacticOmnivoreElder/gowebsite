@@ -397,7 +397,7 @@ const DiscordJoin = () => {
           industry.{" "}
         </div>
         <a href="https://discord.gg/ZbSShxu6K4" target="_blank" rel="noopener noreferrer">
-          <Button className="w-full bg-white text-black-300 p-4 hover:bg-[#c82484] cursor-pointer">
+          <Button className="w-full bg-[#FFFFFF] text-[#000000]-300 p-4 hover:bg-[#c82484] cursor-pointer">
             <Image
               src={discordImg}
               alt="discord"
