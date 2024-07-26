@@ -396,16 +396,18 @@ const DiscordJoin = () => {
           who always wanted to write a game...everyone is welcome from any
           industry.{" "}
         </div>
-        <Button className="w-full bg-[#B1B1B1] text-gray-300 p-4 hover:bg-[#B1B1B1] cursor-not-allowed">
-          <Image
-            src={discordImg}
-            alt="discord"
-            height="18"
-            width="18"
-            className="mr-1"
-          />{" "}
-          JOIN US
-        </Button>
+        <a href="https://discord.gg/ZbSShxu6K4" target="_blank" rel="noopener noreferrer">
+          <Button className="w-full bg-[#B1B1B1] text-gray-300 p-4 hover:bg-[#B1B1B1] cursor-pointer">
+            <Image
+              src={discordImg}
+              alt="discord"
+              height="18"
+              width="18"
+              className="mr-1"
+            />{" "}
+            JOIN US
+          </Button>
+        </a>
         <div className="mt-4">
           Invites left: <span className="text-gray-600">00</span>0
         </div>
