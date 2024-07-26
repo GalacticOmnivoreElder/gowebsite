@@ -403,12 +403,12 @@ const DiscordJoin = () => {
             height="18"
             width="18"
             className="mr-1"
-          />{" "}
+          />{"https://discord.gg/ZbSShxu6K4"}
           JOIN US
         </Button>
-        <div className="mt-4">
+        {/* <div className="mt-4">
           Invites left: <span className="text-gray-600">00</span>0
-        </div>
+        </div> */}
       </div>
     </div>
   );
