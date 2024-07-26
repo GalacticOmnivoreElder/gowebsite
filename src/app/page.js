@@ -397,7 +397,7 @@ const DiscordJoin = () => {
           industry.{" "}
         </div>
         <a href="https://discord.gg/ZbSShxu6K4" target="_blank" rel="noopener noreferrer">
-          <Button className="w-full bg-[#B1B1B1] text-gray-300 p-4 hover:bg-[#B1B1B1] cursor-pointer">
+          <Button className="w-full bg-[#c82484] text-gray-300 p-4 hover:bg-[#B1B1B1] cursor-pointer">
             <Image
               src={discordImg}
               alt="discord"
@@ -408,9 +408,9 @@ const DiscordJoin = () => {
             JOIN US
           </Button>
         </a>
-        <div className="mt-4">
+        {/* <div className="mt-4">
           Invites left: <span className="text-gray-600">00</span>0
-        </div>
+        </div> */}
       </div>
     </div>
   );
