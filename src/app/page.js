@@ -237,12 +237,12 @@ const EventCard = ({
 
 const eventSlidesData = [
   {
-    title: "Empowering the next generation of game developers",
-    instructor: "Mentor: Multiple",
-    date: "Multiple",
-    location: "Base42",
+    title: "",
+    instructor: "",
+    date: "",
+    location: "@Base42",
     image: event3Img,
-    cta: "SIGN UP",
+    cta: "SIGN UP NOW",
     link: "https://itch.io/jam/gogamejam2024",
   },
   {
