@@ -22,6 +22,7 @@ import driveTruImg from "@/assets/drivetru.png";
 
 import event1Img from "@/assets/event1.png";
 import event2Img from "@/assets/event2.png";
+import event3Img from "@/assets/event3.png";
 import hqImg from "@/assets/openhours.png";
 import transparentImg from "@/assets/transparent.png";
 
@@ -235,6 +236,14 @@ const EventCard = ({
 };
 
 const eventSlidesData = [
+  {
+    title: "🖖",
+    instructor: "Mentor: Multiple",
+    image: event3Img,
+    hook: "START YOUR GAME DEV JOURNEY ",
+    cta: "ENGAGE",
+    link: "https://itch.io/jam/gogamejam2024",
+  },
   {
     title: "ZINKA WORKSHOP # 3",
     instructor: "Mentor: Andreja Popovik",
