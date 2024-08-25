@@ -213,14 +213,6 @@ const EventCard = ({
           alt="Profile Image"
           className="w-[100%] h-[220px]"
         />
-        <div className="absolute flex p-4 flex-col items-center justify-center w-full top-10 gap-4">
-          <div className="text-3xl text-center">{hook}</div>
-          <a href={link}>
-            <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
-              {cta}
-            </Button>
-          </a>
-        </div>
       </div>
       <div className="flex justify-center p-2">
         <div className="min-h-[28px] text-center">{instructor}</div>
