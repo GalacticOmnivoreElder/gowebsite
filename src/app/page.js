@@ -188,7 +188,6 @@ const TestemonialCard = ({ img, fullName, role, text, link }) => {
     </div>
   );
 };
-
 const EventCard = ({
   title,
   instructor,
@@ -217,11 +216,6 @@ const EventCard = ({
         />
         <div className="absolute flex p-4 flex-col items-center justify-center w-full top-10 gap-4">
           <div className="text-3xl text-center">{hook}</div>
-          <a href={link}>
-            <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
-              {cta}
-            </Button>
-          </a>
         </div>
       </div>
       <div className="flex justify-between p-2">
@@ -230,6 +224,11 @@ const EventCard = ({
           {date && <div>{date}</div>}
           <div>{location}</div>
         </div>
+        <a href={link}>
+          <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
+            {cta}
+          </Button>
+        </a>
       </div>
     </div>
   );
@@ -237,9 +236,9 @@ const EventCard = ({
 
 const eventSlidesData = [
   {
-    title: "",
+    title: "GOGAMEJAM 2024",
     instructor: "",
-    date: cta,
+    date: "TBD",
     location: "@Base42",
     image: event3Img,
     cta: "SIGN UP NOW",
@@ -258,8 +257,8 @@ const eventSlidesData = [
   {
     title: "ROGUE, ROGUELIKES, ROGUELIGHTS",
     instructor: "Mentor: Ivan Kikerkov",
-    date: "TBD",
-    location: "TBD",
+    date: "Date: TBD",
+    location: "Location: TBD",
     image: event2Img,
     hook: "",
     cta: "SIGN UP & GIT GUD",
