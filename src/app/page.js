@@ -282,6 +282,13 @@ const eventSlides = [
       </div>
     ),
   },
+  {
+    node: (
+      <div className="flex justify-center flex-col h-[350px]">
+        <EventCard {...eventSlidesData[2]} />
+      </div>
+    ),
+  },
 ];
 
 const testemonialsData = [
