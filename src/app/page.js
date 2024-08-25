@@ -188,6 +188,7 @@ const TestemonialCard = ({ img, fullName, role, text, link }) => {
     </div>
   );
 };
+
 const EventCard = ({
   title,
   instructor,
@@ -216,6 +217,11 @@ const EventCard = ({
         />
         <div className="absolute flex p-4 flex-col items-center justify-center w-full top-10 gap-4">
           <div className="text-3xl text-center">{hook}</div>
+          <a href={link}>
+            <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
+              {cta}
+            </Button>
+          </a>
         </div>
       </div>
       <div className="flex justify-between p-2">
@@ -224,11 +230,6 @@ const EventCard = ({
           {date && <div>{date}</div>}
           <div>{location}</div>
         </div>
-        <a href={link}>
-          <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
-            {cta}
-          </Button>
-        </a>
       </div>
     </div>
   );
@@ -236,19 +237,20 @@ const EventCard = ({
 
 const eventSlidesData = [
   {
-    title: "GOGAMEJAM 2024",
+    title: "",
     instructor: "",
-    date: "TBD",
-    location: "@Base42",
+    date: "",
+    location: "",
     image: event3Img,
-    cta: "SIGN UP NOW",
+    hook: "",
+    cta: "ENGAGE",
     link: "https://itch.io/jam/gogamejam2024",
   },
   {
     title: "ZINKA WORKSHOP # 3",
     instructor: "Mentor: Andreja Popovik",
-    date: "Date: TBD",
-    location: "Location: TBD",
+    date: "TBD",
+    location: "TBD",
     image: event1Img,
     hook: "MAKE YOUR OWN TTRPG",
     cta: "SIGN UP & ROLL THE DICE",
@@ -257,8 +259,8 @@ const eventSlidesData = [
   {
     title: "ROGUE, ROGUELIKES, ROGUELIGHTS",
     instructor: "Mentor: Ivan Kikerkov",
-    date: "Date: TBD",
-    location: "Location: TBD",
+    date: "TBD",
+    location: "TBD",
     image: event2Img,
     hook: "",
     cta: "SIGN UP & GIT GUD",
@@ -278,13 +280,6 @@ const eventSlides = [
     node: (
       <div className="flex justify-center flex-col h-[350px]">
         <EventCard {...eventSlidesData[1]} />
-      </div>
-    ),
-  },
-  {
-    node: (
-      <div className="flex justify-center flex-col h-[350px]">
-        <EventCard {...eventSlidesData[2]} />
       </div>
     ),
   },
