@@ -192,8 +192,6 @@ const TestemonialCard = ({ img, fullName, role, text, link }) => {
 const EventCard = ({
   title,
   instructor,
-  date,
-  location,
   image,
   hook,
   cta,
@@ -224,12 +222,8 @@ const EventCard = ({
           </a>
         </div>
       </div>
-      <div className="flex justify-between p-2">
+      <div className="flex justify-center p-2">
         <div className="min-h-[28px] text-center">{instructor}</div>
-        <div className="flex gap-2">
-          {date && <div>{date}</div>}
-          <div>{location}</div>
-        </div>
       </div>
     </div>
   );
@@ -242,7 +236,7 @@ const eventSlidesData = [
     date: "",
     location: "",
     image: event3Img,
-    hook: "",
+    hook: "MAKE YOUR OWN TTRPG",
     cta: "ENGAGE",
     link: "https://itch.io/jam/gogamejam2024",
   },
