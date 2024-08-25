@@ -239,7 +239,7 @@ const eventSlidesData = [
   {
     title: "",
     instructor: "",
-    date: "",
+    date: cta,
     location: "@Base42",
     image: event3Img,
     cta: "SIGN UP NOW",
@@ -248,8 +248,8 @@ const eventSlidesData = [
   {
     title: "ZINKA WORKSHOP # 3",
     instructor: "Mentor: Andreja Popovik",
-    date: "TBD",
-    location: "TBD",
+    date: "Date: TBD",
+    location: "Location: TBD",
     image: event1Img,
     hook: "MAKE YOUR OWN TTRPG",
     cta: "SIGN UP & ROLL THE DICE",
