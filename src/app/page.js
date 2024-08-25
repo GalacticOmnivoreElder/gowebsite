@@ -225,9 +225,17 @@ const EventCard = ({
       <div className="flex justify-center p-2">
         <div className="min-h-[28px] text-center">{instructor}</div>
       </div>
+      <div className="flex justify-center p-2">
+        <a href={link}>
+          <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
+            {cta}
+          </Button>
+        </a>
+      </div>
     </div>
   );
 };
+
 
 const eventSlidesData = [
   {
@@ -236,7 +244,7 @@ const eventSlidesData = [
     date: "",
     location: "",
     image: event3Img,
-    hook: "MAKE YOUR OWN TTRPG",
+    hook: "",
     cta: "ENGAGE",
     link: "https://itch.io/jam/gogamejam2024",
   },
