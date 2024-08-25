@@ -237,10 +237,7 @@ const EventCard = ({
 
 const eventSlidesData = [
   {
-    title: "🖖",
-    instructor: "Mentor: Multiple",
     image: event3Img,
-    hook: "START YOUR GAME DEV JOURNEY ",
     cta: "ENGAGE",
     link: "https://itch.io/jam/gogamejam2024",
   },
