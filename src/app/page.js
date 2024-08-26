@@ -204,13 +204,13 @@ const EventCard = ({
       }`}
     >
       <div className="text-[24px] min-h-[28px] text-center">{title}</div>
-      <div className="relative justify-center">
+      <div className="relative">
         <Image
           src={image}
           width={1920}
           height={1080}
           alt="Profile Image"
-          className="w-[220px] h-[220px]"
+          className="justify-center w-[220px] h-[220px]"
         />
       </div>
       <div className="flex justify-center p-2">
@@ -236,7 +236,7 @@ const eventSlidesData = [
     link: "https://itch.io/jam/gogamejam2024",
   },
   {
-    title: "ZINKA WORKSHOP 3",
+    title: "ZINKA WORKSHOP #3",
     date: "",
     location: "",
     image: event1Img,
@@ -245,7 +245,7 @@ const eventSlidesData = [
     link: "https://forms.gle/kGjR45M2FGczKHUw8",
   },
   {
-    title: "",
+    title: "ROGUE, ROGUELIKES & ROGUELIKES",
     date: "",
     location: "",
     image: event2Img,
