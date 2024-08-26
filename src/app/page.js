@@ -225,7 +225,7 @@ const EventCard = ({
 
 const eventSlidesData = [
   {
-    title: "🖖",
+    title: "",
     date: "",
     location: "",
     image: event3Img,
@@ -241,7 +241,7 @@ const eventSlidesData = [
     link: "https://forms.gle/kGjR45M2FGczKHUw8",
   },
   {
-    title: "",
+    title: "LEARN ABOUT!",
     date: "",
     location: "",
     image: event2Img,
