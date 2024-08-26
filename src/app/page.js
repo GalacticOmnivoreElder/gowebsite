@@ -204,13 +204,13 @@ const EventCard = ({
       }`}
     >
       <div className="text-[24px] min-h-[28px] text-center">{title}</div>
-      <div className="relative">
+      <div className="relative flex justify-center items-center">
         <Image
           src={image}
           width={1920}
           height={1080}
           alt="Profile Image"
-          className="justify-center w-[220px] h-[220px]"
+          className="w-[220px] h-[220px]"
         />
       </div>
       <div className="flex justify-center p-2">
