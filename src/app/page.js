@@ -207,10 +207,10 @@ const EventCard = ({
       <div className="relative">
         <Image
           src={image}
-          width={1800}
-          height={1800}
+          width={1920}
+          height={1080}
           alt="Profile Image"
-          className="w-[100%] h-[100%]"
+          className="w-[220px] h-[220px]"
         />
       </div>
       <div className="flex justify-center p-2">
