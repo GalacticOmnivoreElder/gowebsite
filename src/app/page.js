@@ -213,6 +213,9 @@ const EventCard = ({
           className="w-[220px] h-[220px]"
         />
       </div>
+      <div className="absolute flex p-4 flex-col items-center justify-center w-full top-10 gap-4">
+          <div className="text-3xl text-black text-center">{hook}</div>
+        </div>
       <div className="flex justify-center p-2">
         <a href={link}>
           <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
@@ -236,7 +239,7 @@ const eventSlidesData = [
     link: "https://itch.io/jam/gogamejam2024",
   },
   {
-    title: "ZINKA WORKSHOP #3",
+    title: "",
     date: "",
     location: "",
     image: event1Img,
@@ -245,12 +248,12 @@ const eventSlidesData = [
     link: "https://forms.gle/kGjR45M2FGczKHUw8",
   },
   {
-    title: "ROGUE, ROGUELIKES & ROGUELIKES",
+    title: "",
     date: "",
     location: "",
     image: event2Img,
     hook: "",
-    cta: "ONE MORE TURN",
+    cta: "GAME OVER?",
     link: "https://forms.gle/uJCoqUCnoyNGyg6V7",
   },
 ];
