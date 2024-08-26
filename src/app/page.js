@@ -208,8 +208,8 @@ const EventCard = ({
       <div className="relative">
         <Image
           src={image}
-          width={1920}
-          height={1080}
+          width={1800}
+          height={1800}
           alt="Profile Image"
           className="w-[100%] h-[220px]"
         />
@@ -239,26 +239,6 @@ const eventSlidesData = [
     hook: "",
     cta: "ENGAGE",
     link: "https://itch.io/jam/gogamejam2024",
-  },
-  {
-    title: "ZINKA WORKSHOP # 3",
-    instructor: "Mentor: Andreja Popovik",
-    date: "TBD",
-    location: "TBD",
-    image: event1Img,
-    hook: "MAKE YOUR OWN TTRPG",
-    cta: "SIGN UP & ROLL THE DICE",
-    link: "https://forms.gle/kGjR45M2FGczKHUw8",
-  },
-  {
-    title: "ROGUE, ROGUELIKES, ROGUELIGHTS",
-    instructor: "Mentor: Ivan Kikerkov",
-    date: "TBD",
-    location: "TBD",
-    image: event2Img,
-    hook: "",
-    cta: "SIGN UP & GIT GUD",
-    link: "https://forms.gle/uJCoqUCnoyNGyg6V7",
   },
 ];
 
