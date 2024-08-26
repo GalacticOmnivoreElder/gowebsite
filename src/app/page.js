@@ -192,7 +192,6 @@ const TestemonialCard = ({ img, fullName, role, text, link }) => {
 const EventCard = ({
   title,
   image,
-  hook,
   cta,
   link,
   noData,
@@ -213,9 +212,6 @@ const EventCard = ({
           className="w-[220px] h-[220px]"
         />
       </div>
-      <div className="absolute flex p-4 flex-col items-center justify-center w-full top-10 gap-4">
-          <div className="text-3xl text-black text-center">{hook}</div>
-        </div>
       <div className="flex justify-center p-2">
         <a href={link}>
           <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
@@ -227,24 +223,21 @@ const EventCard = ({
   );
 };
 
-
 const eventSlidesData = [
   {
-    title: "",
+    title: "🖖",
     date: "",
     location: "",
     image: event3Img,
-    hook: "",
     cta: "ENGAGE",
     link: "https://itch.io/jam/gogamejam2024",
   },
   {
-    title: "",
+    title: "MAKE YOUR TTRPG!",
     date: "",
     location: "",
     image: event1Img,
-    hook: "MAKE YOUR OWN TTRPG",
-    cta: "SIGN UP & ROLL THE DICE",
+    cta: "ROLL THE DICE",
     link: "https://forms.gle/kGjR45M2FGczKHUw8",
   },
   {
