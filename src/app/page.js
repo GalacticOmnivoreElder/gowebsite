@@ -204,7 +204,7 @@ const EventCard = ({
       }`}
     >
       <div className="text-[24px] min-h-[28px] text-center">{title}</div>
-      <div className="relative">
+      <div className="relative justify-center">
         <Image
           src={image}
           width={1920}
