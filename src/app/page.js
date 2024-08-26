@@ -191,7 +191,6 @@ const TestemonialCard = ({ img, fullName, role, text, link }) => {
 
 const EventCard = ({
   title,
-  instructor,
   image,
   hook,
   cta,
@@ -213,9 +212,6 @@ const EventCard = ({
           alt="Profile Image"
           className="w-[100%] h-[220px]"
         />
-      </div>
-      <div className="flex justify-center p-2">
-        <div className="min-h-[28px] text-center">{instructor}</div>
       </div>
       <div className="flex justify-center p-2">
         <a href={link}>
