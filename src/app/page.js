@@ -207,7 +207,7 @@ const EventCard = ({
       <div className="relative">
         <Image
           src={image}
-          width={1920}
+          width={1080}
           height={1080}
           alt="Profile Image"
           className="w-[100%] h-[220px]"
