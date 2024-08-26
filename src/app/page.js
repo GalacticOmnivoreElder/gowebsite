@@ -228,7 +228,6 @@ const EventCard = ({
 const eventSlidesData = [
   {
     title: "",
-    instructor: "",
     date: "",
     location: "",
     image: event3Img,
@@ -238,7 +237,6 @@ const eventSlidesData = [
   },
   {
     title: "ZINKA WORKSHOP # 3",
-    instructor: "Mentor: Andreja Popovik",
     date: "TBD",
     location: "TBD",
     image: event1Img,
@@ -248,7 +246,6 @@ const eventSlidesData = [
   },
   {
     title: "ROGUE, ROGUELIKES, ROGUELIGHTS",
-    instructor: "Mentor: Ivan Kikerkov",
     date: "TBD",
     location: "TBD",
     image: event2Img,
