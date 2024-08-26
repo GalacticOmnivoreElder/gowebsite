@@ -137,7 +137,7 @@ const SwipeableSection = ({
     <div className="relative overflow-hidden">
       <div
         className="flex overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory h-[50%]"
-        // style={{ backgroundColor: color }}
+        style={{ zIndex: -1 }} // Ensure the slide boxes are below other elements
         onScroll={handleScroll}
       >
         {slides.map((slide, index) => (
@@ -145,7 +145,7 @@ const SwipeableSection = ({
         ))}
       </div>
       {slides.length > 0 && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center">
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center z-10">
           <div className="flex gap-2">
             {Array.from({ length: slides.length }).map((_, index) => (
               <Dot key={index} isActive={index === activeSlide} />
