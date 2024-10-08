@@ -390,7 +390,7 @@ const DiscordJoin = () => {
         alt="Background Image"
       />
       <div className="absolute inset-0 flex items-center justify-center flex-col p-4">
-        <div className="text-4xl text-center my-4">OVER 200 OMNIVORES</div>
+        <div className="text-4xl text-center my-4">OVER 250 OMNIVORES</div>
         <div className="mb-4 text-center">
           From junior game developers to senior app developers who never made a
           game in their life, artists who want to switch to digital and writers
