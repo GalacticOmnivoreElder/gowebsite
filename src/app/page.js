@@ -617,7 +617,8 @@ const HomePage = () => {
     <div className="bg-black" id="home">
       <Header />
 
-      <Image src={heroImg} alt="Hero Image" width={1920} height={1080} />
+        <a href="https://itch.io/jam/gogamejam2024" target="_blank" rel="noopener noreferrer"> <Image src={heroImg} alt="Hero Image" width={1920} height={1080} /> 
+		</a>
 
       <section className="bg-black p-4 flex flex-col justify-center">
         <About />
