@@ -441,13 +441,13 @@ const ContactUs = () => {
     <div className={`flex justify-center flex-col p-4 bg-[${magenta}]`}>
       <div className="text-4xl text-center mb-4">CONTACT US</div>
       <div className="text-center">
-        No matter if you have a secret idea for a game you always dreamed of or
-        you have a unique skill set that you want to direct towards game
-        development or you just want to hang out with a bunch of nerds.
+      Got a game idea, a unique skill set, or just want to connect with fellow game enthusiasts? 
+      Reach out! Whether you're here to learn (Education), build your brand (Portfolio), or find
+      project support (Outsourcing), our community is here to help you thrive.
       </div>
       <a href="mailto:galacticomnivore@gmail.com" className="w-full">
         <Button className="bg-white text-black p-4 mt-4 w-full">
-          CONTACT US
+          CONTACT US!
         </Button>
       </a>
     </div>
@@ -458,15 +458,14 @@ const ContactUs = () => {
 const Newsletter = () => {
   return (
     <div className={`flex justify-center flex-col p-4 bg-[${magenta}]`}>
-      <div className="text-4xl text-center mb-4">SUBSCRIBE</div>
+      <div className="text-4xl text-center mb-4">NEWSLETTER</div>
       <div className="text-center">
-        Subscribe to the Galactic Omnivore Community newsletter for 
-        exclusive insights and updates on the latest projects and
-        opportunities within our community.
+      Want exclusive insights, the latest updates, and new
+      opportunities from the Galactic Omnivore community?
       </div>
       <a href="https://forms.gle/QGDQWhbRQGfc8YaY9" className="w-full">
         <Button className="bg-white text-black p-4 mt-4 w-full">
-          SUBSCRIBE
+          SUBSCRIBE!
         </Button>
       </a>
     </div>
