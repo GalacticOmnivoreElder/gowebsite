@@ -455,19 +455,23 @@ const ContactUs = () => {
 };
 
 
-const Newsletter = () => (
-  <div className="flex justify-center my-8 p-4 bg-black">
-    <iframe
-      src="https://docs.google.com/forms/d/e/1FAIpQLSfXD_kZtPSdfyXso0KcMEYCCI6Cvl9by2ZtuYQ91bqbm8122w/viewform?embedded=true"
-      width="640"
-      height="471"
-      className="w-full max-w-lg"
-      title="Newsletter Signup"
-    >
-      Loading…
-    </iframe>
-  </div>
-);
+const Newsletter = () => {
+  return (
+    <div className={`flex justify-center flex-col p-4 bg-[${magenta}]`}>
+      <div className="text-4xl text-center mb-4">SUBSCRIBE</div>
+      <div className="text-center">
+        Subscribe to the GameForge Community newsletter for exclusive insights, game development tips, 
+        and updates on the latest projects and opportunities. Join our mission to level up your skills
+        and connect with creators who are as passionate about gaming as you are!
+      </div>
+      <a href="https://forms.gle/QGDQWhbRQGfc8YaY9" className="w-full">
+        <Button className="bg-white text-black p-4 mt-4 w-full">
+          SUBSCRIBE
+        </Button>
+      </a>
+    </div>
+  );
+};
 
 
 // const CalendarButton = () => {
@@ -772,9 +776,8 @@ const HomePage = () => {
 
       <section className="relative">
         <div id="newsletter" className="absolute top-[-80px]"></div>
-        <Newsletter />
+        <Newsletter/>
       </section>
-
 
       <Image
         src={pixelDownImg}
