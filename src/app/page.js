@@ -460,9 +460,9 @@ const Newsletter = () => {
     <div className={`flex justify-center flex-col p-4 bg-[${magenta}]`}>
       <div className="text-4xl text-center mb-4">SUBSCRIBE</div>
       <div className="text-center">
-        Subscribe to the GameForge Community newsletter for exclusive insights, game development tips, 
-        and updates on the latest projects and opportunities. Join our mission to level up your skills
-        and connect with creators who are as passionate about gaming as you are!
+        Subscribe to the Galactic Omnivore Community newsletter for 
+        exclusive insights and updates on the latest projects and
+        opportunities within our community.
       </div>
       <a href="https://forms.gle/QGDQWhbRQGfc8YaY9" className="w-full">
         <Button className="bg-white text-black p-4 mt-4 w-full">
