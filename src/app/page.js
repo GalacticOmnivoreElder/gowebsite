@@ -454,6 +454,22 @@ const ContactUs = () => {
   );
 };
 
+
+const Newsletter = () => (
+  <div className="flex justify-center my-8 p-4 bg-black">
+    <iframe
+      src="https://docs.google.com/forms/d/e/1FAIpQLSfXD_kZtPSdfyXso0KcMEYCCI6Cvl9by2ZtuYQ91bqbm8122w/viewform?embedded=true"
+      width="640"
+      height="471"
+      className="w-full max-w-lg"
+      title="Newsletter Signup"
+    >
+      Loading…
+    </iframe>
+  </div>
+);
+
+
 // const CalendarButton = () => {
 //   useEffect(() => {
 //     const loadGoogleCalendarScript = () => {
@@ -753,6 +769,12 @@ const HomePage = () => {
         <div id="contact" className="absolute top-[-80px]"></div>
         <ContactUs />
       </section>
+
+      <section className="relative">
+        <div id="newsletter" className="absolute top-[-80px]"></div>
+        <Newsletter />
+      </section>
+
 
       <Image
         src={pixelDownImg}
