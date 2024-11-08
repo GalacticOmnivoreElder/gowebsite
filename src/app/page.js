@@ -455,6 +455,8 @@ const ContactUs = () => {
 };
 
 
+
+
 const Newsletter = () => {
   return (
     <div className={`flex justify-center flex-col p-4 bg-[${magenta}]`}>
