@@ -8,6 +8,7 @@ import avatar2Img from "@/assets/avatar2.png";
 import avatar3Img from "@/assets/avatar3.png";
 import avatar4Img from "@/assets/avatar4.gif";
 
+
 import joinusImg from "@/assets/joinus.png";
 import discordImg from "@/assets/discord.png";
 
