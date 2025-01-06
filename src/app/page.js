@@ -600,7 +600,7 @@ const SocialFooter = () => {
         ))}
       </div>
       <div className="text-gray-400 w-full text-center mb-8">
-        Copyright ©Galactic Omnivore 2024
+        Copyright ©Galactic Omnivore 2025
       </div>
     </>
   );
