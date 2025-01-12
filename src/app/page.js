@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 
+
 import background1Img from "@/assets/background1.png";
 import heroImg from "@/assets/hero1.png";
 import avatar1Img from "@/assets/avatar1.png";
