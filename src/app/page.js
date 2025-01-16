@@ -676,7 +676,7 @@ GALACTIC OMNIVORE ANUAL FEEDBACK SURVEY
       rel="noopener noreferrer"
     >
       <Button className="bg-white text-black px-6 py-2 hover:bg-gray-200 rounded-[0px]">
-        Get Survey
+      Submit Your Feedback
       </Button>
     </a>
   </div>
