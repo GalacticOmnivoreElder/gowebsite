@@ -230,14 +230,6 @@ const EventCard = ({
 
 const eventSlidesData = [
   {
-    title: "",
-    date: "",
-    location: "",
-    image: event3Img,
-    cta: "ENGAGE",
-    link: "https://itch.io/jam/gogamejam2024",
-  },
-  {
     title: "MAKE YOUR TTRPG!",
     date: "",
     location: "",
@@ -268,13 +260,6 @@ const eventSlides = [
     node: (
       <div className="flex justify-center flex-col h-[350px]">
         <EventCard {...eventSlidesData[1]} />
-      </div>
-    ),
-  },
-  {
-    node: (
-      <div className="flex justify-center flex-col h-[350px]">
-        <EventCard {...eventSlidesData[2]} />
       </div>
     ),
   },
