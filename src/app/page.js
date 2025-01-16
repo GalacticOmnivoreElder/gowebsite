@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 
 
 import background1Img from "@/assets/background1.png";
-import heroImg from "@/assets/hero1.png";
+import heroImg from "@/assets/HERO.png";
 import avatar1Img from "@/assets/avatar1.png";
 import avatar2Img from "@/assets/avatar2.png";
 import avatar3Img from "@/assets/avatar3.png";
@@ -20,7 +20,9 @@ import edu3Img from "@/assets/OUTSOURCING.png";
 import pixelDownImg from "@/assets/pixeldown.png";
 import pixelUpImg from "@/assets/pixelup.png";
 
-import driveTruImg from "@/assets/drivetru.png";
+// import driveTruImg from "@/assets/drivetru.png";
+import driveTruImg from "@/assets/logosImg.png";
+
 
 import event1Img from "@/assets/event1.png";
 import event2Img from "@/assets/event2.png";
@@ -69,33 +71,33 @@ const Dot = ({ isActive }) => (
   ></div>
 );
 
-const EduBox = ({ isFull, img, text }) => {
+const EduBox = ({ isFull, img, text, noImg, link }) => {
   return (
     <div
       className={`border-2 border-white bg-black flex ${
         isFull ? "w-full" : "w-[150px]"
       }`}
     >
-      <div className="flex-shrink-0 flex flex-col justify-center">
+     {!noImg && <div className="flex-shrink-0 flex flex-col justify-center">
         <Image
           src={img}
           height={100}
           width={50}
           className=" h-full w-[30px]"
         ></Image>
-      </div>
-      <div className="text-white flex flex-col justify-start p-2">
+      </div>} 
+      <div className="text-white flex flex-col justify-start p-2 h-[350px] justify-center">
         {text && <div className="text-white">{text}</div>}
       </div>
     </div>
   );
 };
 
-const EduBoxLarge = ({ title, jsx, img }) => {
+const EduBoxLarge = ({ title, jsx, img, noImg }) => {
   return (
-    <div className="flex flex-col bg-[#CA2380] p-8 pt-4 justify-center items-center">
-      <div className="text-[32px] text-center mb-4">{title}</div>
-      <EduBox img={img} isFull text={jsx} />
+    <div className="flex flex-col bg-[#CA2380] p-8 pt-4 justify-center items-center lg:w-1/3">
+      <div className="text-[32px] text-center mb-4 font-bold text-white">{title}</div>
+      <EduBox img={img} isFull text={jsx} noImg={noImg} />
     </div>
   );
 };
@@ -115,7 +117,7 @@ const SwipeableSection = ({
   };
 
   const Slide = ({ children }) => (
-    <div className="flex-none w-full md:w-1/4 snap-center">{children}</div>
+    <div className="flex-none max-w-[100vw] lg:w-1/4 snap-center">{children}</div>
   );
 
   if (!slides.length && slideType == "event") {
@@ -138,7 +140,7 @@ const SwipeableSection = ({
   return (
     <div className="relative overflow-hidden">
       <div
-        className="flex overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory h-[50%]"
+        className="flex overflow-x-auto lg:overflow-x-hidden snap-x snap-mandatory h-full lg:h-[450px] items-center justify-center max-w-[100vw]"
         // style={{ backgroundColor: color }}
         onScroll={handleScroll}
       >
@@ -161,8 +163,8 @@ const SwipeableSection = ({
 
 const TestemonialCard = ({ img, fullName, role, text, link }) => {
   return (
-    <div className="flex  bg-black gap-2">
-      <div className="flex flex-col min-w-[35%]">
+    <div className="flex bg-black gap-2 flex-col items-center justify-center border-2 border-white">
+      <div className="flex flex-col min-w-[35%] h-[150px]">
         <Image
           src={img}
           width={200}
@@ -173,20 +175,21 @@ const TestemonialCard = ({ img, fullName, role, text, link }) => {
         <div className="text-[13px] text-white font-bold">{fullName}</div>
         <div className="text-[10px] text-white text-center">{role}</div>
       </div>
-      <div>
-        <div className="text-[12px] text-white px-4 pr-2 text-center mb-4">
-          {text}
+      <div className="h-[120px] flex items-center">
+        <div className="text-[12px] text-white px-4 pr-2 text-center">
+          {text?.length > 160 ? `${text.slice(0, 160)}...` : text}
         </div>
-        <div className="flex justify-center items-center">
-          <Link href={link} target="_blank">
+       
+      </div>
+      <div className="flex justify-center items-center pb-4 w-full">
+          <Link href={link || "#"} target="_blank">
             <Button
-              className={`bg-white  text-black rounded-sm hover:bg-[${magenta}] w-full `}
+              className={`bg-white  text-black rounded-sm hover:bg-[${magenta}] w-full rounded-[0px] w-full`}
             >
               MORE
             </Button>
           </Link>
         </div>
-      </div>
     </div>
   );
 };
@@ -200,11 +203,11 @@ const EventCard = ({
 }) => {
   return (
     <div
-      className={`flex flex-col gap-2   ${
+      className={`flex flex-col gap-2 border-2 border-white mx-2 justify-center w-full  ${
         noData ? `bg-[${magenta}] h-[360px]` : "bg-black h-[360px]"
       }`}
     >
-      <div className="text-[24px] min-h-[28px] text-center">{title}</div>
+      {/* <div className="text-[24px] min-h-[28px] text-center text-white">{title}</div> */}
       <div className="relative flex justify-center items-center">
         <Image
           src={image}
@@ -215,8 +218,8 @@ const EventCard = ({
         />
       </div>
       <div className="flex justify-center p-2">
-        <a href={link}>
-          <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280]`}>
+        <a href={link || "#"}>
+          <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280] w-[220px] rounded-[0px]`}>
             {cta}
           </Button>
         </a>
@@ -298,45 +301,33 @@ const testemonialsData = [
     role: "Community Member",
     text: "The game development community has been an exceptional source of inspiration and support, fueling my creativity and enhancing my skills. The collaborative environment and wealth of knowledge I've found here have made my journey in game development truly rewarding.",
     link: "https://k32n31-p4n1c.github.io/Index.html",
-  },
-  {
-    img: avatar4Img,
-    fullName: "ROGUE TANKS",
-    role: "Product",
-    text: "A roguelike inspired by old NES-era games with a modern design twist. Developed by Game Development Community Galactic Omnivore Skopje. Early Access Password 'rogueTanksBetaTesting'",
-    link: "https://galactic-omnivore.itch.io/rogue-tanks",
-  },
+  }
+
 ];
 
 const testemonialSlides = [
   {
     node: (
-      <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
+      <div className="p-4 flex justify-center flex-col bg-black h-[400px]">
         <TestemonialCard {...testemonialsData[0]} />
       </div>
     ),
   },
   {
     node: (
-      <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
+      <div className="p-4 flex justify-center flex-col bg-black h-[400px]">
         <TestemonialCard {...testemonialsData[1]} />
       </div>
     ),
   },
   {
     node: (
-      <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
+      <div className="p-4 flex justify-center flex-col bg-black h-[400px]">
         <TestemonialCard {...testemonialsData[2]} />
       </div>
     ),
-  },
-  {
-    node: (
-      <div className="p-4 flex justify-center flex-col bg-black h-[300px]">
-        <TestemonialCard {...testemonialsData[3]} />
-      </div>
-    ),
-  },
+  }
+
 ];
 
 const pillarSlidesData = [
@@ -391,16 +382,16 @@ const DiscordJoin = () => {
         objectFit="cover"
         alt="Background Image"
       />
-      <div className="absolute inset-0 flex items-center justify-center flex-col p-4">
+      <div className="absolute inset-0 flex items-center justify-center flex-col p-4 text-white">
         <div className="text-4xl text-center my-4">OVER 250 OMNIVORES</div>
-        <div className="mb-4 text-center">
+        <div className="mb-4 text-center lg:mx-[10%]">
           From junior game developers to senior app developers who never made a
           game in their life, artists who want to switch to digital and writers
           who always wanted to write a game...everyone is welcome from any
           industry.{" "}
         </div>
-        <a href="https://discord.gg/ZbSShxu6K4" target="_blank" rel="noopener noreferrer" className="w-full">
-          <Button className="w-full bg-[#c82484] text-white hover:bg-[#c82484]">
+        <a href="https://discord.gg/ZbSShxu6K4" target="_blank" rel="noopener noreferrer" className="w-full lg:w-[200px] flex justify-center">
+          <Button className="w-full bg-[#c82484] text-white hover:bg-[#c82484] lg:w-[200px] mt-12 rounded-[0px]">
             <Image
               src={discordImg}
               alt="discord"
@@ -441,14 +432,14 @@ const socialMedia = [
 const ContactUs = () => {
   return (
     <div className={`flex justify-center flex-col p-4 bg-[${magenta}]`}>
-      <div className="text-4xl text-center mb-4">CONTACT US</div>
-      <div className="text-center">
+      <div className="text-4xl text-center mb-4 text-white">CONTACT US</div>
+      <div className="text-center lg:mx-[10%] text-white">
       Got a game idea, a unique skill set, or just want to connect with fellow game enthusiasts? 
       Reach out! Whether you're here to learn (Education), build your brand (Portfolio), or find
       project support (Outsourcing), our community is here to help you thrive.
       </div>
-      <a href="mailto:galacticomnivore@gmail.com" className="w-full">
-        <Button className="bg-white text-black p-4 mt-4 w-full">
+      <a href="mailto:galacticomnivore@gmail.com" className="w-full flex justify-center">
+        <Button className="bg-white text-black p-4 mt-4 w-full lg:w-[200px] rounded-[0px]">
           CONTACT US!
         </Button>
       </a>
@@ -461,14 +452,14 @@ const ContactUs = () => {
 
 const Newsletter = () => {
   return (
-    <div className={`flex justify-center flex-col p-4 bg-[${magenta}]`}>
+    <div className={`flex justify-center flex-col p-4 pt-16 bg-[${magenta}] text-white`}>
       <div className="text-4xl text-center mb-4">NEWSLETTER</div>
-      <div className="text-center">
+      <div className="text-center lg:mx-[10%]">
       Want exclusive insights, the latest updates, and new
       opportunities from the Galactic Omnivore community?
       </div>
-      <a href="https://forms.gle/QGDQWhbRQGfc8YaY9" className="w-full">
-        <Button className="bg-white text-black p-4 mt-4 w-full">
+      <a href="https://forms.gle/QGDQWhbRQGfc8YaY9" className="w-full flex justify-center">
+        <Button className="bg-white text-black p-4 mt-4 w-full lg:w-[200px] rounded-[0px]">
           SUBSCRIBE!
         </Button>
       </a>
@@ -565,9 +556,9 @@ const HqOpenhours = () => {
         objectFit="cover"
         alt="Transparent Image"
       />
-      <div className="absolute inset-0 flex flex-col p-4 top-0">
+      <div className="absolute inset-0 flex flex-col p-4 top-0 text-white">
         <div className="text-4xl text-center my-4">HQ OPEN HOURS:</div>
-        <div className="mb-16 text-center">
+        <div className="mb-16 text-center lg:mx-[10%]">
           Located on the eleventh floor in the building next to the Macedonian
           Archbishop Cathedral, we have 60 square meters of game making
           community space with a cool view to stimulate the best game creation
@@ -576,10 +567,10 @@ const HqOpenhours = () => {
 
         <Link
           target="blank"
-          className="w-full"
+          className="w-full flex justify-center"
           href="https://calendar.app.google/H7Zwkwm81SMrbp7F9"
         >
-          <Button className="w-full bg-[#c82484] text-white hover:bg-[#c82484]">
+          <Button className="w-full bg-[#c82484] text-white hover:bg-[#c82484] lg:w-[200px] rounded-[0px]">
             SCHEDULE A VISIT
           </Button>
         </Link>
@@ -593,14 +584,14 @@ const SocialFooter = () => {
     <>
       <div className="flex gap-2 w-full justify-center my-8 sm:flex-row flex-wrap px-4">
         {socialMedia.map((social, i) => (
-          <Link href={social.src} className="bg-gray-800 rounded-full p-4">
+          <Link href={social.src} className="bg-gray-800 p-4 rounded-[0px]">
             <div className="text-gray-500 hover:text-gray-300 transition-colors duration-300">
               {social.icon}
             </div>
           </Link>
         ))}
       </div>
-      <div className="text-gray-400 w-full text-center mb-8">
+      <div className="text-gray-400 w-full text-center pb-12">
         Copyright ©Galactic Omnivore 2025
       </div>
     </>
@@ -609,24 +600,23 @@ const SocialFooter = () => {
 
 const About = () => {
   return (
-    <div className="relative">
+    <div className="relative lg:my-16">
       <div id="about" className="absolute top-[-80px]"></div>
-      <div className="text-4xl mb-8 text-center">ABOUT</div>
-      <div className="text-center mb-4">
-        Galactic Omnivore is the only Game Dev. Community in North Macedonia
+      <div className="text-4xl mb-8 text-center text-white">ABOUT</div>
+      <div className="text-center mb-4 text-white lg:mx-[10%] lg:text-[22px]">
+        Galactic Omnivore is  <span className="text-[#EED75F]">the only Game Dev. Community in North Macedonia</span>{" "}
         where you can greet, meet and create your own game dev. team.{" "}
       </div>
-      <div className="text-center mb-4">
+      <div className="text-center mb-4 text-white lg:mx-[10%] lg:text-[22px]">
         We help in <span className="text-[#EED75F]">teaching</span> new people
-        how to make games, how to{" "}
-        <span className="text-[#EED75F]">build a portfolio</span> and structure
-        their work and how to{" "}
-        <span className="text-[#EED75F]">publish games</span> to the world’s
+        <span className="text-[#EED75F]"> how to make games, build or expand their portfolio{" "} and structure
+        their work. </span> We also help in {" "}
+        <span className="text-[#EED75F]">publishing games</span> to the world’s
         most popular online stores.{" "}
       </div>
       <Image
         src={driveTruImg}
-        className="mb-4"
+        className="my-6"
         alt="game shops"
         width={1920}
         height={1080}
@@ -636,11 +626,61 @@ const About = () => {
 };
 
 const HomePage = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== "undefined") {
+        setIsMobile(window.innerWidth <= 1024);
+      }
+    };
+  
+    if (typeof window !== "undefined") {
+      handleResize(); // Set initial value
+      window.addEventListener("resize", handleResize);
+    }
+  
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("resize", handleResize);
+      }
+    };
+  }, []);
+
   return (
     <div className="bg-black" id="home">
       <Header />
 
-      <a href="https://forms.gle/rbaowWxTUdJYVVpv5" target="_blank" rel="noopener noreferrer">  <Image src={heroImg} alt="Hero Image" width={1920} height={1920} /></a>
+      
+       {/* <Image src={heroImg} alt="Hero Image" width={1920} height={920} className="w-full h-[400px] object-cover" />
+       
+       <a href="https://forms.gle/rbaowWxTUdJYVVpv5" target="_blank" rel="noopener noreferrer"> 
+       <Button>Get Survey</Button>
+       </a> */}
+
+       <div className="relative w-full h-[400px]">
+  <Image
+    src={heroImg}
+    alt="Hero Image"
+    width={1920}
+    height={920}
+    className="w-full h-full object-cover"
+  />
+  <div className="absolute inset-0 flex flex-col justify-center items-center text-center">
+    <h1 className="text-white text-4xl font-bold mb-16">
+GALACTIC OMNIVORE ANUAL FEEDBACK SURVEY
+    </h1>
+    <a
+      href="https://forms.gle/rbaowWxTUdJYVVpv5"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <Button className="bg-white text-black px-6 py-2 hover:bg-gray-200 rounded-[0px]">
+        Get Survey
+      </Button>
+    </a>
+  </div>
+</div>
 
       <section className="bg-black p-4 flex flex-col justify-center">
         <About />
@@ -654,8 +694,11 @@ const HomePage = () => {
         height={1080}
       />
 
-      <EduBoxLarge
+    <div className="flex flex-col gap-4 justify-between pb-32 bg-[#CA2380] lg:flex-row lg:justify-center lg:items-start">
+
+    <EduBoxLarge
         title="EDUCATION"
+        noImg={!isMobile}
         img={edu1Img}
         jsx={
           <div className="text-center flex flex-col gap-2">
@@ -664,7 +707,7 @@ const HomePage = () => {
               become both students and mentors.
             </span>
             <div>
-              Regardless of their background, they can learn or share knowledge
+They can learn or share knowledge
               about :
             </div>
             <div>
@@ -679,6 +722,7 @@ const HomePage = () => {
       <EduBoxLarge
         title="PORTFOLIO"
         img={edu2Img}
+        noImg={!isMobile}
         jsx={
           <div className="text-center flex flex-col gap-2">
             <div>
@@ -704,6 +748,7 @@ const HomePage = () => {
       <EduBoxLarge
         title="OUTSOURCING"
         img={edu3Img}
+        noImg={!isMobile}
         jsx={
           <div className="text-center flex flex-col gap-2">
             <div>
@@ -725,6 +770,10 @@ const HomePage = () => {
           </div>
         }
       />
+
+    </div>
+
+      
 
       {/* <section className="h-screen">
         <SwipeableSection slides={pillarSlidesData} />
@@ -761,8 +810,8 @@ const HomePage = () => {
         <DiscordJoin />
       </section>
 
-      <section className="bg-black">
-        <div className="relative text-4xl my-8 text-center text-white bg-black">
+      <section className="bg-black h-[600px] flex flex-col items-center">
+        <div className="relative text-4xl mt-8 text-center text-white bg-black mb-8 lg:mb-0">
           <div id="testemonials" className="absolute top-[-80px]"></div>
           TESTEMONIALS:
         </div>

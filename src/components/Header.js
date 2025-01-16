@@ -68,7 +68,7 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 bg-black shadow-md z-50 bg-black">
-      <div className="container mx-auto flex items-center justify-between p-4">
+      <div className="container mx-auto text-white flex items-center justify-between p-4">
         <div>
           <Image src={logoImg} height={40} width={100} alt="Logo" />
         </div>
