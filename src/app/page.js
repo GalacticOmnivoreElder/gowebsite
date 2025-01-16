@@ -668,7 +668,7 @@ const HomePage = () => {
   />
   <div className="absolute inset-0 flex flex-col justify-center items-center text-center">
     <h1 className="text-white text-4xl font-bold mb-16">
-GALACTIC OMNIVORE ANUAL FEEDBACK SURVEY
+    GALACTIC OMNIVORE ANNUAL FEEDBACK SURVEY
     </h1>
     <a
       href="https://forms.gle/rbaowWxTUdJYVVpv5"
