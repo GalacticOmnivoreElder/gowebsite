@@ -526,6 +526,44 @@ const Newsletter = () => {
 //   return <div id="calendar-scheduling-button"></div>;
 // };
 
+// const HqOpenhours = () => {
+//   return (
+//     <div className="relative h-[450px] mb-8 w-full">
+//       <Image
+//         src={hqImg}
+//         layout="fill"
+//         objectFit="cover"
+//         alt="Background Image"
+//       />
+//       <Image
+//         src={transparentImg}
+//         layout="fill"
+//         objectFit="cover"
+//         alt="Transparent Image"
+//       />
+//       <div className="absolute inset-0 flex flex-col p-4 top-0 text-white">
+//         <div className="text-4xl text-center my-4">HQ OPEN HOURS:</div>
+//         <div className="mb-16 text-center lg:mx-[10%]">
+//           Located on the eleventh floor in the building next to the Macedonian
+//           Archbishop Cathedral, we have 60 square meters of game making
+//           community space with a cool view to stimulate the best game creation
+//           ideas.
+//         </div>
+
+//         <Link
+//           target="blank"
+//           className="w-full flex justify-center"
+//           href="https://calendar.app.google/H7Zwkwm81SMrbp7F9"
+//         >
+//           <Button className="w-full bg-[#c82484] text-white hover:bg-[#c82484] lg:w-[200px] rounded-[0px]">
+//             SCHEDULE A VISIT
+//           </Button>
+//         </Link>
+//       </div>
+//     </div>
+//   );
+// };
+
 const HqOpenhours = () => {
   return (
     <div className="relative h-[450px] mb-8 w-full">
@@ -543,11 +581,17 @@ const HqOpenhours = () => {
       />
       <div className="absolute inset-0 flex flex-col p-4 top-0 text-white">
         <div className="text-4xl text-center my-4">HQ OPEN HOURS:</div>
-        <div className="mb-16 text-center lg:mx-[10%]">
+        <div className="mb-4 text-center lg:mx-[10%]">
           Located on the eleventh floor in the building next to the Macedonian
-          Archbishop Cathedral, we have 60 square meters of game making
+          Archbishop Cathedral, we have 60 square meters of game-making
           community space with a cool view to stimulate the best game creation
           ideas.
+        </div>
+        
+        {/* Open Hours Section */}
+        <div className="text-center text-lg font-semibold my-4">
+          <p>Monday - Friday</p>
+          <p>12:00 - 20:00</p>
         </div>
 
         <Link
