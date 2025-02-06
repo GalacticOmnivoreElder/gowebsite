@@ -654,6 +654,13 @@ const About = () => {
   );
 };
 
+"use client";
+import React, { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import heroImg from "@/assets/HERO.png";
+
 const HomePage = () => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -704,11 +711,23 @@ const HomePage = () => {
       target="_blank"
       rel="noopener noreferrer"
     >
-      <Button className="bg-[#CA2280] text-white font-bold uppercase px-6 py-2 hover:bg-[#FF1493] rounded-[0px]">
-      START SURVEY
-      </Button>
+            <Button
+              className="bg-[#CA2280] text-white font-bold uppercase px-6 py-2 hover:bg-[#FF1493] rounded-[0px]"
+              style={{ animation: "blink 1s infinite" }}
+            >
+              START SURVEY
+            </Button>
     </a>
   </div>
+
+      {/* Add global styles for the blinking effect */}
+      <style jsx>{`
+        @keyframes blink {
+          0% { opacity: 1; }
+          50% { opacity: 0; }
+          100% { opacity: 1; }
+        }
+      `}</style>
 </div>
 
       <section className="bg-black p-4 flex flex-col justify-center">
