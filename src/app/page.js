@@ -704,7 +704,7 @@ const HomePage = () => {
       target="_blank"
       rel="noopener noreferrer"
     >
-      <Button className="bg-[#FFC107] text-black px-6 py-2 hover:bg-[#E0A800] rounded-[0px]">
+      <Button className="bg-[#FF69B4] text-white px-6 py-2 hover:bg-[#FF1493] rounded-[0px]">
       Submit Your Feedback
       </Button>
     </a>
