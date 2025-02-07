@@ -8,6 +8,10 @@ import avatar2Img from "@/assets/avatar2.png";
 import avatar3Img from "@/assets/avatar3.png";
 import avatar4Img from "@/assets/avatar4.gif";
 
+import achievementImg1 from "@/assets/A1.png";
+// import achievementImg2 from "@/assets/achievement2.png";
+// import achievementImg3 from "@/assets/achievement3.png";
+
 import joinusImg from "@/assets/joinus.png";
 import discordImg from "@/assets/discord.png";
 
@@ -207,13 +211,17 @@ const EventCard = ({ title, image, cta, link, noData }) => {
     >
       {/* <div className="text-[24px] min-h-[28px] text-center text-white">{title}</div> */}
       <div className="relative flex justify-center items-center">
-        <Image
-          src={image}
-          width={1920}
-          height={1080}
-          alt="Profile Image"
-          className="w-[220px] h-[220px]"
-        />
+        <div className="relative w-full mb-4" style={{ paddingTop: "56.25%" }}>
+          {" "}
+          {/* 56.25% = 9/16 * 100 */}
+          <Image
+            src={image}
+            alt={title}
+            layout="fill"
+            objectFit="contain"
+            className="rounded-sm"
+          />
+        </div>
       </div>
       <div className="flex justify-center p-2">
         <a href={link || "#"}>
@@ -533,38 +541,50 @@ const About = () => {
 
 const carouselData = [
   {
-    title: "Game Development",
-    image: background1Img,
-    text: "Learn the fundamentals of game development, from concept to deployment. Our comprehensive approach covers everything from basic mechanics to advanced gameplay systems.",
+    title: "Human Rights Trivia Game",
+    image: achievementImg1,
+    text: "For Human Rights Day (December 10th), Galactic Omnivore, in collaboration with Europe House and the Macedonian Young Lawyers Association (MYLA), developed a trivia web game engaging thousands in an interactive learning experience. In just 14 days, it reached 48,332 unique plays, showcasing the power of gamification. Now available to play here, Navigator reflects our commitment to knowledge, evolution, and engagement.",
+    link: "https://kikerkov.itch.io/navigator",
   },
   {
     title: "Art & Design",
     image: heroImg,
     text: "Master the art of game visuals, including 2D and 3D asset creation, animation, and UI/UX design. Create stunning worlds that players will love to explore.",
+    link: "#",
   },
   {
     title: "Programming",
     image: avatar1Img,
     text: "Dive deep into game programming with hands-on experience in popular engines and frameworks. Build the technical foundation you need for successful game development.",
+    link: "#",
   },
 ];
 
-const CarouselItem = ({ title, image, text }) => {
+const CarouselItem = ({ title, image, text, link }) => {
   return (
     <div className="flex flex-col items-center p-4 bg-black border-2 border-white h-full">
-      <div className="relative w-full aspect-square mb-4">
+      <div className="relative w-full mb-4" style={{ paddingTop: "56.25%" }}>
+        {" "}
+        {/* 56.25% = 9/16 * 100 */}
         <Image
           src={image}
           alt={title}
           layout="fill"
-          objectFit="cover"
+          objectFit="contain"
           className="rounded-sm"
         />
       </div>
       <h3 className="text-2xl font-bold text-white mb-4 text-center">
         {title}
       </h3>
-      <p className="text-white text-center">{text}</p>
+      <p className="text-white text-center mb-4">{text}</p>
+      <div className="mt-auto">
+        <a href={link} target="_blank" rel="noopener noreferrer">
+          <Button className="bg-[#CA2280] text-white hover:bg-[#CA2280] rounded-[0px]">
+            LEARN MORE
+          </Button>
+        </a>
+      </div>
     </div>
   );
 };
