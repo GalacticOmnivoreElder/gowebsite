@@ -768,7 +768,12 @@ const HomePage = () => {
         title="G.O. ACHIEVEMENTS"
         backgroundColor="#CA2280"
       />
-      <Image src={pixelUpImg} alt="pixel section" width={1920} height={1080} />
+      <Image
+        src={pixelDownImg}
+        alt="pixel section"
+        width={1920}
+        height={1080}
+      />
 
       <section className="bg-black p-4 flex flex-col justify-center">
         <About />
@@ -898,12 +903,7 @@ const HomePage = () => {
         />
       </section>
 
-      <Image
-        src={pixelDownImg}
-        alt="pixel section"
-        width={1920}
-        height={1080}
-      />
+      <Image src={pixelUpImg} alt="pixel section" width={1920} height={1080} />
 
       <section className="relative">
         <div id="contact" className="absolute top-[-80px]"></div>
