@@ -546,18 +546,18 @@ const carouselData = [
     text: "For Human Rights Day (December 10th), Galactic Omnivore, in collaboration with Europe House and the Macedonian Young Lawyers Association (MYLA), developed a trivia web game engaging thousands in an interactive learning experience. In just 14 days, it reached 48,332 unique plays, showcasing the power of gamification. Now available to play here, Navigator reflects our commitment to knowledge, evolution, and engagement.",
     link: "https://kikerkov.itch.io/navigator",
   },
-  {
-    title: "Art & Design",
-    image: heroImg,
-    text: "Master the art of game visuals, including 2D and 3D asset creation, animation, and UI/UX design. Create stunning worlds that players will love to explore.",
-    link: "#",
-  },
-  {
-    title: "Programming",
-    image: avatar1Img,
-    text: "Dive deep into game programming with hands-on experience in popular engines and frameworks. Build the technical foundation you need for successful game development.",
-    link: "#",
-  },
+  // {
+  //   title: "Art & Design",
+  //   image: heroImg,
+  //   text: "Master the art of game visuals, including 2D and 3D asset creation, animation, and UI/UX design. Create stunning worlds that players will love to explore.",
+  //   link: "#",
+  // },
+  // {
+  //   title: "Programming",
+  //   image: avatar1Img,
+  //   text: "Dive deep into game programming with hands-on experience in popular engines and frameworks. Build the technical foundation you need for successful game development.",
+  //   link: "#",
+  // },
 ];
 
 const CarouselItem = ({ title, image, text, link }) => {
