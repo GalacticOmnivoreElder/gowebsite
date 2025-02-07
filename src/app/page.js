@@ -1,6 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
-
+import React, { useEffect, useState, useRef } from "react";
 
 import background1Img from "@/assets/background1.png";
 import heroImg from "@/assets/HERO.png";
@@ -8,7 +7,6 @@ import avatar1Img from "@/assets/avatar1.png";
 import avatar2Img from "@/assets/avatar2.png";
 import avatar3Img from "@/assets/avatar3.png";
 import avatar4Img from "@/assets/avatar4.gif";
-
 
 import joinusImg from "@/assets/joinus.png";
 import discordImg from "@/assets/discord.png";
@@ -22,7 +20,6 @@ import pixelUpImg from "@/assets/pixelup.png";
 
 // import driveTruImg from "@/assets/drivetru.png";
 import driveTruImg from "@/assets/logosImg.png";
-
 
 import event1Img from "@/assets/event1.png";
 import event2Img from "@/assets/event2.png";
@@ -39,6 +36,8 @@ import {
   Twitch,
   Twitter,
   Youtube,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -78,14 +77,16 @@ const EduBox = ({ isFull, img, text, noImg, link }) => {
         isFull ? "w-full" : "w-[150px]"
       }`}
     >
-     {!noImg && <div className="flex-shrink-0 flex flex-col justify-center">
-        <Image
-          src={img}
-          height={100}
-          width={50}
-          className=" h-full w-[30px]"
-        ></Image>
-      </div>} 
+      {!noImg && (
+        <div className="flex-shrink-0 flex flex-col justify-center">
+          <Image
+            src={img}
+            height={100}
+            width={50}
+            className=" h-full w-[30px]"
+          ></Image>
+        </div>
+      )}
       <div className="text-white flex flex-col justify-start p-2 h-[350px] justify-center">
         {text && <div className="text-white">{text}</div>}
       </div>
@@ -96,7 +97,9 @@ const EduBox = ({ isFull, img, text, noImg, link }) => {
 const EduBoxLarge = ({ title, jsx, img, noImg }) => {
   return (
     <div className="flex flex-col bg-[#CA2380] p-8 pt-4 justify-center items-center lg:w-1/3">
-      <div className="text-[32px] text-center mb-4 font-bold text-white">{title}</div>
+      <div className="text-[32px] text-center mb-4 font-bold text-white">
+        {title}
+      </div>
       <EduBox img={img} isFull text={jsx} noImg={noImg} />
     </div>
   );
@@ -117,7 +120,9 @@ const SwipeableSection = ({
   };
 
   const Slide = ({ children }) => (
-    <div className="flex-none max-w-[100vw] lg:w-1/4 snap-center">{children}</div>
+    <div className="flex-none max-w-[100vw] lg:w-1/4 snap-center">
+      {children}
+    </div>
   );
 
   if (!slides.length && slideType == "event") {
@@ -141,7 +146,7 @@ const SwipeableSection = ({
     <div className="relative overflow-hidden">
       <div
         className="flex overflow-x-auto lg:overflow-x-hidden snap-x snap-mandatory h-full lg:h-[450px] items-center justify-center max-w-[100vw]"
-        // style={{ backgroundColor: color }}
+        style={{ backgroundColor: color }}
         onScroll={handleScroll}
       >
         {slides.map((slide, index) => (
@@ -179,28 +184,21 @@ const TestemonialCard = ({ img, fullName, role, text, link }) => {
         <div className="text-[12px] text-white px-4 pr-2 text-center">
           {text?.length > 160 ? `${text.slice(0, 160)}...` : text}
         </div>
-       
       </div>
       <div className="flex justify-center items-center pb-4 w-full">
-          <Link href={link || "#"} target="_blank">
-            <Button
-              className={`bg-white  text-black rounded-sm hover:bg-[${magenta}] w-full rounded-[0px] w-full`}
-            >
-              MORE
-            </Button>
-          </Link>
-        </div>
+        <Link href={link || "#"} target="_blank">
+          <Button
+            className={`bg-white  text-black rounded-sm hover:bg-[${magenta}] w-full rounded-[0px] w-full`}
+          >
+            MORE
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 };
 
-const EventCard = ({
-  title,
-  image,
-  cta,
-  link,
-  noData,
-}) => {
+const EventCard = ({ title, image, cta, link, noData }) => {
   return (
     <div
       className={`flex flex-col gap-2 border-2 border-white mx-2 justify-center w-full  ${
@@ -219,7 +217,9 @@ const EventCard = ({
       </div>
       <div className="flex justify-center p-2">
         <a href={link || "#"}>
-          <Button className={`text-white bg-[#CA2280] hover:bg-[#CA2280] w-[220px] rounded-[0px]`}>
+          <Button
+            className={`text-white bg-[#CA2280] hover:bg-[#CA2280] w-[220px] rounded-[0px]`}
+          >
             {cta}
           </Button>
         </a>
@@ -248,22 +248,11 @@ const eventSlidesData = [
   },
 ];
 
-const eventSlides = [
-  {
-    node: (
-      <div className="flex justify-center flex-col h-[350px]">
-        <EventCard {...eventSlidesData[0]} />
-      </div>
-    ),
-  },
-  {
-    node: (
-      <div className="flex justify-center flex-col h-[350px]">
-        <EventCard {...eventSlidesData[1]} />
-      </div>
-    ),
-  },
-];
+const eventSlides = eventSlidesData.map((item) => (
+  <div className="flex justify-center flex-col h-[350px]">
+    <EventCard {...item} />
+  </div>
+));
 
 const testemonialsData = [
   {
@@ -277,7 +266,7 @@ const testemonialsData = [
     img: avatar2Img,
     fullName: "Andreja Popovik",
     role: "Community Member",
-    text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN’Play games was borne. ",
+    text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN'Play games was borne. ",
     link: "https://linktr.ee/PrintNplay",
   },
   {
@@ -286,34 +275,14 @@ const testemonialsData = [
     role: "Community Member",
     text: "The game development community has been an exceptional source of inspiration and support, fueling my creativity and enhancing my skills. The collaborative environment and wealth of knowledge I've found here have made my journey in game development truly rewarding.",
     link: "https://k32n31-p4n1c.github.io/Index.html",
-  }
-
+  },
 ];
 
-const testemonialSlides = [
-  {
-    node: (
-      <div className="p-4 flex justify-center flex-col bg-black h-[400px]">
-        <TestemonialCard {...testemonialsData[0]} />
-      </div>
-    ),
-  },
-  {
-    node: (
-      <div className="p-4 flex justify-center flex-col bg-black h-[400px]">
-        <TestemonialCard {...testemonialsData[1]} />
-      </div>
-    ),
-  },
-  {
-    node: (
-      <div className="p-4 flex justify-center flex-col bg-black h-[400px]">
-        <TestemonialCard {...testemonialsData[2]} />
-      </div>
-    ),
-  }
-
-];
+const testimonialSlides = testemonialsData.map((item) => (
+  <div className="p-4 flex justify-center flex-col bg-black h-[350px]">
+    <TestemonialCard {...item} />
+  </div>
+));
 
 const pillarSlidesData = [
   {
@@ -375,7 +344,12 @@ const DiscordJoin = () => {
           who always wanted to write a game...everyone is welcome from any
           industry.{" "}
         </div>
-        <a href="https://discord.gg/ZbSShxu6K4" target="_blank" rel="noopener noreferrer" className="w-full lg:w-[200px] flex justify-center">
+        <a
+          href="https://discord.gg/ZbSShxu6K4"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full lg:w-[200px] flex justify-center"
+        >
           <Button className="w-full bg-[#c82484] text-white hover:bg-[#c82484] lg:w-[200px] mt-12 rounded-[0px]">
             <Image
               src={discordImg}
@@ -397,21 +371,23 @@ const socialMedia = [
     icon: <Facebook />,
     src: "https://www.facebook.com/profile.php?id=100088917386120",
   },
-  { icon: <Twitter />,
-    src: "https://twitter.com/GalacticOmnivor"},
-  { 
+  { icon: <Twitter />, src: "https://twitter.com/GalacticOmnivor" },
+  {
     icon: <Instagram />,
-     src: "https://www.instagram.com/galacticomnivore/"},
+    src: "https://www.instagram.com/galacticomnivore/",
+  },
   {
     icon: <Linkedin />,
     src: "https://www.linkedin.com/company/galactic-omnivore/",
   },
-  { 
-    icon: <Youtube />, 
-    src: "https://www.youtube.com/@galacticomnivore"},
-  { 
+  {
+    icon: <Youtube />,
+    src: "https://www.youtube.com/@galacticomnivore",
+  },
+  {
     icon: <Twitch />,
-    src: "https://www.twitch.tv/galactic_omnivore"},
+    src: "https://www.twitch.tv/galactic_omnivore",
+  },
 ];
 
 const ContactUs = () => {
@@ -419,11 +395,15 @@ const ContactUs = () => {
     <div className={`flex justify-center flex-col p-4 bg-[${magenta}]`}>
       <div className="text-4xl text-center mb-4 text-white">CONTACT US</div>
       <div className="text-center lg:mx-[10%] text-white">
-      Got a game idea, a unique skill set, or just want to connect with fellow game enthusiasts? 
-      Reach out! Whether you're here to learn (Education), build your brand (Portfolio), or find
-      project support (Outsourcing), our community is here to help you thrive.
+        Got a game idea, a unique skill set, or just want to connect with fellow
+        game enthusiasts? Reach out! Whether you're here to learn (Education),
+        build your brand (Portfolio), or find project support (Outsourcing), our
+        community is here to help you thrive.
       </div>
-      <a href="mailto:galacticomnivore@gmail.com" className="w-full flex justify-center">
+      <a
+        href="mailto:galacticomnivore@gmail.com"
+        className="w-full flex justify-center"
+      >
         <Button className="bg-white text-black p-4 mt-4 w-full lg:w-[200px] rounded-[0px]">
           CONTACT US!
         </Button>
@@ -432,18 +412,20 @@ const ContactUs = () => {
   );
 };
 
-
-
-
 const Newsletter = () => {
   return (
-    <div className={`flex justify-center flex-col p-4 pt-16 bg-[${magenta}] text-white`}>
+    <div
+      className={`flex justify-center flex-col p-4 pt-16 bg-[${magenta}] text-white`}
+    >
       <div className="text-4xl text-center mb-4">NEWSLETTER</div>
       <div className="text-center lg:mx-[10%]">
-      Want exclusive insights, the latest updates, and new
-      opportunities from the Galactic Omnivore community?
+        Want exclusive insights, the latest updates, and new opportunities from
+        the Galactic Omnivore community?
       </div>
-      <a href="https://forms.gle/QGDQWhbRQGfc8YaY9" className="w-full flex justify-center">
+      <a
+        href="https://forms.gle/QGDQWhbRQGfc8YaY9"
+        className="w-full flex justify-center"
+      >
         <Button className="bg-white text-black p-4 mt-4 w-full lg:w-[200px] rounded-[0px]">
           SUBSCRIBE!
         </Button>
@@ -451,118 +433,6 @@ const Newsletter = () => {
     </div>
   );
 };
-
-
-// const CalendarButton = () => {
-//   useEffect(() => {
-//     const loadGoogleCalendarScript = () => {
-//       if (
-//         typeof window !== "undefined" &&
-//         !document.getElementById("google-calendar-script")
-//       ) {
-//         const script = document.createElement("script");
-//         script.id = "google-calendar-script";
-//         script.src =
-//           "https://calendar.google.com/calendar/scheduling-button-script.js";
-//         script.async = true;
-//         script.onload = () => {
-//           const target = document.getElementById("calendar-scheduling-button");
-//           if (window.calendar && window.calendar.schedulingButton) {
-//             window.calendar.schedulingButton.load({
-//               url: "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3VDpBu45xKIza2MVgLs_P0lsiN6y7sCWbBpU5mBYOlulceCJawKoonMNvGBP2Paj3y1G0kD3_w?gv=true",
-//               color: "#c82484",
-//               label: "SCHEDULE A VISIT",
-//               target,
-//             });
-
-//             const applyCustomStyles = () => {
-//               const button = target.querySelector("button");
-//               if (button) {
-//                 button.style.width = "100%";
-//                 button.style.fontFamily = orbitron.style.fontFamily;
-//                 button.style.boxSizing = "border-box";
-//                 button.style.display = "block";
-//               }
-//             };
-//             applyCustomStyles();
-//           } else {
-//             console.error("Google Calendar schedulingButton is not available.");
-//           }
-//         };
-//         script.onerror = () => {
-//           console.error("Failed to load the Google Calendar script.");
-//         };
-//         document.body.appendChild(script);
-//       }
-//     };
-
-//     const loadGoogleCalendarCSS = () => {
-//       if (
-//         typeof window !== "undefined" &&
-//         !document.getElementById("google-calendar-css")
-//       ) {
-//         const link = document.createElement("link");
-//         link.id = "google-calendar-css";
-//         link.href =
-//           "https://calendar.google.com/calendar/scheduling-button-script.css";
-//         link.rel = "stylesheet";
-//         link.onload = () => {
-//           console.log("Google Calendar CSS loaded.");
-//         };
-//         link.onerror = () => {
-//           console.error("Failed to load the Google Calendar CSS.");
-//         };
-//         document.head.appendChild(link);
-//       }
-//     };
-
-//     // Only execute in the browser
-//     if (typeof window !== "undefined") {
-//       loadGoogleCalendarScript();
-//       loadGoogleCalendarCSS();
-//     }
-//   }, []);
-
-//   return <div id="calendar-scheduling-button"></div>;
-// };
-
-// const HqOpenhours = () => {
-//   return (
-//     <div className="relative h-[450px] mb-8 w-full">
-//       <Image
-//         src={hqImg}
-//         layout="fill"
-//         objectFit="cover"
-//         alt="Background Image"
-//       />
-//       <Image
-//         src={transparentImg}
-//         layout="fill"
-//         objectFit="cover"
-//         alt="Transparent Image"
-//       />
-//       <div className="absolute inset-0 flex flex-col p-4 top-0 text-white">
-//         <div className="text-4xl text-center my-4">HQ OPEN HOURS:</div>
-//         <div className="mb-16 text-center lg:mx-[10%]">
-//           Located on the eleventh floor in the building next to the Macedonian
-//           Archbishop Cathedral, we have 60 square meters of game making
-//           community space with a cool view to stimulate the best game creation
-//           ideas.
-//         </div>
-
-//         <Link
-//           target="blank"
-//           className="w-full flex justify-center"
-//           href="https://calendar.app.google/H7Zwkwm81SMrbp7F9"
-//         >
-//           <Button className="w-full bg-[#c82484] text-white hover:bg-[#c82484] lg:w-[200px] rounded-[0px]">
-//             SCHEDULE A VISIT
-//           </Button>
-//         </Link>
-//       </div>
-//     </div>
-//   );
-// };
 
 const HqOpenhours = () => {
   return (
@@ -587,8 +457,7 @@ const HqOpenhours = () => {
           community space with a cool view to stimulate the best game creation
           ideas.
         </div>
-        
-        {/* Open Hours Section */}
+
         <div className="text-center text-lg font-semibold my-4">
           <p>Monday - Friday</p>
           <p>12:00 - 20:00</p>
@@ -633,15 +502,23 @@ const About = () => {
       <div id="about" className="absolute top-[-80px]"></div>
       <div className="text-4xl mb-8 text-center text-white">ABOUT</div>
       <div className="text-center mb-4 text-white lg:mx-[10%] lg:text-[22px]">
-        Galactic Omnivore is  <span className="text-[#EED75F]">the only Game Dev. Community in North Macedonia</span>{" "}
+        Galactic Omnivore is{" "}
+        <span className="text-[#EED75F]">
+          the only Game Dev. Community in North Macedonia
+        </span>{" "}
         where you can greet, meet and create your own game dev. team.{" "}
       </div>
       <div className="text-center mb-4 text-white lg:mx-[10%] lg:text-[22px]">
         We help in <span className="text-[#EED75F]">teaching</span> new people
-        <span className="text-[#EED75F]"> how to make games, build or expand their portfolio{" "} and structure
-        their work. </span> We also help in {" "}
-        <span className="text-[#EED75F]">publishing games</span> to the world’s
-        most popular online stores.{" "}
+        <span className="text-[#EED75F]">
+          {" "}
+          how to make games, build or expand their portfolio and structure their
+          work.{" "}
+        </span>{" "}
+        We also help in <span className="text-[#EED75F]">
+          publishing games
+        </span>{" "}
+        to the world's most popular online stores.{" "}
       </div>
       <Image
         src={driveTruImg}
@@ -650,6 +527,188 @@ const About = () => {
         width={1920}
         height={1080}
       />
+    </div>
+  );
+};
+
+const carouselData = [
+  {
+    title: "Game Development",
+    image: background1Img,
+    text: "Learn the fundamentals of game development, from concept to deployment. Our comprehensive approach covers everything from basic mechanics to advanced gameplay systems.",
+  },
+  {
+    title: "Art & Design",
+    image: heroImg,
+    text: "Master the art of game visuals, including 2D and 3D asset creation, animation, and UI/UX design. Create stunning worlds that players will love to explore.",
+  },
+  {
+    title: "Programming",
+    image: avatar1Img,
+    text: "Dive deep into game programming with hands-on experience in popular engines and frameworks. Build the technical foundation you need for successful game development.",
+  },
+];
+
+const CarouselItem = ({ title, image, text }) => {
+  return (
+    <div className="flex flex-col items-center p-4 bg-black border-2 border-white h-full">
+      <div className="relative w-full aspect-square mb-4">
+        <Image
+          src={image}
+          alt={title}
+          layout="fill"
+          objectFit="cover"
+          className="rounded-sm"
+        />
+      </div>
+      <h3 className="text-2xl font-bold text-white mb-4 text-center">
+        {title}
+      </h3>
+      <p className="text-white text-center">{text}</p>
+    </div>
+  );
+};
+
+const achievementSlides = carouselData.map((item) => (
+  <CarouselItem {...item} />
+));
+
+const GenericCarousel = ({
+  slides,
+  itemsPerViewDesktop = 3,
+  itemsPerViewTablet = 2,
+  itemsPerViewMobile = 1,
+  backgroundColor = "#CA2280",
+  title,
+  className = "",
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(itemsPerViewDesktop);
+  const [startX, setStartX] = useState(0);
+  const [currentX, setCurrentX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 600) {
+        setItemsPerView(itemsPerViewMobile);
+      } else if (window.innerWidth < 1000) {
+        setItemsPerView(itemsPerViewTablet);
+      } else {
+        setItemsPerView(itemsPerViewDesktop);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [itemsPerViewDesktop, itemsPerViewTablet, itemsPerViewMobile]);
+
+  const totalSlides = Math.ceil(slides.length / itemsPerView);
+
+  const handleStart = (e) => {
+    setIsDragging(true);
+    setStartX(e.type === "mousedown" ? e.pageX : e.touches[0].clientX);
+  };
+
+  const handleMove = (e) => {
+    if (!isDragging) return;
+    const x = e.type === "mousemove" ? e.pageX : e.touches[0].clientX;
+    const walk = x - startX;
+    setCurrentX(walk);
+  };
+
+  const handleEnd = () => {
+    if (!isDragging) return;
+    const threshold = window.innerWidth / 4;
+    if (Math.abs(currentX) > threshold) {
+      if (currentX > 0 && currentIndex > 0) {
+        setCurrentIndex((prev) => prev - 1);
+      } else if (currentX < 0 && currentIndex < totalSlides - 1) {
+        setCurrentIndex((prev) => prev + 1);
+      }
+    }
+    setIsDragging(false);
+    setCurrentX(0);
+  };
+
+  return (
+    <div
+      className={`${
+        backgroundColor ? `bg-[${backgroundColor}]` : ""
+      } ${className}`}
+    >
+      {title && (
+        <div className="text-4xl text-center text-white pt-8 mb-4">{title}</div>
+      )}
+      <div className="relative py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="relative overflow-hidden">
+            <div
+              ref={containerRef}
+              className="flex touch-pan-y"
+              style={{
+                transform: `translateX(${
+                  -currentIndex * (100 / itemsPerView) +
+                  (isDragging
+                    ? (currentX / containerRef.current?.offsetWidth) * 100
+                    : 0)
+                }%)`,
+                transition: isDragging ? "none" : "transform 0.3s ease-out",
+              }}
+              onMouseDown={handleStart}
+              onMouseMove={handleMove}
+              onMouseUp={handleEnd}
+              onMouseLeave={handleEnd}
+              onTouchStart={handleStart}
+              onTouchMove={handleMove}
+              onTouchEnd={handleEnd}
+            >
+              {slides.map((slide, index) => (
+                <div
+                  key={index}
+                  className="flex-shrink-0 px-2"
+                  style={{ width: `${100 / itemsPerView}%` }}
+                >
+                  {slide}
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() =>
+                currentIndex > 0 && setCurrentIndex((prev) => prev - 1)
+              }
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/10 p-2 rounded-full"
+            >
+              <ChevronLeft className="text-white" />
+            </button>
+
+            <button
+              onClick={() =>
+                currentIndex < totalSlides - 1 &&
+                setCurrentIndex((prev) => prev + 1)
+              }
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/10 p-2 rounded-full"
+            >
+              <ChevronRight className="text-white" />
+            </button>
+          </div>
+
+          <div className="flex justify-center mt-4 gap-2">
+            {Array.from({ length: totalSlides }).map((_, index) => (
+              <button
+                key={index}
+                className={`w-3 h-3 rounded-sm transition-colors ${
+                  index === currentIndex ? "bg-white" : "bg-white/30"
+                }`}
+                onClick={() => setCurrentIndex(index)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -663,12 +722,12 @@ const HomePage = () => {
         setIsMobile(window.innerWidth <= 1024);
       }
     };
-  
+
     if (typeof window !== "undefined") {
-      handleResize(); // Set initial value
+      handleResize();
       window.addEventListener("resize", handleResize);
     }
-  
+
     return () => {
       if (typeof window !== "undefined") {
         window.removeEventListener("resize", handleResize);
@@ -680,36 +739,36 @@ const HomePage = () => {
     <div className="bg-black" id="home">
       <Header />
 
-      
-       {/* <Image src={heroImg} alt="Hero Image" width={1920} height={920} className="w-full h-[400px] object-cover" />
-       
-       <a href="https://forms.gle/rbaowWxTUdJYVVpv5" target="_blank" rel="noopener noreferrer"> 
-       <Button>Get Survey</Button>
-       </a> */}
+      <div className="relative w-full h-[400px]">
+        <Image
+          src={heroImg}
+          alt="Hero Image"
+          width={1920}
+          height={920}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 flex flex-col justify-center items-center text-center">
+          <h1 className="text-white text-4xl font-bold mb-16">
+            GALACTIC OMNIVORE ANNUAL FEEDBACK SURVEY
+          </h1>
+          <a
+            href="https://forms.gle/rbaowWxTUdJYVVpv5"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button className="bg-[#CA2280] text-white font-bold uppercase px-6 py-2 hover:bg-[#FF1493] rounded-[0px]">
+              - START SURVEY -
+            </Button>
+          </a>
+        </div>
+      </div>
 
-       <div className="relative w-full h-[400px]">
-  <Image
-    src={heroImg}
-    alt="Hero Image"
-    width={1920}
-    height={920}
-    className="w-full h-full object-cover"
-  />
-  <div className="absolute inset-0 flex flex-col justify-center items-center text-center">
-    <h1 className="text-white text-4xl font-bold mb-16">
-    GALACTIC OMNIVORE ANNUAL FEEDBACK SURVEY
-    </h1>
-    <a
-      href="https://forms.gle/rbaowWxTUdJYVVpv5"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <Button className="bg-[#CA2280] text-white font-bold uppercase px-6 py-2 hover:bg-[#FF1493] rounded-[0px]">
-      - START SURVEY -
-      </Button>
-    </a>
-  </div>
-</div>
+      <GenericCarousel
+        slides={achievementSlides}
+        title="G.O. ACHIEVEMENTS"
+        backgroundColor="#CA2280"
+      />
+      <Image src={pixelUpImg} alt="pixel section" width={1920} height={1080} />
 
       <section className="bg-black p-4 flex flex-col justify-center">
         <About />
@@ -723,101 +782,92 @@ const HomePage = () => {
         height={1080}
       />
 
-    <div className="flex flex-col gap-4 justify-between pb-32 bg-[#CA2380] lg:flex-row lg:justify-center lg:items-start">
-
-    <EduBoxLarge
-        title="EDUCATION"
-        noImg={!isMobile}
-        img={edu1Img}
-        jsx={
-          <div className="text-center flex flex-col gap-2">
-            <div>As a community, we offer everyone an opportunity to</div>
-            <span className="text-[#EED75F]">
-              become both students and mentors.
-            </span>
-            <div>
-They can learn or share knowledge
-              about :
-            </div>
-            <div>
+      <div className="flex flex-col gap-4 justify-between pb-32 bg-[#CA2380] lg:flex-row lg:justify-center lg:items-start">
+        <EduBoxLarge
+          title="EDUCATION"
+          noImg={!isMobile}
+          img={edu1Img}
+          jsx={
+            <div className="text-center flex flex-col gap-2">
+              <div>As a community, we offer everyone an opportunity to</div>
               <span className="text-[#EED75F]">
-                2D & 3D Art, Tech Art, Programming, Audio, Game Testing, Game
-                Design, Game Production, Marketing, Biz Support, Data and
+                become both students and mentors.
               </span>
+              <div>They can learn or share knowledge about :</div>
+              <div>
+                <span className="text-[#EED75F]">
+                  2D & 3D Art, Tech Art, Programming, Audio, Game Testing, Game
+                  Design, Game Production, Marketing, Biz Support, Data and
+                </span>
+              </div>
             </div>
-          </div>
-        }
-      />
-      <EduBoxLarge
-        title="PORTFOLIO"
-        img={edu2Img}
-        noImg={!isMobile}
-        jsx={
-          <div className="text-center flex flex-col gap-2">
-            <div>
-              Everyone needs to{" "}
-              <span className="text-[#EED75F]">start somewhere</span>, but not
-              everyone knows how.
-            </div>
+          }
+        />
+        <EduBoxLarge
+          title="PORTFOLIO"
+          img={edu2Img}
+          noImg={!isMobile}
+          jsx={
+            <div className="text-center flex flex-col gap-2">
+              <div>
+                Everyone needs to{" "}
+                <span className="text-[#EED75F]">start somewhere</span>, but not
+                everyone knows how.
+              </div>
 
-            <div>
-              We have the know-how to help you{" "}
-              <span className="text-[#EED75F]">
-                build, showcase and present your portfolio.
-              </span>
+              <div>
+                We have the know-how to help you{" "}
+                <span className="text-[#EED75F]">
+                  build, showcase and present your portfolio.
+                </span>
+              </div>
+              <div>
+                <span className="text-[#EED75F]">Join</span> an existing project
+                or <span className="text-[#EED75F]">start</span> your own and
+                have others join you.
+              </div>
             </div>
-            <div>
-              <span className="text-[#EED75F]">Join</span> an existing project
-              or <span className="text-[#EED75F]">start</span> your own and have
-              others join you.
+          }
+        />
+        <EduBoxLarge
+          title="OUTSOURCING"
+          img={edu3Img}
+          noImg={!isMobile}
+          jsx={
+            <div className="text-center flex flex-col gap-2">
+              <div>
+                Looking for your{" "}
+                <span className="text-[#EED75F]">first job</span> or looking for
+                a high end <span className="text-[#EED75F]">consultancy</span>{" "}
+                position?
+              </div>
+
+              <div>
+                Sometimes we don't even need to do anything to help you. By
+                being surrounded with like-minded folks your opportunity will
+                reach you.
+              </div>
+              <div>
+                Otherwise, we create{" "}
+                <span className="text-[#EED75F]">B2B connections</span> and
+                provide <span className="text-[#EED75F]">work challenges</span>{" "}
+                to those who seek it.
+              </div>
             </div>
-          </div>
-        }
-      />
-      <EduBoxLarge
-        title="OUTSOURCING"
-        img={edu3Img}
-        noImg={!isMobile}
-        jsx={
-          <div className="text-center flex flex-col gap-2">
-            <div>
-              Looking for your <span className="text-[#EED75F]">first job</span>{" "}
-              or looking for a high end{" "}
-              <span className="text-[#EED75F]">consultancy</span> position?
-            </div>
-
-            <div>
-              Sometimes we don’t even need to do anything to help you. By being
-              surrounded with like-minded folks your opportunity will reach you.
-            </div>
-            <div>
-              Otherwise, we create{" "}
-              <span className="text-[#EED75F]">B2B connections</span> and
-              provide <span className="text-[#EED75F]">work challenges</span> to{" "}
-              those who seek it.
-            </div>
-          </div>
-        }
-      />
-
-    </div>
-
-      
-
-      {/* <section className="h-screen">
-        <SwipeableSection slides={pillarSlidesData} />
-      </section> */}
-
-      <div className="flex justify-center bg-[#CA2380]">
-        <div className="relative text-3xl mb-4 text-center text-white">
-          <div id="events" className="absolute top-[-80px]"></div>
-          UPCOMING EVENTS:
-        </div>
+          }
+        />
       </div>
 
-      <section className="">
-        <SwipeableSection slides={eventSlides} color="#DBAE93" />
-      </section>
+      <div id="events">
+        <GenericCarousel
+          slides={eventSlides}
+          title="UPCOMING EVENTS:"
+          backgroundColor="#CA2280"
+          itemsPerViewDesktop={4}
+          itemsPerViewTablet={2}
+          itemsPerViewMobile={1}
+        />
+      </div>
 
       <Image
         src={pixelDownImg}
@@ -840,14 +890,20 @@ They can learn or share knowledge
       </section>
 
       <section className="bg-black h-[600px] flex flex-col items-center">
-        <div className="relative text-4xl mt-8 text-center text-white bg-black mb-8 lg:mb-0">
-          <div id="testemonials" className="absolute top-[-80px]"></div>
-          TESTEMONIALS:
-        </div>
-        <SwipeableSection slides={testemonialSlides} />
+        <GenericCarousel
+          slides={testimonialSlides}
+          title="TESTIMONIALS:"
+          backgroundColor="transparent"
+          className="h-full"
+        />
       </section>
 
-      <Image src={pixelUpImg} alt="pixel section" width={1920} height={1080} />
+      <Image
+        src={pixelDownImg}
+        alt="pixel section"
+        width={1920}
+        height={1080}
+      />
 
       <section className="relative">
         <div id="contact" className="absolute top-[-80px]"></div>
@@ -856,7 +912,7 @@ They can learn or share knowledge
 
       <section className="relative">
         <div id="newsletter" className="absolute top-[-80px]"></div>
-        <Newsletter/>
+        <Newsletter />
       </section>
 
       <Image
