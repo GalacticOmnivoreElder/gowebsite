@@ -173,13 +173,13 @@ const SwipeableSection = ({
 const TestemonialCard = ({ img, fullName, role, text, link }) => {
   return (
     <div className="flex bg-black gap-2 flex-col items-center justify-center border-2 border-white">
-      <div className="flex flex-col min-w-[35%] h-[150px]">
+      <div className="flex flex-col  h-[150px]">
         <Image
           src={img}
           width={200}
           height={200}
           alt="Profile Image"
-          className="w-[120px] h-[120px]"
+          className="w-[120px] h-[120px] mt-4"
         />
         <div className="text-[13px] text-white font-bold">{fullName}</div>
         <div className="text-[10px] text-white text-center">{role}</div>
@@ -287,7 +287,7 @@ const testemonialsData = [
 ];
 
 const testimonialSlides = testemonialsData.map((item) => (
-  <div className="p-4 flex justify-center flex-col bg-black h-[350px]">
+  <div className="flex justify-center flex-col bg-black">
     <TestemonialCard {...item} />
   </div>
 ));
