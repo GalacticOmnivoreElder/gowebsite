@@ -171,7 +171,7 @@ const SwipeableSection = ({
   );
 };
 
-const TestemonialCard = ({ img, fullName, role, text, link }) => {
+const TestimonialCard = ({ img, fullName, role, text, link }) => {
   return (
     <div className="flex bg-black gap-2 flex-col items-center justify-center border-2 border-white">
       <div className="flex flex-col  h-[150px]">
@@ -263,7 +263,7 @@ const TestemonialCard = ({ img, fullName, role, text, link }) => {
 //   </div>
 // ));
 
-const testemonialsData = [
+const testimonialsData = [
   {
     img: avatar1Img,
     fullName: "Ivan Kikerkov",
@@ -287,9 +287,9 @@ const testemonialsData = [
   },
 ];
 
-const testimonialSlides = testemonialsData.map((item) => (
+const testimonialSlides = testimonialsData.map((item) => (
   <div className="flex justify-center flex-col bg-black">
-    <TestemonialCard {...item} />
+    <TestimonialCard {...item} />
   </div>
 ));
 
