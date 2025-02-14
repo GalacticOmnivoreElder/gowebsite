@@ -203,39 +203,39 @@ const TestemonialCard = ({ img, fullName, role, text, link }) => {
   );
 };
 
-const EventCard = ({ title, image, cta, link, noData }) => {
-  return (
-    <div
-      className={`flex flex-col gap-2 border-2 border-white mx-2 justify-center w-full  ${
-        noData ? `bg-[${magenta}] h-[360px]` : "bg-black h-[360px]"
-      }`}
-    >
-      {/* <div className="text-[24px] min-h-[28px] text-center text-white">{title}</div> */}
-      <div className="relative flex justify-center items-center">
-        <div className="relative w-full mb-4" style={{ paddingTop: "56.25%" }}>
-          {" "}
-          {/* 56.25% = 9/16 * 100 */}
-          <Image
-            src={image}
-            alt={title}
-            layout="fill"
-            objectFit="contain"
-            className="rounded-sm"
-          />
-        </div>
-      </div>
-      <div className="flex justify-center p-2">
-        <a href={link || "#"}>
-          <Button
-            className={`text-white bg-[#CA2280] hover:bg-[#CA2280] w-[220px] rounded-[0px]`}
-          >
-            {cta}
-          </Button>
-        </a>
-      </div>
-    </div>
-  );
-};
+// const EventCard = ({ title, image, cta, link, noData }) => {
+//   return (
+//     <div
+//       className={`flex flex-col gap-2 border-2 border-white mx-2 justify-center w-full  ${
+//         noData ? `bg-[${magenta}] h-[360px]` : "bg-black h-[360px]"
+//       }`}
+//     >
+//       {/* <div className="text-[24px] min-h-[28px] text-center text-white">{title}</div> */}
+//       <div className="relative flex justify-center items-center">
+//         <div className="relative w-full mb-4" style={{ paddingTop: "56.25%" }}>
+//           {" "}
+//           {/* 56.25% = 9/16 * 100 */}
+//           <Image
+//             src={image}
+//             alt={title}
+//             layout="fill"
+//             objectFit="contain"
+//             className="rounded-sm"
+//           />
+//         </div>
+//       </div>
+//       <div className="flex justify-center p-2">
+//         <a href={link || "#"}>
+//           <Button
+//             className={`text-white bg-[#CA2280] hover:bg-[#CA2280] w-[220px] rounded-[0px]`}
+//           >
+//             {cta}
+//           </Button>
+//         </a>
+//       </div>
+//     </div>
+//   );
+// };
 
 // const eventSlidesData = [
 //   {
