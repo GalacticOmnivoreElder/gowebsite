@@ -53,8 +53,8 @@ export const Header = () => {
       link: "#discord",
     },
     {
-      label: "TESTEMONIALS",
-      link: "#testemonials",
+      label: "TESTIMONIALS",
+      link: "#testimonials",
     },
     {
       label: "CONTACT",
