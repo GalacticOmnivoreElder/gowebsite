@@ -916,6 +916,7 @@ const HomePage = () => {
       </section>
 
       <section className="bg-black h-[600px] flex flex-col items-center">
+        <div id="testimonials" className="absolute top-[-80px]"></div>
         <GenericCarousel
           slides={testimonialSlides}
           title="TESTIMONIALS:"
