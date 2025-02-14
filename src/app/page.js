@@ -237,31 +237,31 @@ const EventCard = ({ title, image, cta, link, noData }) => {
   );
 };
 
-const eventSlidesData = [
-  {
-    title: "MAKE YOUR TTRPG!",
-    date: "",
-    location: "",
-    image: event1Img,
-    cta: "ROLL THE DICE",
-    link: "https://forms.gle/kGjR45M2FGczKHUw8",
-  },
-  {
-    title: "LEARN ABOUT!",
-    date: "",
-    location: "",
-    image: event2Img,
-    hook: "",
-    cta: "GAME OVER?",
-    link: "https://forms.gle/uJCoqUCnoyNGyg6V7",
-  },
-];
+// const eventSlidesData = [
+//   {
+//     title: "MAKE YOUR TTRPG!",
+//     date: "",
+//     location: "",
+//     image: event1Img,
+//     cta: "ROLL THE DICE",
+//     link: "https://forms.gle/kGjR45M2FGczKHUw8",
+//   },
+//   {
+//     title: "LEARN ABOUT!",
+//     date: "",
+//     location: "",
+//     image: event2Img,
+//     hook: "",
+//     cta: "GAME OVER?",
+//     link: "https://forms.gle/uJCoqUCnoyNGyg6V7",
+//   },
+// ];
 
-const eventSlides = eventSlidesData.map((item) => (
-  <div className="flex justify-center flex-col h-[350px]">
-    <EventCard {...item} />
-  </div>
-));
+// const eventSlides = eventSlidesData.map((item) => (
+//   <div className="flex justify-center flex-col h-[350px]">
+//     <EventCard {...item} />
+//   </div>
+// ));
 
 const testemonialsData = [
   {
