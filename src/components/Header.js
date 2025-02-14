@@ -39,10 +39,10 @@ export const Header = () => {
       link: "#pillars",
     },
 
-    {
-      label: "EVENTS",
-      link: "#events",
-    },
+    // {
+    //   label: "EVENTS",
+    //   link: "#events",
+    // },
 
     {
       label: "OPEN HOURS",
