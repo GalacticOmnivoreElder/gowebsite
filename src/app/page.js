@@ -915,14 +915,16 @@ const HomePage = () => {
         <DiscordJoin />
       </section>
 
-      <section className="bg-black h-[600px] flex flex-col items-center">
+      <section className="relative">
         <div id="testimonials" className="absolute top-[-80px]"></div>
-        <GenericCarousel
-          slides={testimonialSlides}
-          title="TESTIMONIALS:"
-          backgroundColor="transparent"
-          className="h-full"
-        />
+        <div className="bg-black h-[600px] flex flex-col items-center">
+          <GenericCarousel
+            slides={testimonialSlides}
+            title="TESTIMONIALS:"
+            backgroundColor="transparent"
+            className="h-full"
+          />
+        </div>
       </section>
 
       <Image src={pixelUpImg} alt="pixel section" width={1920} height={1080} />
