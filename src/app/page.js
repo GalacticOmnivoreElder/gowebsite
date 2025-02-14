@@ -26,9 +26,9 @@ import pixelUpImg from "@/assets/pixelup.png";
 // import driveTruImg from "@/assets/drivetru.png";
 import driveTruImg from "@/assets/logosImg.png";
 
-import event1Img from "@/assets/event1.png";
-import event2Img from "@/assets/event2.png";
-import event3Img from "@/assets/event3.png";
+// import event1Img from "@/assets/event1.png";
+// import event2Img from "@/assets/event2.png";
+// import event3Img from "@/assets/event3.png";
 import hqImg from "@/assets/openhours.png";
 import transparentImg from "@/assets/transparent.png";
 
@@ -130,22 +130,22 @@ const SwipeableSection = ({
     </div>
   );
 
-  if (!slides.length && slideType == "event") {
-    return (
-      <div className="flex justify-center flex-col h-[350px]">
-        <EventCard
-          title=""
-          instructor=""
-          date=""
-          location=""
-          image={event1Img}
-          hook="More events"
-          cta="COMING SOON"
-          noData
-        />
-      </div>
-    );
-  }
+  // if (!slides.length && slideType == "event") {
+  //   return (
+  //     <div className="flex justify-center flex-col h-[350px]">
+  //       <EventCard
+  //         title=""
+  //         instructor=""
+  //         date=""
+  //         location=""
+  //         image={event1Img}
+  //         hook="More events"
+  //         cta="COMING SOON"
+  //         noData
+  //       />
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="relative overflow-hidden">
@@ -203,65 +203,65 @@ const TestemonialCard = ({ img, fullName, role, text, link }) => {
   );
 };
 
-const EventCard = ({ title, image, cta, link, noData }) => {
-  return (
-    <div
-      className={`flex flex-col gap-2 border-2 border-white mx-2 justify-center w-full  ${
-        noData ? `bg-[${magenta}] h-[360px]` : "bg-black h-[360px]"
-      }`}
-    >
-      {/* <div className="text-[24px] min-h-[28px] text-center text-white">{title}</div> */}
-      <div className="relative flex justify-center items-center">
-        <div className="relative w-full mb-4" style={{ paddingTop: "56.25%" }}>
-          {" "}
-          {/* 56.25% = 9/16 * 100 */}
-          <Image
-            src={image}
-            alt={title}
-            layout="fill"
-            objectFit="contain"
-            className="rounded-sm"
-          />
-        </div>
-      </div>
-      <div className="flex justify-center p-2">
-        <a href={link || "#"}>
-          <Button
-            className={`text-white bg-[#CA2280] hover:bg-[#CA2280] w-[220px] rounded-[0px]`}
-          >
-            {cta}
-          </Button>
-        </a>
-      </div>
-    </div>
-  );
-};
+// const EventCard = ({ title, image, cta, link, noData }) => {
+//   return (
+//     <div
+//       className={`flex flex-col gap-2 border-2 border-white mx-2 justify-center w-full  ${
+//         noData ? `bg-[${magenta}] h-[360px]` : "bg-black h-[360px]"
+//       }`}
+//     >
+//       {/* <div className="text-[24px] min-h-[28px] text-center text-white">{title}</div> */}
+//       <div className="relative flex justify-center items-center">
+//         <div className="relative w-full mb-4" style={{ paddingTop: "56.25%" }}>
+//           {" "}
+//           {/* 56.25% = 9/16 * 100 */}
+//           <Image
+//             src={image}
+//             alt={title}
+//             layout="fill"
+//             objectFit="contain"
+//             className="rounded-sm"
+//           />
+//         </div>
+//       </div>
+//       <div className="flex justify-center p-2">
+//         <a href={link || "#"}>
+//           <Button
+//             className={`text-white bg-[#CA2280] hover:bg-[#CA2280] w-[220px] rounded-[0px]`}
+//           >
+//             {cta}
+//           </Button>
+//         </a>
+//       </div>
+//     </div>
+//   );
+// };
 
-const eventSlidesData = [
-  {
-    title: "MAKE YOUR TTRPG!",
-    date: "",
-    location: "",
-    image: event1Img,
-    cta: "ROLL THE DICE",
-    link: "https://forms.gle/kGjR45M2FGczKHUw8",
-  },
-  {
-    title: "LEARN ABOUT!",
-    date: "",
-    location: "",
-    image: event2Img,
-    hook: "",
-    cta: "GAME OVER?",
-    link: "https://forms.gle/uJCoqUCnoyNGyg6V7",
-  },
-];
+// const eventSlidesData = [
+//   {
+//     title: "MAKE YOUR TTRPG!",
+//     date: "",
+//     location: "",
+//     image: event1Img,
+//     cta: "ROLL THE DICE",
+//     link: "https://forms.gle/kGjR45M2FGczKHUw8",
+//   },
+//   {
+//     title: "LEARN ABOUT!",
+//     date: "",
+//     location: "",
+//     image: event2Img,
+//     hook: "",
+//     cta: "GAME OVER?",
+//     link: "https://forms.gle/uJCoqUCnoyNGyg6V7",
+//   },
+// ];
 
-const eventSlides = eventSlidesData.map((item) => (
-  <div className="flex justify-center flex-col h-[350px]">
-    <EventCard {...item} />
-  </div>
-));
+// const eventSlides = eventSlidesData.map((item) => (
+//   <div className="flex justify-center flex-col h-[350px]">
+//     <EventCard {...item} />
+//   </div>
+// ));
 
 const testemonialsData = [
   {
@@ -884,7 +884,7 @@ const HomePage = () => {
         />
       </div>
 
-      <div id="events">
+      {/* <div id="events">
         <GenericCarousel
           slides={eventSlides}
           title="UPCOMING EVENTS:"
@@ -893,7 +893,7 @@ const HomePage = () => {
           itemsPerViewTablet={2}
           itemsPerViewMobile={1}
         />
-      </div>
+      </div> */}
 
       <Image
         src={pixelDownImg}
