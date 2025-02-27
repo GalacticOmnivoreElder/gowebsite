@@ -47,6 +47,8 @@ import {
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 
+const magenta = "#CA2280";
+
 const TimerCountdown = () => {
   const [timeLeft, setTimeLeft] = useState(getTimeLeft());
 
@@ -74,7 +76,7 @@ const TimerCountdown = () => {
 
   return (
     // Tuka ako menjas za design ovoj div
-    <div className="flex items-center justify-center   bg-black text-white font-bold text-xl tracking-wide max-w-[200px] p-3">
+    <div className="flex items-center justify-center bg-[${magenta}] text-white font-bold text-xl tracking-wide max-w-[300px] p-3">
       {String(timeLeft.hours).padStart(2, "0")}:
       {String(timeLeft.minutes).padStart(2, "0")}:
       {String(timeLeft.seconds).padStart(2, "0")}
@@ -82,7 +84,7 @@ const TimerCountdown = () => {
   );
 };
 
-const magenta = "#CA2280";
+
 
 const pillarsData = [
   {
