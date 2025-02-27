@@ -76,7 +76,7 @@ const TimerCountdown = () => {
 
   return (
     // Tuka ako menjas za design ovoj div
-    <div className="flex items-center justify-center bg-[${magenta}] text-white font-bold text-xl tracking-wide max-w-[300px] p-3">
+    <div className="flex items-center justify-center bg-[#CA2280] text-white font-bold text-xl tracking-wide max-w-[300px] p-3">
       {String(timeLeft.hours).padStart(2, "0")}:
       {String(timeLeft.minutes).padStart(2, "0")}:
       {String(timeLeft.seconds).padStart(2, "0")}
