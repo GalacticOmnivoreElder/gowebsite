@@ -47,6 +47,41 @@ import {
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 
+const TimerCountdown = () => {
+  const [timeLeft, setTimeLeft] = useState(getTimeLeft());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(getTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  function getTimeLeft() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const endOfMonth = new Date(Date.UTC(year, month + 1, 0, 22, 59, 59));
+    const diff = Math.max(0, endOfMonth.getTime() - now.getTime());
+
+    return {
+      hours: Math.floor(diff / (1000 * 60 * 60)),
+      minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+      seconds: Math.floor((diff % (1000 * 60)) / 1000),
+    };
+  }
+
+  return (
+    // Tuka ako menjas za design ovoj div
+    <div className="flex items-center justify-center   bg-black text-white font-bold text-xl tracking-wide max-w-[200px] p-3">
+      {String(timeLeft.hours).padStart(2, "0")}:
+      {String(timeLeft.minutes).padStart(2, "0")}:
+      {String(timeLeft.seconds).padStart(2, "0")}
+    </div>
+  );
+};
+
 const magenta = "#CA2280";
 
 const pillarsData = [
@@ -777,6 +812,10 @@ const HomePage = () => {
             target="_blank"
             rel="noopener noreferrer"
           >
+            <div className="w-full flex justify-center items-center my-4">
+             <TimerCountdown />
+              </div>
+    
             <Button className="bg-[#CA2280] text-white font-bold uppercase px-6 py-2 hover:bg-[#FF1493] rounded-[0px]">
               - START SURVEY -
             </Button>
