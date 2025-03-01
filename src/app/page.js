@@ -62,18 +62,16 @@ const TimerCountdown = () => {
 
   function getTimeLeft() {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const endOfMonth = new Date(Date.UTC(year, month + 1, 0, 22, 59, 59));
-    const diff = Math.max(0, endOfMonth.getTime() - now.getTime());
-
+    // Month is 0-indexed: 3 represents April.
+    const targetDate = new Date(Date.UTC(2025, 3, 1, 0, 0, 0));
+    const diff = Math.max(0, targetDate.getTime() - now.getTime());
+  
     return {
       hours: Math.floor(diff / (1000 * 60 * 60)),
       minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
       seconds: Math.floor((diff % (1000 * 60)) / 1000),
     };
   }
-
   return (
     // Tuka ako menjas za design ovoj div
     <div className="flex items-center justify-center bg-[#CA2280] text-white font-bold text-xl tracking-wide max-w-[300px] p-3">
