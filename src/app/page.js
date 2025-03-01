@@ -808,7 +808,7 @@ const HomePage = () => {
             GALACTIC OMNIVORE ANNUAL FEEDBACK SURVEY
           </h1>
           <a
-            href="https://forms.gle/rbaowWxTUdJYVVpv5"
+            href="https://forms.gle/QGDQWhbRQGfc8YaY9"
             target="_blank"
             rel="noopener noreferrer"
           >
