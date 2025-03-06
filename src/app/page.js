@@ -49,39 +49,38 @@ import { Button } from "@/components/ui/button";
 
 const magenta = "#CA2280";
 
-// const TimerCountdown = () => {
-//   const [timeLeft, setTimeLeft] = useState(getTimeLeft());
+const TimerCountdown = () => {
+  const [timeLeft, setTimeLeft] = useState(getTimeLeft());
 
-//   useEffect(() => {
-//     const timer = setInterval(() => {
-//       setTimeLeft(getTimeLeft());
-//     }, 1000);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(getTimeLeft());
+    }, 1000);
 
-//     return () => clearInterval(timer);
-//   }, []);
+    return () => clearInterval(timer);
+  }, []);
 
-//   function getTimeLeft() {
-//     const now = new Date();
-//     // Months are 0-indexed (0 = January, so 3 = April)
-//     const targetDate = new Date(2025, 3, 1, 0, 0, 0);
-//     const diff = targetDate.getTime() - now.getTime();
-//     const clampedDiff = Math.max(diff, 0);
-
-//     return {
-//       hours: Math.floor(clampedDiff / (1000 * 60 * 60)),
-//       minutes: Math.floor((clampedDiff % (1000 * 60 * 60)) / (1000 * 60)),
-//       seconds: Math.floor((clampedDiff % (1000 * 60)) / 1000),
-//     };
-//   }
-//   return (
-//     // Tuka ako menjas za design ovoj div
-//     <div className="flex items-center justify-center bg-[#CA2280] text-white font-bold text-xl tracking-wide max-w-[300px] p-3">
-//       {String(timeLeft.hours).padStart(2, "0")}:
-//       {String(timeLeft.minutes).padStart(2, "0")}:
-//       {String(timeLeft.seconds).padStart(2, "0")}
-//     </div>
-//   );
-// };
+  function getTimeLeft() {
+    const now = new Date();
+    // Month is 0-indexed: 3 represents April.
+    const targetDate = new Date(Date.UTC(2025, 3, 1, 0, 0, 0));
+    const diff = Math.max(0, targetDate.getTime() - now.getTime());
+  
+    return {
+      hours: Math.floor(diff / (1000 * 60 * 60)),
+      minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+      seconds: Math.floor((diff % (1000 * 60)) / 1000),
+    };
+  }
+  return (
+    // Tuka ako menjas za design ovoj div
+    <div className="flex items-center justify-center bg-[#CA2280] text-white font-bold text-xl tracking-wide max-w-[300px] p-3">
+      {String(timeLeft.hours).padStart(2, "0")}:
+      {String(timeLeft.minutes).padStart(2, "0")}:
+      {String(timeLeft.seconds).padStart(2, "0")}
+    </div>
+  );
+};
 
 
 
