@@ -49,7 +49,6 @@ import { Button } from "@/components/ui/button";
 
 const magenta = "#CA2280";
 
-import { useState, useEffect } from "react";
 
 const TimerCountdown = () => {
   const [timeLeft, setTimeLeft] = useState(getTimeLeft());
@@ -83,8 +82,6 @@ const TimerCountdown = () => {
     </div>
   );
 };
-
-export default TimerCountdown;
 
 
 
