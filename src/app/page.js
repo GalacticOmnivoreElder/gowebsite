@@ -75,7 +75,7 @@ const TimerCountdown = () => {
 
   return (
     <div className="flex items-center justify-center bg-[#CA2280] text-white font-bold text-xl tracking-wide max-w-[350px] p-3">
-      {timeLeft.days}d {String(timeLeft.hours).padStart(2, "0")}:
+      {timeLeft.days}д {String(timeLeft.hours).padStart(2, "0")}:
       {String(timeLeft.minutes).padStart(2, "0")}:
       {String(timeLeft.seconds).padStart(2, "0")}
     </div>
