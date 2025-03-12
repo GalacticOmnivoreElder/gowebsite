@@ -67,6 +67,7 @@ const TimerCountdown = () => {
     const diff = Math.max(0, targetDate.getTime() - now.getTime());
   
     return {
+      days: Math.floor(diff / (60 * 60 * 60 * 24)),
       hours: Math.floor(diff / (1000 * 60 * 60)),
       minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
       seconds: Math.floor((diff % (1000 * 60)) / 1000),
@@ -805,10 +806,10 @@ const HomePage = () => {
         />
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center">
           <h1 className="text-white text-4xl font-bold mb-16">
-            GALACTIC OMNIVORE ANNUAL FEEDBACK SURVEY
+            СТАНИ ЧЛЕН НА ГАЛАКТИК ОМНИВОР
           </h1>
           <a
-            href="https://forms.gle/QGDQWhbRQGfc8YaY9"
+            href="https://forms.gle/vi5SSNSmFEmAbX5L9"
             target="_blank"
             rel="noopener noreferrer"
           >
