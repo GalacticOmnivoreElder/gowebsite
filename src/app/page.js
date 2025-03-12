@@ -63,7 +63,7 @@ const TimerCountdown = () => {
   function getTimeLeft() {
     const now = new Date();
     // Month is 0-indexed: 3 represents April.
-    const targetDate = new Date(Date.UTC(2025, 3, 1, 0, 0, 0));
+    const targetDate = new Date(Date.UTC(2025, 4, 4, 0, 0, 0));
     const diff = Math.max(0, targetDate.getTime() - now.getTime());
   
     return {
