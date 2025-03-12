@@ -49,6 +49,8 @@ import { Button } from "@/components/ui/button";
 
 const magenta = "#CA2280";
 
+import { useState, useEffect } from "react";
+
 const TimerCountdown = () => {
   const [timeLeft, setTimeLeft] = useState(getTimeLeft());
 
@@ -62,26 +64,27 @@ const TimerCountdown = () => {
 
   function getTimeLeft() {
     const now = new Date();
-    // Month is 0-indexed: 3 represents April.
     const targetDate = new Date(Date.UTC(2025, 4, 4, 0, 0, 0));
     const diff = Math.max(0, targetDate.getTime() - now.getTime());
-  
+
     return {
-      days: Math.floor(diff / (60 * 60 * 60 * 24)),
-      hours: Math.floor(diff / (1000 * 60 * 60)),
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
       minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
       seconds: Math.floor((diff % (1000 * 60)) / 1000),
     };
   }
+
   return (
-    // Tuka ako menjas za design ovoj div
-    <div className="flex items-center justify-center bg-[#CA2280] text-white font-bold text-xl tracking-wide max-w-[300px] p-3">
-      {String(timeLeft.hours).padStart(2, "0")}:
+    <div className="flex items-center justify-center bg-[#CA2280] text-white font-bold text-xl tracking-wide max-w-[350px] p-3">
+      {timeLeft.days}d {String(timeLeft.hours).padStart(2, "0")}:
       {String(timeLeft.minutes).padStart(2, "0")}:
       {String(timeLeft.seconds).padStart(2, "0")}
     </div>
   );
 };
+
+export default TimerCountdown;
 
 
 
@@ -818,7 +821,7 @@ const HomePage = () => {
               </div>
     
             <Button className="bg-[#CA2280] text-white font-bold uppercase px-6 py-2 hover:bg-[#FF1493] rounded-[0px]">
-              - START SURVEY -
+              - СТИСНИ СТАРТ -
             </Button>
           </a>
         </div>
