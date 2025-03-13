@@ -804,7 +804,7 @@ const HomePage = () => {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center">
-          <h1 className="text-white text-4xl font-bold mb-16">
+          <h1 className="text-white text-4xl font-bold mb-12">
             СТАНИ ЧЛЕН НА ГАЛАКТИК ОМНИВОР
             ПРЕД ДА ИСТЕЧЕ ВРЕМЕТО И ДОБИЈ
             90% ПОПУСТ ВО ПРВИТЕ 3 МЕСЕЦИ!
