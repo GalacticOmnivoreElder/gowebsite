@@ -834,7 +834,7 @@ const HomePage = () => {
 
       <GenericCarousel
         slides={achievementSlides}
-        title="G.O. ACHIEVEMENTS"
+        title="GALACTIC OMNINEWS"
         backgroundColor="#CA2280"
       />
       <Image
