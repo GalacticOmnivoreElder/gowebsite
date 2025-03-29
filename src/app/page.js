@@ -10,6 +10,7 @@ import avatar3Img from "@/assets/avatar3.png";
 import avatar4Img from "@/assets/avatar4.gif";
 
 import achievementImg1 from "@/assets/A1.png";
+import achievementImg2 from "@/assets/A2.png";
 // import achievementImg2 from "@/assets/achievement2.png";
 // import achievementImg3 from "@/assets/achievement3.png";
 
@@ -581,6 +582,12 @@ const carouselData = [
     image: achievementImg1,
     text: "For Human Rights Day (December 10th), Galactic Omnivore, in collaboration with Europe House and the Macedonian Young Lawyers Association (MYLA), developed a trivia web game engaging thousands in an interactive learning experience. In just 14 days, it reached 48,332 unique plays, showcasing the power of gamification. Now available to play here, Navigator reflects our commitment to knowledge, evolution, and engagement.",
     link: "https://kikerkov.itch.io/navigator",
+  },
+  {
+    title: "Glagolica 2.0",
+    image: achievementImg2,
+    text: "Curious about how you can be part of a groundbreaking VR project that brings the ancient Glagolitic script to life? We're inviting passionate creatives from all backgrounds to explore, collaborate, and shape immersive environments inspired by Macedonian heritage. If this sounds like something you'd love to contribute to, take a moment to dive into the details and register your interest—your journey starts here. Read more and apply.",
+    link: "https://go-platform-eight.vercel.app/blog/macedonian-glagolitic-in-vr-immersive-letter-environments",
   },
   // {
   //   title: "Art & Design",
