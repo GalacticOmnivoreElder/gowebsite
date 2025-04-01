@@ -11,6 +11,8 @@ import avatar4Img from "@/assets/avatar4.gif";
 
 import achievementImg1 from "@/assets/A1.png";
 import achievementImg2 from "@/assets/A2.png";
+import achievementImg3 from "@/assets/A3.png";
+
 // import achievementImg2 from "@/assets/achievement2.png";
 // import achievementImg3 from "@/assets/achievement3.png";
 
@@ -582,6 +584,12 @@ const carouselData = [
     image: achievementImg2,
     text: "Curious about how you can be part of a groundbreaking VR project that brings the ancient Glagolitic script to life? We're inviting passionate creatives from all backgrounds to explore, collaborate, and shape immersive environments inspired by Macedonian heritage. If this sounds like something you'd love to contribute to, take a moment to dive into the details and register your interest—your journey starts here. Read more and apply.",
     link: "https://go-platform-eight.vercel.app/blog/macedonian-glagolitic-in-vr-immersive-letter-environments",
+  },
+  {
+    title: "Print N’Play Games",
+    image: achievementImg3,
+    text: "Two years ago, game designer Andreja Popovik joined G.O. the local GameDev community, shifting from digital games to TTRPGs. He created the successful Kickstarter campaign within the Songs and Sagas, system leading to PrintN'Play's rise. Collaborations followed, including the tool Birthplace of Evil and the D&;D product Dezriel's Elemental Spellbook, showcasing community innovation in game development. Currently working on a Point & Click adventure with Monstergarden.",
+    link: "https://go-platform-eight.vercel.app/blog/print-nplay-games-a-printable-games-brand-brewed-inside-the-community",
   },
   {
     title: "Human Rights Trivia Game",
