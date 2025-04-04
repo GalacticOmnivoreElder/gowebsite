@@ -23,6 +23,8 @@ import {
   query,
   where,
   deleteDoc,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { db } from "@/firebase";
 import { format } from "date-fns";
@@ -106,6 +108,7 @@ export default function UsersPage() {
   const toggleMembership = async (userId, currentStatus, subscriptionId) => {
     try {
       setActionLoading(userId);
+      const currentMonthGameId = "toxic-sewers-april-2025"; // Hardcoded for now
 
       if (currentStatus) {
         // Deactivate membership
@@ -114,6 +117,14 @@ export default function UsersPage() {
             active: false,
             endDate: serverTimestamp(),
           });
+          
+          // Remove the game from unlocked packages
+          console.log("Deactivating membership, removing game:", currentMonthGameId);
+          const userDocRef = doc(db, "users", userId);
+          await updateDoc(userDocRef, {
+            unlockedPackages: arrayRemove(currentMonthGameId)
+          });
+          console.log("Game removed from unlocked packages");
         }
       } else {
         // Activate membership
@@ -124,10 +135,19 @@ export default function UsersPage() {
             startDate: serverTimestamp(),
             endDate: null,
           });
+          
+          // Add the game to unlocked packages
+          console.log("Activating membership, adding game:", currentMonthGameId);
+          const userDocRef = doc(db, "users", userId);
+          await updateDoc(userDocRef, {
+            unlockedPackages: arrayUnion(currentMonthGameId)
+          });
+          console.log("Game added to unlocked packages");
         } else {
           // Create new subscription
           const subscriptionRef = collection(db, "subscriptions");
-          await setDoc(doc(subscriptionRef), {
+          const newSubscriptionId = doc(subscriptionRef).id;
+          await setDoc(doc(db, "subscriptions", newSubscriptionId), {
             userId: userId,
             active: true,
             startDate: serverTimestamp(),
@@ -136,6 +156,14 @@ export default function UsersPage() {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
           });
+          
+          // Add the game to unlocked packages
+          console.log("Activating new membership, adding game:", currentMonthGameId);
+          const userDocRef = doc(db, "users", userId);
+          await updateDoc(userDocRef, {
+            unlockedPackages: arrayUnion(currentMonthGameId)
+          });
+          console.log("Game added to unlocked packages");
         }
       }
 
