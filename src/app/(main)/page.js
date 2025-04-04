@@ -322,8 +322,8 @@ const testimonialsData = [
   },
 ];
 
-const testimonialSlides = testimonialsData.map((item) => (
-  <div className="flex justify-center flex-col bg-black">
+const testimonialSlides = testimonialsData.map((item, i) => (
+  <div key={i} className="flex justify-center flex-col bg-black">
     <TestimonialCard {...item} />
   </div>
 ));
@@ -414,7 +414,7 @@ const pillarSlidesData = [
                 position?
               </div>
               <div>
-                Sometimes we don't even need to do anything to help you. By
+                Sometimes we don&apos;t even need to do anything to help you. By
                 being surrounded with like-minded folks your opportunity will
                 reach you.
               </div>
@@ -501,7 +501,7 @@ const ContactUs = () => {
       <div className="text-4xl text-center mb-4 text-white">CONTACT US</div>
       <div className="text-center lg:mx-[10%] text-white">
         Got a game idea, a unique skill set, or just want to connect with fellow
-        game enthusiasts? Reach out! Whether you're here to learn (Education),
+        game enthusiasts? Reach out! Whether you&apos;re here to learn (Education),
         build your brand (Portfolio), or find project support (Outsourcing), our
         community is here to help you thrive.
       </div>
@@ -588,7 +588,7 @@ const SocialFooter = () => {
     <>
       <div className="flex gap-2 w-full justify-center my-8 sm:flex-row flex-wrap px-4">
         {socialMedia.map((social, i) => (
-          <Link href={social.src} className="bg-gray-800 p-4 rounded-[0px]">
+          <Link  key={i} href={social.src} className="bg-gray-800 p-4 rounded-[0px]">
             <div className="text-gray-500 hover:text-gray-300 transition-colors duration-300">
               {social.icon}
             </div>
@@ -621,7 +621,7 @@ const About = () => {
           work.
         </span>{" "}
         We also help in <span className="text-primary">publishing games</span> to
-        the world's most popular online stores.{" "}
+        the world&apos;s most popular online stores.{" "}
       </div>
       <Image
         src={driveTruImg}
@@ -696,9 +696,9 @@ const CarouselItem = ({ title, image, text, link }) => {
   );
 };
 
-const achievementSlides = carouselData.map((item) => (
-  <CarouselItem {...item} />
-));
+// const achievementSlides = carouselData.map((item) => (
+//   <CarouselItem {...item} />
+// ));
 
 const GenericCarousel = ({
   slides,
@@ -939,7 +939,7 @@ const HomePage = () => {
                 position?
               </div>
               <div>
-                Sometimes we don't even need to do anything to help you. By
+                Sometimes we don&apos;t even need to do anything to help you. By
                 being surrounded with like-minded folks your opportunity will
                 reach you.
               </div>
