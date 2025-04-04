@@ -1,22 +1,22 @@
-import { ThemeProvider } from "@/components/theme-provider";
+"use client";
+
+import { Inter } from "next/font/google";
 import "../globals.css";
-import { Inter, Orbitron } from "next/font/google";
-import Head from "next/head";
+import { ThemeProvider } from "next-themes";
+import ReusableLayout from "@/reusable-ui/ReusableLayout";
+// import CookieConsent from "@/components/cookies/CookieConsent";
 
 const inter = Inter({ subsets: ["latin"] });
-const orbitron = Orbitron({ subsets: ["latin"] });
+// new font
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <Head>
-        <link rel="icon" type="image/png" href="/favicon.png" />
-        <title>Galactic Omnivore</title>
-      </Head>
-      <body className={orbitron.className}>
-        <ThemeProvider attribute="class" defaultTheme="system">
-          {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ReusableLayout>{children}</ReusableLayout>
         </ThemeProvider>
+        {/* <CookieConsent /> */}
       </body>
     </html>
   );
