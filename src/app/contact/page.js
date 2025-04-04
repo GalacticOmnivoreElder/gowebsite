@@ -12,9 +12,16 @@ export default function ContactPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Need help with your subscription or assets?
+              Need help with your subscription, assets or game development journey in general?
             </p>
-            <p className="font-medium">https://galacticomnivore.atlassian.net/servicedesk/customer/portal/</p>
+            <a
+              href="https://galacticomnivore.atlassian.net/servicedesk/customer/portal/"
+              className="font-medium text-blue-600 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              https://galacticomnivore.atlassian.net/servicedesk/customer/portal/
+            </a>
           </CardContent>
         </Card>
 
@@ -26,7 +33,7 @@ export default function ContactPage() {
             <p className="text-muted-foreground mb-4">
               Interested in partnerships or collaboration?
             </p>
-            <p className="font-medium">business@galacticomnivore.com</p>
+            <p className="font-medium">galacticomnivore@galacticomnivore.com</p>
           </CardContent>
         </Card>
       </div>
@@ -38,15 +45,15 @@ export default function ContactPage() {
         <CardContent>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2">Main Office</h3>
+              <h3 className="font-semibold mb-2">GOHQ</h3>
               <p className="text-muted-foreground">
-                123 Game Dev Street
+                Blvd. Partizanski Odredi 6/43, Skopje 1000
                 <br />
-                Digital District
+                Center
                 <br />
-                San Francisco, CA 94105
+                Skopje, 1000
                 <br />
-                United States
+                Macedonia
               </p>
             </div>
             <div>
@@ -54,10 +61,10 @@ export default function ContactPage() {
               <p className="text-muted-foreground">
                 Monday - Friday
                 <br />
-                9:00 AM - 6:00 PM (PST)
+                12:00 - 20:00 (CEST)
                 <br />
                 <br />
-                Support available 24/7
+                Support available during working hours
               </p>
             </div>
           </div>
