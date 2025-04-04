@@ -72,6 +72,7 @@ export default function PackageForm({ initialData, onSubmit, onCancel }) {
     year: currentYear.toString(),
     theme: "",
     coverImage: "",
+    brandColor: "#32671d", // Default brand color
     assets: [
       {
         type: "music",
@@ -151,7 +152,14 @@ export default function PackageForm({ initialData, onSubmit, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Make sure brandColor is included in the form data
+    const formDataToSubmit = {
+      ...formData,
+      brandColor: formData.brandColor || "#32671d", // Ensure brandColor is always included
+    };
+    
+    onSubmit(formDataToSubmit);
   };
 
   const getAssetIcon = (type) => {
@@ -280,6 +288,31 @@ export default function PackageForm({ initialData, onSubmit, onCancel }) {
             />
             <p className="text-sm text-muted-foreground mt-1">
               URL to the main image for this package.
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="brandColor">Brand Color</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="brandColor"
+                name="brandColor"
+                type="color"
+                value={formData.brandColor}
+                onChange={handleChange}
+                className="h-10 w-20 p-1"
+              />
+              <Input
+                id="brandColorText"
+                name="brandColor"
+                value={formData.brandColor}
+                onChange={handleChange}
+                placeholder="#32671d"
+                className="flex-1"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Color used for primary buttons and accents in this package.
             </p>
           </div>
         </div>

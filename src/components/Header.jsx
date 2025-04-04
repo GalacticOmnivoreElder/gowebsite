@@ -17,7 +17,6 @@ import {
 import { Menu, X } from "lucide-react";
 import { auth } from "@/firebase";
 import { signOut } from "firebase/auth";
-import { ModeToggle } from "./ui/themeButton";
 import Image from "next/image";
 import logoImg from "../assets/logo.png";
 export default function Header() {
@@ -100,7 +99,7 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          <ModeToggle />
+        
 
           {!loading && (
             <>

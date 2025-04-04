@@ -25,6 +25,12 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const CheckoutPage = observer(() => {
   const searchParams = useSearchParams();
@@ -209,33 +215,24 @@ const CheckoutPage = observer(() => {
                     <p className="text-muted-foreground mb-2">
                       Please transfer the exact amount to our bank account:
                     </p>
-                    <div className="bg-muted p-4 rounded-md space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Bank Name:</span>
-                        <span className="font-medium">Stopanska Banka</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Account Number:</span>
-                        <span className="font-medium">PP30-XXXXXXXX</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Recipient:</span>
-                        <span className="font-medium">Galactic Omnivore</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Reference:</span>
-                        <span className="font-medium">
-                          {MobxStore.user?.email || "Your Email"} -{" "}
-                          {selectedPlan.name}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Amount:</span>
-                        <span className="font-medium">
-                          {selectedPlan.totalAmount}
-                        </span>
-                      </div>
-                    </div>
+                   <Dialog>
+                     <DialogTrigger asChild>
+                       <div className="cursor-pointer hover:opacity-90 transition-opacity">
+                         <Image src="/uplatnica.png" alt="Uplatnica" width={400} height={400} />
+                       </div>
+                     </DialogTrigger>
+                     <DialogContent className="max-w-4xl p-0 overflow-hidden">
+                       <div className="relative w-full h-full">
+                         <Image 
+                           src="/uplatnica.png" 
+                           alt="Uplatnica Full Size" 
+                           width={1200} 
+                           height={1200} 
+                           className="w-full h-auto object-contain"
+                         />
+                       </div>
+                     </DialogContent>
+                   </Dialog>
                   </div>
                 </div>
 

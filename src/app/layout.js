@@ -11,9 +11,9 @@ const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="dark">
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark">
           <ReusableLayout>{children}</ReusableLayout>
         </ThemeProvider>
         {/* <CookieConsent /> */}

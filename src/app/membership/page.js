@@ -88,7 +88,7 @@ export const GameOfTheMonth = ({fromLanding}) => (
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl">
           <Link href="/membership">
             <Image
-              src="/g1/g1-mvp.png"
+              src="/g1/g1-mvp.gif"
               alt="Top Rat Game"
               fill
               className="object-cover transition-transform duration-500 hover:scale-105 cursor-pointer"
@@ -195,14 +195,14 @@ const MembershipPage = observer(() => {
 
         <DetailSection
           title="Theme of the Month Art Packages"
-          description="Immerse yourself in our monthly themed art packages. This May, explore the gritty world of Top Rat with toxic sewer-inspired sprites, backgrounds, and UI elements. Perfect for creating atmospheric platformer games or adding a touch of urban adventure to your projects."
+          description="Serve up a visually rich platformer with this handcrafted asset pack! Every element in this collection is lovingly illustrated by hand, bringing a fresh, organic feel to your game world—no pixels, just pure artistry. Whether you're crafting a roguelike, an action-packed adventure, or a whimsical platformer, these assets provide the perfect ingredients for a stunning game."
           imageSrc="/g1/g1-art.png"
           imageAlt="May Top Rat Theme Art Package Preview"
         />
 
         <DetailSection
           title="Curated Music Packs"
-          description="Set the mood with our professionally composed music packs. Each month features a new theme, providing you with a variety of tracks to enhance your game's atmosphere. Listen to a preview of this month's toxic sewer-inspired melody:"
+          description="Spice up your game with this sizzling selection of original sounds and music! Whether you’re baking a brawler, frying up a fantasy quest, or slow-cooking a story-rich RPG, this audio asset pack delivers crispy sound design and mouth-watering melodies to level up your entire soundscape."
           imageSrc="/g1/g1-music.png"
           imageAlt="Music Pack Visualizer"
           reverse={true}
@@ -212,14 +212,14 @@ const MembershipPage = observer(() => {
 
         <DetailSection
           title="Code Packs & Snippets"
-          description="Accelerate your development with our monthly code packs. Get access to optimized algorithms, game mechanics, and systems tailored to the month's theme. This month, dive into endless platformer mechanics, obstacle generation, and power-up systems for your own games."
+          description="Get the actual Unity project of this month's game theme! You can eat up all of that pre-written code, modify your developer's meal at any moment, and add your own spices and flavours. Take this prototype in a completely different direction and unleash your creative hunger."
           imageSrc="/g1/g1-code.png"
           imageAlt="Code Snippet Preview"
         />
 
         <DetailSection
           title="UI & Level Design Templates"
-          description="Create engaging and challenging levels with our professional UI and level design templates. Each month, we focus on techniques relevant to the theme. Learn how to design intuitive UI for platformers, implement difficulty progression, or create engaging obstacle patterns."
+          description="Great games, like great meals, start with the right ingredients and a well-thought-out recipe. If you’re crafting a platformer and need a structured way to mix movement, levels, and progression into a deliciously balanced experience, the G.O Platformer Game Design Document is your ultimate game development cookbook."
           imageSrc="/g1/g1-design.png"
           imageAlt="UI & Level Design Preview"
           reverse={true}
@@ -227,7 +227,9 @@ const MembershipPage = observer(() => {
 
         <DetailSection
           title="Exclusive Monthly Game"
-          description="Get inspired by playing and deconstructing our monthly themed game. This May, enjoy 'Top Rat', an endless platformer that showcases the art, music, and code techniques covered in this month's resources. Dive deep into its mechanics and learn how it was built!"
+          description="TOP - RAT The Ultimate Pixel-Perfect Feast! 
+Step into a handcrafted platforming experience where every jump, enemy, and level is a deliciously designed bite of gameplay perfection.
+A full-course adventure served with style, challenge, and heart. Inspired by classic 2D platformers and spiced with modern mechanics, this is your chance to feast on gameplay that’s as tight and satisfying as a perfectly cooked dish."
           imageSrc="/g1/g1-mvp.png"
           imageAlt="Top Rat Game Screenshot"
         />

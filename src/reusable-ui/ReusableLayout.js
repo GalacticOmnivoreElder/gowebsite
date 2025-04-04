@@ -1,26 +1,12 @@
 "use client";
-
-import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { Separator } from "@/components/ui/separator";
-import { VerticalNavbar } from "./VerticalNavbar";
-
-import { PackageSearch, Ticket, UserIcon } from "lucide-react";
 import MobxStore from "../mobx";
-import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 import { observer } from "mobx-react";
-import { LoadingSpinner } from "./LoadingSpinner";
-import { UserNav } from "./ReusableProfileMenu";
-import Image from "next/image";
-import logoImg from "../assets/logo.png";
 
-import { ModeToggle } from "@/components/ui/themeButton";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const ReusableLayout = observer(({ children }) => {
-  const { user, logout } = MobxStore;
 
   const pathname = usePathname();
 

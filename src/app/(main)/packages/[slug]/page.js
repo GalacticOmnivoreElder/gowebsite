@@ -20,6 +20,8 @@ import {
   Loader2,
   Palette,
   Gamepad2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
 import { auth } from "@/firebase";
@@ -30,6 +32,7 @@ export default function PackageDetailPage({ params }) {
   const [permissionsLoading, setPermissionsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCurrentMonth, setIsCurrentMonth] = useState(false);
+  const [expandedDescriptions, setExpandedDescriptions] = useState({});
   const router = useRouter();
   const { slug } = params;
   const [user, setUser] = useState(null);
@@ -99,6 +102,13 @@ export default function PackageDetailPage({ params }) {
 
     fetchPackageData();
   }, [slug, user, authChecked]);
+
+  const toggleDescription = (assetIndex) => {
+    setExpandedDescriptions(prev => ({
+      ...prev,
+      [assetIndex]: !prev[assetIndex]
+    }));
+  };
 
   if (loading) {
     return <PackageDetailSkeleton />;
@@ -175,9 +185,18 @@ export default function PackageDetailPage({ params }) {
       );
     }
 
+    
     if (packageData.hasAccess) {
       return (
-        <Button asChild className="w-full">
+        <Button 
+          asChild 
+          className="w-full"
+          style={{ 
+            backgroundColor: packageData.brandColor || 'hsl(var(--primary))',
+            color: getContrastColor(packageData.brandColor || 'hsl(var(--primary))'),
+            borderColor: 'transparent'
+          }}
+        >
           <a href={asset.downloadUrl} target="_blank" rel="noopener noreferrer">
             <Download className="h-4 w-4 mr-2" />
             Download
@@ -186,7 +205,16 @@ export default function PackageDetailPage({ params }) {
       );
     } else if (isCurrentMonth) {
       return (
-        <Button asChild variant="secondary" className="w-full">
+        <Button 
+          asChild 
+          variant="secondary" 
+          className="w-full"
+          style={{ 
+            backgroundColor: packageData.brandColor || 'hsl(var(--primary))',
+            color: getContrastColor(packageData.brandColor || 'hsl(var(--primary))'),
+            borderColor: 'transparent'
+          }}
+        >
           <Link href="/membership">
             <Lock className="h-4 w-4 mr-2" />
             Subscribe to Unlock
@@ -195,7 +223,16 @@ export default function PackageDetailPage({ params }) {
       );
     } else {
       return (
-        <Button asChild variant="secondary" className="w-full">
+        <Button 
+          asChild 
+          variant="secondary" 
+          className="w-full"
+          style={{ 
+            backgroundColor: packageData.brandColor || 'hsl(var(--primary))',
+            color: getContrastColor(packageData.brandColor || 'hsl(var(--primary))'),
+            borderColor: 'transparent'
+          }}
+        >
           <Link href="/shop">
             <ShoppingCart className="h-4 w-4 mr-2" />
             Buy in Shop
@@ -203,6 +240,26 @@ export default function PackageDetailPage({ params }) {
         </Button>
       );
     }
+  };
+
+  // Helper function to determine text color based on background color
+  const getContrastColor = (hexColor) => {
+    // If it's a CSS variable, return default
+    if (hexColor.includes('var')) return 'white';
+    
+    // Remove the hash if it exists
+    const color = hexColor.replace('#', '');
+    
+    // Convert to RGB
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+    
+    // Calculate luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return black or white based on luminance
+    return luminance > 0.5 ? 'black' : 'white';
   };
 
   const renderSidebarContent = () => {
@@ -348,9 +405,29 @@ export default function PackageDetailPage({ params }) {
                   </div>
 
                   <h3 className="font-bold mb-1">{asset.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                    {asset.description}
-                  </p>
+                  <div className="mb-3">
+                    <p className={`text-sm text-muted-foreground ${!expandedDescriptions[index] ? 'line-clamp-3' : ''}`}>
+                      {asset.description}
+                    </p>
+                    {asset.description.length > 100 && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="p-0 h-auto text-xs text-muted-foreground hover:text-foreground mt-1"
+                        onClick={() => toggleDescription(index)}
+                      >
+                        {expandedDescriptions[index] ? (
+                          <>
+                            Show less <ChevronUp className="h-3 w-3 ml-1" />
+                          </>
+                        ) : (
+                          <>
+                            Show more <ChevronDown className="h-3 w-3 ml-1" />
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
 
                   {renderAssetButton(asset)}
                 </CardContent>
@@ -360,7 +437,7 @@ export default function PackageDetailPage({ params }) {
         </div>
 
         <div>
-          <Card className="sticky top-6">
+          <Card className="sticky top-10">
             <CardContent className="p-6">
               <h3 className="text-lg font-bold mb-4">About This Package</h3>
 
