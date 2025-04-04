@@ -33,6 +33,7 @@ export default function PackageDetailPage({ params }) {
   const [error, setError] = useState(null);
   const [isCurrentMonth, setIsCurrentMonth] = useState(false);
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
+  const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
   const { slug } = params;
   const [user, setUser] = useState(null);
@@ -46,6 +47,22 @@ export default function PackageDetailPage({ params }) {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  // Add useEffect for media query
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Initial check
+    checkIfMobile();
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
   useEffect(() => {
@@ -352,10 +369,9 @@ export default function PackageDetailPage({ params }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <div className="relative w-full aspect-square max-w-[500px] mx-auto rounded-lg overflow-hidden mb-6">
+          <div className="relative w-full aspect-square mx-auto max-h-[460px] rounded-lg overflow-hidden mb-6 border-2 border-border ">
             <Image
-              // src={`/g1/${packageData.coverImage}.png`}
-              src={`/g1/g1-mvp.png`}
+              src={isMobile ? `/g1/${packageData.coverImage}.png` : `/g1/${packageData.coverImage}-h.png`}
               alt={packageData.title}
               fill
               className="object-cover"
