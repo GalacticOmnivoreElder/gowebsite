@@ -124,12 +124,11 @@ export const GameOfTheMonth = ({fromLanding}) => (
           <h4 className="font-semibold">Includes:</h4>
           <ul className="space-y-2">
             {[
-              "Complete game with endless platforming",
-              "Top Rat Art Assets with 100+ sprites",
+              "Playable prototype with endless platforming",
+              "Tons of hand-drawn sprite frames ",
               "Original atmospheric soundtrack",
-              "Game mechanics source code",
-              "UI & Level Design templates",
-              "Mini-games set in the Top Rat universe",
+              "Secret Game Design scroll",
+              "Unity Source code file",
             ].map((item, index) => (
               <li key={index} className="flex items-start">
                 <Check className="h-5 w-5 text-primary mr-2 mt-0.5" />

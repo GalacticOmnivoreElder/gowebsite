@@ -4,7 +4,7 @@ export const dummyPackages = [
     slug: "top-rat-may-2024",
     title: "Top Rat May 2024",
     description:
-      "Dive into the toxic sewers with Mrale, a courageous rat on an endless platforming adventure. Jump, dodge, and survive in this challenging game where every obstacle could be your last. Perfect for players who love fast-paced action and challenging gameplay.",
+      "Dive into the toxic sewers with Mrale, a courageous rat on an endless platforming adventure. Jump, dash, wall slide, and survive in this challenging game where a single misstep can take you for a swim with the radioactive fishes.",
     month: "May",
     year: "2024",
     theme: "Toxic Sewers",
