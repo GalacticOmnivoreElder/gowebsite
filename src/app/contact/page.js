@@ -14,7 +14,7 @@ export default function ContactPage() {
             <p className="text-muted-foreground mb-4">
               Need help with your subscription or assets?
             </p>
-            <p className="font-medium">support@galacticomnivore.com</p>
+            <p className="font-medium">https://galacticomnivore.atlassian.net/servicedesk/customer/portal/</p>
           </CardContent>
         </Card>
 
