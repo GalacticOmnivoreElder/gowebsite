@@ -95,7 +95,7 @@ export const GameOfTheMonth = ({fromLanding}) => (
               priority
             />
           </Link>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          {/* <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div> */}
           <div className="absolute bottom-4 left-4 right-4">
             <Badge className="bg-primary/90 text-white mb-2">
               Game of the Month
