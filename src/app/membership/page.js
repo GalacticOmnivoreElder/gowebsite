@@ -115,8 +115,7 @@ export const GameOfTheMonth = ({fromLanding}) => (
           </h2>
           <h3 className="text-3xl font-bold mb-4">Top Rat</h3>
           <p className="text-lg text-muted-foreground mb-6">
-            Dive into the toxic sewers with Mrale, a courageous rat on an endless platforming adventure. 
-            Jump, dodge, and survive in this challenging game where every obstacle could be your last.
+            Jump, dash, wall slide, and survive in this challenging game where a single misstep can take you for a swim with the radioactive fishes.
           </p>
         </div>
 
