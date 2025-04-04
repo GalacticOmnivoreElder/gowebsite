@@ -300,8 +300,8 @@ const CheckoutPage = observer(() => {
             </CardContent>
           </Card>
         </div>
-
-        <div className="md:col-span-1">
+                        {/* disabled-feature */}
+        {/* <div className="md:col-span-1">
           <div className="sticky top-24">
             <Card>
               <CardHeader>
@@ -336,7 +336,7 @@ const CheckoutPage = observer(() => {
               </Button>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
