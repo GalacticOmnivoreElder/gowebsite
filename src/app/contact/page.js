@@ -20,7 +20,7 @@ export default function ContactPage() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              https://galacticomnivore.atlassian.net/servicedesk/customer/portal/
+              Support Omnidesk
             </a>
           </CardContent>
         </Card>
