@@ -173,6 +173,8 @@ const LoginCard = observer(() => {
   const { signInWithGoogle } = MobxStore;
 
   const [redirectTo, setRedirectTo] = useState("/dashboard");
+  const [googleError, setGoogleError] = useState(null);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   // Get redirect path and plan from query params
   useEffect(() => {
@@ -190,10 +192,17 @@ const LoginCard = observer(() => {
 
   const handleGoogleSignIn = async () => {
     try {
+      console.log("Starting Google sign-in from login page");
+      setIsGoogleLoading(true);
+      setGoogleError(null);
       await signInWithGoogle();
+      console.log("Google sign-in successful, redirecting to:", redirectTo);
       router.push(redirectTo);
     } catch (error) {
       console.error("Google sign-in error:", error);
+      setGoogleError(error.message || "Failed to sign in with Google");
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -207,10 +216,23 @@ const LoginCard = observer(() => {
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="grid grid-cols-1 gap-6">
-          <Button variant="outline" onClick={handleGoogleSignIn}>
-            <FaGoogle className="mr-2 h-4 w-4" />
-            Google
+          <Button 
+            variant="outline" 
+            onClick={handleGoogleSignIn}
+            disabled={isGoogleLoading}
+          >
+            {isGoogleLoading ? (
+              <CgSpinner className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FaGoogle className="mr-2 h-4 w-4" />
+            )}
+            {isGoogleLoading ? "Signing in..." : "Google"}
           </Button>
+          {googleError && (
+            <div className="text-destructive text-sm text-center">
+              {googleError}
+            </div>
+          )}
         </div>
         <div className="relative">
           <div className="absolute inset-0 flex items-center">

@@ -54,7 +54,12 @@ export default function Header() {
   };
 
   const isActive = (path) => {
-    return pathname === path ? "default" : "ghost";
+    // For login and signup routes, check for exact match
+    if (path === '/login' || path === '/signup') {
+      return pathname === path ? "default" : "ghost";
+    }
+    // For other routes, check if pathname starts with the path
+    return pathname?.startsWith(path) ? "default" : "ghost";
   };
 
   // Function to handle navigation and close menu
@@ -138,10 +143,10 @@ export default function Header() {
                 </DropdownMenu>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Button asChild variant="ghost" size="sm">
+                  <Button asChild variant={pathname === '/login' ? "default" : "ghost"} size="sm">
                     <Link href="/login" onClick={handleNavigation}>Log in</Link>
                   </Button>
-                  <Button asChild size="sm">
+                  <Button asChild variant={pathname === '/signup' ? "default" : "ghost"} size="sm">
                     <Link href="/signup" onClick={handleNavigation}>Sign up</Link>
                   </Button>
                 </div>

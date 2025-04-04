@@ -385,15 +385,21 @@ class Store {
 
   async signInWithGoogle() {
     try {
+      console.log("Starting Google sign-in process");
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
+      console.log("Google sign-in successful, user:", result.user);
       const user = result.user;
 
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
+      console.log("User document exists:", userDoc.exists());
 
+      let userData;
+      
       if (!userDoc.exists()) {
-        const newUserProfile = {
+        console.log("Creating new user profile");
+        userData = {
           ...DEFAULT_USER,
           createdAt: new Date(),
           username: user.displayName || "New User",
@@ -401,18 +407,23 @@ class Store {
           uid: user.uid,
         };
 
-        await setDoc(userDocRef, newUserProfile);
-
-        runInAction(() => {
-          this.user = newUserProfile;
-        });
+        await setDoc(userDocRef, userData);
+        console.log("New user profile created:", userData);
       } else {
-        runInAction(() => {
-          this.user = { uid: user.uid, ...userDoc.data() };
-        });
+        console.log("Existing user found:", userDoc.data());
+        userData = { uid: user.uid, ...userDoc.data() };
       }
+      
+      // Set the user data using runInAction with a direct reference to the store
+      console.log("Setting user in MobX store:", userData);
+      runInAction(() => {
+        MobxStore.user = userData;
+      });
+      
+      console.log("Google sign-in process completed successfully");
     } catch (error) {
       console.error("Error with Google sign-in:", error);
+      throw error;
     }
   }
 
