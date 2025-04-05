@@ -12,8 +12,14 @@ export default function AboutPage() {
           <CardContent className="pt-6">
             <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
             <p className="text-muted-foreground">
-              Galactic Omnivore is a creative ecosystem committed to evolving the game development industry by uniting creators, fostering education, and enabling sustainable growth. We empower communities with tools, mentorship, and opportunities to build, showcase, and publish games—supporting everyone from beginners to professionals.
-            </p>
+            At Galactic Omnivore, we are building an open, people-first game development community where everyone can grow, contribute, and thrive. We make games together—driven by equality, shared knowledge, and collective values.
+
+We believe that game development should be accessible, transparent, and sustainable. Through a peer-reviewed, merit-based system, we support each other’s growth, share our skills, and collaborate on meaningful projects that reflect our diverse strengths.
+
+Our platform empowers creators of all levels to take part in educational programs, contribute to real projects, and earn equally for their time and talent. Every contribution is valued, every mistake is a lesson, and every success is shared.
+
+We are decentralized. We are cooperative. We are future-focused.
+We are Galactic Omnivore.            </p>
           </CardContent>
         </Card>
 
