@@ -139,7 +139,7 @@ export const GameOfTheMonth = ({fromLanding}) => (
         </div>
 
         <Button size="lg" asChild className="mt-4">
-          <Link href={fromLanding ? "/membership" : "/pricing"}>
+          <Link href={fromLanding ? "/packages" : "/pricing"}>
             {fromLanding ? "Learn More" : "Become a Member"}
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
