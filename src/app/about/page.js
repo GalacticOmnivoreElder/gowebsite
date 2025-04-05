@@ -61,6 +61,7 @@ export default function AboutPage() {
             </CardContent>
           </Card>
 
+        </div>
 
         <Card>
           <CardContent className="pt-6">
