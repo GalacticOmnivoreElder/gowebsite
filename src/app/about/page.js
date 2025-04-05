@@ -12,10 +12,7 @@ export default function AboutPage() {
           <CardContent className="pt-6">
             <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
             <p className="text-muted-foreground">
-              At Galactic Omnivore, we&apos;re dedicated to empowering game
-              developers with high-quality, themed asset packs that accelerate
-              their creative journey. We believe that great games are built on
-              great resources, and we&apos;re here to provide them.
+              Galactic Omnivore is a creative ecosystem committed to evolving the game development industry by uniting creators, fostering education, and enabling sustainable growth. We empower communities with tools, mentorship, and opportunities to build, showcase, and publish games—supporting everyone from beginners to professionals.
             </p>
           </CardContent>
         </Card>
@@ -25,10 +22,12 @@ export default function AboutPage() {
             <CardContent className="pt-6">
               <h3 className="text-xl font-semibold mb-3">Our Values</h3>
               <ul className="space-y-2">
-                <li>🎯 Quality First</li>
-                <li>🤝 Community Driven</li>
-                <li>🚀 Continuous Innovation</li>
-                <li>💡 Creative Freedom</li>
+                <li>🤝 Honesty</li>
+                <li>🔁 Evolution</li>
+                <li>📚 Knowledge</li>
+                <li>✅ Accountability</li>
+                <li>🔥 Commitment</li>
+                <li>⚖️ Egalitarianism</li>
               </ul>
             </CardContent>
           </Card>
@@ -37,23 +36,37 @@ export default function AboutPage() {
             <CardContent className="pt-6">
               <h3 className="text-xl font-semibold mb-3">Our Impact</h3>
               <ul className="space-y-2">
-                <li>🎮 1000+ Games Powered</li>
-                <li>👥 5000+ Active Developers</li>
-                <li>📦 50+ Monthly Packs</li>
-                <li>🌍 Global Community</li>
+                <li>🚀 7 Active Projects</li>
+                <li>
+                  🎓 <a href="https://itch.io/jam/gogamejam2024" target="_blank" rel="noopener noreferrer" className="underline">Empowering The Next Generation of Game Developers</a> – Game education & community jam initiative
+                </li>
+                <li>
+                  🏛️ <a href="http://mugi.mk/" target="_blank" rel="noopener noreferrer" className="underline">Macedonian Union of Gaming Industry</a> – National industry support platform
+                </li>
+                <li>
+                  🧭 <a href="https://kikerkov.itch.io/navigator" target="_blank" rel="noopener noreferrer" className="underline">Navigator</a> – Educational game with 50,000+ plays for Human Rights Day
+                </li>
+                <li>
+                  🕯️ <a href="https://www.instagram.com/glagolitic_2.0/" target="_blank" rel="noopener noreferrer" className="underline">GLAGOLICA – VR</a> – Immersive cultural heritage experience
+                </li>
+                <li>
+                  🤝 Partnerships: 
+                  <a href="https://linktr.ee/PrintNplay" target="_blank" rel="noopener noreferrer" className="underline ml-1">PRINT N’ PLAY</a> (TTRPGs), 
+                  <a href="https://linktr.ee/zandana" target="_blank" rel="noopener noreferrer" className="underline ml-1">ZANDANA</a> (D&D community support)
+                </li>
+                <li>
+                  🌌 <span className="font-semibold">Galactic Omnivore</span> – Internal growth through game dev, education & innovation
+                </li>
               </ul>
             </CardContent>
           </Card>
-        </div>
+
 
         <Card>
           <CardContent className="pt-6">
             <h2 className="text-2xl font-semibold mb-4">Our Story</h2>
             <p className="text-muted-foreground">
-              Founded in 2023, Galactic Omnivore emerged from a simple idea:
-              make game development more accessible and enjoyable. What started
-              as a small collection of assets has grown into a comprehensive
-              platform serving developers worldwide.
+              Founded in 2023, Galactic Omnivore emerged from a shared belief in creative collaboration and accessibility. From a small grassroots initiative to an expansive platform with global reach, we continue to evolve—bridging knowledge gaps and empowering the next generation of game developers.
             </p>
           </CardContent>
         </Card>
