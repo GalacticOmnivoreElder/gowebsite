@@ -156,105 +156,105 @@ const Badge = ({ children, className }) => (
     {children}
   </span>
 );
+            // disabled-feature
+// const MembershipPage = observer(() => {
+//   const searchParams = useSearchParams();
+//   const [selectedPlan, setSelectedPlan] = useState("monthly");
 
-const MembershipPage = observer(() => {
-  const searchParams = useSearchParams();
-  const [selectedPlan, setSelectedPlan] = useState("monthly");
+//   const isAuthenticated = !!MobxStore.user;
 
-  const isAuthenticated = !!MobxStore.user;
+//   useEffect(() => {
+//     const planParam = searchParams.get("plan");
+//     const storedPlan = localStorage.getItem("selectedPlan");
 
-  useEffect(() => {
-    const planParam = searchParams.get("plan");
-    const storedPlan = localStorage.getItem("selectedPlan");
+//     if (planParam && ["monthly", "annual"].includes(planParam)) {
+//       setSelectedPlan(planParam);
+//       localStorage.setItem("selectedPlan", planParam);
+//     } else if (storedPlan && ["monthly", "annual"].includes(storedPlan)) {
+//       setSelectedPlan(storedPlan);
+//     }
 
-    if (planParam && ["monthly", "annual"].includes(planParam)) {
-      setSelectedPlan(planParam);
-      localStorage.setItem("selectedPlan", planParam);
-    } else if (storedPlan && ["monthly", "annual"].includes(storedPlan)) {
-      setSelectedPlan(storedPlan);
-    }
+//     if (storedPlan) {
+//       localStorage.removeItem("selectedPlan");
+//     }
+//   }, [searchParams]);
 
-    if (storedPlan) {
-      localStorage.removeItem("selectedPlan");
-    }
-  }, [searchParams]);
+//   return (
+//     <div className="bg-background text-foreground">
+//       <Head>
+//         <title>Membership - Your Game Dev Community</title>
+//         <meta
+//           name="description"
+//           content="Join our exclusive game development community and get access to monthly themed assets, tutorials, and more!"
+//         />
+//       </Head>
 
-  return (
-    <div className="bg-background text-foreground">
-      <Head>
-        <title>Membership - Your Game Dev Community</title>
-        <meta
-          name="description"
-          content="Join our exclusive game development community and get access to monthly themed assets, tutorials, and more!"
-        />
-      </Head>
+//       <main className="container mx-auto px-4 py-16">
+//         <GameOfTheMonth />
 
-      <main className="container mx-auto px-4 py-16">
-        <GameOfTheMonth />
+//         <DetailSection
+//           title="Theme of the Month Art Packages"
+//           description="Serve up a visually rich platformer with this handcrafted asset pack! Every element in this collection is lovingly illustrated by hand, bringing a fresh, organic feel to your game world—no pixels, just pure artistry. Whether you're crafting a roguelike, an action-packed adventure, or a whimsical platformer, these assets provide the perfect ingredients for a stunning game."
+//           imageSrc="/g1/g1-art.png"
+//           imageAlt="May Top Rat Theme Art Package Preview"
+//         />
 
-        <DetailSection
-          title="Theme of the Month Art Packages"
-          description="Serve up a visually rich platformer with this handcrafted asset pack! Every element in this collection is lovingly illustrated by hand, bringing a fresh, organic feel to your game world—no pixels, just pure artistry. Whether you're crafting a roguelike, an action-packed adventure, or a whimsical platformer, these assets provide the perfect ingredients for a stunning game."
-          imageSrc="/g1/g1-art.png"
-          imageAlt="May Top Rat Theme Art Package Preview"
-        />
+//         <DetailSection
+//           title="Curated Music Packs"
+//           description="Spice up your game with this sizzling selection of original sounds and music! Whether you’re baking a brawler, frying up a fantasy quest, or slow-cooking a story-rich RPG, this audio asset pack delivers crispy sound design and mouth-watering melodies to level up your entire soundscape."
+//           imageSrc="/g1/g1-music.png"
+//           imageAlt="Music Pack Visualizer"
+//           reverse={true}
+//         >
+//           {/* <AudioPreview src="/path-to-audio-file.mp3" /> */}
+//         </DetailSection>
 
-        <DetailSection
-          title="Curated Music Packs"
-          description="Spice up your game with this sizzling selection of original sounds and music! Whether you’re baking a brawler, frying up a fantasy quest, or slow-cooking a story-rich RPG, this audio asset pack delivers crispy sound design and mouth-watering melodies to level up your entire soundscape."
-          imageSrc="/g1/g1-music.png"
-          imageAlt="Music Pack Visualizer"
-          reverse={true}
-        >
-          {/* <AudioPreview src="/path-to-audio-file.mp3" /> */}
-        </DetailSection>
+//         <DetailSection
+//           title="Code Packs & Snippets"
+//           description="Get the actual Unity project of this month's game theme! You can eat up all of that pre-written code, modify your developer's meal at any moment, and add your own spices and flavours. Take this prototype in a completely different direction and unleash your creative hunger."
+//           imageSrc="/g1/g1-code.png"
+//           imageAlt="Code Snippet Preview"
+//         />
 
-        <DetailSection
-          title="Code Packs & Snippets"
-          description="Get the actual Unity project of this month's game theme! You can eat up all of that pre-written code, modify your developer's meal at any moment, and add your own spices and flavours. Take this prototype in a completely different direction and unleash your creative hunger."
-          imageSrc="/g1/g1-code.png"
-          imageAlt="Code Snippet Preview"
-        />
+//         <DetailSection
+//           title="UI & Level Design Templates"
+//           description="Great games, like great meals, start with the right ingredients and a well-thought-out recipe. If you’re crafting a platformer and need a structured way to mix movement, levels, and progression into a deliciously balanced experience, the G.O Platformer Game Design Document is your ultimate game development cookbook."
+//           imageSrc="/g1/g1-design.png"
+//           imageAlt="UI & Level Design Preview"
+//           reverse={true}
+//         />
 
-        <DetailSection
-          title="UI & Level Design Templates"
-          description="Great games, like great meals, start with the right ingredients and a well-thought-out recipe. If you’re crafting a platformer and need a structured way to mix movement, levels, and progression into a deliciously balanced experience, the G.O Platformer Game Design Document is your ultimate game development cookbook."
-          imageSrc="/g1/g1-design.png"
-          imageAlt="UI & Level Design Preview"
-          reverse={true}
-        />
-
-        <DetailSection
-          title="Exclusive Monthly Game"
-          description="TOP - RAT The Ultimate Pixel-Perfect Feast! 
-Step into a handcrafted platforming experience where every jump, enemy, and level is a deliciously designed bite of gameplay perfection.
-A full-course adventure served with style, challenge, and heart. Inspired by classic 2D platformers and spiced with modern mechanics, this is your chance to feast on gameplay that’s as tight and satisfying as a perfectly cooked dish."
-          imageSrc="/g1/g1-mvp.png"
-          imageAlt="Top Rat Game Screenshot"
-        />
+//         <DetailSection
+//           title="Exclusive Monthly Game"
+//           description="TOP - RAT The Ultimate Pixel-Perfect Feast! 
+// Step into a handcrafted platforming experience where every jump, enemy, and level is a deliciously designed bite of gameplay perfection.
+// A full-course adventure served with style, challenge, and heart. Inspired by classic 2D platformers and spiced with modern mechanics, this is your chance to feast on gameplay that’s as tight and satisfying as a perfectly cooked dish."
+//           imageSrc="/g1/g1-mvp.png"
+//           imageAlt="Top Rat Game Screenshot"
+//         />
 
       
 
-        <div className="text-center mt-16">
-          <h2 className="text-3xl font-bold mb-4">
-            Ready to Level Up Your Game Dev Journey?
-          </h2>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild>
-              <Link href="/pricing">View Pricing Plans</Link>
-            </Button>
-            {!isAuthenticated && (
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/login?redirect=/pricing">
-                  Sign In to Subscribe
-                </Link>
-              </Button>
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-});
+//         {/* <div className="text-center mt-16">
+//           <h2 className="text-3xl font-bold mb-4">
+//             Ready to Level Up Your Game Dev Journey?
+//           </h2>
+//           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+//             <Button size="lg" asChild>
+//               <Link href="/pricing">View Pricing Plans</Link>
+//             </Button>
+//             {!isAuthenticated && (
+//               <Button size="lg" variant="outline" asChild>
+//                 <Link href="/login?redirect=/pricing">
+//                   Sign In to Subscribe
+//                 </Link>
+//               </Button>
+//             )}
+//           </div>
+//         </div> */}
+//       </main>
+//     </div>
+//   );
+// });
 
 export default MembershipPage;
