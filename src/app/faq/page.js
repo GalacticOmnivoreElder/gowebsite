@@ -9,7 +9,7 @@ const faqs = [
   {
     question: "What is Galactic Omnivore?",
     answer:
-      "Galactic Omnivore is a premium subscription service providing monthly themed asset packs for game developers. Each pack includes artwork, music, code snippets, and tutorials carefully curated around a specific theme.",
+      "Galactic Omnivore is a game development community and registered NGO dedicated to empowering game development enthusiasts. Our mission is to support individuals in: Learning game development through mentorships, workshops, and practical modules Building a professional portfolio by working on real projects and collaborative games Outsourcing their skills to the international game development ecosystem We serve as a launchpad for creative and technical talent—helping members grow from curious learners to confident creators with global opportunities.",
   },
   {
     question: "How often are new asset packs released?",
@@ -19,7 +19,7 @@ const faqs = [
   {
     question: "Can I use the assets in commercial projects?",
     answer:
-      "Yes! All assets included in our packs come with a commercial license. You can use them in both personal and commercial projects without additional attribution.",
+      "Yes, you can use the assets in both personal and commercial projects. However, they are licensed under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0). This means: Attribution is required – You must give appropriate credit, provide a link to the license, and indicate if changes were made. ShareAlike – If you remix, transform, or build upon the material, you must distribute your contributions under the same license. Be sure to follow the license terms when using these assets.",
   },
   {
     question: "How long do I have access to the assets?",
@@ -36,15 +36,15 @@ const faqs = [
     answer:
       "Absolutely! We encourage community input and regularly consider member suggestions when planning future themed packs.",
   },
-  {
-    question: "Do you offer refunds?",
-    answer:
-      "We offer a 30-day money-back guarantee on all new subscriptions. If you're not satisfied with our service, contact our support team for a full refund.",
-  },
+  // {
+  //   question: "Do you offer refunds?",
+  //   answer:
+  //     "We offer a 30-day money-back guarantee on all new subscriptions. If you're not satisfied with our service, contact our support team for a full refund.",
+  // },
   {
     question: "How can I get support?",
     answer:
-      "We offer support through multiple channels: our Discord community, email support, and detailed documentation. Our team typically responds within 24 hours.",
+      "We offer support through our support service desk Galactic Omnidesk available on the following URL: https://galacticomnivore.atlassian.net/servicedesk/customer/portals ",
   },
 ];
 
