@@ -100,8 +100,8 @@ export const GameOfTheMonth = ({fromLanding}) => (
             <Badge className="bg-primary/90 text-white mb-2">
               Game of the Month
             </Badge>
-            <p className="text-white text-sm">
-              Available exclusively to members
+            <p className="text-black text-sm">
+              Available exclusively to community members
             </p>
           </div>
         </div>
