@@ -55,7 +55,7 @@ export default function Header() {
 
   const isActive = (path) => {
     // For login and signup routes, check for exact match
-    if (path === '/login' || path === '/signup') {
+    if (path === "/login" || path === "/signup") {
       return pathname === path ? "default" : "ghost";
     }
     // For other routes, check if pathname starts with the path
@@ -71,8 +71,12 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2" onClick={handleNavigation}>
-          <Image src={logoImg} height={40} width={100} alt="Logo" />
+          <Link
+            href="/"
+            className="flex items-center gap-2"
+            onClick={handleNavigation}
+          >
+            <Image src={logoImg} height={40} width={100} alt="Logo" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -104,8 +108,6 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-        
-
           {!loading && (
             <>
               {user ? (
@@ -124,16 +126,26 @@ export default function Header() {
                     </Avatar>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link href="/profile" onClick={handleNavigation}>Profile</Link>
+                      <Link href="/profile" onClick={handleNavigation}>
+                        Profile
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/profile?tab=downloads" onClick={handleNavigation}>Downloads</Link>
+                      <Link
+                        href="/profile?tab=downloads"
+                        onClick={handleNavigation}
+                      >
+                        Downloads
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/profile?tab=settings" onClick={handleNavigation}>Settings</Link>
+                      <Link
+                        href="/profile?tab=settings"
+                        onClick={handleNavigation}
+                      >
+                        Settings
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
@@ -143,11 +155,23 @@ export default function Header() {
                 </DropdownMenu>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Button asChild variant={pathname === '/login' ? "default" : "ghost"} size="sm">
-                    <Link href="/login" onClick={handleNavigation}>Log in</Link>
+                  <Button
+                    asChild
+                    variant={pathname === "/login" ? "default" : "ghost"}
+                    size="sm"
+                  >
+                    <Link href="/login" onClick={handleNavigation}>
+                      Log in
+                    </Link>
                   </Button>
-                  <Button asChild variant={pathname === '/signup' ? "default" : "ghost"} size="sm">
-                    <Link href="/signup" onClick={handleNavigation}>Sign up</Link>
+                  <Button
+                    asChild
+                    variant={pathname === "/signup" ? "default" : "ghost"}
+                    size="sm"
+                  >
+                    <Link href="/signup" onClick={handleNavigation}>
+                      Sign up
+                    </Link>
                   </Button>
                 </div>
               )}
@@ -180,37 +204,47 @@ export default function Header() {
                 variant={isActive("/dashboard")}
                 className="justify-start"
               >
-                <Link href="/dashboard" onClick={handleNavigation}>Dashboard</Link>
+                <Link href="/dashboard" onClick={handleNavigation}>
+                  Dashboard
+                </Link>
               </Button>
             )}
-          
+
             <Button
               asChild
               variant={isActive("/packages")}
               className="justify-start"
             >
-              <Link href="/packages" onClick={handleNavigation}>Packages</Link>
+              <Link href="/packages" onClick={handleNavigation}>
+                Packages
+              </Link>
             </Button>
             <Button
               asChild
               variant={isActive("/games")}
               className="justify-start"
             >
-              <Link href="/games" onClick={handleNavigation}>Games</Link>
+              <Link href="/games" onClick={handleNavigation}>
+                Games
+              </Link>
             </Button>
             <Button
               asChild
               variant={isActive("/blog")}
               className="justify-start"
             >
-              <Link href="/blog" onClick={handleNavigation}>Blog</Link>
+              <Link href="/blog" onClick={handleNavigation}>
+                Blog
+              </Link>
             </Button>
             <Button
               asChild
               variant={isActive("/initiatives")}
               className="justify-start"
             >
-              <Link href="/initiatives" onClick={handleNavigation}>Initiatives</Link>
+              <Link href="/initiatives" onClick={handleNavigation}>
+                Initiatives
+              </Link>
             </Button>
 
             <Button
@@ -218,14 +252,18 @@ export default function Header() {
               variant={isActive("/pricing")}
               className="justify-start"
             >
-              <Link href="/pricing" onClick={handleNavigation}>Pricing</Link>
+              <Link href="/pricing" onClick={handleNavigation}>
+                Pricing
+              </Link>
             </Button>
             <Button
               asChild
               variant={isActive("/membership")}
               className="justify-start"
             >
-              <Link href="/membership" onClick={handleNavigation}>Membership</Link>
+              <Link href="/membership" onClick={handleNavigation}>
+                Membership
+              </Link>
             </Button>
 
             {user && (
@@ -234,7 +272,9 @@ export default function Header() {
                 variant={isActive("/profile")}
                 className="justify-start"
               >
-                <Link href="/profile" onClick={handleNavigation}>Profile</Link>
+                <Link href="/profile" onClick={handleNavigation}>
+                  Profile
+                </Link>
               </Button>
             )}
           </nav>
