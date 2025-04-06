@@ -26,11 +26,49 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+
+function EmailButton({ selectedPlan, MobxStore }) {
+  const mailto = `mailto:galacticomnivore@gmail.com?subject=Membership Access&body=Hello,%0D%0A%0D%0AI have completed the payment for the ${
+    selectedPlan.name
+  } plan.%0D%0A%0D%0AMy details:%0D%0AName: ${
+    MobxStore.user?.username || ""
+  }%0D%0AEmail: ${
+    MobxStore.user?.email || ""
+  }%0D%0A%0D%0APlease find the payment confirmation attached.%0D%0A%0D%0AThank you.`;
+
+  const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=galacticomnivore@gmail.com&su=Membership Access&body=Hello,%0D%0A%0D%0AI have completed the payment for the ${
+    selectedPlan.name
+  } plan.%0D%0A%0D%0AMy details:%0D%0AName: ${
+    MobxStore.user?.username || ""
+  }%0D%0AEmail: ${
+    MobxStore.user?.email || ""
+  }%0D%0A%0D%0APlease find the payment confirmation attached.%0D%0A%0D%0AThank you.`;
+
+  return (
+    <div className="space-y-2 my-4">
+      <Button className="w-full" asChild>
+        <a
+          href={mailto}
+          onClick={() => {
+            alert(
+              "If nothing happens, make sure you have a default mail app set up, or use the Gmail button below!"
+            );
+          }}
+        >
+          <Mail className="mr-2 h-4 w-4" />
+          Compose Email
+        </a>
+      </Button>
+
+      <Button variant="outline" className="w-full" asChild>
+        <a href={gmail} target="_blank" rel="noopener noreferrer">
+          📧 Open Gmail Instead
+        </a>
+      </Button>
+    </div>
+  );
+}
 
 const CheckoutPage = observer(() => {
   const searchParams = useSearchParams();
@@ -215,24 +253,29 @@ const CheckoutPage = observer(() => {
                     <p className="text-muted-foreground mb-2">
                       Please transfer the exact amount to our bank account:
                     </p>
-                   <Dialog>
-                     <DialogTrigger asChild>
-                       <div className="cursor-pointer hover:opacity-90 transition-opacity">
-                         <Image src="/uplatnica.png" alt="Uplatnica" width={400} height={400} />
-                       </div>
-                     </DialogTrigger>
-                     <DialogContent className="max-w-4xl p-0 overflow-hidden">
-                       <div className="relative w-full h-full">
-                         <Image 
-                           src="/uplatnica.png" 
-                           alt="Uplatnica Full Size" 
-                           width={1200} 
-                           height={1200} 
-                           className="w-full h-auto object-contain"
-                         />
-                       </div>
-                     </DialogContent>
-                   </Dialog>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div className="cursor-pointer hover:opacity-90 transition-opacity">
+                          <Image
+                            src="/uplatnica.png"
+                            alt="Uplatnica"
+                            width={400}
+                            height={400}
+                          />
+                        </div>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl p-0 overflow-hidden">
+                        <div className="relative w-full h-full">
+                          <Image
+                            src="/uplatnica.png"
+                            alt="Uplatnica Full Size"
+                            width={1200}
+                            height={1200}
+                            className="w-full h-auto object-contain"
+                          />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
 
@@ -265,7 +308,11 @@ const CheckoutPage = observer(() => {
                       <li>Selected plan: {selectedPlan.name}</li>
                       <li>Attach the screenshot of your payment</li>
                     </ul>
-                    <Button variant="outline" className="mt-3" asChild>
+                    <EmailButton
+                      selectedPlan={selectedPlan}
+                      MobxStore={MobxStore}
+                    />
+                    {/* <Button variant="outline" className="mt-3" asChild>
                       <a
                         href={`mailto:galacticomnivore@gmail.com?subject=Membership Access&body=Hello,%0D%0A%0D%0AI have completed the payment for the ${
                           selectedPlan.name
@@ -274,12 +321,11 @@ const CheckoutPage = observer(() => {
                         }%0D%0AEmail: ${
                           MobxStore.user?.email || ""
                         }%0D%0A%0D%0APlease find the payment confirmation attached.%0D%0A%0D%0AThank you.`}
-                        target="_blank"
                       >
                         <Mail className="mr-2 h-4 w-4" />
                         Compose Email
                       </a>
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
 
@@ -300,7 +346,7 @@ const CheckoutPage = observer(() => {
             </CardContent>
           </Card>
         </div>
-                        {/* disabled-feature */}
+        {/* disabled-feature */}
         {/* <div className="md:col-span-1">
           <div className="sticky top-24">
             <Card>
