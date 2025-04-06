@@ -5,6 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+
 const faqs = [
   {
     question: "What is Galactic Omnivore?",
