@@ -123,7 +123,7 @@ const CheckoutPage = observer(() => {
       price: "500",
       interval: "month",
       description: "Flexible monthly subscription. Cancel anytime.",
-      totalAmount: "500 Den.",
+      totalAmount: "500 MKD",
       billingCycle: "Monthly",
       nextBilling: new Date(
         Date.now() + 30 * 24 * 60 * 60 * 1000
@@ -133,8 +133,8 @@ const CheckoutPage = observer(() => {
       name: "Annual Membership",
       price: "4,800",
       interval: "year",
-      description: "Our best value. Save 1,200 Den. compared to monthly.",
-      totalAmount: "4,800 Den.",
+      description: "Our best value. Save 1,200 MKD compared to monthly.",
+      totalAmount: "4,800 MKD",
       billingCycle: "Yearly",
       nextBilling: new Date(
         Date.now() + 365 * 24 * 60 * 60 * 1000
