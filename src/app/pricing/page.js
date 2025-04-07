@@ -139,7 +139,7 @@ const PricingPage = observer(() => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
           <PricingTier
             title="Monthly Plan"
-            price="500 Den. /month"
+            price="500 MKD /month"
             description="Perfect for creators who want flexibility. Cancel anytime."
             benefits={tier1Benefits}
             ctaText="Subscribe Monthly"
@@ -148,8 +148,8 @@ const PricingPage = observer(() => {
 
           <PricingTier
             title="Annual Plan"
-            price="4,800 Den. /year"
-            description="Our best value. Save 1,200 Den. compared to monthly."
+            price="4,800 MKD /year"
+            description="Our best value. Save 1,200 MKD compared to monthly."
             benefits={tier1Benefits}
             ctaText="Subscribe Yearly"
             ctaAction={() => handleSubscribe("annual")}
