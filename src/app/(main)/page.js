@@ -493,6 +493,10 @@ const socialMedia = [
     icon: <Twitch />,
     src: "https://www.twitch.tv/galactic_omnivore",
   },
+  {
+    icon: <discordImg />,
+    src: "https://discord.gg/ZbSShxu6K4",
+  },
 ];
 
 const ContactUs = () => {
