@@ -35,7 +35,6 @@ export default function AboutPage() {
             <CardContent className="pt-6">
               <h3 className="text-xl font-semibold mb-3">Our Impact</h3>
               <ul className="space-y-2">
-                <li>🚀 7 Active Projects</li>
                 <li>
                   🎓 <a href="https://itch.io/jam/gogamejam2024" target="_blank" rel="noopener noreferrer" className="underline">Empowering The Next Generation of Game Developers</a> – Game education & community jam initiative
                 </li>
