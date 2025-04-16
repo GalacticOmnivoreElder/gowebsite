@@ -67,3 +67,32 @@
     @apply bg-background text-foreground;
   }
 }
+
+.prose .has-large-font-size {
+  @apply text-4xl font-bold mt-6 mb-4;
+}
+
+.prose ul,
+.prose ol {
+  @apply my-6;
+}
+
+.prose ul > li {
+  @apply list-disc my-2 ml-4;
+}
+
+.prose ol > li {
+  @apply list-decimal my-2 ml-4;
+}
+
+.prose li::marker {
+  @apply text-muted-foreground;
+}
+
+.prose p {
+  @apply my-4;
+}
+
+.prose li > p {
+  @apply my-1;
+}
