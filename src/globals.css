@@ -68,10 +68,21 @@
   }
 }
 
+/* Custom styles for WordPress font sizes */
+.prose .has-small-font-size {
+  @apply text-sm font-normal mt-4 mb-2;
+}
+.prose .has-medium-font-size {
+  @apply text-lg font-semibold mt-5 mb-3;
+}
 .prose .has-large-font-size {
-  @apply text-4xl font-bold mt-6 mb-4;
+  @apply text-4xl font-bold mt-6 mb-4; /* Was text-4xl */
+}
+.prose .has-x-large-font-size {
+  @apply text-5xl font-extrabold mt-8 mb-5;
 }
 
+/* Adjust list spacing within prose */
 .prose ul,
 .prose ol {
   @apply my-6;
@@ -89,10 +100,20 @@
   @apply text-muted-foreground;
 }
 
+/* Paragraph spacing */
 .prose p {
-  @apply my-4;
+  @apply my-4; /* Keep this at my-4 for standard paragraphs */
 }
 
 .prose li > p {
   @apply my-1;
+}
+
+/* Link Styling */
+.prose a {
+  @apply text-primary underline decoration-primary/50 underline-offset-2 transition-colors;
+}
+
+.prose a:hover {
+  @apply decoration-primary; /* Change underline color on hover */
 }
