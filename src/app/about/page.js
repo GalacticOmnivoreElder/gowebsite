@@ -12,29 +12,32 @@ export default function AboutPage() {
           <CardContent className="pt-6">
             <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
             <p className="text-muted-foreground">
-              At Galactic Omnivore, we’re building a people-first game dev community where everyone can grow, create, and thrive.
+              At Galactic Omnivore, we’re building a creative ecosystem that empowers individuals and communities through the power of games, technology, and storytelling. We are an open, people-first game development community where everyone can grow, contribute, and thrive.
               <br /><br />
-              We make games together — driven by equality, shared knowledge, and real collaboration.
+              We make games together — driven by equality, shared knowledge, and collective values. Our mission is rooted in innovation, education, and collaboration, creating a space where game development is accessible, transparent, and sustainable for all.
               <br /><br />
-              <strong>Our mission?</strong><br />
-              Empower devs of all levels through open tools, hands-on learning, and fair rewards.<br />
-              Build games. Learn by doing. Share success.
-              <br /><br />
-              <strong>Unite. Create. Evolve.</strong><br />
-              We’re decentralized. We’re cooperative. We’re future-focused.<br />
-              <strong>We are Galactic Omnivore.</strong>
+              We are decentralized. We are cooperative. We are future-focused. Every contribution is valued. Every mistake is a lesson. Every success is shared. We are Galactic Omnivore.
             </p>
             <p className="text-muted-foreground mt-6">
-              Our goals also include: building a multimedia platform with open-source tools to support all types of game development; helping members gain practical skills and build portfolios through collaborative projects and education; and supporting local initiatives that connect game creation, learning, and community development.
+              <strong>Our main objectives are:</strong>
               <br /><br />
+              1. Build an open multimedia platform to support the development of games in all forms — digital, physical, or hybrid — through accessible, open-source tools and resources.
+              <br /><br />
+              2. Empower creators with practical skills in the game development industry through shared learning, hands-on projects, and collective portfolio building, using both formal and informal education methods.
+              <br /><br />
+              3. Support local initiatives and foster a thriving network for game creation, publishing, and knowledge-sharing — strengthening collaboration and communication within the local creative community.
+              <br /><br />
+              🚀 Ready to dive deeper into our vision?
+              <br />
               <a
                 href="https://drive.google.com/file/d/1dRk9BEbZEDK1968WUrj6oZv_kYrEq4in/view?usp=sharing"
                 className="text-blue-600 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Read our full Statute here →
-              </a> to learn more about our vision and how you can be part of it.
+                👉 Read our full Statute here
+              </a>{" "}
+              and see how you can be part of the movement.
             </p>
           </CardContent>
         </Card>
