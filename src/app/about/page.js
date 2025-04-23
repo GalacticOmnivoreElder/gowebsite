@@ -8,7 +8,7 @@ export default function AboutPage() {
       </h1>
 
       <div className="space-y-8">
-  <Card>
+      <Card>
     <CardContent className="pt-6">
       <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
       <p className="text-muted-foreground">
@@ -35,8 +35,6 @@ export default function AboutPage() {
       </p>
     </CardContent>
   </Card>
-</div>
-
 
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
