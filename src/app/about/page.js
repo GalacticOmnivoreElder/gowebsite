@@ -8,13 +8,35 @@ export default function AboutPage() {
       </h1>
 
       <div className="space-y-8">
-        <Card>
-          <CardContent className="pt-6">
-            <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
-            <p className="text-muted-foreground">
-            At Galactic Omnivore, we are building an open, people-first game development community where everyone can grow, contribute, and thrive. We make games together—driven by equality, shared knowledge, and collective values. We believe that game development should be accessible, transparent, and sustainable. Through a peer-reviewed, merit-based system, we support each other’s growth, share our skills, and collaborate on meaningful projects that reflect our diverse strengths. Our platform empowers creators of all levels to take part in educational programs, contribute to real projects, and earn equally for their time and talent. Every contribution is valued, every mistake is a lesson, and every success is shared. We are decentralized. We are cooperative. We are future-focused. We are Galactic Omnivore.            </p>
-          </CardContent>
-        </Card>
+  <Card>
+    <CardContent className="pt-6">
+      <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
+      <p className="text-muted-foreground">
+        At Galactic Omnivore, we’re building a people-first game dev community where everyone can grow, create, and thrive.
+        <br /><br />
+        We make games together — driven by equality, shared knowledge, and real collaboration.
+        <br /><br />
+        <strong>Our mission?</strong><br />
+        Empower devs of all levels through open tools, hands-on learning, and fair rewards.<br />
+        Build games. Learn by doing. Share success.
+        <br /><br />
+        <strong>Unite. Create. Evolve.</strong><br />
+        We’re decentralized. We’re cooperative. We’re future-focused.<br />
+        <strong>We are Galactic Omnivore.</strong>
+      </p>
+      <p className="text-muted-foreground mt-6">
+        Our goals also include: building a multimedia platform with open-source tools to support all types of game development; helping members gain practical skills and build portfolios through collaborative projects and education; and supporting local initiatives that connect game creation, learning, and community development. 
+        <br />
+        <br />
+        <a href="/statute" className="text-blue-600 hover:underline">
+          👉 Read our full Statute here
+        </a>{"https://drive.google.com/file/d/1dRk9BEbZEDK1968WUrj6oZv_kYrEq4in/view?usp=sharing"}
+        to learn more about our vision and how you can be part of it.
+      </p>
+    </CardContent>
+  </Card>
+</div>
+
 
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
