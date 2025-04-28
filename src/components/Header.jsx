@@ -86,8 +86,8 @@ export default function Header() {
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
             )}
-            <Button asChild variant={isActive("/packages")} size="sm">
-              <Link href="/packages">Packages</Link>
+            <Button asChild variant={isActive("/resources")} size="sm">
+              <Link href="/resources">Resources</Link>
             </Button>
             <Button asChild variant={isActive("/games")} size="sm">
               <Link href="/games">Games</Link>
@@ -212,11 +212,11 @@ export default function Header() {
 
             <Button
               asChild
-              variant={isActive("/packages")}
+              variant={isActive("/resources")}
               className="justify-start"
             >
-              <Link href="/packages" onClick={handleNavigation}>
-                Packages
+              <Link href="/resources" onClick={handleNavigation}>
+                Resources
               </Link>
             </Button>
             <Button

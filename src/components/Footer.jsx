@@ -3,6 +3,8 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import MobxStore from "@/mobx";
 import { Facebook, Instagram, Linkedin, Youtube, Twitch } from "lucide-react";
+import Image from "next/image";
+import discordImg from "@/assets/discord.png";
 
 // Custom X (Twitter) icon component
 const TwitterIcon = () => (
@@ -35,26 +37,45 @@ export default function Footer() {
     {
       icon: <Facebook className="h-5 w-5" />,
       src: "https://www.facebook.com/profile.php?id=100088917386120",
+      name: "Facebook",
     },
-    { 
-      icon: <TwitterIcon />, 
-      src: "https://twitter.com/GalacticOmnivor" 
+    {
+      icon: <TwitterIcon />,
+      src: "https://twitter.com/GalacticOmnivor",
+      name: "Twitter",
     },
     {
       icon: <Instagram className="h-5 w-5" />,
       src: "https://www.instagram.com/galacticomnivore/",
+      name: "Instagram",
     },
     {
       icon: <Linkedin className="h-5 w-5" />,
       src: "https://www.linkedin.com/company/galactic-omnivore/",
+      name: "LinkedIn",
     },
     {
       icon: <Youtube className="h-5 w-5" />,
       src: "https://www.youtube.com/@galacticomnivore",
+      name: "YouTube",
     },
     {
       icon: <Twitch className="h-5 w-5" />,
       src: "https://www.twitch.tv/galactic_omnivore",
+      name: "Twitch",
+    },
+    {
+      icon: (
+        <Image
+          src={discordImg}
+          alt="Discord"
+          width={20}
+          height={20}
+          className="h-5 w-5"
+        />
+      ),
+      src: "https://discord.gg/ZbSShxu6K4",
+      name: "Discord",
     },
   ];
 
@@ -79,16 +100,10 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={`Link to ${social.name}`}
                 >
                   {social.icon}
-                  <span className="sr-only">
-                    {social.src.includes("facebook") ? "Facebook" : 
-                     social.src.includes("twitter") ? "Twitter" : 
-                     social.src.includes("instagram") ? "Instagram" : 
-                     social.src.includes("linkedin") ? "LinkedIn" : 
-                     social.src.includes("youtube") ? "YouTube" : 
-                     social.src.includes("twitch") ? "Twitch" : "Social Media"}
-                  </span>
+                  <span className="sr-only">{social.name}</span>
                 </Link>
               ))}
             </div>
@@ -108,10 +123,10 @@ export default function Footer() {
 
               <li>
                 <Link
-                  href="/packages"
+                  href="/resources"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Packages
+                  Resources
                 </Link>
               </li>
               <li>
@@ -181,7 +196,7 @@ export default function Footer() {
             </Link>
           </div>
         </div>
-{/* disabled-feature */}
+        {/* disabled-feature */}
         {/* <Button
           variant="ghost"
           size="sm"

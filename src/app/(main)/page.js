@@ -1,6 +1,15 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 
+// New Landing Components
+import { HeroSection } from "@/components/landing/HeroSection";
+import { SkillBanner } from "@/components/landing/SkillBanner";
+import { StatsPreview } from "@/components/landing/StatsPreview";
+import { PartnerBanner } from "@/components/landing/PartnerBanner";
+import { FullCTA } from "@/components/landing/FullCTA";
+import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
+import { LandingOpenHours } from "@/components/landing/LandingOpenHours";
+import { LandingDiscordJoin } from "@/components/landing/LandingDiscordJoin";
 
 import background1Img from "../../assets/background1.png";
 import heroImg from "../../assets/HERO.png";
@@ -13,7 +22,6 @@ import achievementImg1 from "../../assets/A1.png";
 import achievementImg2 from "../../assets/A2.png";
 import achievementImg3 from "../../assets/A3.png";
 
-
 import joinusImg from "../../assets/joinus.png";
 import discordImg from "../../assets/discord.png";
 
@@ -24,11 +32,8 @@ import edu3Img from "../../assets/OUTSOURCING.png";
 import pixelDownImg from "../../assets/pixeldown.png";
 import pixelUpImg from "../../assets/pixelup.png";
 
-
 import driveTruImg from "../../assets/logosImg.png";
 
-
-import hqImg from "../../assets/openhours.png";
 import transparentImg from "../../assets/transparent.png";
 
 import Link from "next/link";
@@ -82,8 +87,6 @@ const TimerCountdown = () => {
   );
 };
 
-
-
 const pillarsData = [
   {
     img: background1Img,
@@ -110,12 +113,15 @@ const Dot = ({ isActive }) => (
   ></div>
 );
 
-const EduBox = ({ isFull, img, text, noImg, link }) => {
+const EduBox = ({ isFull, img, text, noImg }) => {
   return (
     <div
       className={`border-2 border-white bg-black flex ${
         isFull ? "w-full" : "w-[150px]"
-      }`}
+      }
+      ${noImg ? "p-4" : ""}
+      h-[250px] md:h-[300px]
+      `}
     >
       {!noImg && (
         <div className="flex-shrink-0 flex flex-col justify-center">
@@ -123,350 +129,37 @@ const EduBox = ({ isFull, img, text, noImg, link }) => {
             src={img}
             height={100}
             width={50}
-            className=" h-full w-[30px]"
-          ></Image>
+            alt="Pillar Icon"
+            className="h-full w-[30px] object-contain"
+          />
         </div>
       )}
-      <div className="text-white flex flex-col justify-start p-2 h-[350px] justify-center">
-        {text && <div className="text-white">{text}</div>}
+      <div
+        className={`text-white flex flex-col w-full p-2 ${
+          noImg ? "items-center text-center" : "justify-center"
+        }`}
+      >
+        {text && <div className="text-white mb-4">{text}</div>}
       </div>
     </div>
   );
 };
 
-const EduBoxLarge = ({ title, jsx, img, noImg }) => {
+const EduBoxLarge = ({ title, jsx, img, noImg, buttonText, buttonLink }) => {
   return (
-    <div className="flex flex-col bg-[#CA2380] p-8 pt-4 justify-center items-center lg:w-1/3">
-      <div className="text-[32px] text-center mb-4 font-bold text-white">
+    <div className="flex flex-col bg-[#CA2380] p-4 sm:p-6 lg:p-8 justify-start items-center lg:w-1/3">
+      <div className="text-3xl h-[70px] text-center mb-4 font-bold text-white sm:block hidden">
         {title}
       </div>
       <EduBox img={img} isFull text={jsx} noImg={noImg} />
-    </div>
-  );
-};
-
-const SwipeableSection = ({
-  slides,
-  slideType = "event",
-  color = "#FF2768",
-}) => {
-  const [activeSlide, setActiveSlide] = useState(0);
-
-  const handleScroll = (e) => {
-    const scrollLeft = e.target.scrollLeft;
-    const width = e.target.clientWidth;
-    const currentSlide = Math.round(scrollLeft / width);
-    setActiveSlide(currentSlide);
-  };
-
-  const Slide = ({ children }) => (
-    <div className="flex-none max-w-[100vw] lg:w-1/4 snap-center">
-      {children}
-    </div>
-  );
-
-  // if (!slides.length && slideType == "event") {
-  //   return (
-  //     <div className="flex justify-center flex-col h-[350px]">
-  //       <EventCard
-  //         title=""
-  //         instructor=""
-  //         date=""
-  //         location=""
-  //         image={event1Img}
-  //         hook="More events"
-  //         cta="COMING SOON"
-  //         noData
-  //       />
-  //     </div>
-  //   );
-  // }
-
-  return (
-    <div className="relative overflow-hidden">
-      <div
-        className="flex overflow-x-auto lg:overflow-x-hidden snap-x snap-mandatory h-full lg:h-[450px] items-center justify-center max-w-[100vw]"
-        style={{ backgroundColor: color }}
-        onScroll={handleScroll}
-      >
-        {slides.map((slide, index) => (
-          <Slide key={index}>{slide.node}</Slide>
-        ))}
-      </div>
-      {slides.length > 0 && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center">
-          <div className="flex gap-2">
-            {Array.from({ length: slides.length }).map((_, index) => (
-              <Dot key={index} isActive={index === activeSlide} />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const TestimonialCard = ({ img, fullName, role, text, link }) => {
-  return (
-    <div className="flex bg-black gap-2 flex-col items-center justify-center border-2 border-white">
-      <div className="flex flex-col  h-[150px]">
-        <Image
-          src={img}
-          width={200}
-          height={200}
-          alt="Profile Image"
-          className="w-[120px] h-[120px] mt-4"
-        />
-        <div className="text-[13px] text-white font-bold">{fullName}</div>
-        <div className="text-[10px] text-white text-center">{role}</div>
-      </div>
-      <div className="h-[120px] flex items-center">
-        <div className="text-[12px] text-white px-4 pr-2 text-center">
-          {text?.length > 160 ? `${text.slice(0, 160)}...` : text}
-        </div>
-      </div>
-      <div className="flex justify-center items-center pb-4 w-full">
-        <Link href={link || "#"} target="_blank">
-          <Button
-            className={`bg-white  text-black rounded-sm hover:bg-[${magenta}] w-full rounded-[0px] w-full`}
-          >
-            MORE
-          </Button>
-        </Link>
-      </div>
-    </div>
-  );
-};
-
-// const EventCard = ({ title, image, cta, link, noData }) => {
-//   return (
-//     <div
-//       className={`flex flex-col gap-2 border-2 border-white mx-2 justify-center w-full  ${
-//         noData ? `bg-[${magenta}] h-[360px]` : "bg-black h-[360px]"
-//       }`}
-//     >
-//       {/* <div className="text-[24px] min-h-[28px] text-center text-white">{title}</div> */}
-//       <div className="relative flex justify-center items-center">
-//         <div className="relative w-full mb-4" style={{ paddingTop: "56.25%" }}>
-//           {" "}
-//           {/* 56.25% = 9/16 * 100 */}
-//           <Image
-//             src={image}
-//             alt={title}
-//             layout="fill"
-//             objectFit="contain"
-//             className="rounded-sm"
-//           />
-//         </div>
-//       </div>
-//       <div className="flex justify-center p-2">
-//         <a href={link || "#"}>
-//           <Button
-//             className={`text-white bg-[#CA2280] hover:bg-[#CA2280] w-[220px] rounded-[0px]`}
-//           >
-//             {cta}
-//           </Button>
-//         </a>
-//       </div>
-//     </div>
-//   );
-// };
-
-// const eventSlidesData = [
-//   {
-//     title: "MAKE YOUR TTRPG!",
-//     date: "",
-//     location: "",
-//     image: event1Img,
-//     cta: "ROLL THE DICE",
-//     link: "https://forms.gle/kGjR45M2FGczKHUw8",
-//   },
-//   {
-//     title: "LEARN ABOUT!",
-//     date: "",
-//     location: "",
-//     image: event2Img,
-//     hook: "",
-//     cta: "GAME OVER?",
-//     link: "https://forms.gle/uJCoqUCnoyNGyg6V7",
-//   },
-// ];
-
-// const eventSlides = eventSlidesData.map((item) => (
-//   <div className="flex justify-center flex-col h-[350px]">
-//     <EventCard {...item} />
-//   </div>
-// ));
-
-const testimonialsData = [
-  {
-    img: avatar1Img,
-    fullName: "Ivan Kikerkov",
-    role: "Founder",
-    text: "I love making games every day, and that's why I founded Galactic Omnivore.",
-    link: "https://kikerkov.itch.io/",
-  },
-  {
-    img: avatar2Img,
-    fullName: "Andreja Popovik",
-    role: "Community Member",
-    text: "Galactic omnivore provided an already established community with talented people that eagerly awaited a challenge within the TTRPG genre and this is how PrintN'Play games was borne. ",
-    link: "https://linktr.ee/PrintNplay",
-  },
-  {
-    img: avatar3Img,
-    fullName: "Andrej Burovski ",
-    role: "Community Member",
-    text: "The game development community has been an exceptional source of inspiration and support, fueling my creativity and enhancing my skills. The collaborative environment and wealth of knowledge I've found here have made my journey in game development truly rewarding.",
-    link: "https://k32n31-p4n1c.github.io/Index.html",
-  },
-];
-
-const testimonialSlides = testimonialsData.map((item, i) => (
-  <div key={i} className="flex justify-center flex-col bg-black">
-    <TestimonialCard {...item} />
-  </div>
-));
-
-const pillarSlidesData = [
-  {
-    node: (
-      <div className="p-4 flex justify-center flex-col">
-        <div className="text-4xl mb-8 text-center text-black">WE PROVIDE:</div>
-        <div className="flex gap-4">
-          <EduBox img={edu1Img} />
-          <EduBox img={edu2Img} />
-          <EduBox img={edu3Img} />
-        </div>
-      </div>
-    ),
-  },
-  {
-    node: (
-      <div className="p-4 flex justify-center flex-col">
-        <div className="text-4xl mb-8 text-center text-black">WE PROVIDE:</div>
-        <EduBox
-          isFull
-          img={edu1Img}
-          text={
-            <div className="text-center flex flex-col gap-2">
-              <div>As a community, we offer everyone an opportunity to</div>
-              <span className="text-primary">
-                become both students and mentors.
-              </span>
-              <div>They can learn or share knowledge about :</div>
-              <div>
-                <span className="text-primary">
-                  2D & 3D Art, Tech Art, Programming, Audio, Game Testing, Game
-                  Design, Game Production, Marketing, Biz Support, Data and
-                </span>
-              </div>
-            </div>
-          }
-        />
-      </div>
-    ),
-  },
-  {
-    node: (
-      <div className="p-4 flex justify-center flex-col">
-        <div className="text-4xl mb-8 text-center text-black">WE PROVIDE:</div>
-        <EduBox
-          isFull
-          img={edu2Img}
-          text={
-            <div className="text-center flex flex-col gap-2">
-              <div>
-                Everyone needs to{" "}
-                <span className="text-primary">start somewhere</span>, but not
-                everyone knows how.
-              </div>
-              <div>
-                We have the know-how to help you{" "}
-                <span className="text-primary">
-                  build, showcase and present your portfolio.
-                </span>
-              </div>
-              <div>
-                <span className="text-primary">Join</span> an existing project
-                or <span className="text-primary">start</span> your own and
-                have others join you.
-              </div>
-            </div>
-          }
-        />
-      </div>
-    ),
-  },
-  {
-    node: (
-      <div className="p-4 flex justify-center flex-col">
-        <div className="text-4xl mb-8 text-center text-black">WE PROVIDE:</div>
-        <EduBox
-          isFull
-          img={edu3Img}
-          text={
-            <div className="text-center flex flex-col gap-2">
-              <div>
-                Looking for your{" "}
-                <span className="text-primary">first job</span> or looking for
-                a high end <span className="text-primary">consultancy</span>{" "}
-                position?
-              </div>
-              <div>
-                Sometimes we don&apos;t even need to do anything to help you. By
-                being surrounded with like-minded folks your opportunity will
-                reach you.
-              </div>
-              <div>
-                Otherwise, we create{" "}
-                <span className="text-primary">B2B connections</span> and
-                provide <span className="text-primary">work challenges</span>{" "}
-                to those who seek it.
-              </div>
-            </div>
-          }
-        />
-      </div>
-    ),
-  },
-];
-
-const DiscordJoin = () => {
-  return (
-    <div className="relative h-[450px] w-full">
-      <Image
-        src={joinusImg}
-        layout="fill"
-        objectFit="cover"
-        alt="Background Image"
-      />
-      <div className="absolute inset-0 flex items-center justify-center flex-col p-4 text-white">
-        <div className="text-4xl text-center my-4">OVER 260 OMNIVORES</div>
-        <div className="mb-4 text-center lg:mx-[10%]">
-          From junior game developers to senior app developers who never made a
-          game in their life, artists who want to switch to digital and writers
-          who always wanted to write a game...everyone is welcome from any
-          industry.{" "}
-        </div>
-        <a
-          href="https://discord.gg/ZbSShxu6K4"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full lg:w-[200px] flex justify-center"
+      {buttonLink && buttonText && (
+        <Button
+          asChild
+          className="bg-white text-black hover:bg-neutral-200 rounded-sm w-full mt-4"
         >
-          <Button className="w-full bg-[#c82484] text-white hover:bg-[#c82484] lg:w-[200px] mt-12 rounded-[0px]">
-            <Image
-              src={discordImg}
-              alt="discord"
-              height="18"
-              width="18"
-              className="mr-1"
-            />{" "}
-            JOIN US
-          </Button>
-        </a>
-      </div>
+          <Link href={buttonLink}>{buttonText}</Link>
+        </Button>
+      )}
     </div>
   );
 };
@@ -505,9 +198,9 @@ const ContactUs = () => {
       <div className="text-4xl text-center mb-4 text-white">CONTACT US</div>
       <div className="text-center lg:mx-[10%] text-white">
         Got a game idea, a unique skill set, or just want to connect with fellow
-        game enthusiasts? Reach out! Whether you&apos;re here to learn (Education),
-        build your brand (Portfolio), or find project support (Outsourcing), our
-        community is here to help you thrive.
+        game enthusiasts? Reach out! Whether you&apos;re here to learn
+        (Education), build your brand (Portfolio), or find project support
+        (Outsourcing), our community is here to help you thrive.
       </div>
       <a
         href="mailto:galacticomnivore@gmail.com"
@@ -518,6 +211,32 @@ const ContactUs = () => {
         </Button>
       </a>
     </div>
+  );
+};
+
+const SocialFooter = () => {
+  return (
+    <>
+      <div className="flex gap-2 w-full justify-center my-8 sm:flex-row flex-wrap px-4">
+        {socialMedia.map(
+          (
+            social,
+            i // This uses the old socialMedia array
+          ) => (
+            <Link
+              key={i}
+              href={social.src}
+              className="bg-gray-800 p-4 rounded-[0px]"
+            >
+              <div className="text-gray-500 hover:text-gray-300 transition-colors duration-300">
+                {social.icon}
+              </div>
+            </Link>
+          )
+        )}
+      </div>
+      {/* Removed copyright text as it belongs in the main Footer.jsx */}
+    </>
   );
 };
 
@@ -543,69 +262,6 @@ const Newsletter = () => {
   );
 };
 
-const HqOpenhours = () => {
-  return (
-    <div className="relative h-[450px] mb-8 w-full">
-      <Image
-        src={hqImg}
-        layout="fill"
-        objectFit="cover"
-        alt="Background Image"
-      />
-      <Image
-        src={transparentImg}
-        layout="fill"
-        objectFit="cover"
-        alt="Transparent Image"
-      />
-      <div className="absolute inset-0 flex flex-col p-4 top-0 text-white">
-        <div className="text-4xl text-center my-4">WANT TO VISIT US?</div>
-        <div className="text-4xl text-center mb-4">HQ OPEN HOURS:</div>
-        <div className="mb-4 text-center lg:mx-[10%]">
-          Located on the eleventh floor in the building next to the Macedonian
-          Archbishop Cathedral, we have 60 square meters of game-making
-          community space with a cool view to stimulate the best game creation
-          ideas.
-        </div>
-
-        <div className="text-center text-lg font-semibold my-4">
-          <p>Monday - Friday</p>
-          <p>12:00 - 20:00</p>
-        </div>
-
-        <Link
-          target="blank"
-          className="w-full flex justify-center"
-          href="https://calendar.app.google/H7Zwkwm81SMrbp7F9"
-        >
-          <Button className="w-full bg-[#c82484] text-white hover:bg-[#c82484] lg:w-[200px] rounded-[0px]">
-            SCHEDULE A VISIT
-          </Button>
-        </Link>
-      </div>
-    </div>
-  );
-};
-
-const SocialFooter = () => {
-  return (
-    <>
-      <div className="flex gap-2 w-full justify-center my-8 sm:flex-row flex-wrap px-4">
-        {socialMedia.map((social, i) => (
-          <Link  key={i} href={social.src} className="bg-gray-800 p-4 rounded-[0px]">
-            <div className="text-gray-500 hover:text-gray-300 transition-colors duration-300">
-              {social.icon}
-            </div>
-          </Link>
-        ))}
-      </div>
-      <div className="text-gray-400 w-full text-center pb-12">
-        Copyright ©Galactic Omnivore 2025
-      </div>
-    </>
-  );
-};
-
 const About = () => {
   return (
     <div className="relative lg:my-16">
@@ -624,15 +280,15 @@ const About = () => {
           how to make games, build or expand their portfolio and structure their
           work.
         </span>{" "}
-        We also help in <span className="text-primary">publishing games</span> to
-        the world&apos;s most popular online stores.{" "}
+        We also help in <span className="text-primary">publishing games</span>{" "}
+        to the world&apos;s most popular online stores.{" "}
       </div>
       <Image
         src={driveTruImg}
-        className="my-6"
-        alt="game shops"
-        width={1920}
-        height={1080}
+        width={1000}
+        height={125}
+        className="my-6 w-full max-w-3xl mx-auto h-auto object-contain"
+        alt="Game distribution platforms like Steam, Itch.io, etc."
       />
     </div>
   );
@@ -648,7 +304,7 @@ const carouselData = [
   {
     title: "Print N'Play Games",
     image: achievementImg3,
-    text: "Two years ago, game designer Andreja Popovik joined G.O. the local GameDev community, shifting from digital games to TTRPGs. He created the successful Kickstarter campaign within the Songs and Sagas, system leading to PrintN'Play's rise. Collaborations followed, including the tool Birthplace of Evil and the D&;D product Dezriel's Elemental Spellbook, showcasing community innovation in game development. Currently working on a Point & Click adventure with Monstergarden.",
+    text: "Two years ago, game designer Andreja Popovik joined G.O. the local GameDev community, shifting from digital games to TTRPGs. He created the successful Kickstarter campaign within the Songs and Sagas, system leading to PrintN'Play's rise. Collaborations followed, including the tool Birthplace of Evil and the D&;D product Dezriel's Elemental Spellbook, showcasing community innovation in game development. Currently working on a Point & Click adventure with Monstergarden.",
     link: "https://go-platform-eight.vercel.app/blog/print-nplay-games-a-printable-games-brand-brewed-inside-the-community",
   },
   {
@@ -700,16 +356,12 @@ const CarouselItem = ({ title, image, text, link }) => {
   );
 };
 
-// const achievementSlides = carouselData.map((item) => (
-//   <CarouselItem {...item} />
-// ));
-
-const GenericCarousel = ({
+export const GenericCarousel = ({
   slides,
   itemsPerViewDesktop = 3,
   itemsPerViewTablet = 2,
   itemsPerViewMobile = 1,
-  backgroundColor = "#CA2280",
+  backgroundColor = "transparent",
   title,
   className = "",
 }) => {
@@ -722,21 +374,31 @@ const GenericCarousel = ({
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 600) {
-        setItemsPerView(itemsPerViewMobile);
-      } else if (window.innerWidth < 1000) {
-        setItemsPerView(itemsPerViewTablet);
-      } else {
-        setItemsPerView(itemsPerViewDesktop);
+      let newItemsPerView = itemsPerViewDesktop;
+      if (window.innerWidth < 768) {
+        newItemsPerView = itemsPerViewMobile;
+      } else if (window.innerWidth < 1024) {
+        newItemsPerView = itemsPerViewTablet;
+      }
+      setItemsPerView(newItemsPerView);
+      const maxIndex = Math.max(0, slides.length - newItemsPerView);
+      if (currentIndex > maxIndex) {
+        setCurrentIndex(maxIndex);
       }
     };
 
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [itemsPerViewDesktop, itemsPerViewTablet, itemsPerViewMobile]);
+  }, [
+    slides.length,
+    itemsPerViewDesktop,
+    itemsPerViewTablet,
+    itemsPerViewMobile,
+    currentIndex,
+  ]);
 
-  const totalSlides = Math.ceil(slides.length / itemsPerView);
+  const maxIndex = Math.max(0, slides.length - itemsPerView);
 
   const handleStart = (e) => {
     setIsDragging(true);
@@ -752,55 +414,59 @@ const GenericCarousel = ({
 
   const handleEnd = () => {
     if (!isDragging) return;
-    const threshold = window.innerWidth / 4;
+    const threshold = containerRef.current?.offsetWidth / itemsPerView / 2;
+
+    let newIndex = currentIndex;
     if (Math.abs(currentX) > threshold) {
       if (currentX > 0 && currentIndex > 0) {
-        setCurrentIndex((prev) => prev - 1);
-      } else if (currentX < 0 && currentIndex < totalSlides - 1) {
-        setCurrentIndex((prev) => prev + 1);
+        newIndex = currentIndex - 1;
+      } else if (currentX < 0 && currentIndex < maxIndex) {
+        newIndex = currentIndex + 1;
       }
     }
+    setCurrentIndex(newIndex);
     setIsDragging(false);
     setCurrentX(0);
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => Math.min(prev + 1, maxIndex));
+  };
+
+  const goToPrev = () => {
+    setCurrentIndex((prev) => Math.max(prev - 1, 0));
   };
 
   return (
     <div
       className={`${
-        backgroundColor ? `bg-[${backgroundColor}]` : ""
+        backgroundColor === "transparent" ? "" : `bg-[${backgroundColor}]`
       } ${className}`}
     >
       {title && (
-        <div className="text-4xl text-center text-white pt-8 mb-4">{title}</div>
+        <div className="text-4xl text-center text-white pt-8 mb-12">
+          {title}
+        </div>
       )}
-      <div className="relative py-12">
+      <div className="relative py-4">
         <div className="max-w-7xl mx-auto px-4">
           <div className="relative overflow-hidden">
             <div
               ref={containerRef}
-              className="flex touch-pan-y"
+              className="flex"
               style={{
-                transform: `translateX(${
-                  -currentIndex * (100 / itemsPerView) +
-                  (isDragging
-                    ? (currentX / containerRef.current?.offsetWidth) * 100
-                    : 0)
+                transform: `translateX(-${
+                  (currentIndex * 100) / slides.length
                 }%)`,
+                width: `${(slides.length / itemsPerView) * 100}%`,
                 transition: isDragging ? "none" : "transform 0.3s ease-out",
               }}
-              onMouseDown={handleStart}
-              onMouseMove={handleMove}
-              onMouseUp={handleEnd}
-              onMouseLeave={handleEnd}
-              onTouchStart={handleStart}
-              onTouchMove={handleMove}
-              onTouchEnd={handleEnd}
             >
               {slides.map((slide, index) => (
                 <div
                   key={index}
                   className="flex-shrink-0 px-2"
-                  style={{ width: `${100 / itemsPerView}%` }}
+                  style={{ width: `${100 / slides.length}%` }}
                 >
                   {slide}
                 </div>
@@ -808,33 +474,45 @@ const GenericCarousel = ({
             </div>
 
             <button
-              onClick={() =>
-                currentIndex > 0 && setCurrentIndex((prev) => prev - 1)
-              }
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/10 p-2 rounded-full"
+              onClick={goToPrev}
+              disabled={currentIndex === 0}
+              className={`absolute left-0 top-1/2 -translate-y-1/2 bg-white/10 p-2 rounded-full z-10 transition-opacity duration-200 ${
+                currentIndex === 0
+                  ? "opacity-30 cursor-not-allowed"
+                  : "opacity-100 hover:bg-white/20"
+              }`}
             >
               <ChevronLeft className="text-white" />
             </button>
 
             <button
-              onClick={() =>
-                currentIndex < totalSlides - 1 &&
-                setCurrentIndex((prev) => prev + 1)
-              }
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/10 p-2 rounded-full"
+              onClick={goToNext}
+              disabled={currentIndex === maxIndex}
+              className={`absolute right-0 top-1/2 -translate-y-1/2 bg-white/10 p-2 rounded-full z-10 transition-opacity duration-200 ${
+                currentIndex === maxIndex
+                  ? "opacity-30 cursor-not-allowed"
+                  : "opacity-100 hover:bg-white/20"
+              }`}
             >
               <ChevronRight className="text-white" />
             </button>
           </div>
 
-          <div className="flex justify-center mt-4 gap-2">
-            {Array.from({ length: totalSlides }).map((_, index) => (
+          <div className="flex justify-center mt-8 gap-2">
+            {Array.from({
+              length: Math.ceil(slides.length / itemsPerView),
+            }).map((_, pageIndex) => (
               <button
-                key={index}
+                key={pageIndex}
                 className={`w-3 h-3 rounded-sm transition-colors ${
-                  index === currentIndex ? "bg-white" : "bg-white/30"
+                  currentIndex >= pageIndex * itemsPerView &&
+                  currentIndex < (pageIndex + 1) * itemsPerView
+                    ? "bg-white"
+                    : "bg-white/30"
                 }`}
-                onClick={() => setCurrentIndex(index)}
+                onClick={() =>
+                  setCurrentIndex(Math.min(pageIndex * itemsPerView, maxIndex))
+                }
               />
             ))}
           </div>
@@ -868,126 +546,117 @@ const HomePage = () => {
 
   return (
     <div className="bg-black" id="home">
+      <HeroSection />
+      <SkillBanner />
+      <section className="bg-black p-4 flex flex-col justify-center">
+        <About />
+      </section>
+      <StatsPreview />
+
+      <div id="pillars" className="relative">
+        <div className="absolute -top-20"></div>
+      </div>
+      <Image
+        src={pixelUpImg}
+        alt="pixel section divider"
+        width={1920}
+        height={100}
+        className="w-full h-auto mb-[-1px]"
+      />
+      <div className="bg-[#CA2380]">
+        <div className="container max-w-7xl mx-auto px-4 py-12 md:py-16 lg:py-20">
+          <div className="flex flex-col lg:flex-row justify-between lg:items-start gap-8 md:gap-12 lg:gap-8">
+            <EduBoxLarge
+              title="EDUCATION"
+              noImg={!isMobile}
+              img={edu1Img}
+              jsx={
+                <div className="text-center flex flex-col gap-2">
+                  <div>As a community, we offer everyone an opportunity to</div>
+                  <span className="text-primary">
+                    become both students and mentors,
+                  </span>
+                  <div>
+                    learning or sharing knowledge about game development.
+                  </div>
+                </div>
+              }
+              buttonText="See Resources"
+              buttonLink="/blog"
+            />
+            <EduBoxLarge
+              title="PORTFOLIO SUPPORT"
+              img={edu2Img}
+              noImg={!isMobile}
+              jsx={
+                <div className="text-center flex flex-col gap-2">
+                  <div>Need help building your portfolio?</div>
+                  <div>
+                    We provide the know-how to{" "}
+                    <span className="text-primary">
+                      build, showcase, and present
+                    </span>{" "}
+                    your work effectively.
+                  </div>
+                  <div>
+                    <span className="text-primary">Join</span> an existing
+                    project or <span className="text-primary">start</span> your
+                    own.
+                  </div>
+                </div>
+              }
+              buttonText="See Initiatives"
+              buttonLink="/initiatives"
+            />
+            <EduBoxLarge
+              title="OUTSOURCING & JOBS"
+              img={edu3Img}
+              noImg={!isMobile}
+              jsx={
+                <div className="text-center flex flex-col gap-2">
+                  <div>
+                    Looking for your{" "}
+                    <span className="text-primary">first job</span> or a
+                    high-end <span className="text-primary">consultancy</span>{" "}
+                    role?
+                  </div>
+                  <div>
+                    We create{" "}
+                    <span className="text-primary">B2B connections</span> and
+                    provide{" "}
+                    <span className="text-primary">work challenges</span> for
+                    our community members.
+                  </div>
+                </div>
+              }
+              buttonText="Request Form"
+              buttonLink="/contact"
+            />
+          </div>
+        </div>
+      </div>
+
+      <PartnerBanner />
+
       <div className="sm:px-8 px-2">
         <GameOfTheMonth fromLanding={true} />
       </div>
 
-      <section className="bg-black p-4 flex flex-col justify-center">
-        <About />
-      </section>
-
-      <Image
-        id="pillars"
-        src={pixelUpImg}
-        alt="pixel section"
-        width={1920}
-        height={1080}
-      />
-
-      <div className="flex flex-col gap-4 justify-between pb-32 bg-[#CA2380] lg:flex-row lg:justify-center lg:items-start">
-        <EduBoxLarge
-          title="EDUCATION"
-          noImg={!isMobile}
-          img={edu1Img}
-          jsx={
-            <div className="text-center flex flex-col gap-2">
-              <div>As a community, we offer everyone an opportunity to</div>
-              <span className="text-primary">
-                become both students and mentors.
-              </span>
-              <div>They can learn or share knowledge about :</div>
-              <div>
-                <span className="text-primary">
-                  2D & 3D Art, Tech Art, Programming, Audio, Game Testing, Game
-                  Design, Game Production, Marketing, Biz Support, Data and
-                </span>
-              </div>
-            </div>
-          }
-        />
-        <EduBoxLarge
-          title="PORTFOLIO"
-          img={edu2Img}
-          noImg={!isMobile}
-          jsx={
-            <div className="text-center flex flex-col gap-2">
-              <div>
-                Everyone needs to{" "}
-                <span className="text-primary">start somewhere</span>, but not
-                everyone knows how.
-              </div>
-              <div>
-                We have the know-how to help you{" "}
-                <span className="text-primary">
-                  build, showcase and present your portfolio.
-                </span>
-              </div>
-              <div>
-                <span className="text-primary">Join</span> an existing project
-                or <span className="text-primary">start</span> your own and
-                have others join you.
-              </div>
-            </div>
-          }
-        />
-        <EduBoxLarge
-          title="OUTSOURCING"
-          img={edu3Img}
-          noImg={!isMobile}
-          jsx={
-            <div className="text-center flex flex-col gap-2">
-              <div>
-                Looking for your{" "}
-                <span className="text-primary">first job</span> or looking for
-                a high end <span className="text-primary">consultancy</span>{" "}
-                position?
-              </div>
-              <div>
-                Sometimes we don&apos;t even need to do anything to help you. By
-                being surrounded with like-minded folks your opportunity will
-                reach you.
-              </div>
-              <div>
-                Otherwise, we create{" "}
-                <span className="text-primary">B2B connections</span> and
-                provide <span className="text-primary">work challenges</span>{" "}
-                to those who seek it.
-              </div>
-            </div>
-          }
-        />
-      </div>
-
-      <Image
-        src={pixelDownImg}
-        alt="Background Image"
-        width={1920}
-        height={1080}
-      />
-
       <section className="relative">
         <div id="openhours" className="absolute top-[-80px]"></div>
-        <HqOpenhours />
+        <LandingOpenHours />
       </section>
 
       <section className="relative">
         <div id="discord" className="absolute top-[-80px]"></div>
-        <DiscordJoin />
+        <LandingDiscordJoin />
       </section>
 
       <section className="relative">
         <div id="testimonials" className="absolute top-[-80px]"></div>
-        <div className="bg-black h-[600px] flex flex-col items-center">
-          <GenericCarousel
-            slides={testimonialSlides}
-            title="TESTIMONIALS:"
-            backgroundColor="transparent"
-            className="h-full"
-          />
-        </div>
+        <LandingTestimonials />
       </section>
-
-      <Image src={pixelUpImg} alt="pixel section" width={1920} height={1080} />
+      <FullCTA />
     </div>
   );
 };
