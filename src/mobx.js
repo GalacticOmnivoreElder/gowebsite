@@ -396,7 +396,7 @@ class Store {
       console.log("User document exists:", userDoc.exists());
 
       let userData;
-      
+
       if (!userDoc.exists()) {
         console.log("Creating new user profile");
         userData = {
@@ -413,13 +413,13 @@ class Store {
         console.log("Existing user found:", userDoc.data());
         userData = { uid: user.uid, ...userDoc.data() };
       }
-      
+
       // Set the user data using runInAction with a direct reference to the store
       console.log("Setting user in MobX store:", userData);
       runInAction(() => {
         MobxStore.user = userData;
       });
-      
+
       console.log("Google sign-in process completed successfully");
     } catch (error) {
       console.error("Error with Google sign-in:", error);

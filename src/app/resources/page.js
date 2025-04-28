@@ -22,6 +22,8 @@ import {
 import { adminDb } from "@/lib/firebase-admin";
 import FeaturedPackageCardWrapper from "@/components/packages/FeaturedPackageCardWrapper"; // Reverted import path
 import PackageList from "@/components/packages/PackageList"; // Reverted import path & name
+import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
+import { FullCTA } from "@/components/landing/FullCTA";
 
 // This enables Static Site Generation / Incremental Static Regeneration
 export const revalidate = 3600; // Revalidate every hour
@@ -221,6 +223,8 @@ export default async function ResourcesPage() {
           {/* Reverted component name & prop name */}
         </div>
       )}
+      <LandingTestimonials />
+      <FullCTA />
     </div>
   );
 }

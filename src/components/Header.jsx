@@ -102,7 +102,7 @@ export default function Header() {
               <Link href="/pricing">Pricing</Link>
             </Button>
             <Button asChild variant={isActive("/membership")} size="sm">
-              <Link href="/membership">Membership</Link>
+              <Link href="/membership">Join Us</Link>
             </Button>
           </nav>
         </div>
@@ -262,7 +262,7 @@ export default function Header() {
               className="justify-start"
             >
               <Link href="/membership" onClick={handleNavigation}>
-                Membership
+                Join Us
               </Link>
             </Button>
 

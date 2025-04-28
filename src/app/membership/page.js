@@ -1,21 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Head from "next/head";
-import Image from "next/image";
+import React from "react";
+import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation"; // Use if needed for CTAs
+import MobxStore from "@/mobx";
+import Link from "next/link";
 import {
   Card,
+  CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-  CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { observer } from "mobx-react-lite";
-import MobxStore from "@/mobx";
+import { PricingDisplay } from "@/components/pricing/PricingDisplay"; // Import the reusable pricing component
+import { PricingTier } from "@/components/pricing/PricingTier"; // Import the PricingTier component
+import { ArrowRight, Building, User } from "lucide-react";
+import Head from "next/head";
+import Image from "next/image";
+import { Check } from "lucide-react";
+import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
+import { FullCTA } from "@/components/landing/FullCTA";
 
 const DetailSection = ({
   title,
@@ -48,7 +53,7 @@ const DetailSection = ({
 );
 
 const AudioPreview = ({ src }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = React.useState(false);
 
   const togglePlay = () => {
     const audio = document.getElementById("audio-preview");
@@ -80,7 +85,7 @@ const YouTubeEmbed = ({ videoId }) => (
   </div>
 );
 
-export const GameOfTheMonth = ({fromLanding}) => (
+export const GameOfTheMonth = ({ fromLanding }) => (
   <div className="py-2 border-b">
     <div className="flex flex-col md:flex-row gap-8 items-center">
       {/* Image section - will appear first on mobile */}
@@ -101,7 +106,7 @@ export const GameOfTheMonth = ({fromLanding}) => (
               Game of the Month
             </Badge>
             <p className="text-white text-sm">
-            Available exclusively to this month’s community members!
+              Available exclusively to this month's community members!
             </p>
           </div>
         </div>
@@ -113,10 +118,14 @@ export const GameOfTheMonth = ({fromLanding}) => (
           <h2 className="text-lg font-medium text-primary mb-2">
             FEATURED THIS MONTH
           </h2>
-          <h3 className="text-3xl font-bold mb-4">G.O. Platformer Asset Pack - April 2025</h3>
+          <h3 className="text-3xl font-bold mb-4">
+            G.O. Platformer Asset Pack - April 2025
+          </h3>
           <p className="text-lg text-muted-foreground mb-6">
-            Dive into the toxic sewers with Mrale, a courageous rat on an endless platforming adventure.
-            Jump, dash, wall slide, and survive in this challenging game where a single misstep can take you for a swim with the radioactive fishes.
+            Dive into the toxic sewers with Mrale, a courageous rat on an
+            endless platforming adventure. Jump, dash, wall slide, and survive
+            in this challenging game where a single misstep can take you for a
+            swim with the radioactive fishes.
           </p>
         </div>
 
@@ -158,42 +167,45 @@ const Badge = ({ children, className }) => (
 );
 
 const MembershipPage = observer(() => {
-  const searchParams = useSearchParams();
-  const [selectedPlan, setSelectedPlan] = useState("monthly");
+  const router = useRouter();
 
-  const isAuthenticated = !!MobxStore.user;
-
-  useEffect(() => {
-    const planParam = searchParams.get("plan");
-    const storedPlan = localStorage.getItem("selectedPlan");
-
-    if (planParam && ["monthly", "annual"].includes(planParam)) {
-      setSelectedPlan(planParam);
-      localStorage.setItem("selectedPlan", planParam);
-    } else if (storedPlan && ["monthly", "annual"].includes(storedPlan)) {
-      setSelectedPlan(storedPlan);
+  // Define the same subscribe handler as in pricing, or a simplified one if needed
+  const handleSubscribe = (plan) => {
+    // Check if user is logged in
+    if (MobxStore.user) {
+      // Redirect to checkout page with plan parameter
+      router.push(`/checkout?plan=${plan}`);
+    } else {
+      // Redirect to login page with return path
+      router.push(`/login?redirect=/checkout&plan=${plan}`);
     }
+  };
 
-    if (storedPlan) {
-      localStorage.removeItem("selectedPlan");
-    }
-  }, [searchParams]);
+  // CTA handler for business inquiries
+  const handleBusinessInquiry = () => {
+    router.push("/contact?subject=BusinessMembership"); // Example redirect to contact page
+  };
 
-// Commented out MembershipPage content
+  const businessBenefits = [
+    "All Individual Plan Benefits",
+    "Team Access & Management",
+    "Volume Licensing Discounts",
+    "Dedicated Account Manager",
+    "Custom Onboarding & Support",
+    "Usage Reporting",
+  ];
 
   return (
     <div className="bg-background text-foreground">
       <Head>
-        <title>Membership - Your Game Dev Community</title>
+        <title>Membership Plans - Your Game Dev Community</title>
         <meta
           name="description"
-          content="Join our exclusive game development community and get access to monthly themed assets, tutorials, and more!"
+          content="Join our exclusive game development community. Choose a plan for individuals or contact us for business solutions."
         />
       </Head>
 
       <main className="container mx-auto px-4 py-16">
-        <GameOfTheMonth />
-
         {/* <DetailSection
           title="Theme of the Month Art Packages"
           description="Serve up a visually rich platformer with this handcrafted asset pack! Every element in this collection is lovingly illustrated by hand, bringing a fresh, organic feel to your game world—no pixels, just pure artistry. Whether you're crafting a roguelike, an action-packed adventure, or a whimsical platformer, these assets provide the perfect ingredients for a stunning game."
@@ -203,7 +215,7 @@ const MembershipPage = observer(() => {
 
         {/* <DetailSection
           title="Curated Music Packs"
-          description="Spice up your game with this sizzling selection of original sounds and music! Whether you’re baking a brawler, frying up a fantasy quest, or slow-cooking a story-rich RPG, this audio asset pack delivers crispy sound design and mouth-watering melodies to level up your entire soundscape."
+          description="Spice up your game with this sizzling selection of original sounds and music! Whether you're baking a brawler, frying up a fantasy quest, or slow-cooking a story-rich RPG, this audio asset pack delivers crispy sound design and mouth-watering melodies to level up your entire soundscape."
           imageSrc="/g1/g1-music.png"
           imageAlt="Music Pack Visualizer"
           reverse={true}
@@ -220,7 +232,7 @@ const MembershipPage = observer(() => {
 
         {/* <DetailSection
           title="UI & Level Design Templates"
-          description="Great games, like great meals, start with the right ingredients and a well-thought-out recipe. If you’re crafting a platformer and need a structured way to mix movement, levels, and progression into a deliciously balanced experience, the G.O Platformer Game Design Document is your ultimate game development cookbook."
+          description="Great games, like great meals, start with the right ingredients and a well-thought-out recipe. If you're crafting a platformer and need a structured way to mix movement, levels, and progression into a deliciously balanced experience, the G.O Platformer Game Design Document is your ultimate game development cookbook."
           imageSrc="/g1/g1-design.png"
           imageAlt="UI & Level Design Preview"
           reverse={true}
@@ -230,12 +242,10 @@ const MembershipPage = observer(() => {
           title="Exclusive Monthly Game"
           description="TOP - RAT The Ultimate Pixel-Perfect Feast! 
 Step into a handcrafted platforming experience where every jump, enemy, and level is a deliciously designed bite of gameplay perfection.
-A full-course adventure served with style, challenge, and heart. Inspired by classic 2D platformers and spiced with modern mechanics, this is your chance to feast on gameplay that’s as tight and satisfying as a perfectly cooked dish."
+A full-course adventure served with style, challenge, and heart. Inspired by classic 2D platformers and spiced with modern mechanics, this is your chance to feast on gameplay that's as tight and satisfying as a perfectly cooked dish."
           imageSrc="/g1/g1-mvp.png"
           imageAlt="Top Rat Game Screenshot"
         /> */}
-
-      
 
         {/* <div className="text-center mt-16">
           <h2 className="text-3xl font-bold mb-4">
@@ -254,6 +264,96 @@ A full-course adventure served with style, challenge, and heart. Inspired by cla
             )}
           </div>
         </div> */}
+
+        {/* B2B / B2C Selection Section */}
+        <section className="mb-20">
+          <h2 className="text-3xl font-semibold text-center mb-10">
+            Plans for Everyone
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* B2C Card */}
+            <Card className="flex flex-col items-center text-center p-8 bg-secondary/30 border-2 border-secondary hover:border-primary transition-colors duration-200">
+              <CardHeader>
+                <User className="h-12 w-12 mb-4 text-primary mx-auto" />
+                <CardTitle className="text-2xl font-bold">
+                  For Individuals
+                </CardTitle>
+                <CardDescription className="mt-2 text-muted-foreground">
+                  Access monthly assets, tutorials, community support, and more
+                  to boost your personal game dev journey.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="mt-auto">
+                <Button
+                  onClick={() =>
+                    document
+                      .getElementById("individual-plans")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                  className="mt-4"
+                >
+                  See Personal Plans
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* B2B Card */}
+            <Card className="flex flex-col items-center text-center p-8 bg-secondary/30 border-2 border-secondary hover:border-primary transition-colors duration-200">
+              <CardHeader>
+                <Building className="h-12 w-12 mb-4 text-primary mx-auto" />
+                <CardTitle className="text-2xl font-bold">
+                  For Businesses & Studios
+                </CardTitle>
+                <CardDescription className="mt-2 text-muted-foreground">
+                  Equip your team with resources, get tailored support, explore
+                  bulk licensing, or discuss custom solutions.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="mt-auto">
+                <Button onClick={handleBusinessInquiry} className="mt-4">
+                  Contact Us for Business Solutions
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Pricing Display Section (Individuals) */}
+        <section id="individual-plans" className="mb-16 scroll-mt-20">
+          <h2 className="text-3xl font-semibold text-center mb-10">
+            Individual Membership Plans
+          </h2>
+          <PricingDisplay handleSubscribe={handleSubscribe} showTier2={true} />
+        </section>
+
+        {/* Business Pricing Section */}
+        <section id="business-plan" className="mb-20 scroll-mt-20">
+          <h2 className="text-3xl font-semibold text-center mb-10">
+            Business & Enterprise Solutions
+          </h2>
+          <div className="max-w-md mx-auto">
+            <PricingTier
+              title="Business Plan"
+              price="Custom Pricing"
+              description="Tailored solutions for teams, studios, and educational institutions."
+              benefits={businessBenefits}
+              ctaText="Request a Quote"
+              ctaAction={handleBusinessInquiry}
+              variant="business"
+              disabled={false}
+            />
+          </div>
+          <p className="text-center text-muted-foreground mt-6 max-w-2xl mx-auto">
+            Need something specific for your organization? Let's chat about your
+            requirements.
+          </p>
+        </section>
+
+        {/* Testimonials and Final CTA */}
+        <LandingTestimonials />
+        <FullCTA />
       </main>
     </div>
   );
