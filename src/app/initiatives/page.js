@@ -17,6 +17,7 @@ import { FaExclamationTriangle } from "react-icons/fa";
 import Logger from "@/utils/logger"; // Assuming Logger utility exists
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
 import { FullCTA } from "@/components/landing/FullCTA";
+import { BlogCard } from "../blog/page"; // Import BlogCard
 
 const logger = new Logger({ debugEnabled: true });
 
@@ -27,117 +28,94 @@ const CATEGORIES = {
   TALENT_SEEK: { slug: "talent-seek", title: "Talent Seek" },
 };
 
-// Reusable component to fetch and display posts for a category
-const CategoryPosts = ({ categorySlug, categoryTitle }) => {
-  const [posts, setPosts] = useState([]);
+// Main Page Component
+const InitiativesPage = () => {
+  const [allPosts, setAllPosts] = useState({}); // Store posts keyed by category slug
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchAllPosts = async () => {
       setLoading(true);
       setError(null);
-      logger.debug(`Fetching posts for category: ${categorySlug}`);
+      logger.debug("Fetching posts for all initiative categories...");
       try {
-        // Using POST request as potentially done in other parts of the app
-        // Or switch to GET: /api/wordpress?category=${categorySlug}
-        const response = await fetch("/api/wordpress", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ category: categorySlug }),
+        const categorySlugs = Object.values(CATEGORIES).map((cat) => cat.slug);
+        const fetchPromises = categorySlugs.map((slug) =>
+          fetch("/api/wordpress", {
+            // Using POST as before, but can switch to GET if API supports it well
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category: slug }),
+          }).then((res) => {
+            if (!res.ok) {
+              // Try to get details, but still throw a general error for the category
+              return res
+                .json()
+                .catch(() => ({})) // Catch potential JSON parsing error
+                .then((errorData) => {
+                  throw new Error(
+                    `HTTP error for ${slug}! Status: ${res.status}. Details: ${
+                      errorData?.details || "N/A"
+                    }`
+                  );
+                });
+            }
+            return res.json();
+          })
+        );
+
+        const results = await Promise.allSettled(fetchPromises);
+
+        const postsByCategory = {};
+        let fetchError = null;
+
+        results.forEach((result, index) => {
+          const slug = categorySlugs[index];
+          if (result.status === "fulfilled") {
+            postsByCategory[slug] = result.value;
+            logger.debug(
+              `Successfully fetched posts for ${slug}:`,
+              result.value.length
+            );
+          } else {
+            logger.error(`Failed to fetch posts for ${slug}:`, result.reason);
+            // Store the first error encountered
+            if (!fetchError) {
+              fetchError =
+                result.reason.message || `Failed to fetch data for ${slug}.`;
+            }
+            postsByCategory[slug] = []; // Set empty array on error for this category
+          }
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.details || `HTTP error! status: ${response.status}`
-          );
+        setAllPosts(postsByCategory);
+
+        if (fetchError) {
+          setError(fetchError); // Set the overall error state if any fetch failed
         }
-        const data = await response.json();
-        logger.debug(`Posts fetched for ${categorySlug}:`, data);
-        setPosts(data);
       } catch (err) {
-        logger.error(`Error fetching posts for ${categorySlug}:`, err);
-        setError(err.message || `Failed to fetch posts for ${categoryTitle}.`);
+        // Catch errors from Promise.allSettled setup or other unexpected issues
+        logger.error("Unexpected error fetching all posts:", err);
+        setError(
+          err.message || "An unexpected error occurred while fetching posts."
+        );
+        // Ensure allPosts is an object even on catastrophic failure
+        setAllPosts(
+          Object.values(CATEGORIES).reduce((acc, cat) => {
+            acc[cat.slug] = [];
+            return acc;
+          }, {})
+        );
       } finally {
         setLoading(false);
+        logger.debug("Finished fetching all posts.");
       }
     };
 
-    fetchPosts();
-  }, [categorySlug, categoryTitle]);
+    fetchAllPosts();
+  }, []); // Empty dependency array ensures this runs only once on mount
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(3)].map((_, i) => (
-          <Skeleton key={i} className="h-48 w-full" />
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <FaExclamationTriangle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (posts.length === 0) {
-    return (
-      <p className="text-muted-foreground">
-        No {categoryTitle.toLowerCase()} found currently.
-      </p>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {posts.map((post) => (
-        <Link key={post.id} href={`/blog/${post.slug}`} passHref>
-          <Card className="hover:shadow-lg transition-shadow duration-200 cursor-pointer h-full flex flex-col">
-            <CardHeader>
-              <CardTitle className="text-lg leading-tight">
-                {post.title}
-              </CardTitle>
-              {post.categories && post.categories.length > 0 && (
-                <div className="mt-2">
-                  {/* Filter out the main category slug itself from badges if desired */}
-                  {post.categories
-                    .filter(
-                      (cat) => cat.toLowerCase() !== categoryTitle.toLowerCase()
-                    )
-                    .map((cat) => (
-                      <Badge
-                        key={cat}
-                        variant="secondary"
-                        className="mr-1 mb-1"
-                      >
-                        {cat}
-                      </Badge>
-                    ))}
-                </div>
-              )}
-            </CardHeader>
-            <CardContent className="flex-grow">
-              {/* Optional: Add excerpt or other info */}
-              {/* <p className="text-sm text-muted-foreground line-clamp-3" dangerouslySetInnerHTML={{ __html: post.excerpt }}></p> */}
-            </CardContent>
-            {/* Optional Footer with date? */}
-            {/* <CardFooter><p className="text-xs text-muted-foreground">{post.date}</p></CardFooter> */}
-          </Card>
-        </Link>
-      ))}
-    </div>
-  );
-};
-
-// Main Page Component
-const InitiativesPage = () => {
   const faqItems = [
     {
       question: "What kind of initiatives are listed here?",
@@ -160,6 +138,45 @@ const InitiativesPage = () => {
         "Participation details vary by initiative. Please refer to the specific post for information on any costs, requirements, or compensation.",
     },
   ];
+
+  // Helper to render content for a specific tab
+  const renderTabContent = (categorySlug, categoryTitle) => {
+    if (loading) {
+      // Show skeleton loaders while initial fetch is in progress
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            // Use a skeleton structure similar to BlogCard
+            <div key={i} className="space-y-3">
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    const posts = allPosts[categorySlug] || [];
+
+    if (posts.length === 0) {
+      return (
+        <p className="text-muted-foreground text-center py-8">
+          No {categoryTitle.toLowerCase()} found currently.
+        </p>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {posts.map((post) => (
+          <BlogCard key={post.id} post={post} />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -185,6 +202,18 @@ const InitiativesPage = () => {
         </p>
       </section>
 
+      {/* Error Alert Section */}
+      {error && !loading && (
+        <Alert variant="destructive" className="mb-8">
+          <FaExclamationTriangle className="h-4 w-4" />
+          <AlertTitle>Error Fetching Initiatives</AlertTitle>
+          <AlertDescription>
+            {error} Some categories might be unavailable. Please try refreshing
+            the page later.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Tabs Section */}
       <section className="mb-16">
         <Tabs defaultValue={CATEGORIES.OPEN_CALLS.slug} className="w-full">
@@ -193,7 +222,7 @@ const InitiativesPage = () => {
               <TabsTrigger
                 key={cat.slug}
                 value={cat.slug}
-                className="py-2 px-1 text-center"
+                className="py-2 px-1 text-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" // Added active state styling
               >
                 {cat.title}
               </TabsTrigger>
@@ -201,10 +230,7 @@ const InitiativesPage = () => {
           </TabsList>
           {Object.values(CATEGORIES).map((cat) => (
             <TabsContent key={cat.slug} value={cat.slug}>
-              <CategoryPosts
-                categorySlug={cat.slug}
-                categoryTitle={cat.title}
-              />
+              {renderTabContent(cat.slug, cat.title)}
             </TabsContent>
           ))}
         </Tabs>
