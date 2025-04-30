@@ -181,9 +181,11 @@ const MembershipPage = observer(() => {
     }
   };
 
-  // CTA handler for business inquiries
   const handleBusinessInquiry = () => {
-    router.push("/contact?subject=BusinessMembership"); // Example redirect to contact page
+    window.open(
+      "https://galacticomnivore.atlassian.net/servicedesk/customer/portal/5/group/14/create/10385",
+      "_blank"
+    );
   };
 
   const businessBenefits = [
