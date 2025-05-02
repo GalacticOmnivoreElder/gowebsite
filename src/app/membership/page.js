@@ -106,7 +106,7 @@ export const GameOfTheMonth = ({ fromLanding }) => (
               Game of the Month
             </Badge>
             <p className="text-white text-sm">
-              Available exclusively to this month's community members!
+              Available exclusively to this month&rsquo;s community members!
             </p>
           </div>
         </div>
@@ -348,7 +348,7 @@ A full-course adventure served with style, challenge, and heart. Inspired by cla
             />
           </div>
           <p className="text-center text-muted-foreground mt-6 max-w-2xl mx-auto">
-            Need something specific for your organization? Let's chat about your
+            Need something specific for your organization? Let&rsquo;s chat about your
             requirements.
           </p>
         </section>
