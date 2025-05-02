@@ -263,7 +263,7 @@ export default function PackageDetailPage({ params }) {
             This is a past package available for individual purchase.
           </p>
           <Button asChild className="w-full">
-            <Link href="/shop">Buy in Shop</Link>
+            <Link href="/membership">Buy in Shop</Link>
           </Button>
         </>
       ) : (
@@ -273,7 +273,7 @@ export default function PackageDetailPage({ params }) {
           </p>
           <div className="space-y-2">
             <Button asChild className="w-full">
-              <Link href="/shop">Buy in Shop</Link>
+              <Link href="/membership">Buy in Shop</Link>
             </Button>
             <Button asChild variant="outline" className="w-full">
               <Link href="/login">Sign In</Link>
