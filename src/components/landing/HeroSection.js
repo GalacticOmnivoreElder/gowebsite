@@ -18,7 +18,7 @@ export const HeroSection = () => {
       />
       <div className="relative z-10 max-w-4xl mx-auto px-4">
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 leading-tight">
-          From game devs, for game devs{" "}
+          From game creators, for game creators{" "}
           <span className="text-primary">and more</span>
         </h1>
         <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-8">
