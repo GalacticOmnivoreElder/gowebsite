@@ -4,14 +4,15 @@ import Image from "next/image";
 
 // Placeholder logos - Replace with actual logo paths when available
 const partnerLogos = [
-  { src: "/placeholder-logo.png", alt: "Partner 1" },
-  { src: "/placeholder-logo.png", alt: "Partner 2" },
-  { src: "/placeholder-logo.png", alt: "Partner 3" },
-  { src: "/placeholder-logo.png", alt: "Partner 4" },
-  { src: "/placeholder-logo.png", alt: "Partner 5" },
-  { src: "/placeholder-logo.png", alt: "Partner 6" },
-  { src: "/placeholder-logo.png", alt: "Partner 7" },
-  { src: "/placeholder-logo.png", alt: "Partner 8" },
+  { src: "/logos/logo1.png", alt: "Partner 1" },
+  { src: "/logos/logo2.png", alt: "Partner 2" },
+  { src: "/logos/logo3.png", alt: "Partner 3" },
+  { src: "/logos/logo4.png", alt: "Partner 4" },
+  { src: "/logos/logo5.png", alt: "Partner 5" },
+  { src: "/logos/logo6.png", alt: "Partner 6" },
+  { src: "/logos/logo7.png", alt: "Partner 7" },
+  { src: "/logos/logo8.png", alt: "Partner 8" },
+  { src: "/logos/logo9.png", alt: "Partner 9" },
 ];
 
 // Duplicate for seamless loop

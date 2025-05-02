@@ -12,7 +12,8 @@ export default function ContactPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Need help with your subscription, assets or game development journey in general?
+              Need help with your subscription, assets or game development
+              journey in general?
             </p>
             <a
               href="https://galacticomnivore.atlassian.net/servicedesk/customer/portal/"

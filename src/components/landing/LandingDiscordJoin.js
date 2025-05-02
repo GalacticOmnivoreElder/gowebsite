@@ -30,7 +30,13 @@ export const LandingDiscordJoin = () => {
         {/* Using Lucide Icon instead of Image */}
         {/* <ActualDiscordIcon className="h-16 w-16 mx-auto mb-4 filter brightness-0 invert" />  */}
         {/* Placeholder with Users icon until a proper Discord icon is confirmed/added */}
-        <Users className="h-16 w-16 mx-auto mb-4" />
+        <Image
+          src="/discord.png"
+          alt="Discord Logo"
+          width={64}
+          height={64}
+          className="mx-auto mb-4"
+        />
 
         <h2 className="text-3xl md:text-4xl font-bold mb-4">
           Over 280+ Omnivores in our Discord!
@@ -52,7 +58,13 @@ export const LandingDiscordJoin = () => {
             className="flex items-center gap-2" // Added flex for icon alignment
           >
             {/* <ActualDiscordIcon className="h-5 w-5" /> */}
-            <Users className="h-5 w-5" /> {/* Button icon */}
+            <Image
+              src="/discord-logo.svg"
+              alt="Discord Logo"
+              width={24}
+              height={24}
+              className="mx-auto"
+            />
             Join Our Discord
           </Link>
         </Button>

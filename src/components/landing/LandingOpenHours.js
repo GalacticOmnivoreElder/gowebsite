@@ -30,9 +30,9 @@ export const LandingOpenHours = () => {
           your best game ideas.
         </p>
 
-        <div className="text-lg font-medium mb-8">
-          <p>Monday - Friday</p>
-          <p className="text-primary">12:00 - 20:00</p>
+        <div className="text-2xl md:text-3xl font-bold mb-8 bg-black/50 p-6 rounded-lg max-w-md mx-auto border-2 border-primary">
+          <p className="text-white">Monday - Friday</p>
+          <p className="text-primary text-3xl md:text-4xl">12:00 - 20:00</p>
         </div>
 
         <Button

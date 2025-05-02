@@ -39,27 +39,27 @@ const testimonialsData = [
     link: "https://k32n31-p4n1c.github.io/Index.html",
   },
   // Added Dummy Data
-  {
-    img: avatar1Img, // Placeholder image
-    fullName: "Elena Petrova",
-    role: "Aspiring Artist",
-    text: "Joining GO helped me connect with programmers and designers. Now my art is actually in a game! The feedback loop is invaluable.",
-    link: "#",
-  },
-  {
-    img: avatar2Img, // Placeholder image
-    fullName: "Marko Georgiev",
-    role: "Hobbyist Developer",
-    text: "I learned so much about Unity and project management through the community projects. It's great to build things together.",
-    link: "#",
-  },
-  {
-    img: avatar3Img, // Placeholder image
-    fullName: "Ana Ivanova",
-    role: "Student",
-    text: "The mentorship here is amazing. I got help setting up my portfolio and learned practical skills I didn't get in class.",
-    link: "#",
-  },
+  // {
+  //   img: avatar1Img, // Placeholder image
+  //   fullName: "Elena Petrova",
+  //   role: "Aspiring Artist",
+  //   text: "Joining GO helped me connect with programmers and designers. Now my art is actually in a game! The feedback loop is invaluable.",
+  //   link: "#",
+  // },
+  // {
+  //   img: avatar2Img, // Placeholder image
+  //   fullName: "Marko Georgiev",
+  //   role: "Hobbyist Developer",
+  //   text: "I learned so much about Unity and project management through the community projects. It's great to build things together.",
+  //   link: "#",
+  // },
+  // {
+  //   img: avatar3Img, // Placeholder image
+  //   fullName: "Ana Ivanova",
+  //   role: "Student",
+  //   text: "The mentorship here is amazing. I got help setting up my portfolio and learned practical skills I didn't get in class.",
+  //   link: "#",
+  // },
 ];
 
 const LandingTestimonialCard = ({ img, fullName, role, text, link }) => {

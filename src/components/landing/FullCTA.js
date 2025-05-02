@@ -24,7 +24,7 @@ export const FullCTA = () => {
           size="lg"
           className="bg-white text-black hover:bg-neutral-200 rounded-sm px-10 py-3 text-lg"
         >
-          <Link href="/signup">Join Us Now</Link>
+          <Link href="/membership">Join Us Now</Link>
         </Button>
       </div>
     </section>

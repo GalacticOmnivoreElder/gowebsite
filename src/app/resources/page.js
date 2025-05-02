@@ -177,9 +177,10 @@ export default async function ResourcesPage() {
                 <Workflow className="h-4 w-4" /> Pipelines
               </span>
             </div>
-            <Button asChild>
+            <Button variant="outline" disabled>
               <Link href="/resources/media">
-                Explore Media Library <ArrowRight className="ml-2 h-4 w-4" />
+                Explore Media Library (Coming Soon){" "}
+                {/* <ArrowRight className="ml-2 h-4 w-4" /> */}
               </Link>
             </Button>
           </CardContent>
