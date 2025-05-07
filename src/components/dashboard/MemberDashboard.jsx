@@ -182,7 +182,7 @@ const MemberDashboard = observer(() => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Recent Packages</h2>
           <Button variant="outline" size="sm" asChild>
-            <Link href="/packages">View All Packages</Link>
+            <Link href="/resources">View All Packages</Link>
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
