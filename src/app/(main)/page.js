@@ -270,7 +270,7 @@ const About = () => {
       <div className="text-center mb-4 text-white lg:mx-[10%] lg:text-[22px]">
         Galactic Omnivore is{" "}
         <span className="text-primary">
-          the only Game Dev. Community in North Macedonia
+          the only Game Dev. Community in Macedonia
         </span>{" "}
         where you can greet, meet and create your own game dev. team.{" "}
       </div>

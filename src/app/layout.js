@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: 'Galactic Omnivore',
-  description: 'Galactic Omnivore is the only Game Dev. Community in North Macedonia where you can greet, meet and create your own game dev. team.',
+  description: 'Galactic Omnivore is the only Game Dev. Community in Macedonia where you can greet, meet and create your own game dev. team.',
   icons: {
     icon: '/favicon.ico', 
   },

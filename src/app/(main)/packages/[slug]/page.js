@@ -108,7 +108,7 @@ export default function PackageDetailPage({ params }) {
     return (
       <div className="container py-10">
         <Button variant="ghost" asChild className="mb-6">
-          <Link href="/packages">
+          <Link href="/resources">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Packages
           </Link>
@@ -135,7 +135,7 @@ export default function PackageDetailPage({ params }) {
             <h2 className="text-xl font-bold">{error}</h2>
           </div>
           <Button asChild>
-            <Link href="/packages">View All Packages</Link>
+            <Link href="/resources">View All Packages</Link>
           </Button>
         </Card>
       </div>
@@ -287,7 +287,7 @@ export default function PackageDetailPage({ params }) {
   return (
     <div className="container py-10">
       <Button variant="ghost" asChild className="mb-6">
-        <Link href="/packages">
+        <Link href="/resources">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Packages
         </Link>
