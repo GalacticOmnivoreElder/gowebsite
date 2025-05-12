@@ -42,7 +42,7 @@ export const LandingOpenHours = () => {
         >
           <Link
             target="_blank"
-            href="https://calendar.app.google/H7Zwkwm81SMrbp7F9"
+            href="https://calendar.app.google/Ge6GvfiaaaMhAHHf6"
           >
             Schedule a Visit
           </Link>
