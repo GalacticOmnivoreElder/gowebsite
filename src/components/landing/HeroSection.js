@@ -30,7 +30,27 @@ export const HeroSection = () => {
             size="lg"
             className="bg-primary hover:bg-primary/90 rounded-sm w-full sm:w-auto"
           >
-            <Link href="/signup">Join Us</Link>
+            <Link href="/signup">Join Our Platform</Link>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            className="bg-white text-black hover:bg-neutral-200 rounded-sm px-8 w-full sm:w-auto"
+          >
+            <Link
+              href="https://discord.gg/ZbSShxu6K4"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2" // Added flex for icon alignment
+            >
+              <Image
+                src="/discord-logo.svg"
+                alt="Discord Logo"
+                width={24}
+                height={24}
+              />
+              Join Our Discord
+            </Link>
           </Button>
           <Button
             asChild
@@ -39,7 +59,7 @@ export const HeroSection = () => {
             className="border-primary text-primary hover:bg-primary/10 hover:text-primary rounded-sm w-full sm:w-auto"
           >
             {/* Linking to signup for now as requested */}
-            <Link href="/signup">Learn More</Link>
+            <Link href="/about">Learn More</Link>
           </Button>
         </div>
       </div>
