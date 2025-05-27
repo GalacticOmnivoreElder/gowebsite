@@ -358,6 +358,43 @@ class Store {
       // Create a user profile in Firestore
       await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
 
+      // Send welcome email
+      try {
+        console.log("=== CALLING WELCOME EMAIL API ===");
+        console.log("Sending data:", {
+          name: username,
+          email: email,
+          username: username,
+        });
+
+        const emailResponse = await fetch("/api/welcomeEmail", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: username,
+            email: email,
+            username: username,
+          }),
+        });
+
+        console.log("Email API response status:", emailResponse.status);
+        console.log("Email API response ok:", emailResponse.ok);
+
+        const emailResponseData = await emailResponse.json();
+        console.log("Email API response data:", emailResponseData);
+
+        if (emailResponse.ok) {
+          console.log("Welcome email sent successfully");
+        } else {
+          console.error("Welcome email API returned error:", emailResponseData);
+        }
+      } catch (emailError) {
+        console.error("Error calling welcome email API:", emailError);
+        // Don't throw here - we don't want email failure to break signup
+      }
+
       runInAction(() => {
         this.user = newUserProfile;
         this.loading = false;
@@ -409,6 +446,52 @@ class Store {
 
         await setDoc(userDocRef, userData);
         console.log("New user profile created:", userData);
+
+        // Send welcome email for new Google users
+        try {
+          console.log("=== CALLING WELCOME EMAIL API (Google User) ===");
+          console.log("Sending data:", {
+            name: user.displayName || "New User",
+            email: user.email,
+            username: user.displayName || "New User",
+          });
+
+          const emailResponse = await fetch("/api/welcomeEmail", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: user.displayName || "New User",
+              email: user.email,
+              username: user.displayName || "New User",
+            }),
+          });
+
+          console.log(
+            "Email API response status (Google):",
+            emailResponse.status
+          );
+          console.log("Email API response ok (Google):", emailResponse.ok);
+
+          const emailResponseData = await emailResponse.json();
+          console.log("Email API response data (Google):", emailResponseData);
+
+          if (emailResponse.ok) {
+            console.log("Welcome email sent successfully to Google user");
+          } else {
+            console.error(
+              "Welcome email API returned error (Google):",
+              emailResponseData
+            );
+          }
+        } catch (emailError) {
+          console.error(
+            "Error calling welcome email API (Google user):",
+            emailError
+          );
+          // Don't throw here - we don't want email failure to break signup
+        }
       } else {
         console.log("Existing user found:", userDoc.data());
         userData = { uid: user.uid, ...userDoc.data() };
