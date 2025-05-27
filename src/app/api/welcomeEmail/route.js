@@ -266,7 +266,7 @@ Join our Discord: https://discord.gg/ZbSShxu6K4
     // Send email
     console.log("=== SENDING EMAIL ===");
     console.log("Email config:", {
-      from: "welcome@galacticomnivore.com",
+      from: "galacticomnivore@gmail.com",
       to: email,
       subject:
         "🎮 Welcome to Galactic Omnivore - Your Game Dev Journey Begins!",
@@ -277,7 +277,7 @@ Join our Discord: https://discord.gg/ZbSShxu6K4
     });
 
     const emailResult = await resend.emails.send({
-      from: "welcome@galacticomnivore.com",
+      from: "galacticomnivore@gmail.com",
       to: email,
       subject:
         "🎮 Welcome to Galactic Omnivore - Your Game Dev Journey Begins!",

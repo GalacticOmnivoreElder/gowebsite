@@ -41,13 +41,13 @@ export const HeroSection = () => {
           >
             <Link href="/signup">Join Our Platform</Link>
           </Button>
-          <Button
+          {/* <Button
             onClick={() => {
               sendEmail();
             }}
           >
             TEST EMAIL
-          </Button>
+          </Button> */}
           <Button
             asChild
             size="lg"

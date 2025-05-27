@@ -17,7 +17,7 @@ export async function POST(request) {
 
     // Simple test email
     const testResult = await resend.emails.send({
-      from: "test@galacticomnivore.com",
+      from: "onboarding@galacticomnivore.com",
       to: email,
       subject: "Test Email from Galactic Omnivore",
       html: `
