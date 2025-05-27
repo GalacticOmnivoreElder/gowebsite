@@ -631,7 +631,7 @@ const HomePage = () => {
                   </div>
                 </div>
               }
-              buttonText="Request Form"
+              buttonText="Contact Us"
               buttonLink="/membership"
             />
           </div>
