@@ -25,8 +25,11 @@ const DashboardPage = observer(() => {
 
   useEffect(() => {
     // Redirect to membership page if user is not logged in or doesn't have member permissions
-    if (!isChecking && (!user || (permissions && !permissions?.permissions?.isMember))) {
-      router.push('/membership');
+    if (
+      !isChecking &&
+      (!user || (permissions && !permissions?.permissions?.isMember))
+    ) {
+      router.push("/initiatives");
     }
   }, [user, permissions, isChecking, router]);
 

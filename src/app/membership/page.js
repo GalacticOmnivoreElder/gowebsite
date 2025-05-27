@@ -86,7 +86,7 @@ const YouTubeEmbed = ({ videoId }) => (
 );
 
 export const GameOfTheMonth = ({ fromLanding }) => (
-  <div className="py-2 border-b">
+  <div className="py-4 border-b">
     <div className="flex flex-col md:flex-row gap-8 items-center">
       {/* Image section - will appear first on mobile */}
       <div className="w-full md:w-1/2 order-1 md:order-2">
@@ -348,8 +348,8 @@ A full-course adventure served with style, challenge, and heart. Inspired by cla
             />
           </div>
           <p className="text-center text-muted-foreground mt-6 max-w-2xl mx-auto">
-            Need something specific for your organization? Let&rsquo;s chat about your
-            requirements.
+            Need something specific for your organization? Let&rsquo;s chat
+            about your requirements.
           </p>
         </section>
 

@@ -548,6 +548,8 @@ const HomePage = () => {
     <div className="bg-black" id="home">
       <HeroSection />
       <SkillBanner />
+      <PartnerBanner />
+
       <section className="bg-black p-4 flex flex-col justify-center">
         <About />
       </section>
@@ -582,7 +584,7 @@ const HomePage = () => {
                 </div>
               }
               buttonText="See Resources"
-              buttonLink="/blog"
+              buttonLink="/resources"
             />
             <EduBoxLarge
               title="PORTFOLIO SUPPORT"
@@ -630,21 +632,19 @@ const HomePage = () => {
                 </div>
               }
               buttonText="Request Form"
-              buttonLink="/contact"
+              buttonLink="/membership"
             />
           </div>
         </div>
       </div>
 
-      <PartnerBanner />
-
-      <div className="sm:px-8 px-2">
+      <div className="sm:px-8 px-4">
         <GameOfTheMonth fromLanding={true} />
       </div>
 
       <section className="relative">
-        <div id="openhours" className="absolute top-[-80px]"></div>
-        <LandingOpenHours />
+        <div id="testimonials" className="absolute top-[-80px]"></div>
+        <LandingTestimonials />
       </section>
 
       <section className="relative">
@@ -653,9 +653,10 @@ const HomePage = () => {
       </section>
 
       <section className="relative">
-        <div id="testimonials" className="absolute top-[-80px]"></div>
-        <LandingTestimonials />
+        <div id="openhours" className="absolute top-[-80px]"></div>
+        <LandingOpenHours />
       </section>
+
       <FullCTA />
     </div>
   );

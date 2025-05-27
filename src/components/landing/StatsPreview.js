@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 const stats = [
-  { value: "280+", label: "Members" },
+  { value: "294+", label: "Members" },
   { value: "20+", label: "Projects" },
   { value: "50+", label: "Games Released" }, // Changed label slightly
   { value: "45+", label: "Events Hosted" }, // Changed label slightly

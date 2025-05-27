@@ -21,9 +21,9 @@ const doubledLogos = [...partnerLogos, ...partnerLogos];
 export const PartnerBanner = () => {
   return (
     <section className="bg-black py-12 overflow-hidden whitespace-nowrap relative">
-      <h2 className="text-center text-2xl text-muted-foreground font-semibold mb-8">
+      {/* <h2 className="text-center text-2xl text-muted-foreground font-semibold mb-8">
         Our Collaborators
-      </h2>
+      </h2> */}
       <div className="animate-marquee-slow inline-block">
         {doubledLogos.map((logo, index) => (
           <div

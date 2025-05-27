@@ -8,19 +8,19 @@ import Link from "next/link";
 export default function PackageCard({ package: pkg, isUnlocked }) {
   // Handle image paths for the Top Rat game
   let imagePath = "/g1/g1-mvp.png"; // Default to the main game image
-  
+
   // If coverImage is provided, use it with proper formatting
   if (pkg.coverImage) {
     // If it's already a full path starting with /g1/, use it as is
-    if (pkg.coverImage.startsWith('/g1/')) {
+    if (pkg.coverImage.startsWith("/g1/")) {
       imagePath = pkg.coverImage;
-    } 
+    }
     // If it's just the filename without extension, add the path and extension
-    else if (!pkg.coverImage.includes('/') && !pkg.coverImage.includes('.')) {
+    else if (!pkg.coverImage.includes("/") && !pkg.coverImage.includes(".")) {
       imagePath = `/g1/${pkg.coverImage}.png`;
     }
     // If it's just the filename with extension but no path
-    else if (!pkg.coverImage.startsWith('/')) {
+    else if (!pkg.coverImage.startsWith("/")) {
       imagePath = `/${pkg.coverImage}`;
     }
     // Otherwise use as is
@@ -63,9 +63,11 @@ export default function PackageCard({ package: pkg, isUnlocked }) {
             </Link>
           </Button>
         ) : (
-          <Button variant="outline" disabled className="w-full">
-            <LockIcon className="h-4 w-4 mr-2" />
-            Subscribe to Unlock
+          <Button className="w-full">
+            <Link href="/pricing" className="w-full flex justify-center">
+              <LockIcon className="h-4 w-4 mr-2" />
+              Subscribe to Unlock
+            </Link>
           </Button>
         )}
       </CardFooter>
