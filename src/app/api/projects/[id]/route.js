@@ -18,29 +18,75 @@ async function getUserFromToken(request) {
 }
 
 async function getUserDetails(userIds) {
-  if (!userIds || userIds.length === 0) return [];
+  if (!userIds || userIds.length === 0) {
+    console.log("🔍 [getUserDetails] No user IDs provided");
+    return [];
+  }
+
+  console.log("🔍 [getUserDetails] Fetching details for user IDs:", userIds);
 
   try {
     const userPromises = userIds.map(async (uid) => {
       try {
+        console.log(`🔍 [getUserDetails] Fetching user: ${uid}`);
         const userDoc = await adminDb.collection("users").doc(uid).get();
+
         if (userDoc.exists) {
           const userData = userDoc.data();
+          console.log(`✅ [getUserDetails] Found user ${uid}:`, userData);
           return {
             uid,
             username: userData.username || "Unknown User",
             email: userData.email || "",
             avatar: userData.avatar || null,
           };
+        } else {
+          console.log(`❌ [getUserDetails] User ${uid} not found in database`);
+
+          // Try to get user info from Firebase Auth and create a basic user document
+          try {
+            const authUser = await adminAuth.getUser(uid);
+            console.log(
+              `🔍 [getUserDetails] Found auth user ${uid}:`,
+              authUser
+            );
+
+            const basicUserData = {
+              uid,
+              username:
+                authUser.displayName ||
+                authUser.email?.split("@")[0] ||
+                "Unknown User",
+              email: authUser.email || "",
+              createdAt: new Date(),
+              provider: authUser.providerData[0]?.providerId || "unknown",
+            };
+
+            // Create the user document
+            await adminDb.collection("users").doc(uid).set(basicUserData);
+            console.log(`✅ [getUserDetails] Created user document for ${uid}`);
+
+            return {
+              uid,
+              username: basicUserData.username,
+              email: basicUserData.email,
+              avatar: authUser.photoURL || null,
+            };
+          } catch (authError) {
+            console.error(
+              `❌ [getUserDetails] Error fetching auth user ${uid}:`,
+              authError
+            );
+            return {
+              uid,
+              username: "Unknown User",
+              email: "",
+              avatar: null,
+            };
+          }
         }
-        return {
-          uid,
-          username: "Unknown User",
-          email: "",
-          avatar: null,
-        };
       } catch (error) {
-        console.error(`Error fetching user ${uid}:`, error);
+        console.error(`❌ [getUserDetails] Error fetching user ${uid}:`, error);
         return {
           uid,
           username: "Unknown User",
@@ -50,9 +96,11 @@ async function getUserDetails(userIds) {
       }
     });
 
-    return await Promise.all(userPromises);
+    const results = await Promise.all(userPromises);
+    console.log("🔍 [getUserDetails] Final results:", results);
+    return results;
   } catch (error) {
-    console.error("Error fetching user details:", error);
+    console.error("❌ [getUserDetails] Error fetching user details:", error);
     return [];
   }
 }
@@ -91,7 +139,11 @@ export async function GET(request, { params }) {
       ...(projectData.teamMembers || []),
     ];
     const uniqueUserIds = [...new Set(allUserIds)];
+    console.log("🔍 [ProjectAPI] All user IDs:", allUserIds);
+    console.log("🔍 [ProjectAPI] Unique user IDs:", uniqueUserIds);
+
     const userDetails = await getUserDetails(uniqueUserIds);
+    console.log("🔍 [ProjectAPI] User details fetched:", userDetails);
 
     // Get linked projects if any
     let linkedProjects = [];
@@ -123,6 +175,18 @@ export async function GET(request, { params }) {
       }
     }
 
+    const ownerDetails = userDetails.find((u) => u.uid === projectData.owner);
+    const adminDetails = userDetails.filter((u) =>
+      projectData.admins?.includes(u.uid)
+    );
+    const teamMemberDetails = userDetails.filter((u) =>
+      projectData.teamMembers?.includes(u.uid)
+    );
+
+    console.log("🔍 [ProjectAPI] Owner details:", ownerDetails);
+    console.log("🔍 [ProjectAPI] Admin details:", adminDetails);
+    console.log("🔍 [ProjectAPI] Team member details:", teamMemberDetails);
+
     const project = {
       id: projectDoc.id,
       ...projectData,
@@ -132,13 +196,9 @@ export async function GET(request, { params }) {
       updatedAt:
         projectData.updatedAt?.toDate?.()?.toISOString() ||
         projectData.updatedAt,
-      ownerDetails: userDetails.find((u) => u.uid === projectData.owner),
-      adminDetails: userDetails.filter((u) =>
-        projectData.admins?.includes(u.uid)
-      ),
-      teamMemberDetails: userDetails.filter((u) =>
-        projectData.teamMembers?.includes(u.uid)
-      ),
+      ownerDetails,
+      adminDetails,
+      teamMemberDetails,
       linkedProjects,
     };
 

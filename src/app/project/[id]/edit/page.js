@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { useRouter, useParams } from "next/navigation";
 import MobxStore from "@/mobx";
+import { auth } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,12 +29,27 @@ const projectSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title too long"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   categoryTags: z.array(z.string()).min(1, "At least one category is required"),
-  type: z.enum(["Game", "Tool", "Asset", "Tutorial", "Other"]),
+  type: z.enum([
+    "Game Development",
+    "Art & Design",
+    "Programming",
+    "Music & Audio",
+    "Writing & Narrative",
+    "Marketing",
+    "Other",
+  ]),
   visibility: z.enum(["Public", "Private", "Invite Only"]),
   goal: z.string().optional(),
   duration: z.string().optional(),
   budget: z.string().optional(),
-  compensationType: z.enum(["Paid", "Revenue Share", "Volunteer", "Equity"]),
+  compensationType: z.enum([
+    "Paid",
+    "Revenue Share",
+    "Portfolio/Experience",
+    "Volunteer",
+    "Equity",
+    "Hybrid",
+  ]),
   requiredRoles: z.array(z.string()),
 });
 
@@ -62,18 +78,22 @@ const CATEGORY_OPTIONS = [
 const ROLE_OPTIONS = [
   "Game Designer",
   "Programmer",
-  "Artist",
+  "C# Developer",
+  "Unity Developer",
+  "Unreal Developer",
+  "2D Artist",
+  "3D Artist",
+  "UI/UX Designer",
   "Animator",
   "Sound Designer",
-  "Music Composer",
+  "Composer",
   "Writer",
+  "Narrative Designer",
+  "Project Manager",
   "Producer",
   "QA Tester",
-  "Marketing",
-  "Business Developer",
-  "UI/UX Designer",
-  "3D Modeler",
-  "Level Designer",
+  "Marketing Specialist",
+  "Other",
 ];
 
 const EditProjectPage = observer(() => {
@@ -85,7 +105,7 @@ const EditProjectPage = observer(() => {
     title: "",
     description: "",
     categoryTags: [],
-    type: "Game",
+    type: "Game Development",
     visibility: "Public",
     goal: "",
     duration: "",
@@ -209,7 +229,7 @@ const EditProjectPage = observer(() => {
           title: projectData.title || "",
           description: projectData.description || "",
           categoryTags: projectData.categoryTags || [],
-          type: projectData.type || "Game",
+          type: projectData.type || "Game Development",
           visibility: projectData.visibility || "Public",
           goal: projectData.goal || "",
           duration: projectData.duration || "",
@@ -265,21 +285,31 @@ const EditProjectPage = observer(() => {
       // Validate form data
       const validatedData = projectSchema.parse(formData);
 
+      // Check if user is authenticated
+      if (!auth.currentUser) {
+        throw new Error("User not authenticated");
+      }
+
+      const token = await auth.currentUser.getIdToken();
+
+      const requestBody = {
+        ...validatedData,
+        updatedAt: new Date().toISOString(),
+      };
+
       // Update project
       const response = await fetch(`/api/projects/${projectId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${await MobxStore.user.getIdToken()}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...validatedData,
-          updatedAt: new Date().toISOString(),
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error("❌ [EditProject] API error:", errorData);
         throw new Error(errorData.error || "Failed to update project");
       }
 
@@ -293,6 +323,7 @@ const EditProjectPage = observer(() => {
         title: "Success",
         description: "Project updated successfully!",
       });
+
       router.push(`/project/${projectId}`);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -332,7 +363,7 @@ const EditProjectPage = observer(() => {
       const response = await fetch(`/api/projects/${projectId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${await MobxStore.user.getIdToken()}`,
+          Authorization: `Bearer ${await auth.currentUser.getIdToken()}`,
         },
       });
 
@@ -479,13 +510,19 @@ const EditProjectPage = observer(() => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {["Game", "Tool", "Asset", "Tutorial", "Other"].map(
-                        (type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        )
-                      )}
+                      {[
+                        "Game Development",
+                        "Art & Design",
+                        "Programming",
+                        "Music & Audio",
+                        "Writing & Narrative",
+                        "Marketing",
+                        "Other",
+                      ].map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -615,8 +652,12 @@ const EditProjectPage = observer(() => {
                   <SelectContent>
                     <SelectItem value="Paid">Paid</SelectItem>
                     <SelectItem value="Revenue Share">Revenue Share</SelectItem>
+                    <SelectItem value="Portfolio/Experience">
+                      Portfolio/Experience
+                    </SelectItem>
                     <SelectItem value="Volunteer">Volunteer</SelectItem>
                     <SelectItem value="Equity">Equity</SelectItem>
+                    <SelectItem value="Hybrid">Hybrid</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
