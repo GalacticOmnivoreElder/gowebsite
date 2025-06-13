@@ -367,13 +367,22 @@ class Store {
   }
 
   async fetchProjectDetails(id) {
-    // Check cache first
+    // Check cache first, but only use it if it has detailed user information
     if (this.cachedProjects.has(id)) {
       const cachedProject = this.cachedProjects.get(id);
-      runInAction(() => {
-        this.projectDetails.set(id, cachedProject);
-      });
-      return cachedProject;
+      // Only use cached data if it has the detailed user information
+      if (
+        cachedProject.ownerDetails ||
+        cachedProject.adminDetails ||
+        cachedProject.teamMemberDetails
+      ) {
+        runInAction(() => {
+          this.projectDetails.set(id, cachedProject);
+        });
+        return cachedProject;
+      }
+      // If cached data doesn't have user details, remove it and fetch fresh
+      this.cachedProjects.delete(id);
     }
 
     // If already loading, wait for the existing request

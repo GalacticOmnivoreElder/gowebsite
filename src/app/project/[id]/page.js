@@ -30,30 +30,32 @@ import {
   Mail,
   User,
 } from "lucide-react";
+import UserLink from "@/components/ui/UserLink";
 
-const UserCard = ({ user, role }) => (
-  <Card className="hover:shadow-md transition-shadow">
-    <CardContent className="p-4">
-      <div className="flex items-center space-x-3">
-        <Avatar>
-          <AvatarImage src={user.avatar} />
-          <AvatarFallback>
-            {user.username?.charAt(0)?.toUpperCase() || "U"}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <p className="font-medium truncate">{user.username}</p>
-          <p className="text-sm text-muted-foreground">{role}</p>
-          {user.email && (
-            <p className="text-xs text-muted-foreground truncate">
-              {user.email}
-            </p>
-          )}
+const UserCard = ({ user, role }) => {
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex items-center space-x-3">
+          <UserLink user={user} showUsername={false} avatarSize="default" />
+          <div className="flex-1 min-w-0">
+            <UserLink
+              user={user}
+              showAvatar={false}
+              className="font-medium truncate block"
+            />
+            <p className="text-sm text-muted-foreground">{role}</p>
+            {user.email && (
+              <p className="text-xs text-muted-foreground truncate">
+                {user.email}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
-    </CardContent>
-  </Card>
-);
+      </CardContent>
+    </Card>
+  );
+};
 
 const LinkedProjectCard = ({ project }) => (
   <Card className="hover:shadow-md transition-shadow">
@@ -112,6 +114,7 @@ const ProjectDetailsPage = observer(() => {
             "✅ [ProjectDetails] Setting project data:",
             projectData.title
           );
+
           setProject(projectData);
         } else {
           setError("Project not found");

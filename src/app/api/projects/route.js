@@ -255,9 +255,41 @@ export async function POST(request) {
     };
 
     const docRef = await adminDb.collection("projects").add(newProject);
+    const projectId = docRef.id;
+
+    // Update user's project arrays
+    try {
+      const userRef = adminDb.collection("users").doc(user.uid);
+      const userDoc = await userRef.get();
+
+      if (userDoc.exists) {
+        const userData = userDoc.data();
+        const updates = {
+          ownerOfProjects: [...(userData.ownerOfProjects || []), projectId],
+          adminOfProjects: [...(userData.adminOfProjects || []), projectId],
+          teamMemberOfProjects: [
+            ...(userData.teamMemberOfProjects || []),
+            projectId,
+          ],
+          updatedAt: new Date(),
+        };
+
+        await userRef.update(updates);
+        console.log(
+          `✅ Updated user ${user.uid} project arrays for new project ${projectId}`
+        );
+      } else {
+        console.log(
+          `⚠️ User document ${user.uid} not found when updating project arrays`
+        );
+      }
+    } catch (error) {
+      console.error("Error updating user project arrays:", error);
+      // Don't fail the project creation if user update fails
+    }
 
     return NextResponse.json({
-      id: docRef.id,
+      id: projectId,
       ...newProject,
       createdAt: newProject.createdAt.toISOString(),
       updatedAt: newProject.updatedAt.toISOString(),
