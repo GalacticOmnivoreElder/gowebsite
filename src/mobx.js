@@ -71,6 +71,11 @@ class Store {
     hasMore: true,
   };
 
+  // Applications
+  applications = [];
+  applicationsLoading = false;
+  applicationsFetched = false;
+
   lists = [];
   // App States
   isMobileOpen = false;
@@ -452,6 +457,85 @@ class Store {
 
   isProjectDetailsLoading(id) {
     return this.projectDetailsLoading.get(id) || false;
+  }
+
+  // Applications Methods
+  async fetchApplications() {
+    if (this.applicationsLoading || !this.user) return;
+
+    runInAction(() => {
+      this.applicationsLoading = true;
+    });
+
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch("/api/applications", {
+        headers,
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch applications");
+
+      const data = await response.json();
+
+      runInAction(() => {
+        this.applications = data.applications;
+        this.applicationsFetched = true;
+      });
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+    } finally {
+      runInAction(() => {
+        this.applicationsLoading = false;
+      });
+    }
+  }
+
+  async updateApplicationStatus(applicationId, status) {
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/applications/${applicationId}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update application");
+      }
+
+      const updatedApplication = await response.json();
+
+      runInAction(() => {
+        const index = this.applications.findIndex(
+          (app) => app.id === applicationId
+        );
+        if (index !== -1) {
+          this.applications[index] = updatedApplication;
+        }
+      });
+
+      return updatedApplication;
+    } catch (error) {
+      console.error("Error updating application:", error);
+      throw error;
+    }
   }
 
   //

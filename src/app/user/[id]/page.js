@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { auth } from "@/firebase";
 import MobxStore from "@/mobx";
 
@@ -13,7 +13,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   User,
   Settings,
@@ -148,9 +147,7 @@ const SocialLink = ({ platform, value, label }) => {
 const UserProfilePage = observer(() => {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
   const userId = params.id;
-  const activeTab = searchParams.get("tab") || "profile";
 
   const [profile, setProfile] = useState(null);
   const [projects, setProjects] = useState(null);
@@ -198,11 +195,10 @@ const UserProfilePage = observer(() => {
 
   useEffect(() => {
     const fetchProjects = async () => {
-      if (!profile || activeTab !== "projects") return;
+      if (!userId) return;
 
       try {
         setProjectsLoading(true);
-
         const headers = {
           "Content-Type": "application/json",
         };
@@ -216,13 +212,10 @@ const UserProfilePage = observer(() => {
           headers,
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to fetch projects");
+        if (response.ok) {
+          const projectsData = await response.json();
+          setProjects(projectsData);
         }
-
-        const projectsData = await response.json();
-        setProjects(projectsData);
       } catch (err) {
         console.error("Error fetching projects:", err);
       } finally {
@@ -231,19 +224,25 @@ const UserProfilePage = observer(() => {
     };
 
     fetchProjects();
-  }, [userId, profile, activeTab]);
+  }, [userId]);
+
+  const getInitials = (name) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto space-y-6">
-          <Skeleton className="h-8 w-1/4" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-48 w-full" />
           <Skeleton className="h-64 w-full" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Skeleton className="h-40" />
-            <Skeleton className="h-40" />
-            <Skeleton className="h-40" />
-          </div>
         </div>
       </div>
     );
@@ -266,37 +265,36 @@ const UserProfilePage = observer(() => {
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-4">User Not Found</h2>
-          <p className="text-muted-foreground mb-4">
-            The user you're looking for doesn't exist.
+          <p className="text-muted-foreground">
+            The user you're looking for doesn't exist or their profile is
+            private.
           </p>
-          <Button onClick={() => router.push("/projects")}>
-            Back to Projects
-          </Button>
         </div>
       </div>
     );
   }
 
-  if (profile.isPrivate) {
+  // Check if profile is private and user is not the owner
+  if (profile.profilePrivacy === "private" && !isOwnProfile) {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardContent className="p-8 text-center">
-              <Lock className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-2xl font-bold mb-4">Private Profile</h2>
-              <div className="flex items-center justify-center gap-3 mb-4">
+              <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Private Profile</h2>
+              <p className="text-muted-foreground mb-4">
+                This user has set their profile to private.
+              </p>
+              <div className="flex items-center justify-center space-x-4">
                 <Avatar className="h-16 w-16">
                   <AvatarImage src={profile.avatar} />
-                  <AvatarFallback>
-                    {profile.username?.charAt(0)?.toUpperCase() || "U"}
+                  <AvatarFallback className="text-lg">
+                    {getInitials(profile.username)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="text-lg font-semibold">{profile.username}</h3>
-                  <p className="text-muted-foreground">
-                    This user's profile is private
-                  </p>
+                  <h3 className="text-lg font-medium">{profile.username}</h3>
                 </div>
               </div>
             </CardContent>
@@ -308,216 +306,219 @@ const UserProfilePage = observer(() => {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={profile.avatar} />
-              <AvatarFallback className="text-2xl">
-                {profile.username?.charAt(0)?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-3xl font-bold">{profile.username}</h1>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  Joined {new Date(profile.joinedAt).toLocaleDateString()}
-                </span>
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Profile Header */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={profile.avatar} />
+                  <AvatarFallback className="text-lg">
+                    {getInitials(profile.username)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h1 className="text-3xl font-bold">{profile.username}</h1>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Joined {new Date(profile.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
               </div>
+              {isOwnProfile && (
+                <Button asChild>
+                  <Link href="/profile">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Edit Profile
+                  </Link>
+                </Button>
+              )}
             </div>
+
+            {profile.bio && (
+              <div className="mt-6">
+                <p className="text-muted-foreground">{profile.bio}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Skills */}
+        {profile.skills && profile.skills.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Skills</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {profile.skills.map((skill, index) => (
+                  <Badge key={index} variant="secondary">
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Social Links */}
+        {profile.socialLinks &&
+          Object.values(profile.socialLinks).some(
+            (link) => link?.value && link?.visible
+          ) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Connect</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {Object.entries(profile.socialLinks).map(
+                    ([platform, link]) =>
+                      link?.visible && (
+                        <SocialLink
+                          key={platform}
+                          platform={platform}
+                          value={link.value}
+                          label={link.label}
+                        />
+                      )
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+        {/* Projects Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Projects</h2>
+            {projects && (
+              <span className="text-sm text-muted-foreground">
+                {projects.totalProjects} total projects
+              </span>
+            )}
           </div>
 
-          {isOwnProfile && (
-            <Button asChild>
-              <Link href="/profile">
-                <Settings className="h-4 w-4 mr-2" />
-                Edit Profile
-              </Link>
-            </Button>
-          )}
-        </div>
-
-        {/* Tabs */}
-        <Tabs value={activeTab} className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="profile" asChild>
-              <Link href={`/user/${userId}?tab=profile`}>
-                <User className="h-4 w-4 mr-2" />
-                Profile
-              </Link>
-            </TabsTrigger>
-            {(isOwnProfile || (projects && projects.totalProjects > 0)) && (
-              <TabsTrigger value="projects" asChild>
-                <Link href={`/user/${userId}?tab=projects`}>
-                  <Briefcase className="h-4 w-4 mr-2" />
-                  Projects
-                </Link>
-              </TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value="profile" className="space-y-6">
-            {/* Bio */}
-            {profile.bio && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>About</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{profile.bio}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Skills */}
-            {profile.skills && profile.skills.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Skills</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {profile.skills.map((skill, index) => (
-                      <Badge key={index} variant="secondary">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Social Links */}
-            {profile.socialLinks &&
-              Object.keys(profile.socialLinks).length > 0 && (
+          {projectsLoading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))}
+            </div>
+          ) : projects ? (
+            <div className="space-y-6">
+              {/* Owner Projects */}
+              {projects.ownerProjects && projects.ownerProjects.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Connect</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      <Crown className="h-5 w-5 text-yellow-500" />
+                      Owner ({projects.ownerProjects.length})
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      {Object.entries(profile.socialLinks).map(
-                        ([platform, value]) => (
-                          <SocialLink
-                            key={platform}
-                            platform={platform}
-                            value={value}
-                            label={
-                              platform.charAt(0).toUpperCase() +
-                              platform.slice(1)
-                            }
-                          />
-                        )
-                      )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {projects.ownerProjects.map((project) => (
+                        <ProjectCard
+                          key={project.id}
+                          project={project}
+                          role="Owner"
+                        />
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
               )}
-          </TabsContent>
 
-          <TabsContent value="projects" className="space-y-6">
-            {projectsLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-32 w-full" />
-              </div>
-            ) : projects ? (
-              <div className="space-y-8">
-                {/* Owner Projects */}
-                {projects.ownerProjects &&
-                  projects.ownerProjects.length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Crown className="h-5 w-5 text-yellow-500" />
-                          Owner of Projects ({projects.ownerProjects.length})
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {projects.ownerProjects.map((project) => (
-                            <ProjectCard
-                              key={project.id}
-                              project={project}
-                              role="Owner"
-                            />
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+              {/* Admin Projects */}
+              {projects.adminProjects && projects.adminProjects.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <UserCheck className="h-5 w-5 text-blue-500" />
+                      Admin ({projects.adminProjects.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {projects.adminProjects.map((project) => (
+                        <ProjectCard
+                          key={project.id}
+                          project={project}
+                          role="Admin"
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-                {/* Admin Projects */}
-                {projects.adminProjects &&
-                  projects.adminProjects.length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <UserCheck className="h-5 w-5 text-blue-500" />
-                          Admin of Projects ({projects.adminProjects.length})
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {projects.adminProjects.map((project) => (
-                            <ProjectCard
-                              key={project.id}
-                              project={project}
-                              role="Admin"
-                            />
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+              {/* Team Member Projects */}
+              {projects.teamMemberProjects &&
+                projects.teamMemberProjects.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-green-500" />
+                        Team Member ({projects.teamMemberProjects.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {projects.teamMemberProjects.map((project) => (
+                          <ProjectCard
+                            key={project.id}
+                            project={project}
+                            role="Team Member"
+                          />
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-                {/* Team Member Projects */}
-                {projects.teamMemberProjects &&
-                  projects.teamMemberProjects.length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Users className="h-5 w-5 text-green-500" />
-                          Team Member of Projects (
-                          {projects.teamMemberProjects.length})
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {projects.teamMemberProjects.map((project) => (
-                            <ProjectCard
-                              key={project.id}
-                              project={project}
-                              role="Team Member"
-                            />
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                {projects.totalProjects === 0 && (
+              {/* No Projects */}
+              {(!projects.ownerProjects ||
+                projects.ownerProjects.length === 0) &&
+                (!projects.adminProjects ||
+                  projects.adminProjects.length === 0) &&
+                (!projects.teamMemberProjects ||
+                  projects.teamMemberProjects.length === 0) && (
                   <Card>
                     <CardContent className="p-8 text-center">
-                      <Briefcase className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                      <h3 className="text-lg font-semibold mb-2">
+                      <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">
                         No Projects Yet
                       </h3>
                       <p className="text-muted-foreground">
                         {isOwnProfile
-                          ? "You haven't joined any projects yet. Start by creating or joining a project!"
-                          : "This user hasn't joined any public projects yet."}
+                          ? "You haven't created or joined any projects yet."
+                          : "This user hasn't created or joined any public projects yet."}
                       </p>
+                      {isOwnProfile && (
+                        <Button asChild className="mt-4">
+                          <Link href="/project/create">
+                            Create Your First Project
+                          </Link>
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 )}
-              </div>
-            ) : null}
-          </TabsContent>
-        </Tabs>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground">
+                  Failed to load projects.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );

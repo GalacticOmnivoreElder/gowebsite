@@ -17,6 +17,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/components/ui/use-toast";
+import {
   Edit,
   Users,
   Eye,
@@ -29,6 +39,8 @@ import {
   ExternalLink,
   Mail,
   User,
+  Send,
+  LogIn,
 } from "lucide-react";
 import UserLink from "@/components/ui/UserLink";
 
@@ -98,6 +110,11 @@ const ProjectDetailsPage = observer(() => {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showApplyDialog, setShowApplyDialog] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
+  const [userApplication, setUserApplication] = useState(null);
+  const [applicationLoading, setApplicationLoading] = useState(false);
 
   const projectId = params.id;
 
@@ -110,11 +127,6 @@ const ProjectDetailsPage = observer(() => {
         const projectData = await MobxStore.fetchProjectDetails(projectId);
 
         if (projectData) {
-          console.log(
-            "✅ [ProjectDetails] Setting project data:",
-            projectData.title
-          );
-
           setProject(projectData);
         } else {
           setError("Project not found");
@@ -130,6 +142,41 @@ const ProjectDetailsPage = observer(() => {
       fetchProject();
     }
   }, [projectId]);
+
+  // Check if user has applied to this project
+  useEffect(() => {
+    const checkUserApplication = async () => {
+      if (!MobxStore.user || !projectId) return;
+
+      setApplicationLoading(true);
+      try {
+        const headers = {
+          "Content-Type": "application/json",
+        };
+
+        if (auth.currentUser) {
+          const token = await auth.currentUser.getIdToken();
+          headers.Authorization = `Bearer ${token}`;
+        }
+
+        const response = await fetch("/api/applications", { headers });
+
+        if (response.ok) {
+          const data = await response.json();
+          const application = data.applications.find(
+            (app) => app.projectId === projectId && app.status !== "cancelled"
+          );
+          setUserApplication(application || null);
+        }
+      } catch (error) {
+        console.error("Error checking user application:", error);
+      } finally {
+        setApplicationLoading(false);
+      }
+    };
+
+    checkUserApplication();
+  }, [MobxStore.user, projectId, project]);
 
   const formatBudget = (budget) => {
     if (budget >= 1000000) {
@@ -166,6 +213,21 @@ const ProjectDetailsPage = observer(() => {
 
   const getStatusColor = (status) => {
     switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "approved":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "rejected":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "cancelled":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const getProjectStatusColor = (status) => {
+    switch (status) {
       case "live":
         return "bg-green-100 text-green-800 border-green-200";
       case "draft":
@@ -181,8 +243,111 @@ const ProjectDetailsPage = observer(() => {
     (project.owner === MobxStore.user.uid ||
       project.admins?.includes(MobxStore.user.uid));
 
+  const isProjectMember =
+    project &&
+    MobxStore.user &&
+    (project.owner === MobxStore.user.uid ||
+      project.admins?.includes(MobxStore.user.uid) ||
+      project.teamMembers?.includes(MobxStore.user.uid));
+
   const handleEdit = () => {
     router.push(`/project/${projectId}/edit`);
+  };
+
+  const handleApply = () => {
+    if (!MobxStore.user) {
+      router.push(`/login?redirect=/project/${projectId}`);
+      return;
+    }
+    setShowApplyDialog(true);
+  };
+
+  const submitApplication = async () => {
+    if (!consentGiven) {
+      toast({
+        title: "Consent Required",
+        description:
+          "Please confirm that you consent to sharing your profile information.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setApplying(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          projectId,
+          projectTitle: project.title,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit application");
+      }
+
+      toast({
+        title: "Application Submitted!",
+        description:
+          "Your application has been sent to the project owner and admins.",
+      });
+
+      setShowApplyDialog(false);
+      setConsentGiven(false);
+
+      // Refresh application status
+      const data = await response.json();
+      setUserApplication(data);
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit application",
+        variant: "destructive",
+      });
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleCancelApplication = async (applicationId) => {
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(`/api/applications/${applicationId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "cancelled" }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to cancel application");
+      }
+
+      toast({
+        title: "Application Cancelled",
+        description: "Your application has been cancelled successfully.",
+      });
+
+      setUserApplication(null);
+    } catch (error) {
+      console.error("Error cancelling application:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to cancel application",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -275,7 +440,9 @@ const ProjectDetailsPage = observer(() => {
             <div className="flex-1">
               <h1 className="text-4xl font-bold mb-4">{project.title}</h1>
               <div className="flex flex-wrap gap-2 mb-4">
-                <Badge className={`${getStatusColor(project.status)} border`}>
+                <Badge
+                  className={`${getProjectStatusColor(project.status)} border`}
+                >
                   {project.status === "live" ? "Live" : "Draft"}
                 </Badge>
                 <Badge variant="secondary" className="flex items-center gap-1">
@@ -286,6 +453,95 @@ const ProjectDetailsPage = observer(() => {
               </div>
             </div>
           </div>
+
+          {/* Apply CTA */}
+          {project.status === "live" && !isProjectMember && (
+            <Card className="mb-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+              <CardContent className="p-6">
+                {applicationLoading ? (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Skeleton className="h-6 w-48 mb-2" />
+                      <Skeleton className="h-4 w-64" />
+                    </div>
+                    <Skeleton className="h-10 w-32" />
+                  </div>
+                ) : userApplication ? (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">
+                        Your Application Status
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={`${getStatusColor(userApplication.status)} border`}
+                        >
+                          {userApplication.status.charAt(0).toUpperCase() +
+                            userApplication.status.slice(1)}
+                        </Badge>
+                        <span className="text-muted-foreground">
+                          Applied on{" "}
+                          {new Date(
+                            userApplication.createdAt
+                          ).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground mt-1">
+                        {userApplication.status === "pending" &&
+                          "Your application is being reviewed by the project team."}
+                        {userApplication.status === "approved" &&
+                          "Congratulations! Your application has been approved."}
+                        {userApplication.status === "rejected" &&
+                          "Your application was not accepted this time."}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      {userApplication.status === "pending" && (
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            handleCancelApplication(userApplication.id)
+                          }
+                        >
+                          Cancel Application
+                        </Button>
+                      )}
+                      <Button variant="outline" asChild>
+                        <Link href="/profile?tab=applications">
+                          View All Applications
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">
+                        Interested in joining this project?
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Apply to become a team member and contribute your skills
+                        to this project.
+                      </p>
+                    </div>
+                    <Button size="lg" onClick={handleApply} className="ml-4">
+                      {MobxStore.user ? (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Apply to Project
+                        </>
+                      ) : (
+                        <>
+                          <LogIn className="h-4 w-4 mr-2" />
+                          Login to Apply
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {project.categoryTags && project.categoryTags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
@@ -457,6 +713,78 @@ const ProjectDetailsPage = observer(() => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Application Dialog */}
+        <Dialog open={showApplyDialog} onOpenChange={setShowApplyDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Apply to {project.title}</DialogTitle>
+              <DialogDescription>
+                You are applying to join this project with your profile. The
+                project owner and admins will be notified when you apply.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h4 className="font-medium mb-2">
+                  What happens when you apply:
+                </h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>
+                    • Your profile will be visible to the project owner and
+                    admins
+                  </li>
+                  <li>
+                    • They will be able to see your skills and contact
+                    information
+                  </li>
+                  <li>
+                    • They may contact you via your primary email:{" "}
+                    {MobxStore.user?.email}
+                  </li>
+                  <li>
+                    • You can track your application status in your profile
+                  </li>
+                </ul>
+              </div>
+
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="consent"
+                  checked={consentGiven}
+                  onCheckedChange={setConsentGiven}
+                />
+                <label
+                  htmlFor="consent"
+                  className="text-sm leading-relaxed cursor-pointer"
+                >
+                  I consent to sharing my profile information with the project
+                  owner and admins, and I understand they may contact me
+                  regarding this application.
+                </label>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowApplyDialog(false);
+                  setConsentGiven(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={submitApplication}
+                disabled={!consentGiven || applying}
+              >
+                {applying ? "Submitting..." : "Submit Application"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

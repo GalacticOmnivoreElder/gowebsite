@@ -33,11 +33,16 @@ async function fetchProjectsByIds(projectIds) {
             id: projectDoc.id,
             title: data.title,
             description: data.description,
+            goal: data.goal,
             thumbnail: data.thumbnail,
             status: data.status,
             visibility: data.visibility,
             type: data.type,
             categoryTags: data.categoryTags,
+            budget: data.budget,
+            duration: data.duration,
+            compensationType: data.compensationType,
+            requiredRoles: data.requiredRoles,
             createdAt:
               data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
             updatedAt:
