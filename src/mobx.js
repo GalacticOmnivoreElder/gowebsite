@@ -51,6 +51,26 @@ class Store {
   blogDetailsLoading = new Map();
   blogsFetched = false;
 
+  // Projects
+  projects = [];
+  projectDetails = new Map();
+  cachedProjects = new Map();
+  projectsLoading = false;
+  projectDetailsLoading = new Map();
+  projectFilters = {
+    search: "",
+    category: "all",
+    type: "all",
+    visibility: "all",
+    status: "all",
+    sortBy: "created_desc",
+  };
+  projectPagination = {
+    page: 1,
+    limit: 20,
+    hasMore: true,
+  };
+
   lists = [];
   // App States
   isMobileOpen = false;
@@ -281,6 +301,150 @@ class Store {
     return this.blogDetailsLoading.get(slug) || false;
   }
 
+  // Projects Methods
+  async fetchProjects(filters = {}, reset = false) {
+    if (this.projectsLoading) return;
+
+    runInAction(() => {
+      this.projectsLoading = true;
+      if (reset) {
+        this.projects = [];
+        this.projectPagination.page = 1;
+        this.projectPagination.hasMore = true;
+      }
+    });
+
+    try {
+      const params = new URLSearchParams({
+        page: this.projectPagination.page.toString(),
+        limit: this.projectPagination.limit.toString(),
+        ...this.projectFilters,
+        ...filters,
+      });
+
+      // Prepare headers with authentication if user is logged in
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      // Add auth header if user is authenticated
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/projects?${params}`, {
+        headers,
+      });
+      if (!response.ok) throw new Error("Failed to fetch projects");
+
+      const data = await response.json();
+
+      runInAction(() => {
+        if (reset) {
+          this.projects = data.projects;
+        } else {
+          this.projects = [...this.projects, ...data.projects];
+        }
+
+        // Cache the projects
+        data.projects.forEach((project) => {
+          this.cachedProjects.set(project.id, project);
+        });
+
+        this.projectPagination.hasMore = data.hasMore;
+        if (data.hasMore) {
+          this.projectPagination.page += 1;
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    } finally {
+      runInAction(() => {
+        this.projectsLoading = false;
+      });
+    }
+  }
+
+  async fetchProjectDetails(id) {
+    // Check cache first
+    if (this.cachedProjects.has(id)) {
+      const cachedProject = this.cachedProjects.get(id);
+      runInAction(() => {
+        this.projectDetails.set(id, cachedProject);
+      });
+      return cachedProject;
+    }
+
+    // If already loading, wait for the existing request
+    if (this.projectDetailsLoading.get(id)) {
+      // Wait for the loading to complete and then return the cached result
+      return new Promise((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (!this.projectDetailsLoading.get(id)) {
+            clearInterval(checkInterval);
+            const project = this.cachedProjects.get(id);
+            resolve(project || null);
+          }
+        }, 50); // Check every 50ms
+      });
+    }
+
+    runInAction(() => {
+      this.projectDetailsLoading.set(id, true);
+    });
+
+    try {
+      // Prepare headers with authentication if user is logged in
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      // Add auth header if user is authenticated
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/projects/${id}`, {
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to fetch project details: ${response.status} ${errorText}`
+        );
+      }
+
+      const project = await response.json();
+
+      runInAction(() => {
+        this.projectDetails.set(id, project);
+        this.cachedProjects.set(id, project);
+      });
+
+      return project;
+    } catch (error) {
+      console.error("Error fetching project details:", error);
+      return null;
+    } finally {
+      runInAction(() => {
+        this.projectDetailsLoading.set(id, false);
+      });
+    }
+  }
+
+  updateProjectFilters(newFilters) {
+    runInAction(() => {
+      this.projectFilters = { ...this.projectFilters, ...newFilters };
+    });
+  }
+
+  isProjectDetailsLoading(id) {
+    return this.projectDetailsLoading.get(id) || false;
+  }
+
   //
   //
   //
@@ -360,13 +524,6 @@ class Store {
 
       // Send welcome email
       try {
-        console.log("=== CALLING WELCOME EMAIL API ===");
-        console.log("Sending data:", {
-          name: username,
-          email: email,
-          username: username,
-        });
-
         const emailResponse = await fetch("/api/welcomeEmail", {
           method: "POST",
           headers: {
@@ -379,15 +536,9 @@ class Store {
           }),
         });
 
-        console.log("Email API response status:", emailResponse.status);
-        console.log("Email API response ok:", emailResponse.ok);
-
         const emailResponseData = await emailResponse.json();
-        console.log("Email API response data:", emailResponseData);
 
-        if (emailResponse.ok) {
-          console.log("Welcome email sent successfully");
-        } else {
+        if (!emailResponse.ok) {
           console.error("Welcome email API returned error:", emailResponseData);
         }
       } catch (emailError) {
