@@ -151,7 +151,7 @@ const ProjectDetailsPage = observer(() => {
   // Check if user has applied to this project
   useEffect(() => {
     const checkUserApplication = async () => {
-      if (!MobxStore.user || !projectId) return;
+      if (!MobxStore.user?.uid || !projectId) return;
 
       setApplicationLoading(true);
       try {
@@ -181,7 +181,7 @@ const ProjectDetailsPage = observer(() => {
     };
 
     checkUserApplication();
-  }, [MobxStore.user, projectId, project]);
+  }, [MobxStore.user?.uid, projectId]);
 
   const formatBudget = (budget) => {
     if (budget >= 1000000) {
@@ -412,10 +412,45 @@ const ProjectDetailsPage = observer(() => {
 
       const updatedApplication = await response.json();
 
-      // Update local state
+      // Update local applications state
       setApplications((prev) =>
         prev.map((app) => (app.id === applicationId ? updatedApplication : app))
       );
+
+      // If approving, update the local project state to add the new team member
+      if (status === "approved") {
+        const newTeamMember = {
+          uid: updatedApplication.userId,
+          username: updatedApplication.username,
+          email: updatedApplication.userEmail,
+          avatar: updatedApplication.avatar,
+        };
+
+        setProject((prevProject) => {
+          if (!prevProject) return prevProject;
+
+          // Check if user is already in team members to avoid duplicates
+          const isAlreadyTeamMember = prevProject.teamMemberDetails?.some(
+            (member) => member.uid === newTeamMember.uid
+          );
+
+          if (isAlreadyTeamMember) {
+            return prevProject;
+          }
+
+          return {
+            ...prevProject,
+            teamMembers: [
+              ...(prevProject.teamMembers || []),
+              newTeamMember.uid,
+            ],
+            teamMemberDetails: [
+              ...(prevProject.teamMemberDetails || []),
+              newTeamMember,
+            ],
+          };
+        });
+      }
 
       const statusMessages = {
         approved:
@@ -525,9 +560,13 @@ const ProjectDetailsPage = observer(() => {
                 >
                   <Users className="h-4 w-4 mr-2" />
                   View Applicants
-                  {applications.length > 0 && (
+                  {applications.filter((app) => app.status === "pending")
+                    .length > 0 && (
                     <Badge variant="secondary" className="ml-2">
-                      {applications.length}
+                      {
+                        applications.filter((app) => app.status === "pending")
+                          .length
+                      }
                     </Badge>
                   )}
                 </Button>
