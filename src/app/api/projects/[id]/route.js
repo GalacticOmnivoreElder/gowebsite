@@ -164,6 +164,28 @@ export async function GET(request, { params }) {
       projectData.teamMembers?.includes(u.uid)
     );
 
+    // Get sourceProject details if exists
+    let sourceProjectDetails = null;
+    if (projectData.sourceProject) {
+      try {
+        const sourceProjectDoc = await adminDb
+          .collection("sourceProjects")
+          .doc(projectData.sourceProject)
+          .get();
+
+        if (sourceProjectDoc.exists) {
+          const sourceProjectData = sourceProjectDoc.data();
+          sourceProjectDetails = {
+            id: sourceProjectDoc.id,
+            name: sourceProjectData.name,
+            sourceOwner: sourceProjectData.sourceOwner,
+          };
+        }
+      } catch (error) {
+        console.error("Error fetching source project:", error);
+      }
+    }
+
     const project = {
       id: projectDoc.id,
       ...projectData,
@@ -177,6 +199,7 @@ export async function GET(request, { params }) {
       adminDetails,
       teamMemberDetails,
       linkedProjects,
+      sourceProjectDetails,
     };
 
     return NextResponse.json(project);

@@ -128,16 +128,68 @@ export async function GET(request) {
     const snapshot = await query.get();
     const projects = [];
 
+    // Fetch sourceProject names for projects that have them
+    const projectsWithSourceProjectIds = [];
+    const sourceProjectIds = new Set();
+
     snapshot.docs.slice(0, limit).forEach((doc) => {
       const data = doc.data();
-
-      // Convert Firestore timestamps to ISO strings
       const project = {
         id: doc.id,
         ...data,
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       };
+
+      projectsWithSourceProjectIds.push(project);
+      if (project.sourceProject) {
+        sourceProjectIds.add(project.sourceProject);
+      }
+    });
+
+    // Fetch sourceProject details
+    const sourceProjectsMap = new Map();
+    if (sourceProjectIds.size > 0) {
+      try {
+        const sourceProjectPromises = Array.from(sourceProjectIds).map(
+          async (id) => {
+            const doc = await adminDb
+              .collection("sourceProjects")
+              .doc(id)
+              .get();
+            if (doc.exists) {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                name: data.name,
+              };
+            }
+            return null;
+          }
+        );
+
+        const sourceProjectResults = await Promise.all(sourceProjectPromises);
+        sourceProjectResults.forEach((sp) => {
+          if (sp) {
+            sourceProjectsMap.set(sp.id, sp);
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching source projects:", error);
+      }
+    }
+
+    // Apply search filter and add sourceProject details
+    projectsWithSourceProjectIds.forEach((project) => {
+      // Add sourceProject details if available
+      if (
+        project.sourceProject &&
+        sourceProjectsMap.has(project.sourceProject)
+      ) {
+        project.sourceProjectDetails = sourceProjectsMap.get(
+          project.sourceProject
+        );
+      }
 
       // Apply search filter (client-side for now, could be improved with Algolia)
       if (search) {
@@ -243,6 +295,67 @@ export async function POST(request) {
       );
     }
 
+    // Handle sourceProject logic
+    let sourceProjectId = null;
+
+    if (projectData.sourceProjectOption === "new") {
+      // Create new sourceProject
+      if (
+        !projectData.sourceProjectName ||
+        projectData.sourceProjectName.trim().length < 3 ||
+        projectData.sourceProjectName.trim().length > 50
+      ) {
+        return NextResponse.json(
+          { error: "Source project name must be between 3 and 50 characters" },
+          { status: 400 }
+        );
+      }
+
+      const sourceProjectData = {
+        name: projectData.sourceProjectName.trim(),
+        sourceOwner: user.uid,
+        projectIds: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const sourceProjectRef = await adminDb
+        .collection("sourceProjects")
+        .add(sourceProjectData);
+      sourceProjectId = sourceProjectRef.id;
+    } else if (
+      projectData.sourceProjectOption === "existing" &&
+      projectData.existingSourceProjectId
+    ) {
+      // Validate that the user owns the existing sourceProject
+      const sourceProjectDoc = await adminDb
+        .collection("sourceProjects")
+        .doc(projectData.existingSourceProjectId)
+        .get();
+
+      if (!sourceProjectDoc.exists) {
+        return NextResponse.json(
+          { error: "Selected source project not found" },
+          { status: 400 }
+        );
+      }
+
+      const sourceProjectData = sourceProjectDoc.data();
+      if (sourceProjectData.sourceOwner !== user.uid) {
+        return NextResponse.json(
+          { error: "You don't have permission to use this source project" },
+          { status: 403 }
+        );
+      }
+
+      sourceProjectId = projectData.existingSourceProjectId;
+    } else {
+      return NextResponse.json(
+        { error: "Invalid source project option" },
+        { status: 400 }
+      );
+    }
+
     // Create the project
     const newProject = {
       ...projectData,
@@ -250,12 +363,46 @@ export async function POST(request) {
       admins: [user.uid],
       teamMembers: [user.uid],
       status: "draft", // Always start as draft
+      sourceProject: sourceProjectId,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
+    // Remove sourceProject-related fields that shouldn't be stored in the project
+    delete newProject.sourceProjectOption;
+    delete newProject.sourceProjectName;
+    delete newProject.existingSourceProjectId;
+
     const docRef = await adminDb.collection("projects").add(newProject);
     const projectId = docRef.id;
+
+    // Update sourceProject to include this project ID
+    try {
+      const sourceProjectRef = adminDb
+        .collection("sourceProjects")
+        .doc(sourceProjectId);
+      const sourceProjectDoc = await sourceProjectRef.get();
+
+      if (sourceProjectDoc.exists) {
+        const sourceProjectData = sourceProjectDoc.data();
+        const updatedProjectIds = [
+          ...(sourceProjectData.projectIds || []),
+          projectId,
+        ];
+
+        await sourceProjectRef.update({
+          projectIds: updatedProjectIds,
+          updatedAt: new Date(),
+        });
+
+        console.log(
+          `✅ Updated sourceProject ${sourceProjectId} with new project ${projectId}`
+        );
+      }
+    } catch (error) {
+      console.error("Error updating sourceProject:", error);
+      // Don't fail the project creation if sourceProject update fails
+    }
 
     // Update user's project arrays
     try {

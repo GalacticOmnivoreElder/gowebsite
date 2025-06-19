@@ -121,6 +121,24 @@ const ProjectCard = ({ project }) => {
             </Badge>
           </div>
 
+          {/* Source Project Information */}
+          {project.sourceProjectDetails && (
+            <div className="mt-2">
+              <p className="text-xs text-muted-foreground">
+                Part of:{" "}
+                <Link
+                  href={`/sourceProject/${project.sourceProjectDetails.id}`}
+                  className="text-primary hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {project.sourceProjectDetails.name.length > 25
+                    ? `${project.sourceProjectDetails.name.substring(0, 25)}...`
+                    : project.sourceProjectDetails.name}
+                </Link>
+              </p>
+            </div>
+          )}
+
           {project.categoryTags && project.categoryTags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {project.categoryTags.slice(0, 3).map((tag, index) => (

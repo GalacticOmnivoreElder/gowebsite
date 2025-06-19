@@ -50,7 +50,7 @@ export const SignupForm = observer(() => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [redirectTo, setRedirectTo] = useState("/dashboard");
+  const [redirectTo, setRedirectTo] = useState("/profile");
 
   // Get redirect path and plan from query params
   useEffect(() => {
@@ -183,7 +183,7 @@ const SignupCard = observer(() => {
   const searchParams = useSearchParams();
   const { isUserAnonymous, signInWithGoogle } = MobxStore;
 
-  const [redirectTo, setRedirectTo] = useState("/dashboard");
+  const [redirectTo, setRedirectTo] = useState("/profile");
 
   // Get redirect path and plan from query params
   useEffect(() => {

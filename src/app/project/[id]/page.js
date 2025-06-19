@@ -596,6 +596,24 @@ const ProjectDetailsPage = observer(() => {
           <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
             <div className="flex-1">
               <h1 className="text-4xl font-bold mb-4">{project.title}</h1>
+
+              {/* Source Project Information */}
+              {project.sourceProjectDetails && (
+                <div className="mb-4">
+                  <p className="text-sm text-muted-foreground">
+                    Part of:{" "}
+                    <Link
+                      href={`/sourceProject/${project.sourceProjectDetails.id}`}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      {project.sourceProjectDetails.name.length > 40
+                        ? `${project.sourceProjectDetails.name.substring(0, 40)}...`
+                        : project.sourceProjectDetails.name}
+                    </Link>
+                  </p>
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-2 mb-4">
                 <Badge
                   className={`${getProjectStatusColor(project.status)} border`}

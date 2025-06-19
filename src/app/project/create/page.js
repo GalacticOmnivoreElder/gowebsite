@@ -80,31 +80,62 @@ const REQUIRED_ROLES = [
 const VISIBILITY_OPTIONS = ["Public", "Private", "Invite Only"];
 
 // Validation Schema
-const projectSchema = z.object({
-  title: z.string().min(1, "Title is required").max(100, "Title too long"),
-  thumbnail: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-  categoryTags: z
-    .array(z.string())
-    .min(1, "At least one category tag is required"),
-  type: z.enum(PROJECT_TYPES, { required_error: "Project type is required" }),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  visibility: z.enum(VISIBILITY_OPTIONS, {
-    required_error: "Visibility is required",
-  }),
-  goal: z.string().min(10, "Goal must be at least 10 characters"),
-  duration: z
-    .number()
-    .min(1, "Duration must be at least 1 day")
-    .max(3650, "Duration too long"),
-  budget: z.number().min(0, "Budget cannot be negative"),
-  compensationType: z.enum(COMPENSATION_TYPES, {
-    required_error: "Compensation type is required",
-  }),
-  requiredRoles: z
-    .array(z.string())
-    .min(1, "At least one required role is needed"),
-  linkedProjects: z.array(z.string()).optional(),
-});
+const projectSchema = z
+  .object({
+    title: z.string().min(1, "Title is required").max(100, "Title too long"),
+    thumbnail: z
+      .string()
+      .url("Must be a valid URL")
+      .optional()
+      .or(z.literal("")),
+    categoryTags: z
+      .array(z.string())
+      .min(1, "At least one category tag is required"),
+    type: z.enum(PROJECT_TYPES, { required_error: "Project type is required" }),
+    description: z
+      .string()
+      .min(10, "Description must be at least 10 characters"),
+    visibility: z.enum(VISIBILITY_OPTIONS, {
+      required_error: "Visibility is required",
+    }),
+    goal: z.string().min(10, "Goal must be at least 10 characters"),
+    duration: z
+      .number()
+      .min(1, "Duration must be at least 1 day")
+      .max(3650, "Duration too long"),
+    budget: z.number().min(0, "Budget cannot be negative"),
+    compensationType: z.enum(COMPENSATION_TYPES, {
+      required_error: "Compensation type is required",
+    }),
+    requiredRoles: z
+      .array(z.string())
+      .min(1, "At least one required role is needed"),
+    linkedProjects: z.array(z.string()).optional(),
+    sourceProjectOption: z.enum(["new", "existing"], {
+      required_error: "Source project option is required",
+    }),
+    sourceProjectName: z.string().optional(),
+    existingSourceProjectId: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.sourceProjectOption === "new") {
+        return (
+          data.sourceProjectName &&
+          data.sourceProjectName.trim().length >= 3 &&
+          data.sourceProjectName.trim().length <= 50
+        );
+      }
+      if (data.sourceProjectOption === "existing") {
+        return data.existingSourceProjectId;
+      }
+      return true;
+    },
+    {
+      message: "Source project configuration is invalid",
+      path: ["sourceProjectOption"],
+    }
+  );
 
 const CreateProjectPage = observer(() => {
   const router = useRouter();
@@ -113,6 +144,8 @@ const CreateProjectPage = observer(() => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [newCategoryTag, setNewCategoryTag] = useState("");
+  const [sourceProjects, setSourceProjects] = useState([]);
+  const [loadingSourceProjects, setLoadingSourceProjects] = useState(false);
 
   const totalSteps = 4;
 
@@ -140,6 +173,9 @@ const CreateProjectPage = observer(() => {
       compensationType: "",
       requiredRoles: [],
       linkedProjects: [],
+      sourceProjectOption: "new",
+      sourceProjectName: "",
+      existingSourceProjectId: "",
     },
   });
 
@@ -150,6 +186,33 @@ const CreateProjectPage = observer(() => {
       router.push("/login?redirect=/project/create");
     }
   }, [MobxStore.user, router]);
+
+  // Fetch user's source projects when they select "existing" option
+  const fetchSourceProjects = async () => {
+    if (!MobxStore.user) return;
+
+    setLoadingSourceProjects(true);
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch("/api/sourceProjects", { headers });
+      if (response.ok) {
+        const data = await response.json();
+        setSourceProjects(data.sourceProjects);
+      }
+    } catch (error) {
+      console.error("Error fetching source projects:", error);
+    } finally {
+      setLoadingSourceProjects(false);
+    }
+  };
 
   const handleNext = async () => {
     const fieldsToValidate = getFieldsForStep(currentStep);
@@ -167,7 +230,15 @@ const CreateProjectPage = observer(() => {
   const getFieldsForStep = (step) => {
     switch (step) {
       case 1:
-        return ["title", "thumbnail", "categoryTags", "type"];
+        return [
+          "title",
+          "thumbnail",
+          "categoryTags",
+          "type",
+          "sourceProjectOption",
+          "sourceProjectName",
+          "existingSourceProjectId",
+        ];
       case 2:
         return ["description", "goal"];
       case 3:
@@ -404,6 +475,128 @@ const CreateProjectPage = observer(() => {
             <p className="text-sm text-red-500 mt-1">{errors.type.message}</p>
           )}
         </div>
+
+        <div>
+          <Label>Source Project *</Label>
+          <Controller
+            name="sourceProjectOption"
+            control={control}
+            render={({ field }) => (
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  if (value === "existing") {
+                    fetchSourceProjects();
+                  }
+                }}
+                value={field.value}
+              >
+                <SelectTrigger
+                  className={errors.sourceProjectOption ? "border-red-500" : ""}
+                >
+                  <SelectValue placeholder="Select source project option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">
+                    Basic - New Source Project
+                  </SelectItem>
+                  <SelectItem value="existing">
+                    Choose Existing Source Project
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.sourceProjectOption && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.sourceProjectOption.message}
+            </p>
+          )}
+        </div>
+
+        {watchedValues.sourceProjectOption === "new" && (
+          <div>
+            <Label htmlFor="sourceProjectName">Source Project Name *</Label>
+            <Controller
+              name="sourceProjectName"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  id="sourceProjectName"
+                  placeholder="Enter source project name (3-50 characters)"
+                  className={errors.sourceProjectName ? "border-red-500" : ""}
+                />
+              )}
+            />
+            {errors.sourceProjectName && (
+              <p className="text-sm text-red-500 mt-1">
+                {errors.sourceProjectName.message}
+              </p>
+            )}
+            <p className="text-sm text-muted-foreground mt-1">
+              This will create a new source project to group related projects
+              together.
+            </p>
+          </div>
+        )}
+
+        {watchedValues.sourceProjectOption === "existing" && (
+          <div>
+            <Label>Existing Source Project *</Label>
+            {loadingSourceProjects ? (
+              <div className="flex items-center justify-center p-3 border rounded">
+                <span className="text-sm text-muted-foreground">
+                  Loading your source projects...
+                </span>
+              </div>
+            ) : (
+              <Controller
+                name="existingSourceProjectId"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger
+                      className={
+                        errors.existingSourceProjectId ? "border-red-500" : ""
+                      }
+                    >
+                      <SelectValue placeholder="Select an existing source project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sourceProjects.length > 0 ? (
+                        sourceProjects.map((sourceProject) => (
+                          <SelectItem
+                            key={sourceProject.id}
+                            value={sourceProject.id}
+                          >
+                            {sourceProject.name} (
+                            {sourceProject.projectIds?.length || 0} projects)
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          No source projects available
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            )}
+            {errors.existingSourceProjectId && (
+              <p className="text-sm text-red-500 mt-1">
+                {errors.existingSourceProjectId.message}
+              </p>
+            )}
+            {sourceProjects.length === 0 && !loadingSourceProjects && (
+              <p className="text-sm text-muted-foreground mt-1">
+                You don't have any existing source projects. Choose "New Source
+                Project" instead.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
