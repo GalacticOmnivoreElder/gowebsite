@@ -37,7 +37,7 @@ import {
 
 import { GAMING_TECH_SKILLS, SOCIAL_PLATFORMS } from "@/constants/skills";
 
-const ProfileEditor = observer(() => {
+const ProfileEditor = observer(({ onSave }) => {
   const [formData, setFormData] = useState({
     username: "",
     bio: "",
@@ -177,6 +177,11 @@ const ProfileEditor = observer(() => {
         title: "Success",
         description: "Profile updated successfully!",
       });
+
+      // Call onSave callback to exit edit mode
+      if (onSave) {
+        onSave();
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
       toast({
@@ -193,9 +198,9 @@ const ProfileEditor = observer(() => {
     return (
       <div className="space-y-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+          <div className="h-8 bg-muted rounded w-1/3"></div>
+          <div className="h-32 bg-muted rounded"></div>
+          <div className="h-64 bg-muted rounded"></div>
         </div>
       </div>
     );

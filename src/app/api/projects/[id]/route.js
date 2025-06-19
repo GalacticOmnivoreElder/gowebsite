@@ -223,7 +223,7 @@ export async function PUT(request, { params }) {
 
     const updateData = await request.json();
 
-    // Don't allow changing owner, status (except by admin), or core system fields
+    // Add status to the allowed fields
     const allowedFields = [
       "title",
       "thumbnail",
@@ -231,6 +231,7 @@ export async function PUT(request, { params }) {
       "type",
       "description",
       "visibility",
+      "status",
       "goal",
       "duration",
       "budget",

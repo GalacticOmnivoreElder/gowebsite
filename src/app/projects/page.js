@@ -73,10 +73,14 @@ const ProjectCard = ({ project }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "live":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "draft":
+      case "pending":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "hiring":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "live":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "completed":
+        return "bg-gray-100 text-gray-800 border-gray-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -95,7 +99,10 @@ const ProjectCard = ({ project }) => {
           />
           <div className="absolute top-2 left-2 flex gap-2">
             <Badge className={`${getStatusColor(project.status)} border`}>
-              {project.status === "live" ? "Live" : "Draft"}
+              {project.status === "pending" && "Pending"}
+              {project.status === "hiring" && "Hiring"}
+              {project.status === "live" && "Live"}
+              {project.status === "completed" && "Completed"}
             </Badge>
             <Badge variant="secondary" className="flex items-center gap-1">
               {getVisibilityIcon(project.visibility)}
@@ -169,6 +176,7 @@ const ProjectsPage = observer(() => {
     category: "all",
     type: "all",
     visibility: "all",
+    status: "hiring",
     sortBy: "created_desc",
   });
 
@@ -272,7 +280,7 @@ const ProjectsPage = observer(() => {
       </div>
 
       {/* Filters and Search */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
         <div className="relative lg:col-span-2">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
@@ -314,6 +322,42 @@ const ProjectsPage = observer(() => {
                 {type}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={localFilters.status}
+          onValueChange={(value) => handleFilterChange("status", value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="hiring">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                Hiring
+              </div>
+            </SelectItem>
+            <SelectItem value="live">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                Live Projects
+              </div>
+            </SelectItem>
+            <SelectItem value="completed">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                Completed
+              </div>
+            </SelectItem>
+            <SelectItem value="pending">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                Pending Approval
+              </div>
+            </SelectItem>
+            <SelectItem value="all">All Statuses</SelectItem>
           </SelectContent>
         </Select>
 

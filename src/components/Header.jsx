@@ -82,10 +82,13 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1 ml-6">
             {user && (
-              <Button asChild variant={isActive("/dashboard")} size="sm">
-                <Link href="/dashboard">Dashboard</Link>
+              <Button asChild variant={isActive("/profile")} size="sm">
+                <Link href="/profile">Dashboard</Link>
               </Button>
             )}
+            <Button asChild variant={isActive("/projects")} size="sm">
+              <Link href="/projects">Projects</Link>
+            </Button>
             <Button asChild variant={isActive("/resources")} size="sm">
               <Link href="/resources">Resources</Link>
             </Button>
@@ -94,9 +97,6 @@ export default function Header() {
             </Button>
             <Button asChild variant={isActive("/blog")} size="sm">
               <Link href="/blog">Blog</Link>
-            </Button>
-            <Button asChild variant={isActive("/initiatives")} size="sm">
-              <Link href="/initiatives">Initiatives</Link>
             </Button>
             <Button asChild variant={isActive("/pricing")} size="sm">
               <Link href="/pricing">Pricing</Link>
@@ -126,9 +126,38 @@ export default function Header() {
                     </Avatar>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {user.displayName ||
+                            user.email?.split("@")[0] ||
+                            "User"}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/profile" onClick={handleNavigation}>
                         Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/profile?tab=projects"
+                        onClick={handleNavigation}
+                      >
+                        My Projects
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/profile?tab=applications"
+                        onClick={handleNavigation}
+                      >
+                        Applications
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -201,14 +230,24 @@ export default function Header() {
             {user && (
               <Button
                 asChild
-                variant={isActive("/dashboard")}
+                variant={isActive("/profile")}
                 className="justify-start"
               >
-                <Link href="/dashboard" onClick={handleNavigation}>
+                <Link href="/profile" onClick={handleNavigation}>
                   Dashboard
                 </Link>
               </Button>
             )}
+
+            <Button
+              asChild
+              variant={isActive("/projects")}
+              className="justify-start"
+            >
+              <Link href="/projects" onClick={handleNavigation}>
+                Projects
+              </Link>
+            </Button>
 
             <Button
               asChild
@@ -235,15 +274,6 @@ export default function Header() {
             >
               <Link href="/blog" onClick={handleNavigation}>
                 Blog
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant={isActive("/initiatives")}
-              className="justify-start"
-            >
-              <Link href="/initiatives" onClick={handleNavigation}>
-                Initiatives
               </Link>
             </Button>
 

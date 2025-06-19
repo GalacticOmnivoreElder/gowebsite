@@ -57,14 +57,48 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  html {
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Poppins", "Inter", sans-serif;
+    font-weight: 600;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    line-height: 1.6;
+  }
+
+  /* Custom typography classes */
+  .heading-xl {
+    @apply text-4xl font-bold tracking-tight;
+  }
+  .heading-lg {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+  .heading-md {
+    @apply text-2xl font-semibold;
+  }
+  .body-lg {
+    @apply text-lg leading-relaxed;
+  }
+  .body-sm {
+    @apply text-sm leading-normal;
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }
 

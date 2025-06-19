@@ -262,6 +262,7 @@ const SocialLink = ({ platform, value, label }) => {
 const ProfilePage = observer(() => {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("profile");
+  const [isEditMode, setIsEditMode] = useState(false);
   const [profile, setProfile] = useState(null);
   const [projects, setProjects] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -273,14 +274,9 @@ const ProfilePage = observer(() => {
     const tabParam = searchParams.get("tab");
     if (
       tabParam &&
-      [
-        "profile",
-        "edit",
-        "projects",
-        "applications",
-        "downloads",
-        "settings",
-      ].includes(tabParam)
+      ["profile", "projects", "applications", "downloads", "settings"].includes(
+        tabParam
+      )
     ) {
       setActiveTab(tabParam);
     }
@@ -393,9 +389,15 @@ const ProfilePage = observer(() => {
   // Update URL when tab changes
   const handleTabChange = (value) => {
     setActiveTab(value);
+    setIsEditMode(false);
     const url = new URL(window.location);
     url.searchParams.set("tab", value);
     window.history.pushState({}, "", url);
+  };
+
+  // Toggle edit mode
+  const toggleEditMode = () => {
+    setIsEditMode(!isEditMode);
   };
 
   const getInitials = (name) => {
@@ -441,7 +443,7 @@ const ProfilePage = observer(() => {
 
   return (
     <div className="container py-10">
-      <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
+      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
       <Tabs
         value={activeTab}
@@ -452,10 +454,6 @@ const ProfilePage = observer(() => {
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Profile
-          </TabsTrigger>
-          <TabsTrigger value="edit" className="flex items-center gap-2">
-            <Edit className="h-4 w-4" />
-            Edit Profile
           </TabsTrigger>
           <TabsTrigger value="projects" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
@@ -477,7 +475,35 @@ const ProfilePage = observer(() => {
 
         <TabsContent value="profile">
           {profileLoading ? (
-            <ProfileSkeleton />
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-4">
+                      <Skeleton className="h-20 w-20 rounded-full bg-muted" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-8 w-48 bg-muted" />
+                        <Skeleton className="h-4 w-72 bg-muted" />
+                        <Skeleton className="h-4 w-32 bg-muted" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-10 w-32 bg-muted" />
+                  </div>
+                  <Skeleton className="h-16 w-full mt-4 bg-muted" />
+                </CardContent>
+              </Card>
+            </div>
+          ) : isEditMode ? (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Edit Profile</h2>
+                <Button variant="outline" onClick={toggleEditMode}>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+              </div>
+              <ProfileEditor onSave={() => setIsEditMode(false)} />
+            </div>
           ) : (
             <div className="space-y-6">
               {/* Profile Header */}
@@ -515,7 +541,7 @@ const ProfilePage = observer(() => {
                         </div>
                       </div>
                     </div>
-                    <Button onClick={() => handleTabChange("edit")}>
+                    <Button onClick={toggleEditMode}>
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Profile
                     </Button>
@@ -526,6 +552,23 @@ const ProfilePage = observer(() => {
                       <p className="text-muted-foreground">{profile.bio}</p>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Subscription Status - Only show for own profile */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Subscription Status</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SubscriptionStatus
+                    user={MobxStore.user}
+                    permissions={MobxStore.permissions}
+                    isMember={MobxStore.isMember}
+                    hasActiveSubscription={
+                      MobxStore.permissions?.subscription?.active
+                    }
+                  />
                 </CardContent>
               </Card>
 
@@ -575,20 +618,6 @@ const ProfilePage = observer(() => {
                 )}
             </div>
           )}
-        </TabsContent>
-
-        <TabsContent value="edit">
-          <div className="space-y-6">
-            <ProfileEditor />
-            <SubscriptionStatus
-              user={MobxStore.user}
-              permissions={MobxStore.permissions}
-              isMember={MobxStore.isMember}
-              hasActiveSubscription={
-                MobxStore.permissions?.subscription?.active
-              }
-            />
-          </div>
         </TabsContent>
 
         <TabsContent value="projects">
@@ -825,16 +854,16 @@ export default ProfilePage;
 function ProfileSkeleton() {
   return (
     <div className="container py-10">
-      <Skeleton className="h-10 w-48 mb-6" />
+      <Skeleton className="h-10 w-48 mb-6 bg-muted" />
 
-      <Skeleton className="h-10 w-[400px] mb-6" />
+      <Skeleton className="h-10 w-[400px] mb-6 bg-muted" />
 
       <Card className="p-6">
         <div className="space-y-4">
-          <Skeleton className="h-24 w-24 rounded-full" />
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-6 w-72" />
-          <Skeleton className="h-10 w-full max-w-sm" />
+          <Skeleton className="h-24 w-24 rounded-full bg-muted" />
+          <Skeleton className="h-8 w-48 bg-muted" />
+          <Skeleton className="h-6 w-72 bg-muted" />
+          <Skeleton className="h-10 w-full max-w-sm bg-muted" />
         </div>
       </Card>
     </div>

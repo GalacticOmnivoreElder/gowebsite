@@ -41,6 +41,8 @@ import {
   User,
   Send,
   LogIn,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import UserLink from "@/components/ui/UserLink";
 
@@ -115,6 +117,9 @@ const ProjectDetailsPage = observer(() => {
   const [consentGiven, setConsentGiven] = useState(false);
   const [userApplication, setUserApplication] = useState(null);
   const [applicationLoading, setApplicationLoading] = useState(false);
+  const [showApplicationsDialog, setShowApplicationsDialog] = useState(false);
+  const [applications, setApplications] = useState([]);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
 
   const projectId = params.id;
 
@@ -215,11 +220,11 @@ const ProjectDetailsPage = observer(() => {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "approved":
+      case "hiring":
         return "bg-green-100 text-green-800 border-green-200";
-      case "rejected":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "cancelled":
+      case "live":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "completed":
         return "bg-gray-100 text-gray-800 border-gray-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -228,10 +233,14 @@ const ProjectDetailsPage = observer(() => {
 
   const getProjectStatusColor = (status) => {
     switch (status) {
-      case "live":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "draft":
+      case "pending":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "hiring":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "live":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "completed":
+        return "bg-gray-100 text-gray-800 border-gray-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -350,6 +359,96 @@ const ProjectDetailsPage = observer(() => {
     }
   };
 
+  const fetchApplications = async () => {
+    if (!projectId || !canEdit) return;
+
+    setApplicationsLoading(true);
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/applications?projectId=${projectId}`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setApplications(data.applications);
+      }
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+    } finally {
+      setApplicationsLoading(false);
+    }
+  };
+
+  const handleApplicationStatusUpdate = async (applicationId, status) => {
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/applications/${applicationId}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update application");
+      }
+
+      const updatedApplication = await response.json();
+
+      // Update local state
+      setApplications((prev) =>
+        prev.map((app) => (app.id === applicationId ? updatedApplication : app))
+      );
+
+      const statusMessages = {
+        approved:
+          "Application approved successfully! The user has been added to the project team.",
+        rejected: "Application rejected. The applicant has been notified.",
+        pending: "Application status updated to pending.",
+      };
+
+      toast({
+        title: "Success",
+        description:
+          statusMessages[status] || `Application ${status} successfully`,
+      });
+    } catch (error) {
+      console.error("Error updating application:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update application",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getInitials = (name) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -414,12 +513,31 @@ const ProjectDetailsPage = observer(() => {
             Back to Projects
           </Button>
 
-          {canEdit && (
-            <Button onClick={handleEdit}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Project
-            </Button>
-          )}
+          <div className="flex gap-2 flex-col sm:flex-row">
+            {canEdit && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowApplicationsDialog(true);
+                    fetchApplications();
+                  }}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  View Applicants
+                  {applications.length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {applications.length}
+                    </Badge>
+                  )}
+                </Button>
+                <Button onClick={handleEdit}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Project
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Project Header */}
@@ -443,7 +561,10 @@ const ProjectDetailsPage = observer(() => {
                 <Badge
                   className={`${getProjectStatusColor(project.status)} border`}
                 >
-                  {project.status === "live" ? "Live" : "Draft"}
+                  {project.status === "pending" && "Pending"}
+                  {project.status === "hiring" && "Hiring"}
+                  {project.status === "live" && "Live"}
+                  {project.status === "completed" && "Completed"}
                 </Badge>
                 <Badge variant="secondary" className="flex items-center gap-1">
                   {getVisibilityIcon(project.visibility)}
@@ -455,7 +576,7 @@ const ProjectDetailsPage = observer(() => {
           </div>
 
           {/* Apply CTA */}
-          {project.status === "live" && !isProjectMember && (
+          {project.status === "hiring" && !isProjectMember && (
             <Card className="mb-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
               <CardContent className="p-6">
                 {applicationLoading ? (
@@ -539,6 +660,42 @@ const ProjectDetailsPage = observer(() => {
                     </Button>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {project.status === "live" && !isProjectMember && (
+            <Card className="mb-6 bg-muted/50 border-muted">
+              <CardContent className="p-6 text-center">
+                <h3 className="text-lg font-semibold mb-2">Project is Live</h3>
+                <p className="text-muted-foreground">
+                  This project is currently ongoing and hiring has closed.
+                  Applications are no longer being accepted.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {project.status === "pending" && (
+            <Card className="mb-6 bg-muted/50 border-muted">
+              <CardContent className="p-6 text-center">
+                <h3 className="text-lg font-semibold mb-2">Pending Approval</h3>
+                <p className="text-muted-foreground">
+                  This project is awaiting admin approval before going public.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {project.status === "completed" && (
+            <Card className="mb-6 bg-muted/50 border-muted">
+              <CardContent className="p-6 text-center">
+                <h3 className="text-lg font-semibold mb-2">
+                  Project Completed
+                </h3>
+                <p className="text-muted-foreground">
+                  This project has been completed and is now archived.
+                </p>
               </CardContent>
             </Card>
           )}
@@ -783,6 +940,143 @@ const ProjectDetailsPage = observer(() => {
                 {applying ? "Submitting..." : "Submit Application"}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Applications Dialog */}
+        <Dialog
+          open={showApplicationsDialog}
+          onOpenChange={setShowApplicationsDialog}
+        >
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Project Applications
+                {applications.length > 0 && (
+                  <Badge variant="secondary">{applications.length}</Badge>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="mt-4">
+              {applicationsLoading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center space-x-4 p-4 border rounded-lg"
+                    >
+                      <Skeleton className="h-12 w-12 rounded-full bg-muted" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-1/4 bg-muted" />
+                        <Skeleton className="h-3 w-1/2 bg-muted" />
+                      </div>
+                      <Skeleton className="h-8 w-20 bg-muted" />
+                    </div>
+                  ))}
+                </div>
+              ) : applications.length > 0 ? (
+                <div className="space-y-4">
+                  {applications.map((application) => (
+                    <div
+                      key={application.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="h-12 w-12">
+                          <AvatarFallback>
+                            {getInitials(application.username)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h4 className="font-medium">
+                            {application.username}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {application.userEmail}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge
+                              className={`${getStatusColor(application.status)} border text-xs`}
+                            >
+                              {application.status.charAt(0).toUpperCase() +
+                                application.status.slice(1)}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              Applied{" "}
+                              {new Date(
+                                application.createdAt
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link
+                            href={`/user/${application.userId}`}
+                            target="_blank"
+                          >
+                            View Profile
+                          </Link>
+                        </Button>
+
+                        {application.status === "pending" && (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                handleApplicationStatusUpdate(
+                                  application.id,
+                                  "approved"
+                                )
+                              }
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleApplicationStatusUpdate(
+                                  application.id,
+                                  "rejected"
+                                )
+                              }
+                              className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                          </>
+                        )}
+
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`mailto:${application.userEmail}`}>
+                            <Mail className="h-4 w-4 mr-1" />
+                            Contact
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">
+                    No Applications Yet
+                  </h3>
+                  <p className="text-muted-foreground">
+                    When people apply to join your project, they'll appear here.
+                  </p>
+                </div>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>

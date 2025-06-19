@@ -8,6 +8,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
+import { toast } from "@/components/ui/use-toast";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -213,41 +214,61 @@ const CreateProjectPage = observer(() => {
     trigger("requiredRoles");
   };
 
-  const onSubmit = async (data) => {
-    if (!MobxStore.user) {
-      setSubmitError("You must be logged in to create a project");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError("");
-
+  const onSubmit = async (formData) => {
     try {
+      setIsSubmitting(true);
+      setSubmitError("");
+
+      // Check if user is authenticated
+      if (!auth.currentUser) {
+        throw new Error("User not authenticated");
+      }
+
       const token = await auth.currentUser.getIdToken();
+
+      // Create project with default status "pending"
+      const projectData = {
+        ...formData,
+        owner: MobxStore.user.uid,
+        status: "pending", // Set default status to pending
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        admins: [],
+        teamMembers: [],
+        linkedProjects: [],
+      };
+
       const response = await fetch("/api/projects", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(projectData),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create project");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create project");
       }
 
-      const createdProject = await response.json();
+      const newProject = await response.json();
 
-      // Refresh projects cache
-      MobxStore.fetchProjects({}, true);
+      toast({
+        title: "Project Created!",
+        description:
+          "Your project has been submitted for review. It will appear publicly once approved by an admin.",
+      });
 
-      // Redirect to the new project
-      router.push(`/project/${createdProject.id}`);
+      router.push(`/project/${newProject.id}`);
     } catch (error) {
       console.error("Error creating project:", error);
       setSubmitError(error.message || "Failed to create project");
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create project",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -675,15 +696,12 @@ const CreateProjectPage = observer(() => {
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   ) : (
-                    <Button type="submit" disabled={isSubmitting || !isValid}>
-                      {isSubmitting ? (
-                        <>Creating...</>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          Create Project
-                        </>
-                      )}
+                    <Button
+                      onClick={handleSubmit(onSubmit)}
+                      disabled={isSubmitting || !isValid}
+                      className="w-full"
+                    >
+                      {isSubmitting ? "Creating..." : "Create Project"}
                     </Button>
                   )}
                 </div>
