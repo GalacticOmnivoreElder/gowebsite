@@ -41,7 +41,7 @@ const projectSchema = z.object({
     "Other",
   ]),
   visibility: z.enum(["Public", "Private", "Invite Only"]),
-  status: z.enum(["pending", "hiring", "live", "completed"]),
+  status: z.enum(["draft", "pending", "hiring", "live", "completed"]),
   thumbnail: z.string().url().optional().or(z.literal("")),
   goal: z.string().optional(),
   duration: z.number().optional(),
@@ -111,7 +111,7 @@ const EditProjectPage = observer(() => {
     categoryTags: [],
     type: "Game Development",
     visibility: "Public",
-    status: "pending",
+    status: "draft",
     thumbnail: "",
     goal: "",
     duration: "",
@@ -162,6 +162,16 @@ const EditProjectPage = observer(() => {
             await new Promise((resolve) => setTimeout(resolve, 100));
           }
 
+          // Also wait for permissions to load
+          while (MobxStore.permissionsLoading) {
+            console.log("⏳ [EditProject] Waiting for permissions to load...", {
+              permissionsLoading: MobxStore.permissionsLoading,
+              permissions: MobxStore.permissions,
+              isAdmin: MobxStore.isAdmin,
+            });
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+
           const user = MobxStore.user;
           console.log("🔍 [EditProject] Auth loaded, current user:", user);
 
@@ -178,6 +188,27 @@ const EditProjectPage = observer(() => {
             return;
           }
 
+          // Check URL for admin override
+          const searchParams = new URLSearchParams(window.location.search);
+          const isAdminMode = searchParams.get("admin") === "true";
+
+          // Check if user is master admin (has platform-wide admin permissions)
+          console.log(
+            "🔍 [EditProject] MobxStore.permissions:",
+            MobxStore.permissions
+          );
+          console.log(
+            "🔍 [EditProject] MobxStore.permissions?.permissions:",
+            MobxStore.permissions?.permissions
+          );
+          console.log("🔍 [EditProject] Full MobxStore.user:", MobxStore.user);
+          console.log(
+            "🔍 [EditProject] MobxStore.isAdmin computed:",
+            MobxStore.isAdmin
+          );
+
+          const isMasterAdmin = MobxStore.isAdmin;
+
           // Check if owner is a string instead of object
           const ownerUid =
             typeof projectData.owner === "string"
@@ -185,18 +216,24 @@ const EditProjectPage = observer(() => {
               : projectData.owner?.uid;
 
           const isOwner = ownerUid === user.uid;
-          const isAdmin =
+          const isProjectAdmin =
             projectData.admins?.some((admin) => {
               const adminUid = typeof admin === "string" ? admin : admin.uid;
               return adminUid === user.uid;
             }) || false;
 
           console.log("🔍 [EditProject] Is owner?", isOwner);
-          console.log("🔍 [EditProject] Is admin?", isAdmin);
-          console.log("🔍 [EditProject] Can edit?", isOwner || isAdmin);
+          console.log("🔍 [EditProject] Is project admin?", isProjectAdmin);
+          console.log("🔍 [EditProject] Is master admin?", isMasterAdmin);
+          console.log("🔍 [EditProject] Admin mode?", isAdminMode);
 
-          if (!isOwner && !isAdmin) {
-            console.log("❌ [EditProject] Access denied - not owner or admin");
+          // Allow access if: owner, project admin, or master admin
+          const canEdit =
+            isOwner || isProjectAdmin || (isMasterAdmin && isAdminMode);
+          console.log("🔍 [EditProject] Can edit?", canEdit);
+
+          if (!canEdit) {
+            console.log("❌ [EditProject] Access denied");
             toast({
               title: "Access Denied",
               description: "You don't have permission to edit this project",
@@ -216,7 +253,7 @@ const EditProjectPage = observer(() => {
             categoryTags: projectData.categoryTags || [],
             type: projectData.type || "Game Development",
             visibility: projectData.visibility || "Public",
-            status: projectData.status || "pending",
+            status: projectData.status || "draft",
             thumbnail: projectData.thumbnail || "",
             goal: projectData.goal || "",
             duration: projectData.duration || "",
@@ -521,6 +558,14 @@ const EditProjectPage = observer(() => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="draft">
+                      <div className="flex flex-col">
+                        <span>Draft</span>
+                        <span className="text-xs text-muted-foreground">
+                          Not publicly visible, awaiting admin approval
+                        </span>
+                      </div>
+                    </SelectItem>
                     <SelectItem value="pending">
                       <div className="flex flex-col">
                         <span>Pending</span>
@@ -556,6 +601,8 @@ const EditProjectPage = observer(() => {
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-muted-foreground mt-1">
+                  {formData.status === "draft" &&
+                    "Project is not publicly visible and awaiting admin approval."}
                   {formData.status === "pending" &&
                     "Project is waiting for admin approval before going public."}
                   {formData.status === "hiring" &&

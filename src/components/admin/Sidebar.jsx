@@ -12,6 +12,7 @@ import {
   Sun,
   Moon,
   Package,
+  FolderOpen,
 } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase";
@@ -33,6 +34,7 @@ export function Sidebar() {
   const navItems = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Users", href: "/admin/users", icon: Users },
+    { name: "Projects", href: "/admin/projects", icon: FolderOpen },
     { name: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
     { name: "Packages", href: "/admin/packages", icon: Package },
     { name: "Analytics", href: "/admin/analytics", icon: BarChart4 },

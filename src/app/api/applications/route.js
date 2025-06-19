@@ -17,6 +17,60 @@ async function getUserFromToken(request) {
   }
 }
 
+async function enrichApplicationWithUserDetails(application) {
+  try {
+    // Get user details from users collection
+    const userDoc = await adminDb
+      .collection("users")
+      .doc(application.userId)
+      .get();
+
+    if (userDoc.exists) {
+      const userData = userDoc.data();
+      return {
+        ...application,
+        // Inject user details
+        username: userData.username || userData.name || "Unknown User",
+        userEmail: userData.email || "No email",
+        avatar: userData.avatar || null,
+      };
+    } else {
+      // Fallback: try to get from Firebase Auth
+      try {
+        const authUser = await adminAuth.getUser(application.userId);
+        return {
+          ...application,
+          username:
+            authUser.displayName ||
+            authUser.email?.split("@")[0] ||
+            "Unknown User",
+          userEmail: authUser.email || "No email",
+          avatar: authUser.photoURL || null,
+        };
+      } catch (authError) {
+        console.error(
+          `Error fetching auth user ${application.userId}:`,
+          authError
+        );
+        return {
+          ...application,
+          username: "Unknown User",
+          userEmail: "No email",
+          avatar: null,
+        };
+      }
+    }
+  } catch (error) {
+    console.error("Error enriching application with user details:", error);
+    return {
+      ...application,
+      username: "Unknown User",
+      userEmail: "No email",
+      avatar: null,
+    };
+  }
+}
+
 export async function POST(request) {
   try {
     const user = await getUserFromToken(request);
@@ -74,18 +128,11 @@ export async function POST(request) {
       );
     }
 
-    // Get user details
-    const userDoc = await adminDb.collection("users").doc(user.uid).get();
-    const userData = userDoc.exists ? userDoc.data() : {};
-
-    // Create application
+    // Create application (only store essential data, user details will be fetched dynamically)
     const applicationData = {
       projectId,
       projectTitle: projectTitle || projectData.title,
       userId: user.uid,
-      userEmail: user.email,
-      username:
-        userData.username || user.email?.split("@")[0] || "Unknown User",
       status: "pending",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -95,12 +142,18 @@ export async function POST(request) {
       .collection("applications")
       .add(applicationData);
 
-    return NextResponse.json({
+    const baseApplication = {
       id: applicationRef.id,
       ...applicationData,
       createdAt: applicationData.createdAt.toISOString(),
       updatedAt: applicationData.updatedAt.toISOString(),
-    });
+    };
+
+    // Enrich with user details before returning
+    const enrichedApplication =
+      await enrichApplicationWithUserDetails(baseApplication);
+
+    return NextResponse.json(enrichedApplication);
   } catch (error) {
     console.error("Error creating application:", error);
     return NextResponse.json(
@@ -155,6 +208,7 @@ export async function GET(request) {
     const snapshot = await query.orderBy("createdAt", "desc").get();
     const applications = [];
 
+    // First, collect all applications with basic data
     snapshot.forEach((doc) => {
       const data = doc.data();
       applications.push({
@@ -165,7 +219,12 @@ export async function GET(request) {
       });
     });
 
-    return NextResponse.json({ applications });
+    // Then enrich each application with user details
+    const enrichedApplications = await Promise.all(
+      applications.map((app) => enrichApplicationWithUserDetails(app))
+    );
+
+    return NextResponse.json({ applications: enrichedApplications });
   } catch (error) {
     console.error("Error fetching applications:", error);
     return NextResponse.json(

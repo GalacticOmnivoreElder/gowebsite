@@ -17,6 +17,60 @@ async function getUserFromToken(request) {
   }
 }
 
+async function enrichApplicationWithUserDetails(application) {
+  try {
+    // Get user details from users collection
+    const userDoc = await adminDb
+      .collection("users")
+      .doc(application.userId)
+      .get();
+
+    if (userDoc.exists) {
+      const userData = userDoc.data();
+      return {
+        ...application,
+        // Inject user details
+        username: userData.username || userData.name || "Unknown User",
+        userEmail: userData.email || "No email",
+        avatar: userData.avatar || null,
+      };
+    } else {
+      // Fallback: try to get from Firebase Auth
+      try {
+        const authUser = await adminAuth.getUser(application.userId);
+        return {
+          ...application,
+          username:
+            authUser.displayName ||
+            authUser.email?.split("@")[0] ||
+            "Unknown User",
+          userEmail: authUser.email || "No email",
+          avatar: authUser.photoURL || null,
+        };
+      } catch (authError) {
+        console.error(
+          `Error fetching auth user ${application.userId}:`,
+          authError
+        );
+        return {
+          ...application,
+          username: "Unknown User",
+          userEmail: "No email",
+          avatar: null,
+        };
+      }
+    }
+  } catch (error) {
+    console.error("Error enriching application with user details:", error);
+    return {
+      ...application,
+      username: "Unknown User",
+      userEmail: "No email",
+      avatar: null,
+    };
+  }
+}
+
 export async function PUT(request, { params }) {
   try {
     const user = await getUserFromToken(request);
@@ -109,16 +163,36 @@ export async function PUT(request, { params }) {
           }
         } else {
           // Create user document if it doesn't exist
-          batch.set(userRef, {
-            uid: applicationData.userId,
-            email: applicationData.userEmail,
-            username: applicationData.username,
-            teamMemberOfProjects: [applicationData.projectId],
-            ownerOfProjects: [],
-            adminOfProjects: [],
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
+          // Get user details from Firebase Auth as fallback
+          try {
+            const authUser = await adminAuth.getUser(applicationData.userId);
+            batch.set(userRef, {
+              uid: applicationData.userId,
+              email: authUser.email || "No email",
+              username:
+                authUser.displayName ||
+                authUser.email?.split("@")[0] ||
+                "Unknown User",
+              teamMemberOfProjects: [applicationData.projectId],
+              ownerOfProjects: [],
+              adminOfProjects: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          } catch (authError) {
+            console.error(`Error fetching auth user for approval:`, authError);
+            // Create with minimal data
+            batch.set(userRef, {
+              uid: applicationData.userId,
+              email: "No email",
+              username: "Unknown User",
+              teamMemberOfProjects: [applicationData.projectId],
+              ownerOfProjects: [],
+              adminOfProjects: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }
         }
 
         // Commit the batch
@@ -135,7 +209,7 @@ export async function PUT(request, { params }) {
     const updatedDoc = await adminDb.collection("applications").doc(id).get();
     const updatedData = updatedDoc.data();
 
-    return NextResponse.json({
+    const baseApplication = {
       id,
       ...updatedData,
       createdAt:
@@ -144,7 +218,13 @@ export async function PUT(request, { params }) {
       updatedAt:
         updatedData.updatedAt?.toDate?.()?.toISOString() ||
         updatedData.updatedAt,
-    });
+    };
+
+    // Enrich with user details
+    const enrichedApplication =
+      await enrichApplicationWithUserDetails(baseApplication);
+
+    return NextResponse.json(enrichedApplication);
   } catch (error) {
     console.error("Error updating application:", error);
     return NextResponse.json(

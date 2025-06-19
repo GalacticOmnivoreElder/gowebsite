@@ -986,7 +986,7 @@ const ProjectDetailsPage = observer(() => {
                       <div className="flex items-center space-x-4">
                         <Avatar className="h-12 w-12">
                           <AvatarImage
-                            src={application.userAvatar}
+                            src={application.avatar}
                             alt={application.username}
                           />
                           <AvatarFallback>

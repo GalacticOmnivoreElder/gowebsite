@@ -209,14 +209,28 @@ export async function PUT(request, { params }) {
 
     const existingProject = projectDoc.data();
 
-    // Check if user can edit this project (owner or admin)
-    const canEdit =
-      existingProject.owner === user.uid ||
-      existingProject.admins?.includes(user.uid);
+    // Check if user can edit this project (owner, project admin, or platform admin)
+    const isOwner = existingProject.owner === user.uid;
+    const isProjectAdmin = existingProject.admins?.includes(user.uid);
+    const isPlatformAdmin = user.admin || false; // Check for platform admin
+
+    console.log("🔧 [ProjectAPI] Edit permission check:", {
+      userId: user.uid,
+      projectOwner: existingProject.owner,
+      isOwner,
+      isProjectAdmin,
+      isPlatformAdmin,
+      projectAdmins: existingProject.admins,
+    });
+
+    const canEdit = isOwner || isProjectAdmin || isPlatformAdmin;
 
     if (!canEdit) {
       return NextResponse.json(
-        { error: "Access denied. Only project owner and admins can edit." },
+        {
+          error:
+            "Access denied. Only project owner, project admins, or platform admins can edit.",
+        },
         { status: 403 }
       );
     }

@@ -226,11 +226,11 @@ const CreateProjectPage = observer(() => {
 
       const token = await auth.currentUser.getIdToken();
 
-      // Create project with default status "pending"
+      // Create project with default status "draft"
       const projectData = {
         ...formData,
         owner: MobxStore.user.uid,
-        status: "pending", // Set default status to pending
+        status: "draft", // Set default status to draft
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         admins: [],
