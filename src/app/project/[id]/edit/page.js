@@ -42,6 +42,7 @@ const projectSchema = z.object({
   ]),
   visibility: z.enum(["Public", "Private", "Invite Only"]),
   status: z.enum(["pending", "hiring", "live", "completed"]),
+  thumbnail: z.string().url().optional().or(z.literal("")),
   goal: z.string().optional(),
   duration: z.number().optional(),
   budget: z.number().optional(),
@@ -111,6 +112,7 @@ const EditProjectPage = observer(() => {
     type: "Game Development",
     visibility: "Public",
     status: "pending",
+    thumbnail: "",
     goal: "",
     duration: "",
     budget: "",
@@ -150,98 +152,81 @@ const EditProjectPage = observer(() => {
         setProject(projectData);
         console.log("✅ [EditProject] Project set:", projectData.title);
 
-        // Check if user can edit this project
-        const user = MobxStore.user;
-        console.log("🔍 [EditProject] Current user:", user);
-        console.log("🔍 [EditProject] User UID:", user?.uid);
+        // WAIT for auth state to load before checking permissions
+        const waitForAuth = async () => {
+          // Wait for MobxStore to be ready
+          while (!MobxStore.isReady) {
+            console.log(
+              "⏳ [EditProject] Waiting for MobxStore to be ready..."
+            );
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
 
-        if (!user) {
-          console.log("❌ [EditProject] No user found, redirecting to login");
-          toast({
-            title: "Authentication Required",
-            description: "You must be logged in to edit projects",
-            variant: "destructive",
+          const user = MobxStore.user;
+          console.log("🔍 [EditProject] Auth loaded, current user:", user);
+
+          if (!user) {
+            console.log(
+              "❌ [EditProject] No user found after auth loaded, redirecting to login"
+            );
+            toast({
+              title: "Authentication Required",
+              description: "You must be logged in to edit projects",
+              variant: "destructive",
+            });
+            router.push(`/login?redirect=/project/${projectId}/edit`);
+            return;
+          }
+
+          // Check if owner is a string instead of object
+          const ownerUid =
+            typeof projectData.owner === "string"
+              ? projectData.owner
+              : projectData.owner?.uid;
+
+          const isOwner = ownerUid === user.uid;
+          const isAdmin =
+            projectData.admins?.some((admin) => {
+              const adminUid = typeof admin === "string" ? admin : admin.uid;
+              return adminUid === user.uid;
+            }) || false;
+
+          console.log("🔍 [EditProject] Is owner?", isOwner);
+          console.log("🔍 [EditProject] Is admin?", isAdmin);
+          console.log("🔍 [EditProject] Can edit?", isOwner || isAdmin);
+
+          if (!isOwner && !isAdmin) {
+            console.log("❌ [EditProject] Access denied - not owner or admin");
+            toast({
+              title: "Access Denied",
+              description: "You don't have permission to edit this project",
+              variant: "destructive",
+            });
+            router.push(`/project/${projectId}`);
+            return;
+          }
+
+          console.log("✅ [EditProject] Access granted - user can edit");
+          setCanEdit(true);
+
+          // Populate form with existing data
+          setFormData({
+            title: projectData.title || "",
+            description: projectData.description || "",
+            categoryTags: projectData.categoryTags || [],
+            type: projectData.type || "Game Development",
+            visibility: projectData.visibility || "Public",
+            status: projectData.status || "pending",
+            thumbnail: projectData.thumbnail || "",
+            goal: projectData.goal || "",
+            duration: projectData.duration || "",
+            budget: projectData.budget || "",
+            compensationType: projectData.compensationType || "Volunteer",
+            requiredRoles: projectData.requiredRoles || [],
           });
-          router.push(`/login?redirect=/project/${projectId}/edit`);
-          return;
-        }
+        };
 
-        console.log("🔍 [EditProject] Project owner:", projectData.owner);
-        console.log(
-          "🔍 [EditProject] Project owner type:",
-          typeof projectData.owner
-        );
-        console.log(
-          "🔍 [EditProject] Project owner UID:",
-          projectData.owner?.uid
-        );
-        console.log("🔍 [EditProject] Project admins:", projectData.admins);
-        console.log(
-          "🔍 [EditProject] Project admins type:",
-          typeof projectData.admins
-        );
-
-        // Check if owner is a string instead of object
-        if (typeof projectData.owner === "string") {
-          console.log(
-            "🔍 [EditProject] Owner is string, comparing directly:",
-            projectData.owner
-          );
-        }
-
-        // Handle both string UID and object with UID for owner
-        const ownerUid =
-          typeof projectData.owner === "string"
-            ? projectData.owner
-            : projectData.owner?.uid;
-        const isOwner = ownerUid === user.uid;
-
-        // Handle admins array - could be strings or objects
-        const isAdmin =
-          projectData.admins?.some((admin) => {
-            const adminUid = typeof admin === "string" ? admin : admin.uid;
-            return adminUid === user.uid;
-          }) || false;
-
-        console.log("🔍 [EditProject] Is owner?", isOwner);
-        console.log("🔍 [EditProject] Is admin?", isAdmin);
-        console.log("🔍 [EditProject] Can edit?", isOwner || isAdmin);
-
-        if (!isOwner && !isAdmin) {
-          console.log("❌ [EditProject] Access denied - not owner or admin");
-          console.log("❌ [EditProject] User UID:", user.uid);
-          console.log("❌ [EditProject] Owner UID:", projectData.owner?.uid);
-          console.log(
-            "❌ [EditProject] Admin UIDs:",
-            projectData.admins?.map((a) => a.uid)
-          );
-
-          toast({
-            title: "Access Denied",
-            description: "You don't have permission to edit this project",
-            variant: "destructive",
-          });
-          router.push(`/project/${projectId}`);
-          return;
-        }
-
-        console.log("✅ [EditProject] Access granted - user can edit");
-        setCanEdit(true);
-
-        // Populate form with existing data
-        setFormData({
-          title: projectData.title || "",
-          description: projectData.description || "",
-          categoryTags: projectData.categoryTags || [],
-          type: projectData.type || "Game Development",
-          visibility: projectData.visibility || "Public",
-          status: projectData.status || "pending",
-          goal: projectData.goal || "",
-          duration: projectData.duration || "",
-          budget: projectData.budget || "",
-          compensationType: projectData.compensationType || "Volunteer",
-          requiredRoles: projectData.requiredRoles || [],
-        });
+        await waitForAuth();
       } catch (error) {
         console.error("Error loading project:", error);
         toast({
@@ -431,6 +416,31 @@ const EditProjectPage = observer(() => {
                 />
                 {errors.title && (
                   <p className="text-sm text-red-500 mt-1">{errors.title}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="thumbnail">Thumbnail URL</Label>
+                <Input
+                  id="thumbnail"
+                  type="url"
+                  value={formData.thumbnail}
+                  onChange={(e) =>
+                    handleInputChange("thumbnail", e.target.value)
+                  }
+                  placeholder="https://example.com/image.jpg"
+                />
+                {formData.thumbnail && (
+                  <div className="mt-2">
+                    <img
+                      src={formData.thumbnail}
+                      alt="Thumbnail preview"
+                      className="w-32 h-20 object-cover rounded border"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                  </div>
                 )}
               </div>
 

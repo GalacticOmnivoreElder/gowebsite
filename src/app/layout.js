@@ -7,12 +7,13 @@ const inter = Inter({ subsets: ["latin"] });
 // new font
 
 export const metadata = {
-  title: 'Galactic Omnivore',
-  description: 'Galactic Omnivore is the only Game Dev. Community in Macedonia where you can greet, meet and create your own game dev. team.',
+  title: "Galactic Omnivore",
+  description:
+    "Galactic Omnivore is the only Game Dev. Community in Macedonia where you can greet, meet and create your own game dev. team.",
   icons: {
-    icon: '/favicon.ico', 
+    icon: "/favicon.ico",
   },
-}
+};
 
 // Create a client component wrapper for ThemeProvider
 import ThemeProviderWrapper from "@/components/ThemeProviderWrapper";

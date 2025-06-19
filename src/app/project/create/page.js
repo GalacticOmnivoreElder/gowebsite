@@ -314,6 +314,7 @@ const CreateProjectPage = observer(() => {
               <Input
                 {...field}
                 id="thumbnail"
+                type="url"
                 placeholder="https://example.com/image.jpg"
                 className={errors.thumbnail ? "border-red-500" : ""}
               />
@@ -323,6 +324,18 @@ const CreateProjectPage = observer(() => {
             <p className="text-sm text-red-500 mt-1">
               {errors.thumbnail.message}
             </p>
+          )}
+          {watchedValues.thumbnail && (
+            <div className="mt-2">
+              <img
+                src={watchedValues.thumbnail}
+                alt="Thumbnail preview"
+                className="w-32 h-20 object-cover rounded border"
+                onError={(e) => {
+                  e.target.style.display = "none";
+                }}
+              />
+            </div>
           )}
         </div>
 
