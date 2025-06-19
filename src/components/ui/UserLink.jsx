@@ -26,7 +26,7 @@ const UserLink = ({
     <div className={`flex items-center gap-2 ${className}`}>
       {showAvatar && (
         <Avatar className={avatarSizeClasses[avatarSize]}>
-          <AvatarImage src={user.avatar} />
+          <AvatarImage src={user.avatar} alt={user.username || "User"} />
           <AvatarFallback>
             {user.username?.charAt(0)?.toUpperCase() || "U"}
           </AvatarFallback>

@@ -4,35 +4,16 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Menu, X } from "lucide-react";
-import { auth } from "@/firebase";
-import { signOut } from "firebase/auth";
 import Image from "next/image";
 import logoImg from "../assets/logo.png";
-export default function Header() {
+import { UserNav } from "@/reusable-ui/ReusableProfileMenu";
+import MobxStore from "@/mobx";
+import { observer } from "mobx-react";
+
+const Header = observer(() => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((authUser) => {
-      setUser(authUser);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   // Close mobile menu when pathname changes
   useEffect(() => {
@@ -43,15 +24,6 @@ export default function Header() {
   if (pathname?.startsWith("/admin")) {
     return null;
   }
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      setIsMenuOpen(false); // Close menu after sign out
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
 
   const isActive = (path) => {
     // For login and signup routes, check for exact match
@@ -81,7 +53,7 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1 ml-6">
-            {user && (
+            {MobxStore.user && (
               <Button asChild variant={isActive("/profile")} size="sm">
                 <Link href="/profile">Dashboard</Link>
               </Button>
@@ -108,80 +80,10 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          {!loading && (
+          {!MobxStore.loading && (
             <>
-              {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Avatar className="h-8 w-8 cursor-pointer">
-                      <AvatarImage
-                        src={user.photoURL}
-                        alt={user.displayName || "User"}
-                      />
-                      <AvatarFallback>
-                        {user.displayName
-                          ? user.displayName.charAt(0).toUpperCase()
-                          : "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {user.displayName ||
-                            user.email?.split("@")[0] ||
-                            "User"}
-                        </p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" onClick={handleNavigation}>
-                        Profile
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href="/profile?tab=projects"
-                        onClick={handleNavigation}
-                      >
-                        My Projects
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href="/profile?tab=applications"
-                        onClick={handleNavigation}
-                      >
-                        Applications
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href="/profile?tab=downloads"
-                        onClick={handleNavigation}
-                      >
-                        Downloads
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href="/profile?tab=settings"
-                        onClick={handleNavigation}
-                      >
-                        Settings
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      Log out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              {MobxStore.user ? (
+                <UserNav user={MobxStore.user} logout={MobxStore.logout} />
               ) : (
                 <div className="flex items-center gap-2">
                   <Button
@@ -227,7 +129,7 @@ export default function Header() {
       {isMenuOpen && (
         <div className="md:hidden border-t">
           <nav className="flex flex-col p-4 space-y-2">
-            {user && (
+            {MobxStore.user && (
               <Button
                 asChild
                 variant={isActive("/profile")}
@@ -296,7 +198,7 @@ export default function Header() {
               </Link>
             </Button>
 
-            {user && (
+            {MobxStore.user && (
               <Button
                 asChild
                 variant={isActive("/profile")}
@@ -312,4 +214,6 @@ export default function Header() {
       )}
     </header>
   );
-}
+});
+
+export default Header;

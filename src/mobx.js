@@ -30,6 +30,7 @@ import {
 } from "firebase/firestore";
 
 import Logger from "@/utils/logger";
+import { generateUserAvatar } from "@/utils/avatarGenerator";
 
 const DEFAULT_USER = {
   joined: new Date(),
@@ -552,15 +553,22 @@ class Store {
         credential
       );
 
+      // Generate unique avatar for the upgraded account
+      const generatedAvatar = generateUserAvatar(username);
+
       const userDocRef = doc(db, "users", userCredential.user.uid);
       await updateDoc(userDocRef, {
         username,
+        email,
+        avatar: generatedAvatar, // Add the generated avatar
       });
 
       runInAction(() => {
         this.user = {
-          ...userCredential.user,
+          ...this.user,
           username,
+          email,
+          avatar: generatedAvatar,
         };
       });
     } catch (error) {
@@ -603,6 +611,9 @@ class Store {
         password
       );
 
+      // Generate unique avatar for the user
+      const generatedAvatar = generateUserAvatar(username);
+
       // Additional user properties
       const newUserProfile = {
         ...DEFAULT_USER,
@@ -610,6 +621,7 @@ class Store {
         username: username,
         email: email,
         uid: userCredential.user.uid,
+        avatar: generatedAvatar, // Add the generated avatar
       };
 
       // Create a user profile in Firestore
@@ -680,12 +692,18 @@ class Store {
 
       if (!userDoc.exists()) {
         console.log("Creating new user profile");
+
+        // For Google users, use their Google profile picture if available, otherwise generate one
+        const avatarUrl =
+          user.photoURL || generateUserAvatar(user.displayName || user.email);
+
         userData = {
           ...DEFAULT_USER,
           createdAt: new Date(),
           username: user.displayName || "New User",
           email: user.email,
           uid: user.uid,
+          avatar: avatarUrl, // Use Google photo or generated avatar
         };
 
         await setDoc(userDocRef, userData);

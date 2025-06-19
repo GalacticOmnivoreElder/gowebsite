@@ -323,7 +323,48 @@ const UserProfilePage = observer(() => {
                   <div className="flex items-center gap-2 mt-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">
-                      Joined {new Date(profile.createdAt).toLocaleDateString()}
+                      Joined{" "}
+                      {(() => {
+                        console.log("Profile createdAt:", profile.createdAt);
+                        console.log(
+                          "Profile createdAt type:",
+                          typeof profile.createdAt
+                        );
+                        console.log(
+                          "Profile createdAt value:",
+                          JSON.stringify(profile.createdAt)
+                        );
+
+                        // Handle different date formats from Firebase
+                        let date;
+                        if (profile.createdAt) {
+                          if (profile.createdAt.seconds) {
+                            // Firestore Timestamp object
+                            date = new Date(profile.createdAt.seconds * 1000);
+                          } else if (profile.createdAt._seconds) {
+                            // Alternative Firestore Timestamp format
+                            date = new Date(profile.createdAt._seconds * 1000);
+                          } else if (
+                            typeof profile.createdAt === "string" ||
+                            typeof profile.createdAt === "number"
+                          ) {
+                            // Regular date string or timestamp
+                            date = new Date(profile.createdAt);
+                          } else {
+                            // Fallback
+                            date = new Date(profile.createdAt);
+                          }
+                        } else {
+                          date = new Date();
+                        }
+
+                        console.log("Parsed date:", date);
+                        console.log("Is valid date:", !isNaN(date.getTime()));
+
+                        return isNaN(date.getTime())
+                          ? "Unknown"
+                          : date.toLocaleDateString();
+                      })()}
                     </span>
                   </div>
                 </div>

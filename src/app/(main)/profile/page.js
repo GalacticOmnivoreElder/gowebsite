@@ -512,7 +512,9 @@ const ProfilePage = observer(() => {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-20 w-20">
-                        <AvatarImage src={profile?.avatar} />
+                        <AvatarImage
+                          src={profile?.avatar || MobxStore.user?.avatar}
+                        />
                         <AvatarFallback className="text-lg">
                           {getInitials(
                             profile?.username || MobxStore.user?.username

@@ -29,7 +29,7 @@ const DashboardPage = observer(() => {
       !isChecking &&
       (!user || (permissions && !permissions?.permissions?.isMember))
     ) {
-      router.push("/initiatives");
+      router.push("/projects");
     }
   }, [user, permissions, isChecking, router]);
 
