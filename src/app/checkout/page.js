@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { observer } from "mobx-react-lite";
 import MobxStore from "@/mobx";
@@ -70,7 +70,7 @@ function EmailButton({ selectedPlan, MobxStore }) {
   );
 }
 
-const CheckoutPage = observer(() => {
+const CheckoutContent = observer(() => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [plan, setPlan] = useState("monthly");
@@ -387,5 +387,22 @@ const CheckoutPage = observer(() => {
     </div>
   );
 });
+
+const CheckoutPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="container max-w-4xl mx-auto py-12 px-4">
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-muted-foreground">Loading checkout...</p>
+          </div>
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
+  );
+};
 
 export default CheckoutPage;

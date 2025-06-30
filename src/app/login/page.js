@@ -27,7 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import MobxStore from "@/mobx";
 import { observer } from "mobx-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -264,11 +264,24 @@ const LoginCard = observer(() => {
   );
 });
 
-const LoginPage = () => {
+const LoginContent = () => {
   return (
     <div className="flex justify-center items-center mt-8">
       <LoginCard />
     </div>
   );
 };
+
+const LoginPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center mt-8">Loading...</div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
+  );
+};
+
 export default LoginPage;

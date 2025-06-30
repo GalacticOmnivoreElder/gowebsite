@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -393,7 +393,7 @@ const SocialLink = ({ platform, value, label }) => {
   );
 };
 
-const ProfilePage = observer(() => {
+const ProfileContent = observer(() => {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditMode, setIsEditMode] = useState(false);
@@ -860,7 +860,7 @@ const ProfilePage = observer(() => {
                         No Projects Yet
                       </h3>
                       <p className="text-muted-foreground mb-4">
-                        You haven't created or joined any projects yet.
+                        You haven&apos;t created or joined any projects yet.
                       </p>
                       <Button asChild>
                         <Link href="/project/create">
@@ -926,7 +926,7 @@ const ProfilePage = observer(() => {
                             )}
                             {application.status === "approved" && (
                               <span className="text-xs text-green-600">
-                                You've been accepted!
+                                You&apos;ve been accepted!
                               </span>
                             )}
                             {application.status === "rejected" && (
@@ -970,8 +970,8 @@ const ProfilePage = observer(() => {
                   No Applications Yet
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  You haven't applied to any projects yet. Browse projects and
-                  apply to ones that interest you!
+                  You haven&apos;t applied to any projects yet. Browse projects
+                  and apply to ones that interest you!
                 </p>
                 <Button asChild>
                   <Link href="/projects">Browse Projects</Link>
@@ -995,6 +995,14 @@ const ProfilePage = observer(() => {
     </div>
   );
 });
+
+const ProfilePage = () => {
+  return (
+    <Suspense fallback={<ProfileSkeleton />}>
+      <ProfileContent />
+    </Suspense>
+  );
+};
 
 export default ProfilePage;
 

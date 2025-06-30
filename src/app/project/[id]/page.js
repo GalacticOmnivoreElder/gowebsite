@@ -526,8 +526,8 @@ const ProjectDetailsPage = observer(() => {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-4">Project Not Found</h2>
           <p className="text-muted-foreground mb-4">
-            The project you're looking for doesn't exist or you don't have
-            permission to view it.
+            The project you&apos;re looking for doesn&apos;t exist or you
+            don&apos;t have permission to view it.
           </p>
           <Button onClick={() => router.push("/projects")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -1133,7 +1133,8 @@ const ProjectDetailsPage = observer(() => {
                     No Applications Yet
                   </h3>
                   <p className="text-muted-foreground">
-                    When people apply to join your project, they'll appear here.
+                    When people apply to join your project, they&apos;ll appear
+                    here.
                   </p>
                 </div>
               )}

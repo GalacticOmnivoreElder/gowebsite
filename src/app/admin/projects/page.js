@@ -377,7 +377,7 @@ const AdminProjectsPage = observer(() => {
           <DialogHeader>
             <DialogTitle>Update Project Status</DialogTitle>
             <DialogDescription>
-              Change the status of "{selectedProject?.title}"
+              Change the status of &quot;{selectedProject?.title}&quot;
             </DialogDescription>
           </DialogHeader>
 

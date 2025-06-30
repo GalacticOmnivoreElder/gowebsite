@@ -397,7 +397,7 @@ const EditProjectPage = observer(() => {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
           <p className="text-muted-foreground mb-6">
-            You don't have permission to edit this project.
+            You don&apos;t have permission to edit this project.
           </p>
           <Button asChild>
             <Link href={`/project/${projectId}`}>

@@ -266,8 +266,8 @@ const UserProfilePage = observer(() => {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-4">User Not Found</h2>
           <p className="text-muted-foreground">
-            The user you're looking for doesn't exist or their profile is
-            private.
+            The user you&apos;re looking for doesn&apos;t exist or their profile
+            is private.
           </p>
         </div>
       </div>

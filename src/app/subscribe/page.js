@@ -34,7 +34,7 @@ const SubscribePage = observer(() => {
         <div className="text-center">
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h1 className="text-3xl font-bold mb-4">
-            You're Already Subscribed!
+            You&apos;re Already Subscribed!
           </h1>
           <p className="text-muted-foreground mb-6">
             You have an active subscription and access to all premium features.

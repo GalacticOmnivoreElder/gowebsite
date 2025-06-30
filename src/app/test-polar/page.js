@@ -124,7 +124,7 @@ export default function TestPolarPage() {
               </CardHeader>
               <CardContent>
                 <p className="mb-4">
-                  You don't have an active subscription. Click below to
+                  You don&apos;t have an active subscription. Click below to
                   subscribe:
                 </p>
                 <Button onClick={handleCheckout}>

@@ -110,8 +110,8 @@ const SourceProjectDetailsPage = observer(() => {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-4">Source Project Not Found</h2>
           <p className="text-muted-foreground mb-4">
-            The source project you're looking for doesn't exist or you don't
-            have permission to view it.
+            The source project you&apos;re looking for doesn&apos;t exist or you
+            don&apos;t have permission to view it.
           </p>
           <Button onClick={() => router.push("/projects")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -248,8 +248,8 @@ const SourceProjectDetailsPage = observer(() => {
                 <Folder className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">No Projects Yet</h3>
                 <p className="text-muted-foreground mb-4">
-                  This source project doesn't have any projects associated with
-                  it yet.
+                  This source project doesn&apos;t have any projects associated
+                  with it yet.
                 </p>
                 {sourceProject.ownerDetails?.uid === MobxStore.user?.uid && (
                   <Button asChild>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { observer } from "mobx-react-lite";
 import MobxStore from "@/mobx";
 import { PricingDisplay } from "@/components/pricing/PricingDisplay";
 
-const PricingPage = observer(() => {
+const PricingContent = observer(() => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [redirectPath, setRedirectPath] = useState("/checkout");
@@ -66,5 +66,22 @@ const PricingPage = observer(() => {
     </div>
   );
 });
+
+const PricingPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-16">
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-muted-foreground">Loading pricing...</p>
+          </div>
+        </div>
+      }
+    >
+      <PricingContent />
+    </Suspense>
+  );
+};
 
 export default PricingPage;

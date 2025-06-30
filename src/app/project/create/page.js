@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { observer } from "mobx-react-lite";
 import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
@@ -137,7 +137,7 @@ const projectSchema = z
     }
   );
 
-const CreateProjectPage = observer(() => {
+const CreateProjectContent = observer(() => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
@@ -352,7 +352,7 @@ const CreateProjectPage = observer(() => {
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold">Basic Information</h2>
         <p className="text-muted-foreground">
-          Let's start with the basics of your project
+          Let&apos;s start with the basics of your project
         </p>
       </div>
 
@@ -591,8 +591,8 @@ const CreateProjectPage = observer(() => {
             )}
             {sourceProjects.length === 0 && !loadingSourceProjects && (
               <p className="text-sm text-muted-foreground mt-1">
-                You don't have any existing source projects. Choose "New Source
-                Project" instead.
+                You don&apos;t have any existing source projects. Choose
+                &quot;New Source Project&quot; instead.
               </p>
             )}
           </div>
@@ -919,5 +919,23 @@ const CreateProjectPage = observer(() => {
     </div>
   );
 });
+
+const CreateProjectPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <CreateProjectContent />
+    </Suspense>
+  );
+};
 
 export default CreateProjectPage;
