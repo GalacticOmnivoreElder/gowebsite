@@ -18,25 +18,54 @@ export async function GET(request) {
     const userDoc = await adminDb.collection("users").doc(uid).get();
     const userData = userDoc.data();
 
-    const subscriptionQuery = await adminDb
-      .collection("subscriptions")
-      .where("userId", "==", uid)
-      .where("active", "==", true)
-      .limit(1)
-      .get();
+    // Check if user has active subscription using new Polar.sh structure
+    let isMember = false;
+    let subscriptionData = null;
 
-    console.log(
-      "Subscription query results:",
-      !subscriptionQuery.empty
-        ? subscriptionQuery.docs[0].data()
-        : "No active subscription"
-    );
+    if (userData?.activeMember) {
+      // If user is marked as active member, check if subscription has expired
+      if (userData.subscriptionEndsAt) {
+        const subscriptionEndsAt = userData.subscriptionEndsAt.toDate
+          ? userData.subscriptionEndsAt.toDate()
+          : new Date(userData.subscriptionEndsAt);
+        const now = new Date();
+
+        if (now > subscriptionEndsAt) {
+          // Subscription has expired, update user
+          console.log("⚠️ Subscription expired, updating user status");
+          await adminDb.collection("users").doc(uid).update({
+            activeMember: false,
+            updatedAt: new Date(),
+          });
+          isMember = false;
+        } else {
+          isMember = true;
+          subscriptionData = {
+            subscriptionId: userData.subscriptionId,
+            subscriptionStatus: userData.subscriptionStatus,
+            subscriptionEndsAt: subscriptionEndsAt,
+            willRenew: userData.willRenew,
+            polarCustomerId: userData.polarCustomerId,
+          };
+        }
+      } else {
+        // No end date, assume active
+        isMember = true;
+        subscriptionData = {
+          subscriptionId: userData.subscriptionId,
+          subscriptionStatus: userData.subscriptionStatus,
+          willRenew: userData.willRenew,
+          polarCustomerId: userData.polarCustomerId,
+        };
+      }
+    }
+
+    console.log("Subscription status:", { isMember, subscriptionData });
 
     const permissions = {
       isAdmin: !!decodedToken.admin,
-      isMember: !subscriptionQuery.empty,
-      canAccessPackages:
-        !subscriptionQuery.empty || userData?.unlockedPackages?.length > 0,
+      isMember: isMember,
+      canAccessPackages: isMember || userData?.unlockedPackages?.length > 0,
     };
 
     console.log("Calculated permissions:", permissions);
@@ -48,10 +77,12 @@ export async function GET(request) {
         username: userData?.username,
         createdAt: userData?.createdAt,
         unlockedPackages: userData?.unlockedPackages || [],
+        activeMember: isMember,
+        subscriptionStatus: userData?.subscriptionStatus,
+        willRenew: userData?.willRenew,
+        subscriptionEndsAt: userData?.subscriptionEndsAt,
       },
-      subscription: !subscriptionQuery.empty
-        ? subscriptionQuery.docs[0].data()
-        : null,
+      subscription: subscriptionData,
       permissions,
     });
   } catch (error) {

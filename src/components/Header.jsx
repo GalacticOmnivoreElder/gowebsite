@@ -10,6 +10,7 @@ import logoImg from "../assets/logo.png";
 import { UserNav } from "@/reusable-ui/ReusableProfileMenu";
 import MobxStore from "@/mobx";
 import { observer } from "mobx-react";
+import SubscribeButton from "@/components/ui/SubscribeButton";
 
 const Header = observer(() => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -82,6 +83,16 @@ const Header = observer(() => {
         <div className="flex items-center gap-4">
           {!MobxStore.loading && (
             <>
+              {/* Subscribe button for logged-in users who aren't members */}
+              {MobxStore.user && !MobxStore.user.activeMember && (
+                <SubscribeButton
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hidden md:flex"
+                  size="sm"
+                >
+                  Subscribe Premium
+                </SubscribeButton>
+              )}
+
               {MobxStore.user ? (
                 <UserNav user={MobxStore.user} logout={MobxStore.logout} />
               ) : (
@@ -208,6 +219,13 @@ const Header = observer(() => {
                   Profile
                 </Link>
               </Button>
+            )}
+
+            {/* Subscribe button for mobile - logged-in users who aren't members */}
+            {MobxStore.user && !MobxStore.user.activeMember && (
+              <SubscribeButton className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 justify-start">
+                Subscribe Premium
+              </SubscribeButton>
             )}
           </nav>
         </div>

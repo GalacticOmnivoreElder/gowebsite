@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import ProfileEditor from "@/components/profile/ProfileEditor";
-import SubscriptionStatus from "@/components/profile/SubscriptionStatus";
+
 import Downloads from "@/components/profile/Downloads";
 import Settings from "@/components/profile/Settings";
 import { observer } from "mobx-react-lite";
@@ -35,10 +35,144 @@ import {
   EyeOff,
   Clock,
   DollarSign,
+  CreditCard,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import SubscribeButton from "@/components/ui/SubscribeButton";
+
+// Helper function to safely convert Firestore timestamp to Date
+const convertToDate = (timestamp) => {
+  if (!timestamp) return null;
+
+  // If it's already a Date object
+  if (timestamp instanceof Date) return timestamp;
+
+  // Handle Firestore timestamp with _seconds property (most common case)
+  if (timestamp._seconds) {
+    return new Date(timestamp._seconds * 1000);
+  }
+
+  // Handle regular Firestore timestamp with seconds property
+  if (timestamp.seconds) {
+    return new Date(timestamp.seconds * 1000);
+  }
+
+  // If it's a string, try to parse it
+  if (typeof timestamp === "string") {
+    return new Date(timestamp);
+  }
+
+  // If it's a number (Unix timestamp)
+  if (typeof timestamp === "number") {
+    return new Date(timestamp * 1000);
+  }
+
+  // Last resort: try toDate method
+  try {
+    if (
+      timestamp &&
+      timestamp.toDate &&
+      typeof timestamp.toDate === "function"
+    ) {
+      return timestamp.toDate();
+    }
+  } catch (error) {
+    console.error("Failed to convert timestamp:", error);
+  }
+
+  return null;
+};
+
+const SubscriptionStatusOverview = ({ user }) => {
+  const getSubscriptionStatusInfo = () => {
+    if (!user?.activeMember) {
+      return {
+        status: "inactive",
+        title: "No Active Subscription",
+        description: "Subscribe to access premium content",
+        icon: <XCircle className="h-5 w-5 text-red-500" />,
+        variant: "destructive",
+      };
+    }
+
+    // Check if subscription is canceled
+    if (user.subscriptionStatus === "canceled") {
+      let endDate = null;
+      let daysLeft = 0;
+
+      // Use the safe date conversion function
+      endDate = convertToDate(user.subscriptionEndsAt);
+
+      if (endDate) {
+        const now = new Date();
+        const timeDiff = endDate.getTime() - now.getTime();
+        daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      }
+
+      return {
+        status: "canceled",
+        title: "Subscription Canceled",
+        description:
+          daysLeft > 0
+            ? `Access ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
+            : "Access has ended",
+        icon: <AlertTriangle className="h-5 w-5 text-orange-500" />,
+        variant: "default",
+      };
+    }
+
+    return {
+      status: "active",
+      title: "Active Subscription",
+      description: "Your subscription is active and up to date",
+      icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+      variant: "default",
+    };
+  };
+
+  const statusInfo = getSubscriptionStatusInfo();
+
+  return (
+    <div className="space-y-4">
+      <Alert variant={statusInfo.variant}>
+        <AlertDescription className="flex items-center justify-between">
+          <div className="flex items-center">
+            {statusInfo.icon}
+            <div className="ml-2">
+              <div className="font-medium">{statusInfo.title}</div>
+              <div className="text-sm">{statusInfo.description}</div>
+            </div>
+          </div>
+          {!user?.activeMember && (
+            <SubscribeButton size="sm" className="ml-4">
+              Subscribe Now
+            </SubscribeButton>
+          )}
+        </AlertDescription>
+      </Alert>
+
+      {user?.activeMember && (
+        <div className="flex items-center justify-between pt-2">
+          <div className="text-sm text-muted-foreground">
+            For full billing details and management
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/billing">
+              <CreditCard className="h-4 w-4 mr-2" />
+              View Billing
+            </Link>
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ProjectCard = ({ project, role }) => {
   const formatBudget = (budget) => {
@@ -274,9 +408,14 @@ const ProfilePage = observer(() => {
     const tabParam = searchParams.get("tab");
     if (
       tabParam &&
-      ["profile", "projects", "applications", "downloads", "settings"].includes(
-        tabParam
-      )
+      [
+        "profile",
+        "projects",
+        "applications",
+        "downloads",
+        "billing",
+        "settings",
+      ].includes(tabParam)
     ) {
       setActiveTab(tabParam);
     }
@@ -388,6 +527,12 @@ const ProfilePage = observer(() => {
 
   // Update URL when tab changes
   const handleTabChange = (value) => {
+    // If billing tab is clicked, navigate to billing page
+    if (value === "billing") {
+      router.push("/billing");
+      return;
+    }
+
     setActiveTab(value);
     setIsEditMode(false);
     const url = new URL(window.location);
@@ -466,6 +611,10 @@ const ProfilePage = observer(() => {
           <TabsTrigger value="downloads" className="flex items-center gap-2">
             <Download className="h-4 w-4" />
             Downloads
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            Billing
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <SettingsIcon className="h-4 w-4" />
@@ -560,17 +709,13 @@ const ProfilePage = observer(() => {
               {/* Subscription Status - Only show for own profile */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Subscription Status</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-yellow-500" />
+                    Subscription Status
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <SubscriptionStatus
-                    user={MobxStore.user}
-                    permissions={MobxStore.permissions}
-                    isMember={MobxStore.isMember}
-                    hasActiveSubscription={
-                      MobxStore.permissions?.subscription?.active
-                    }
-                  />
+                  <SubscriptionStatusOverview user={MobxStore.user} />
                 </CardContent>
               </Card>
 

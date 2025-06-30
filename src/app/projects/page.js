@@ -225,30 +225,6 @@ const ProjectsPage = observer(() => {
     }
   };
 
-  const handleSeedProjects = async () => {
-    if (!MobxStore.user) return;
-
-    try {
-      const token = await auth.currentUser.getIdToken();
-      const response = await fetch("/api/projects/seed", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        await MobxStore.fetchProjects({}, true);
-      } else {
-        const error = await response.json();
-        console.error("Failed to seed projects:", error);
-      }
-    } catch (error) {
-      console.error("Error seeding projects:", error);
-    }
-  };
-
   const uniqueCategories = React.useMemo(() => {
     const categories = new Set();
     MobxStore.projects.forEach((project) => {
@@ -279,17 +255,6 @@ const ProjectsPage = observer(() => {
         </div>
 
         <div className="flex gap-2">
-          {/* Temporary Seed Button - Remove in production */}
-          {MobxStore.user && (
-            <Button
-              variant="outline"
-              onClick={handleSeedProjects}
-              className="whitespace-nowrap"
-            >
-              Seed Projects
-            </Button>
-          )}
-
           <Button onClick={handleCreateProject} className="whitespace-nowrap">
             <Plus className="h-4 w-4 mr-2" />
             Create Project

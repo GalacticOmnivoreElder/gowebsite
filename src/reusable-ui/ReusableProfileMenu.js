@@ -52,6 +52,9 @@ export function UserNav({ user, logout }) {
             <Link href="/profile?tab=downloads">Downloads</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
+            <Link href="/billing">Billing</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <Link href="/profile?tab=settings">Settings</Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
