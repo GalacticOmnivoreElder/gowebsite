@@ -14,7 +14,7 @@ export async function POST(request) {
 
     let targetUid = uid;
 
-    // If email provided, find the user by email
+    // If email provided, find the user by emails
     if (email && !uid) {
       try {
         const userRecord = await adminAuth.getUserByEmail(email);
