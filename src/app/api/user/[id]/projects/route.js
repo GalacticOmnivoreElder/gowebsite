@@ -66,7 +66,7 @@ async function fetchProjectsByIds(projectIds) {
 
 export async function GET(request, { params }) {
   try {
-    const { id: userId } = params;
+    const { id: userId } = await params;
     const requestingUser = await getUserFromToken(request);
 
     // Check if user exists

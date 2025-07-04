@@ -3,7 +3,7 @@ import { adminAuth as auth, adminDb as db } from "@/lib/firebase-admin";
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const doc = await db.collection("sourceProjects").doc(id).get();
 
@@ -87,7 +87,7 @@ export async function PUT(request, { params }) {
     const decodedToken = await auth.verifyIdToken(token);
     const userId = decodedToken.uid;
 
-    const { id } = params;
+    const { id } = await params;
     const { projectIds } = await request.json();
 
     // Check if sourceProject exists and user owns it

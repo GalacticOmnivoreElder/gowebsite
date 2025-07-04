@@ -19,7 +19,7 @@ async function getUserFromToken(request) {
 
 export async function GET(request, { params }) {
   try {
-    const { id: userId } = params;
+    const { id: userId } = await params;
     const requestingUser = await getUserFromToken(request);
 
     // Fetch the user document
@@ -86,7 +86,7 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    const { id: userId } = params;
+    const { id: userId } = await params;
     const requestingUser = await getUserFromToken(request);
 
     if (!requestingUser) {

@@ -6,16 +6,29 @@ import { getFirestore } from "firebase-admin/firestore";
 
 export async function GET(request) {
   try {
+    console.log("🔍 Auth verify route called");
+
     const authHeader = request.headers.get("authorization");
+    console.log("🔍 Auth header:", authHeader ? "Present" : "Missing");
+
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.log("❌ No valid auth header provided");
       return Response.json({ error: "No token provided" }, { status: 401 });
     }
 
     const token = authHeader.split("Bearer ")[1];
+    console.log("🔍 Token extracted, length:", token.length);
+
+    console.log("🔍 Attempting to verify token with Firebase Admin...");
     const decodedToken = await adminAuth.verifyIdToken(token);
+    console.log("✅ Token verified successfully, UID:", decodedToken.uid);
+
     const uid = decodedToken.uid;
 
+    console.log("🔍 Fetching user document from Firestore...");
     const userDoc = await adminDb.collection("users").doc(uid).get();
+    console.log("🔍 User document exists:", userDoc.exists);
+
     const userData = userDoc.data();
 
     // Check if user has active subscription using new Polar.sh structure
@@ -86,7 +99,12 @@ export async function GET(request) {
       permissions,
     });
   } catch (error) {
-    console.error("Verify permissions error:", error);
+    console.error("❌ Verify permissions error:", error);
+    console.error("❌ Error details:", {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+    });
     return Response.json({ error: "Authentication failed" }, { status: 401 });
   }
 }

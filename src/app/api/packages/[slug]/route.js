@@ -2,7 +2,7 @@ import { adminDb } from "@/lib/firebase-admin";
 
 export async function GET(request, { params }) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
 
     // Get the package
     const packageQuery = await adminDb
