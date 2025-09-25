@@ -54,7 +54,7 @@ export default function AboutPage() {
               🚀 Ready to dive deeper into our vision?
               <br />
               <a
-                href="https://drive.google.com/file/d/1dRk9BEbZEDK1968WUrj6oZv_kYrEq4in/view?usp=sharing"
+                href="https://drive.google.com/file/d/1DRFhgeRC7GwwnC5u2W1IJOBc8SgOSxIm/view?usp=sharing"
                 className="text-blue-600 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
