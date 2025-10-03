@@ -1,8 +1,6 @@
 import { FullCTA } from "@/components/landing/FullCTA";
 import { Card, CardContent } from "@/components/ui/card";
 
-
-
 export default function AboutPage() {
   return (
     <div className="container max-w-4xl mx-auto py-12">
