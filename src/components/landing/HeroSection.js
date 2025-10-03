@@ -34,13 +34,13 @@ export const HeroSection = () => {
           The only game development community in Macedonia
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button
+          {/* <Button
             asChild
             size="lg"
             className="bg-primary hover:bg-primary/90 rounded-sm w-full sm:w-auto"
           >
             <Link href="/signup">Join Our Platform</Link>
-          </Button>
+          </Button> */}
           {/* <Button
             onClick={() => {
               sendEmail();
