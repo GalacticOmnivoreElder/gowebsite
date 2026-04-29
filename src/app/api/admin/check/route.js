@@ -1,4 +1,4 @@
-import { adminAuth } from "@/lib/firebase-admin";
+import { adminAuth, adminDb } from "@/lib/firebase-admin";
 
 export async function GET(request) {
   try {
@@ -9,8 +9,16 @@ export async function GET(request) {
 
     const token = authHeader.split("Bearer ")[1];
     const decodedToken = await adminAuth.verifyIdToken(token);
+    const uid = decodedToken.uid;
+    const userDoc = await adminDb.collection("users").doc(uid).get();
+    const userData = userDoc.data();
 
-    if (!decodedToken.admin) {
+    const isAdmin = !!(
+      decodedToken.admin === true ||
+      userData?.admin === true
+    );
+
+    if (!isAdmin) {
       return Response.json({ error: "Not an admin" }, { status: 403 });
     }
 

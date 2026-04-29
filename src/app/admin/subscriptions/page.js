@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -17,48 +17,56 @@ import {
   getDocs,
   doc,
   updateDoc,
-  getDoc,
   serverTimestamp,
-  query,
-  where,
 } from "firebase/firestore";
 import { db } from "@/firebase";
 import { format } from "date-fns";
+import {
+  getAdminCache,
+  setAdminCache,
+  clearAdminCache,
+} from "@/lib/admin-data-cache";
+
+const CACHE_KEY = "admin-subscriptions-v1";
 
 export default function SubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
 
-  useEffect(() => {
-    fetchSubscriptions();
-  }, []);
-
-  const fetchSubscriptions = async () => {
+  const fetchSubscriptions = useCallback(async ({ skipCache = false } = {}) => {
     try {
+      if (!skipCache) {
+        const cached = getAdminCache(CACHE_KEY);
+        if (cached) {
+          setSubscriptions(cached);
+          setLoading(false);
+          return;
+        }
+      }
+
       setLoading(true);
-      const subscriptionsCollection = collection(db, "subscriptions");
-      const subscriptionsSnapshot = await getDocs(subscriptionsCollection);
+
+      const [subscriptionsSnapshot, usersSnapshot] = await Promise.all([
+        getDocs(collection(db, "subscriptions")),
+        getDocs(collection(db, "users")),
+      ]);
+
+      const userById = new Map(
+        usersSnapshot.docs.map((d) => [d.id, d.data()])
+      );
 
       const subscriptionsData = [];
 
       for (const subDoc of subscriptionsSnapshot.docs) {
         const subData = subDoc.data();
-
-        // Get user data
-        let userData = { name: "N/A", email: "N/A" };
-        try {
-          const userDoc = await getDoc(doc(db, "users", subData.userId));
-          if (userDoc.exists()) {
-            const user = userDoc.data();
-            userData = {
-              name: user.name || user.displayName || "N/A",
-              email: user.email || "N/A",
-            };
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        }
+        const u = subData.userId ? userById.get(subData.userId) : null;
+        const userData = u
+          ? {
+              name: u.name || u.displayName || "N/A",
+              email: u.email || "N/A",
+            }
+          : { name: "N/A", email: "N/A" };
 
         subscriptionsData.push({
           id: subDoc.id,
@@ -78,13 +86,18 @@ export default function SubscriptionsPage() {
         });
       }
 
+      setAdminCache(CACHE_KEY, subscriptionsData);
       setSubscriptions(subscriptionsData);
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, [fetchSubscriptions]);
 
   const calculateDuration = (subscription) => {
     if (!subscription.startDate) return 0;
@@ -94,7 +107,6 @@ export default function SubscriptionsPage() {
       ? new Date(subscription.endDate.toDate())
       : new Date();
 
-    // Calculate months between dates
     return Math.max(
       0,
       (endDate.getFullYear() - startDate.getFullYear()) * 12 +
@@ -113,8 +125,8 @@ export default function SubscriptionsPage() {
         ...(currentStatus ? { endDate: serverTimestamp() } : { endDate: null }),
       });
 
-      // Refresh subscriptions list
-      await fetchSubscriptions();
+      clearAdminCache("admin-");
+      await fetchSubscriptions({ skipCache: true });
     } catch (error) {
       console.error("Error toggling subscription:", error);
     } finally {
@@ -131,8 +143,8 @@ export default function SubscriptionsPage() {
         updatedAt: serverTimestamp(),
       });
 
-      // Refresh subscriptions list
-      await fetchSubscriptions();
+      clearAdminCache("admin-");
+      await fetchSubscriptions({ skipCache: true });
     } catch (error) {
       console.error("Error toggling auto-renew:", error);
     } finally {
@@ -152,7 +164,14 @@ export default function SubscriptionsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Subscriptions Management</h1>
-        <Button onClick={fetchSubscriptions}>Refresh</Button>
+        <Button
+          onClick={() => {
+            clearAdminCache(CACHE_KEY);
+            fetchSubscriptions({ skipCache: true });
+          }}
+        >
+          Refresh
+        </Button>
       </div>
 
       <div className="rounded-md border border-border">

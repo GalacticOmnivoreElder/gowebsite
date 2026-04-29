@@ -117,7 +117,8 @@ export default function AdminPackagesPage() {
     };
 
     checkAdminAndFetchPackages();
-  }, [router]);
+    // Do not depend on `router` — in Next.js App Router its identity can change every render and retrigger this forever.
+  }, []);
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);

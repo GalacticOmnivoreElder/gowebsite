@@ -90,24 +90,24 @@ class Store {
           const userDocRef = doc(db, "users", user.uid);
           const userDoc = await getDoc(userDocRef);
 
-          runInAction(() => {
-            if (!userDoc.exists()) {
-              const newUser = {
-                ...DEFAULT_USER,
-                uid: user.uid,
-                provider: "anonymous",
-                username: "Guest",
-                createdAt: new Date(),
-              };
-              setDoc(userDocRef, newUser).then(() => {
-                this.user = newUser;
-                this.checkPermissions(true);
-              });
-            } else {
+          if (!userDoc.exists()) {
+            const newUser = {
+              ...DEFAULT_USER,
+              uid: user.uid,
+              provider: "anonymous",
+              username: "Guest",
+              createdAt: new Date(),
+            };
+            await setDoc(userDocRef, newUser);
+            runInAction(() => {
+              this.user = newUser;
+            });
+          } else {
+            runInAction(() => {
               this.user = { uid: user.uid, ...userDoc.data() };
-              this.checkPermissions(true);
-            }
-          });
+            });
+          }
+          await this.checkPermissions(true);
         } catch (error) {
           console.error("Error in initializeAuth:", error);
         }

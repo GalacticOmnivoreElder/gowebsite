@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   collection,
   getDocs,
@@ -10,6 +10,9 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase";
 import { Users, CreditCard, UserCheck, Calendar } from "lucide-react";
+import { getAdminCache, setAdminCache } from "@/lib/admin-data-cache";
+
+const CACHE_KEY = "admin-dashboard-stats";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
@@ -20,25 +23,18 @@ export default function DashboardPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Get total users count
       const usersCollection = collection(db, "users");
       const usersSnapshot = await getCountFromServer(usersCollection);
       const totalUsers = usersSnapshot.data().count;
 
-      // Get subscriptions data
       const subscriptionsCollection = collection(db, "subscriptions");
       const subscriptionsSnapshot = await getDocs(subscriptionsCollection);
       const totalSubscriptions = subscriptionsSnapshot.size;
 
-      // Get active members count
       const activeSubscriptionsQuery = query(
         subscriptionsCollection,
         where("active", "==", true)
@@ -48,18 +44,30 @@ export default function DashboardPage() {
       );
       const activeMembers = activeSubscriptionsSnapshot.data().count;
 
-      setStats({
+      const payload = {
         totalUsers,
         activeMembers,
         totalSubscriptions,
-        revenueThisMonth: activeMembers * 9.99, // Assuming $9.99 per subscription
-      });
+        revenueThisMonth: activeMembers * 9.99,
+      };
+      setAdminCache(CACHE_KEY, payload);
+      setStats(payload);
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const cached = getAdminCache(CACHE_KEY);
+    if (cached) {
+      setStats(cached);
+      setLoading(false);
+      return;
+    }
+    fetchStats();
+  }, [fetchStats]);
 
   if (loading) {
     return (

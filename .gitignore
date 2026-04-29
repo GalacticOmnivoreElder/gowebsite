@@ -30,6 +30,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# Firebase Admin SDK JSON (local dev; never commit)
+/secrets/
+
 # vercel
 .vercel
 

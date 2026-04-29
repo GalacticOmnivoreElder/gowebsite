@@ -11,19 +11,20 @@ const AdminLayout = observer(({ children }) => {
   const router = useRouter();
   const { user, permissions, loading, permissionsLoading } = MobxStore;
 
-  useEffect(() => {
-    if (!loading && !permissionsLoading) {
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+  const uid = user?.uid ?? null;
+  const isAdmin = Boolean(permissions?.permissions?.isAdmin);
 
-      if (!permissions?.permissions?.isAdmin) {
-        router.push("/login");
-        return;
-      }
+  useEffect(() => {
+    if (loading || permissionsLoading) return;
+    if (!uid) {
+      router.replace("/login");
+      return;
     }
-  }, [user, permissions, loading, permissionsLoading, router]);
+    if (!isAdmin) {
+      router.replace("/login");
+    }
+    // Primitives only — `router` and `permissions` objects change identity often and caused effect storms.
+  }, [loading, permissionsLoading, uid, isAdmin]);
 
   if (loading || permissionsLoading || !permissions) {
     return (
