@@ -78,7 +78,7 @@ export const HeroSection = () => {
             target="_blank"
             href="https://calendar.app.google/Ge6GvfiaaaMhAHHf6"
           >
-            Schedule a Visit
+            Schedule a Call
           </Link>
         </Button>
 
