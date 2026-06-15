@@ -68,6 +68,21 @@ export const HeroSection = () => {
               Join Our Discord
             </Link>
           </Button>
+
+          <Button
+          asChild
+          size="lg"
+          className="bg-primary hover:bg-primary/90 rounded-sm"
+        >
+          <Link
+            target="_blank"
+            href="https://calendar.app.google/Ge6GvfiaaaMhAHHf6"
+          >
+            Schedule a Visit
+          </Link>
+        </Button>
+
+
           <Button
             asChild
             variant="outline"
