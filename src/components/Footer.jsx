@@ -88,9 +88,9 @@ export default function Footer() {
               Galactic Omnivore
             </Link>
             <p className="mt-2 text-muted-foreground max-w-md">
-              Empowering game developers with monthly themed asset packs,
-              tutorials, and code snippets to bring your creative visions to
-              life.
+              Building a stronger game development ecosystem
+              through community, education, mentorship, events,
+              and creative collaboration.
             </p>
             <div className="flex gap-4 mt-4">
               {socialMedia.map((social, index) => (
