@@ -29,7 +29,7 @@ import Image from "next/image";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 function EmailButton({ selectedPlan, MobxStore }) {
-  const mailto = `mailto:galacticomnivore@gmail.com?subject=Membership Access&body=Hello,%0D%0A%0D%0AI have completed the payment for the ${
+  const mailto = `mailto:galacticomnivore@galacticomnivore.com?subject=Membership Access&body=Hello,%0D%0A%0D%0AI have completed the payment for the ${
     selectedPlan.name
   } plan.%0D%0A%0D%0AMy details:%0D%0AName: ${
     MobxStore.user?.username || ""
@@ -37,7 +37,7 @@ function EmailButton({ selectedPlan, MobxStore }) {
     MobxStore.user?.email || ""
   }%0D%0A%0D%0APlease find the payment confirmation attached.%0D%0A%0D%0AThank you.`;
 
-  const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=galacticomnivore@gmail.com&su=Membership Access&body=Hello,%0D%0A%0D%0AI have completed the payment for the ${
+  const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=galacticomnivore@galacticomnivore.com&su=Membership Access&body=Hello,%0D%0A%0D%0AI have completed the payment for the ${
     selectedPlan.name
   } plan.%0D%0A%0D%0AMy details:%0D%0AName: ${
     MobxStore.user?.username || ""
@@ -300,7 +300,7 @@ const CheckoutPage = observer(() => {
                   <div>
                     <h3 className="font-medium">3. Send Confirmation Email</h3>
                     <p className="text-muted-foreground mb-2">
-                      Send an email to galacticomnivore@gmail.com with:
+                      Send an email to galacticomnivore@galacticomnivore.com with:
                     </p>
                     <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
                       <li>Subject: Membership Access</li>
@@ -314,7 +314,7 @@ const CheckoutPage = observer(() => {
                     />
                     {/* <Button variant="outline" className="mt-3" asChild>
                       <a
-                        href={`mailto:galacticomnivore@gmail.com?subject=Membership Access&body=Hello,%0D%0A%0D%0AI have completed the payment for the ${
+                        href={`mailto:galacticomnivore@galacticomnivore.com?subject=Membership Access&body=Hello,%0D%0A%0D%0AI have completed the payment for the ${
                           selectedPlan.name
                         } plan.%0D%0A%0D%0AMy details:%0D%0AName: ${
                           MobxStore.user?.username || ""
