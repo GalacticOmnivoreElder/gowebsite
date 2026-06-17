@@ -203,7 +203,7 @@ const ContactUs = () => {
         (Outsourcing), our community is here to help you thrive.
       </div>
       <a
-        href="mailto:galacticomnivore@gmail.com"
+        href="mailto:galacticomnivore@galacticomnivore.com"
         className="w-full flex justify-center"
       >
         <Button className="bg-white text-black p-4 mt-4 w-full lg:w-[200px] rounded-[0px]">

@@ -10,8 +10,8 @@ export const HeroSection = () => {
     fetch("/api/welcomeEmail", {
       method: "POST",
       body: JSON.stringify({
-        name: "deno games",
-        email: "denogames.official@gmail.com",
+        name: "galacticomnivore",
+        email: "galacticomnivore@galacticomnivore.com",
       }),
     });
   };
