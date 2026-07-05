@@ -6,6 +6,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get("slug");
   const category = searchParams.get("category");
+  const tag = searchParams.get("tag");
 
   try {
     let url;
@@ -37,6 +38,33 @@ export async function GET(request) {
         } catch (categoryError) {
           console.error("Error getting category ID:", categoryError);
           // Return empty array if there's an error
+          return NextResponse.json([]);
+        }
+      }
+
+      if (tag && tag !== "all") {
+        try {
+          const tagId = await getTagId(tag);
+          console.log(`Tag ID for "${tag}":`, tagId);
+
+          if (tagId) {
+            url += `&tags=${tagId}`;
+            console.log(`Filtering by tag ID: ${tagId} for tag: ${tag}`);
+          } else {
+            const fallbackCategoryId = await getCategoryId(tag);
+
+            if (fallbackCategoryId) {
+              url += `&categories=${fallbackCategoryId}`;
+              console.log(
+                `Tag "${tag}" not found. Filtering by matching category ID: ${fallbackCategoryId}`
+              );
+            } else {
+              console.log(`Tag or category "${tag}" not found.`);
+              return NextResponse.json([]);
+            }
+          }
+        } catch (tagError) {
+          console.error("Error getting tag ID:", tagError);
           return NextResponse.json([]);
         }
       }
@@ -142,7 +170,7 @@ async function getTagId(tagName) {
 
 export async function POST(request) {
   try {
-    const { category } = await request.json();
+    const { category, tag } = await request.json();
     let url = `${process.env.WORDPRESS_API_URL}/posts?_embed&per_page=10`;
 
     if (category && category !== "all") {
@@ -167,6 +195,33 @@ export async function POST(request) {
       } catch (categoryError) {
         console.error("Error getting category ID:", categoryError);
         // Return empty array if there's an error
+        return NextResponse.json([]);
+      }
+    }
+
+    if (tag && tag !== "all") {
+      try {
+        const tagId = await getTagId(tag);
+        console.log(`Tag ID for "${tag}":`, tagId);
+
+        if (tagId) {
+          url += `&tags=${tagId}`;
+          console.log(`Filtering by tag ID: ${tagId} for tag: ${tag}`);
+        } else {
+          const fallbackCategoryId = await getCategoryId(tag);
+
+          if (fallbackCategoryId) {
+            url += `&categories=${fallbackCategoryId}`;
+            console.log(
+              `Tag "${tag}" not found. Filtering by matching category ID: ${fallbackCategoryId}`
+            );
+          } else {
+            console.log(`Tag or category "${tag}" not found.`);
+            return NextResponse.json([]);
+          }
+        }
+      } catch (tagError) {
+        console.error("Error getting tag ID:", tagError);
         return NextResponse.json([]);
       }
     }

@@ -128,19 +128,17 @@ export default async function ResourcesPage() {
               Educational Content
             </CardTitle>
             <CardDescription>
-              In-depth guides, tutorials, and insights from community experts
-              (Content Coming Soon).
+              Explore guides, tutorials, workshop notes, and course updates created for developers, artists, designers, writers, and anyone building games.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Learn about game design principles, programming techniques, art
-              workflows, and more. (We are preparing detailed articles and
-              videos based on Galactic Omnivore initiatives - stay tuned!).
+              Learn about game design, production, AI-assisted workflows, Game Engines (Unity, Godot, Unreal), prototyping, community projects, and the practical skills needed to move from idea to playable game.
             </p>
-            {/* Placeholder CTA */}
-            <Button variant="outline" disabled>
-              Read More (Coming Soon)
+            <Button asChild variant="outline">
+              <Link href="/education">
+                Explore Education <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </CardContent>
         </Card>

@@ -202,39 +202,7 @@ const BlogPost = observer(() => {
 
             {/* Main Content */}
             <div
-              className="prose prose-lg dark:prose-invert max-w-none
-                        prose-headings:text-foreground
-                        prose-h1:mt-16 prose-h1:mb-8
-                        prose-h2:mt-12 prose-h2:mb-6
-                        prose-p:text-muted-foreground prose-p:my-4
-                        prose-strong:text-foreground
-                        prose-em:italic prose-em:text-foreground
-                        prose-a:text-primary hover:prose-a:text-primary/80
-                        prose-blockquote:border-primary
-                        prose-hr:my-12 prose-hr:border-border
-                        
-                        /* Image and Figure Styling */
-                        prose-figure:my-16                    /* Increased margin around figures */
-                        [&_.wp-block-image]:my-16            /* Specific to WordPress image blocks */
-                        prose-img:rounded-lg
-                        [&_figure_img]:w-full                /* Make images full width */
-                        [&_figure_img]:object-cover          /* Better image fitting */
-                        [&_figure]:text-center               /* Center figure and captions */
-                        [&_figcaption]:mt-4                  /* Space between image and caption */
-                        [&_figcaption]:text-sm               /* Smaller caption text */
-                        [&_figcaption]:text-muted-foreground /* Caption color */
-                        
-                        /* Other elements */
-                        prose-ul:my-6 prose-ul:list-disc prose-ul:pl-6
-                        prose-li:my-1
-                        [&_.wp-block-separator]:my-12
-                        [&_p]:leading-relaxed
-                        [&_ul]:space-y-2
-                        
-                        /* Additional spacing for consecutive elements */
-                        [&_figure+p]:mt-16                   /* Space after figure before paragraph */
-                        [&_p+figure]:mt-16                   /* Space before figure after paragraph */
-                        [&_figure+figure]:mt-16              /* Space between consecutive figures */"
+              className="wordpress-content"
               dangerouslySetInnerHTML={{
                 __html: post.content,
               }}

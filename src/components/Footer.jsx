@@ -120,6 +120,14 @@ export default function Footer() {
                   Blog
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/education"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Education
+                </Link>
+              </li>
 
               <li>
                 <Link
