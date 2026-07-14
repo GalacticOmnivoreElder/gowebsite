@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebase-admin";
+import { getEffectiveMembership, getRequestUser } from "@/lib/auth-utils";
 
 export async function GET(request, { params }) {
   try {
@@ -18,38 +19,13 @@ export async function GET(request, { params }) {
     const packageDoc = packageQuery.docs[0];
     const packageData = { id: packageDoc.id, ...packageDoc.data() };
 
-    // Check if user is authenticated
-    const authHeader = request.headers.get("authorization");
-    let isAuthenticated = false;
-    let hasAccess = false;
-    let uid = null;
-
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      try {
-        const token = authHeader.split("Bearer ")[1];
-        const { adminAuth } = await import("@/lib/firebase-admin");
-        const decodedToken = await adminAuth.verifyIdToken(token);
-        uid = decodedToken.uid;
-        isAuthenticated = true;
-
-        // Get user data
-        const userDoc = await adminDb.collection("users").doc(uid).get();
-        const userData = userDoc.data();
-
-        // Check if user has access to this package
-        hasAccess = userData?.unlockedPackages?.includes(packageData.id);
-
-        console.log("Access check:", {
-          uid,
-          packageId: packageData.id,
-          unlockedPackages: userData?.unlockedPackages,
-          hasAccess,
-        });
-      } catch (error) {
-        console.error("Auth verification error:", error);
-        // Continue as unauthenticated user
-      }
-    }
+    const user = await getRequestUser(request);
+    const isAuthenticated = !!user;
+    const membership = getEffectiveMembership(user?.userData || {}, {
+      admin: user?.admin === true,
+    });
+    const hasPackageUnlock = user?.userData?.unlockedPackages?.includes(packageData.id) === true;
+    const hasAccess = membership.activeMember || hasPackageUnlock;
 
     // Prepare response based on access level
     const responseData = {

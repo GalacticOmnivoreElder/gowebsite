@@ -63,7 +63,13 @@ function loadAuthModule({ decodedTokens = {}, userDocs = {} } = {}) {
 
   return loadSourceModule(
     "src/lib/auth-utils.js",
-    ["getTokenFromRequest", "getRequestUser", "verifyToken"],
+    [
+      "getEffectiveMembership",
+      "getTokenFromRequest",
+      "getRequestUser",
+      "hasActiveSubscription",
+      "verifyToken",
+    ],
     {
       stripImports: true,
       sandbox: { adminAuth, adminDb, Date: FixedDate },
@@ -159,8 +165,31 @@ test("getRequestUser grants platform admin from either token claim or user doc",
   const docAdmin = await getRequestUser(createRequest({ Authorization: "Bearer docAdmin" }));
 
   assert.equal(claimAdmin.admin, true);
+  assert.equal(claimAdmin.activeMember, true);
+  assert.equal(claimAdmin.membershipTier, "company");
   assert.equal(claimAdmin.canCreateProjects, true);
   assert.equal(docAdmin.admin, true);
   assert.equal(docAdmin.email, "admin@example.com");
+  assert.equal(docAdmin.activeMember, true);
+  assert.equal(docAdmin.membershipTier, "company");
   assert.equal(docAdmin.canCreateProjects, true);
+});
+
+test("effective membership gives admins company-tier benefits without a real subscription", () => {
+  const { getEffectiveMembership, hasActiveSubscription } = loadAuthModule();
+
+  const membership = getEffectiveMembership(
+    {
+      activeMember: false,
+      unlockedPackages: [],
+    },
+    { admin: true }
+  );
+
+  assert.equal(hasActiveSubscription({ activeMember: false }), false);
+  assert.equal(membership.activeMember, true);
+  assert.equal(membership.membershipTier, "company");
+  assert.equal(membership.canCreateProjects, true);
+  assert.equal(membership.canAccessPackages, true);
+  assert.equal(membership.subscribed, false);
 });

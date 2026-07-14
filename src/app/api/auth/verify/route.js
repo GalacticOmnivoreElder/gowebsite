@@ -5,6 +5,7 @@ import {
   adminDb,
   isFirebaseAdminSetupError,
 } from "@/lib/firebase-admin";
+import { getEffectiveMembership, hasActiveSubscription } from "@/lib/auth-utils";
 
 export async function GET(request) {
   try {
@@ -64,8 +65,9 @@ export async function GET(request) {
 
     // Membership now derives from the Polar subscription model written by the
     // webhook: users/{uid}.activeMember + subscriptionEndsAt (see /api/subscription/webhook).
+    // Platform admins receive an effective company-tier membership so they can
+    // exercise all member/company benefits without creating fake billing data.
     const now = new Date();
-    let isMember = false;
     let subscriptionData = null;
 
     if (userData?.activeMember) {
@@ -86,9 +88,7 @@ export async function GET(request) {
         } catch (e) {
           console.error("Failed to expire membership for", uid, e);
         }
-        isMember = false;
       } else {
-        isMember = true;
         subscriptionData = {
           subscriptionId: userData.subscriptionId || null,
           subscriptionStatus: userData.subscriptionStatus || null,
@@ -103,15 +103,18 @@ export async function GET(request) {
     const isAdmin = !!(decodedToken.admin === true || userData?.admin === true);
 
     // Tier: "member" can apply to projects; "company" can also create/manage projects.
-    const membershipTier = isMember ? userData?.membershipTier || "member" : null;
-    const canCreateProjects = isAdmin || membershipTier === "company";
+    const membership = getEffectiveMembership(userData, { admin: isAdmin, now });
+    const isMember = membership.activeMember;
+    const membershipTier = membership.membershipTier;
+    const canCreateProjects = membership.canCreateProjects;
 
     const permissions = {
       isAdmin,
       isMember,
       membershipTier,
       canCreateProjects,
-      canAccessPackages: isMember || userData?.unlockedPackages?.length > 0,
+      canAccessPackages: membership.canAccessPackages,
+      hasPaidSubscription: hasActiveSubscription(userData, now),
     };
 
     return Response.json({

@@ -17,6 +17,41 @@ export async function verifyToken(token) {
   }
 }
 
+export function hasActiveSubscription(userData = {}, now = new Date()) {
+  if (userData?.activeMember !== true) return false;
+
+  if (userData.subscriptionEndsAt) {
+    const endsAt = userData.subscriptionEndsAt.toDate
+      ? userData.subscriptionEndsAt.toDate()
+      : new Date(userData.subscriptionEndsAt);
+
+    if (endsAt && now > endsAt) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function getEffectiveMembership(userData = {}, { admin = false, now = new Date() } = {}) {
+  const subscribed = hasActiveSubscription(userData, now);
+  const activeMember = admin || subscribed;
+  const membershipTier = activeMember
+    ? admin
+      ? "company"
+      : userData.membershipTier || "member"
+    : null;
+
+  return {
+    activeMember,
+    membershipTier,
+    subscribed,
+    canCreateProjects: membershipTier === "company",
+    canAccessPackages:
+      activeMember || (Array.isArray(userData.unlockedPackages) && userData.unlockedPackages.length > 0),
+  };
+}
+
 /**
  * Resolve the authenticated user for an API request into a single object that
  * carries everything the authorization helpers need:
@@ -52,25 +87,16 @@ export async function getRequestUser(request) {
 
   const admin = decoded.admin === true || userData.admin === true;
 
-  let activeMember = userData.activeMember === true;
-  if (activeMember && userData.subscriptionEndsAt) {
-    const endsAt = userData.subscriptionEndsAt.toDate
-      ? userData.subscriptionEndsAt.toDate()
-      : new Date(userData.subscriptionEndsAt);
-    if (endsAt && new Date() > endsAt) {
-      activeMember = false;
-    }
-  }
-
-  const membershipTier = activeMember ? userData.membershipTier || "member" : null;
+  const membership = getEffectiveMembership(userData, { admin });
 
   return {
     uid: decoded.uid,
     email: decoded.email || userData.email || null,
     admin,
-    activeMember,
-    membershipTier,
-    canCreateProjects: admin || membershipTier === "company",
+    activeMember: membership.activeMember,
+    membershipTier: membership.membershipTier,
+    canCreateProjects: membership.canCreateProjects,
+    canAccessPackages: membership.canAccessPackages,
     claims: decoded,
     userData,
   };

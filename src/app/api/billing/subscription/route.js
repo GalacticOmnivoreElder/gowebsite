@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { getTokenFromRequest, verifyToken } from "@/lib/auth-utils";
+import {
+  getEffectiveMembership,
+  getTokenFromRequest,
+  hasActiveSubscription,
+  verifyToken,
+} from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
 import { getPolarApiBase } from "@/lib/polar";
 
@@ -26,12 +31,17 @@ export async function GET(request) {
     }
 
     const userData = userDoc.data();
+    const isAdmin = decodedToken.admin === true || userData.admin === true;
+    const membership = getEffectiveMembership(userData, { admin: isAdmin });
+    const hasPaidSubscription = hasActiveSubscription(userData);
 
     // If no subscription, return basic info
     if (!userData.subscriptionId) {
       return NextResponse.json({
         hasSubscription: false,
-        activeMember: userData.activeMember || false,
+        activeMember: membership.activeMember,
+        membershipTier: membership.membershipTier,
+        hasPaidSubscription,
       });
     }
 
@@ -52,7 +62,9 @@ export async function GET(request) {
 
         return NextResponse.json({
           hasSubscription: true,
-          activeMember: userData.activeMember || false,
+          activeMember: membership.activeMember,
+          membershipTier: membership.membershipTier,
+          hasPaidSubscription,
           subscriptionStatus: userData.subscriptionStatus || "active",
           subscription: {
             id: subscription.id,
@@ -75,7 +87,9 @@ export async function GET(request) {
     // Fallback to Firestore data if Polar fails
     return NextResponse.json({
       hasSubscription: true,
-      activeMember: userData.activeMember || false,
+      activeMember: membership.activeMember,
+      membershipTier: membership.membershipTier,
+      hasPaidSubscription,
       subscriptionStatus: userData.subscriptionStatus || "active",
       canceledAt: userData.canceledAt,
       subscriptionEndsAt: userData.subscriptionEndsAt,

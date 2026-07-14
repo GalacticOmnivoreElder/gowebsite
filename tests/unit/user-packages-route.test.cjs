@@ -15,31 +15,22 @@ function loadRoute({ decoded = {}, packages = {}, userDocs = {} } = {}) {
       stripImports: true,
       sandbox: {
         Response: NextResponse,
-        adminAuth: {
-          async verifyIdToken(token) {
-            if (!decoded[token]) throw new Error("bad token");
-            return decoded[token];
-          },
-        },
         adminDb: {
           collection(name) {
-            if (name === "users") {
+            if (name === "packages") {
               return {
-                doc(uid) {
+                async get() {
                   return {
-                    async get() {
-                      const data = userDocs[uid];
-                      return {
-                        data: () => data || null,
-                      };
+                    forEach(callback) {
+                      Object.entries(packages).forEach(([id, data]) =>
+                        callback({
+                          id,
+                          data: () => data,
+                        })
+                      );
                     },
                   };
                 },
-              };
-            }
-
-            if (name === "packages") {
-              return {
                 where(field, operator, values) {
                   assert.equal(field, "id");
                   assert.equal(operator, "in");
@@ -65,6 +56,17 @@ function loadRoute({ decoded = {}, packages = {}, userDocs = {} } = {}) {
 
             throw new Error(`Unexpected collection: ${name}`);
           },
+        },
+        getRequestUser: async (request) => {
+          const token = request.headers.get("authorization")?.replace("Bearer ", "");
+          if (!token || !decoded[token]) return null;
+          const userData = userDocs[decoded[token].uid] || {};
+          return {
+            activeMember: decoded[token].admin === true || userData.admin === true || userData.activeMember === true,
+            admin: decoded[token].admin === true || userData.admin === true,
+            uid: decoded[token].uid,
+            userData,
+          };
         },
       },
     }
@@ -117,4 +119,44 @@ test("user packages route fetches unlocked packages", async () => {
     { id: "pack_1", title: "Starter Pack" },
     { id: "pack_2", title: "Advanced Pack" },
   ]);
+});
+
+test("user packages route returns every package for active members and admins", async () => {
+  let route = loadRoute({
+    decoded: {
+      token: { uid: "member-1" },
+    },
+    packages: {
+      pack_1: { id: "pack_1", title: "Starter Pack" },
+      pack_2: { id: "pack_2", title: "Advanced Pack" },
+    },
+    userDocs: {
+      "member-1": { activeMember: true, unlockedPackages: [] },
+    },
+  });
+
+  let response = await route.GET(createRequest({ headers: { authorization: "Bearer token" } }));
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(plain(response.body), [
+    { id: "pack_1", title: "Starter Pack" },
+    { id: "pack_2", title: "Advanced Pack" },
+  ]);
+
+  route = loadRoute({
+    decoded: {
+      token: { uid: "admin-1" },
+    },
+    packages: {
+      pack_1: { id: "pack_1", title: "Starter Pack" },
+    },
+    userDocs: {
+      "admin-1": { admin: true, activeMember: false, unlockedPackages: [] },
+    },
+  });
+
+  response = await route.GET(createRequest({ headers: { authorization: "Bearer token" } }));
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(plain(response.body), [{ id: "pack_1", title: "Starter Pack" }]);
 });

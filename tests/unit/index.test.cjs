@@ -21,6 +21,7 @@ require("./lib-utils.test.cjs");
 require("./logger.test.cjs");
 require("./me-cv-route.test.cjs");
 require("./me-profile-route.test.cjs");
+require("./package-slug-route.test.cjs");
 require("./subscription-webhook-route.test.cjs");
 require("./token.test.cjs");
 require("./transformers.test.cjs");

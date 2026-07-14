@@ -1,30 +1,27 @@
 export const dynamic = "force-dynamic";
 
-import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { adminDb } from "@/lib/firebase-admin";
+import { getRequestUser } from "@/lib/auth-utils";
 
 export async function GET(request) {
   try {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const user = await getRequestUser(request);
+    if (!user) {
       return Response.json({ error: "No token provided" }, { status: 401 });
     }
 
-    const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    const uid = decodedToken.uid;
-
-    const userDoc = await adminDb.collection("users").doc(uid).get();
-    const userData = userDoc.data();
-
-    if (!userData || !userData.unlockedPackages) {
-      return Response.json([]);
-    }
+    const userData = user.userData || {};
 
     const packagesRef = adminDb.collection("packages");
-    const snapshot = await packagesRef
-      .where("id", "in", userData.unlockedPackages)
-      .get();
+    const snapshot = user.activeMember
+      ? await packagesRef.get()
+      : Array.isArray(userData.unlockedPackages) && userData.unlockedPackages.length > 0
+      ? await packagesRef.where("id", "in", userData.unlockedPackages).get()
+      : null;
+
+    if (!snapshot) {
+      return Response.json([]);
+    }
 
     const packages = [];
     snapshot.forEach((doc) => {
