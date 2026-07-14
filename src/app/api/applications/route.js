@@ -7,6 +7,17 @@ async function getUserFromToken(request) {
   return getRequestUser(request);
 }
 
+function serializeApplicationDate(value) {
+  const date = value?.toDate?.() || value;
+  return date instanceof Date ? date.toISOString() : date;
+}
+
+function applicationTime(value) {
+  const date = value?.toDate?.() || value;
+  const time = date instanceof Date ? date.getTime() : new Date(date || 0).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
 async function enrichApplicationWithUserDetails(application) {
   try {
     // Get user details from users collection
@@ -245,7 +256,10 @@ export async function GET(request) {
       query = query.where("userId", "==", user.uid);
     }
 
-    const snapshot = await query.orderBy("createdAt", "desc").get();
+    // Sorting a filtered query in Firestore requires a separately deployed
+    // composite index. Fetch the already-filtered result and sort it here so
+    // applicant lists work in every environment without hidden index setup.
+    const snapshot = await query.get();
     const applications = [];
 
     // First, collect all applications with basic data
@@ -254,10 +268,15 @@ export async function GET(request) {
       applications.push({
         id: doc.id,
         ...data,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+        createdAt: serializeApplicationDate(data.createdAt),
+        updatedAt: serializeApplicationDate(data.updatedAt),
       });
     });
+
+    applications.sort(
+      (left, right) =>
+        applicationTime(right.createdAt) - applicationTime(left.createdAt)
+    );
 
     // Then enrich each application with user details
     const enrichedApplications = await Promise.all(
