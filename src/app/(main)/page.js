@@ -607,8 +607,8 @@ const HomePage = () => {
                   </div>
                 </div>
               }
-              buttonText="See Initiatives"
-              buttonLink="/initiatives"
+              buttonText="See Projects"
+              buttonLink="/projects"
             />
             <EduBoxLarge
               title="OUTSOURCING & JOBS"
