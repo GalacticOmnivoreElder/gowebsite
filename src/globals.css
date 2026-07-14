@@ -63,8 +63,39 @@
   * {
     @apply border-border;
   }
+  html {
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  }
   body {
     @apply bg-background text-foreground;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    line-height: 1.6;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Poppins", "Inter", sans-serif;
+    font-weight: 600;
+  }
+
+  /* Custom typography classes (used by Projects/profile pages) */
+  .heading-xl {
+    @apply text-4xl font-bold tracking-tight;
+  }
+  .heading-lg {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+  .heading-md {
+    @apply text-2xl font-semibold;
+  }
+  .body-lg {
+    @apply text-lg leading-relaxed;
+  }
+  .body-sm {
+    @apply text-sm leading-normal;
   }
 }
 

@@ -36,11 +36,10 @@ export const PricingDisplay = ({ handleSubscribe, showTier2 = true }) => {
           <PricingTier
             title="Annual Plan"
             price="4,800 MKD /year"
-            description="Our best value. Save 1,200 MKD compared to monthly."
+            description="Best value — save 1,200 MKD compared to monthly billing."
             benefits={tier1Benefits}
             ctaText="Subscribe Yearly"
-            ctaAction={() => handleSubscribe("annual")} // Use passed handler
-            popular={true}
+            ctaAction={() => handleSubscribe("annual")}
             discount="-20%"
           />
         </div>

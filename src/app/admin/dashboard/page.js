@@ -31,18 +31,23 @@ export default function DashboardPage() {
       const usersSnapshot = await getCountFromServer(usersCollection);
       const totalUsers = usersSnapshot.data().count;
 
-      const subscriptionsCollection = collection(db, "subscriptions");
-      const subscriptionsSnapshot = await getDocs(subscriptionsCollection);
-      const totalSubscriptions = subscriptionsSnapshot.size;
+      // Membership now lives on the user doc (Polar model): users.activeMember.
+      const activeMembersSnapshot = await getCountFromServer(
+        query(usersCollection, where("activeMember", "==", true))
+      );
+      const activeMembers = activeMembersSnapshot.data().count;
 
-      const activeSubscriptionsQuery = query(
-        subscriptionsCollection,
-        where("active", "==", true)
-      );
-      const activeSubscriptionsSnapshot = await getCountFromServer(
-        activeSubscriptionsQuery
-      );
-      const activeMembers = activeSubscriptionsSnapshot.data().count;
+      // Anyone who has ever had a Polar customer created (active or churned).
+      let totalSubscriptions = activeMembers;
+      try {
+        const withBillingSnapshot = await getCountFromServer(
+          query(usersCollection, where("polarCustomerId", "!=", null))
+        );
+        totalSubscriptions = withBillingSnapshot.data().count;
+      } catch (e) {
+        // "!=" needs the field present/indexed; fall back to active count.
+        console.warn("Subscription count fallback:", e?.message);
+      }
 
       const payload = {
         totalUsers,

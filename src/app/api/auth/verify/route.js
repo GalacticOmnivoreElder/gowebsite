@@ -37,17 +37,9 @@ export async function GET(request) {
 
     let userDoc;
     let userData;
-    let subscriptionQuery;
     try {
       userDoc = await adminDb.collection("users").doc(uid).get();
       userData = userDoc.data();
-
-      subscriptionQuery = await adminDb
-        .collection("subscriptions")
-        .where("userId", "==", uid)
-        .where("active", "==", true)
-        .limit(1)
-        .get();
     } catch (e) {
       console.error("Firestore error in /api/auth/verify:", e);
       const isCred =
@@ -70,25 +62,57 @@ export async function GET(request) {
       );
     }
 
-    console.log(
-      "Subscription query results:",
-      !subscriptionQuery.empty
-        ? subscriptionQuery.docs[0].data()
-        : "No active subscription"
-    );
+    // Membership now derives from the Polar subscription model written by the
+    // webhook: users/{uid}.activeMember + subscriptionEndsAt (see /api/subscription/webhook).
+    const now = new Date();
+    let isMember = false;
+    let subscriptionData = null;
+
+    if (userData?.activeMember) {
+      const endsAtRaw = userData.subscriptionEndsAt;
+      const endsAt = endsAtRaw?.toDate
+        ? endsAtRaw.toDate()
+        : endsAtRaw
+        ? new Date(endsAtRaw)
+        : null;
+
+      if (endsAt && now > endsAt) {
+        // Access window has lapsed — flip the flag so gating is accurate.
+        try {
+          await adminDb.collection("users").doc(uid).update({
+            activeMember: false,
+            updatedAt: new Date(),
+          });
+        } catch (e) {
+          console.error("Failed to expire membership for", uid, e);
+        }
+        isMember = false;
+      } else {
+        isMember = true;
+        subscriptionData = {
+          subscriptionId: userData.subscriptionId || null,
+          subscriptionStatus: userData.subscriptionStatus || null,
+          subscriptionEndsAt: endsAt,
+          willRenew: userData.willRenew ?? null,
+          polarCustomerId: userData.polarCustomerId || null,
+        };
+      }
+    }
 
     // Admin can be set via Auth custom claims (decodedToken.admin) OR Firestore users/{uid}.admin
-    const permissions = {
-      isAdmin: !!(
-        decodedToken.admin === true ||
-        userData?.admin === true
-      ),
-      isMember: !subscriptionQuery.empty,
-      canAccessPackages:
-        !subscriptionQuery.empty || userData?.unlockedPackages?.length > 0,
-    };
+    const isAdmin = !!(decodedToken.admin === true || userData?.admin === true);
 
-    console.log("Calculated permissions:", permissions);
+    // Tier: "member" can apply to projects; "company" can also create/manage projects.
+    const membershipTier = isMember ? userData?.membershipTier || "member" : null;
+    const canCreateProjects = isAdmin || membershipTier === "company";
+
+    const permissions = {
+      isAdmin,
+      isMember,
+      membershipTier,
+      canCreateProjects,
+      canAccessPackages: isMember || userData?.unlockedPackages?.length > 0,
+    };
 
     return Response.json({
       user: {
@@ -97,10 +121,14 @@ export async function GET(request) {
         username: userData?.username,
         createdAt: userData?.createdAt,
         unlockedPackages: userData?.unlockedPackages || [],
+        activeMember: isMember,
+        membershipTier,
+        subscriptionStatus: userData?.subscriptionStatus || null,
+        willRenew: userData?.willRenew ?? null,
+        subscriptionEndsAt: userData?.subscriptionEndsAt || null,
+        polarCustomerId: userData?.polarCustomerId || null,
       },
-      subscription: !subscriptionQuery.empty
-        ? subscriptionQuery.docs[0].data()
-        : null,
+      subscription: subscriptionData,
       permissions,
     });
   } catch (error) {

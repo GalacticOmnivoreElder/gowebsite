@@ -10,6 +10,8 @@ const nextConfig = {
       "firebasestorage.googleapis.com",
       "m.media-amazon.com",
       "galacticomnivorecom.wordpress.com",
+      "plus.unsplash.com",
+      "bs-uploads.toptal.io",
     ],
   },
 };

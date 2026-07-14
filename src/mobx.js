@@ -30,6 +30,7 @@ import {
 } from "firebase/firestore";
 
 import Logger from "@/utils/logger";
+import { generateUserAvatar } from "@/utils/avatarGenerator";
 
 const DEFAULT_USER = {
   joined: new Date(),
@@ -50,6 +51,31 @@ class Store {
   blogsLoading = false;
   blogDetailsLoading = new Map();
   blogsFetched = false;
+
+  // Projects
+  projects = [];
+  projectDetails = new Map();
+  cachedProjects = new Map();
+  projectsLoading = false;
+  projectDetailsLoading = new Map();
+  projectFilters = {
+    search: "",
+    category: "all",
+    type: "all",
+    visibility: "all",
+    status: "all",
+    sortBy: "created_desc",
+  };
+  projectPagination = {
+    page: 1,
+    limit: 20,
+    hasMore: true,
+  };
+
+  // Applications
+  applications = [];
+  applicationsLoading = false;
+  applicationsFetched = false;
 
   lists = [];
   // App States
@@ -90,24 +116,24 @@ class Store {
           const userDocRef = doc(db, "users", user.uid);
           const userDoc = await getDoc(userDocRef);
 
-          if (!userDoc.exists()) {
-            const newUser = {
-              ...DEFAULT_USER,
-              uid: user.uid,
-              provider: "anonymous",
-              username: "Guest",
-              createdAt: new Date(),
-            };
-            await setDoc(userDocRef, newUser);
-            runInAction(() => {
-              this.user = newUser;
-            });
-          } else {
-            runInAction(() => {
+          runInAction(() => {
+            if (!userDoc.exists()) {
+              const newUser = {
+                ...DEFAULT_USER,
+                uid: user.uid,
+                provider: "anonymous",
+                username: "Guest",
+                createdAt: new Date(),
+              };
+              setDoc(userDocRef, newUser).then(() => {
+                this.user = newUser;
+                this.checkPermissions(true);
+              });
+            } else {
               this.user = { uid: user.uid, ...userDoc.data() };
-            });
-          }
-          await this.checkPermissions(true);
+              this.checkPermissions(true);
+            }
+          });
         } catch (error) {
           console.error("Error in initializeAuth:", error);
         }
@@ -165,6 +191,9 @@ class Store {
           this.permissions = data;
           this.permissionsLoading = false;
           this.lastPermissionCheck = Date.now();
+          if (data.user && this.user) {
+            this.user = { ...this.user, ...data.user };
+          }
         });
 
         return data;
@@ -190,6 +219,29 @@ class Store {
 
   get isMember() {
     return this.permissions?.permissions?.isMember ?? false;
+  }
+
+  get hasActiveSubscription() {
+    return this.isMember || this.user?.activeMember === true;
+  }
+
+  async checkAuth() {
+    if (!auth.currentUser) return;
+
+    try {
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      runInAction(() => {
+        if (userDoc.exists()) {
+          this.user = { uid: auth.currentUser.uid, ...userDoc.data() };
+        }
+      });
+
+      await this.checkPermissions(true);
+    } catch (error) {
+      console.error("MobX - checkAuth error:", error);
+    }
   }
 
   get canAccessPackages() {
@@ -281,6 +333,238 @@ class Store {
     return this.blogDetailsLoading.get(slug) || false;
   }
 
+  // Projects Methods
+  async fetchProjects(filters = {}, reset = false) {
+    if (this.projectsLoading) return;
+
+    runInAction(() => {
+      this.projectsLoading = true;
+      if (reset) {
+        this.projects = [];
+        this.projectPagination.page = 1;
+        this.projectPagination.hasMore = true;
+      }
+    });
+
+    try {
+      const params = new URLSearchParams({
+        page: this.projectPagination.page.toString(),
+        limit: this.projectPagination.limit.toString(),
+        ...this.projectFilters,
+        ...filters,
+      });
+
+      // Prepare headers with authentication if user is logged in
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      // Add auth header if user is authenticated
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/projects?${params}`, {
+        headers,
+      });
+      if (!response.ok) throw new Error("Failed to fetch projects");
+
+      const data = await response.json();
+
+      runInAction(() => {
+        if (reset) {
+          this.projects = data.projects;
+        } else {
+          this.projects = [...this.projects, ...data.projects];
+        }
+
+        // Cache the projects
+        data.projects.forEach((project) => {
+          this.cachedProjects.set(project.id, project);
+        });
+
+        this.projectPagination.hasMore = data.hasMore;
+        if (data.hasMore) {
+          this.projectPagination.page += 1;
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    } finally {
+      runInAction(() => {
+        this.projectsLoading = false;
+      });
+    }
+  }
+
+  async fetchProjectDetails(id) {
+    // Check cache first, but only use it if it has detailed user information
+    if (this.cachedProjects.has(id)) {
+      const cachedProject = this.cachedProjects.get(id);
+      // Only use cached data if it has the detailed user information
+      if (
+        cachedProject.ownerDetails ||
+        cachedProject.adminDetails ||
+        cachedProject.teamMemberDetails
+      ) {
+        runInAction(() => {
+          this.projectDetails.set(id, cachedProject);
+        });
+        return cachedProject;
+      }
+      // If cached data doesn't have user details, remove it and fetch fresh
+      this.cachedProjects.delete(id);
+    }
+
+    // If already loading, wait for the existing request
+    if (this.projectDetailsLoading.get(id)) {
+      // Wait for the loading to complete and then return the cached result
+      return new Promise((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (!this.projectDetailsLoading.get(id)) {
+            clearInterval(checkInterval);
+            const project = this.cachedProjects.get(id);
+            resolve(project || null);
+          }
+        }, 50); // Check every 50ms
+      });
+    }
+
+    runInAction(() => {
+      this.projectDetailsLoading.set(id, true);
+    });
+
+    try {
+      // Prepare headers with authentication if user is logged in
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      // Add auth header if user is authenticated
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/projects/${id}`, {
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to fetch project details: ${response.status} ${errorText}`
+        );
+      }
+
+      const project = await response.json();
+
+      runInAction(() => {
+        this.projectDetails.set(id, project);
+        this.cachedProjects.set(id, project);
+      });
+
+      return project;
+    } catch (error) {
+      console.error("Error fetching project details:", error);
+      return null;
+    } finally {
+      runInAction(() => {
+        this.projectDetailsLoading.set(id, false);
+      });
+    }
+  }
+
+  updateProjectFilters(newFilters) {
+    runInAction(() => {
+      this.projectFilters = { ...this.projectFilters, ...newFilters };
+    });
+  }
+
+  isProjectDetailsLoading(id) {
+    return this.projectDetailsLoading.get(id) || false;
+  }
+
+  // Applications Methods
+  async fetchApplications() {
+    if (this.applicationsLoading || !this.user) return;
+
+    runInAction(() => {
+      this.applicationsLoading = true;
+    });
+
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch("/api/applications", {
+        headers,
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch applications");
+
+      const data = await response.json();
+
+      runInAction(() => {
+        this.applications = data.applications;
+        this.applicationsFetched = true;
+      });
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+    } finally {
+      runInAction(() => {
+        this.applicationsLoading = false;
+      });
+    }
+  }
+
+  async updateApplicationStatus(applicationId, status) {
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/applications/${applicationId}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update application");
+      }
+
+      const updatedApplication = await response.json();
+
+      runInAction(() => {
+        const index = this.applications.findIndex(
+          (app) => app.id === applicationId
+        );
+        if (index !== -1) {
+          this.applications[index] = updatedApplication;
+        }
+      });
+
+      return updatedApplication;
+    } catch (error) {
+      console.error("Error updating application:", error);
+      throw error;
+    }
+  }
+
   //
   //
   //
@@ -295,15 +579,22 @@ class Store {
         credential
       );
 
+      // Generate unique avatar for the upgraded account
+      const generatedAvatar = generateUserAvatar(username);
+
       const userDocRef = doc(db, "users", userCredential.user.uid);
       await updateDoc(userDocRef, {
         username,
+        email,
+        avatar: generatedAvatar, // Add the generated avatar
       });
 
       runInAction(() => {
         this.user = {
-          ...userCredential.user,
+          ...this.user,
           username,
+          email,
+          avatar: generatedAvatar,
         };
       });
     } catch (error) {
@@ -346,6 +637,9 @@ class Store {
         password
       );
 
+      // Generate unique avatar for the user
+      const generatedAvatar = generateUserAvatar(username);
+
       // Additional user properties
       const newUserProfile = {
         ...DEFAULT_USER,
@@ -353,6 +647,7 @@ class Store {
         username: username,
         email: email,
         uid: userCredential.user.uid,
+        avatar: generatedAvatar, // Add the generated avatar
       };
 
       // Create a user profile in Firestore
@@ -360,13 +655,6 @@ class Store {
 
       // Send welcome email
       try {
-        console.log("=== CALLING WELCOME EMAIL API ===");
-        console.log("Sending data:", {
-          name: username,
-          email: email,
-          username: username,
-        });
-
         const emailResponse = await fetch("/api/welcomeEmail", {
           method: "POST",
           headers: {
@@ -379,15 +667,9 @@ class Store {
           }),
         });
 
-        console.log("Email API response status:", emailResponse.status);
-        console.log("Email API response ok:", emailResponse.ok);
-
         const emailResponseData = await emailResponse.json();
-        console.log("Email API response data:", emailResponseData);
 
-        if (emailResponse.ok) {
-          console.log("Welcome email sent successfully");
-        } else {
+        if (!emailResponse.ok) {
           console.error("Welcome email API returned error:", emailResponseData);
         }
       } catch (emailError) {
@@ -436,12 +718,18 @@ class Store {
 
       if (!userDoc.exists()) {
         console.log("Creating new user profile");
+
+        // For Google users, use their Google profile picture if available, otherwise generate one
+        const avatarUrl =
+          user.photoURL || generateUserAvatar(user.displayName || user.email);
+
         userData = {
           ...DEFAULT_USER,
           createdAt: new Date(),
           username: user.displayName || "New User",
           email: user.email,
           uid: user.uid,
+          avatar: avatarUrl, // Use Google photo or generated avatar
         };
 
         await setDoc(userDocRef, userData);

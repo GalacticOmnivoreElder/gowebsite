@@ -1,0 +1,94 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO Platform — Firestore Security Rules
+//
+// These rules are the real security backstop. The Next.js API routes use the
+// Firebase ADMIN SDK, which bypasses these rules entirely — so anything the API
+// is responsible for (projects, applications, source projects, orders, webhook
+// bookkeeping) is denied to the browser here. That is what actually prevents a
+// random signed-in user from reading private/community projects directly from
+// the client SDK or the Firebase console.
+//
+// Deploy:  firebase deploy --only firestore:rules
+// Test FIRST in the Firebase console → Firestore → Rules → Playground, or point
+// firebase at a staging project, before shipping to production.
+// ─────────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    // Admins are granted via /api/admin/make-admin, which sets BOTH the Firebase
+    // Auth custom claim `admin` and users/{uid}.admin. Rules can only see the claim.
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // Fields a regular user must never set on themselves (privilege / billing).
+    function privilegedUserFields() {
+      return [
+        'admin', 'adminGrantedBy', 'activeMember', 'membershipTier',
+        'subscriptionId', 'subscriptionStatus', 'subscriptionEndsAt',
+        'willRenew', 'polarCustomerId', 'unlockedPackages',
+        'ownerOfProjects', 'adminOfProjects', 'teamMemberOfProjects'
+      ];
+    }
+
+    match /users/{uid} {
+      // Read your own doc; admins can read/list any (admin panel).
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
+
+      // Create your own doc at signup, but you may not grant yourself any
+      // privileged/billing fields.
+      allow create: if isOwner(uid)
+        && !request.resource.data.keys().hasAny(privilegedUserFields());
+
+      // Update your own profile fields only (no privilege escalation); admins
+      // may update anything (used by the admin users panel).
+      allow update: if isAdmin()
+        || (isOwner(uid)
+            && !request.resource.data.diff(resource.data)
+                 .affectedKeys().hasAny(privilegedUserFields()));
+
+      allow delete: if isAdmin();
+    }
+
+    // Public catalog the client renders directly; only admins edit it.
+    match /packages/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Legacy subscriptions collection. Client (admin panel) manages these;
+    // a user may read their own. Polar-era writes happen via the Admin SDK.
+    match /subscriptions/{doc} {
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // ── Server-only collections (Admin SDK bypasses these; browser is denied) ──
+    match /projects/{doc}            { allow read, write: if false; }
+    match /sourceProjects/{doc}      { allow read, write: if false; }
+    match /applications/{doc}        { allow read, write: if false; }
+    match /orders/{doc}              { allow read, write: if false; }
+    match /subscription_events/{doc} { allow read, write: if false; }
+    match /processed_webhooks/{doc}  { allow read, write: if false; }
+    // GO 2.0 onboarding / profile / CV — all go through /api (Admin SDK).
+    match /user_profiles/{doc}       { allow read, write: if false; }
+    match /onboarding_sessions/{doc} { allow read, write: if false; }
+    match /go_cvs/{doc}              { allow read, write: if false; }
+
+    // Default deny for anything not explicitly matched above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

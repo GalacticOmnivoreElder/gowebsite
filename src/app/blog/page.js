@@ -65,7 +65,9 @@ const BlogPage = observer(() => {
   }
 
   const filteredPosts = blogs.filter((post) => {
-    return post.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const query = searchQuery.trim().slice(0, 100).toLowerCase();
+    if (!query) return true;
+    return post.title.toLowerCase().includes(query);
   });
 
   return (
@@ -84,6 +86,7 @@ const BlogPage = observer(() => {
             placeholder="Search posts..."
             className="pl-10"
             value={searchQuery}
+            maxLength={100}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>

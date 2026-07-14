@@ -1,6 +1,14 @@
 import { FullCTA } from "@/components/landing/FullCTA";
 import { Card, CardContent } from "@/components/ui/card";
 
+export const metadata = {
+  title: "About Us | Galactic Omnivore",
+  description:
+    "Learn about Galactic Omnivore's mission, impact, and community initiatives.",
+};
+
+const impactLinkClass =
+  "text-primary font-medium underline underline-offset-4 decoration-primary/60 hover:decoration-primary hover:text-primary/80 transition-colors";
 
 export default function AboutPage() {
   return (
@@ -55,7 +63,7 @@ export default function AboutPage() {
               🚀 Ready to dive deeper into our vision?
               <br />
               <a
-                href="https://drive.google.com/file/d/1DRFhgeRC7GwwnC5u2W1IJOBc8SgOSxIm/view?usp=sharing"
+                href="https://drive.google.com/file/d/1dRk9BEbZEDK1968WUrj6oZv_kYrEq4in/view?usp=sharing"
                 className="text-blue-600 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -85,6 +93,10 @@ export default function AboutPage() {
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-xl font-semibold mb-3">Our Impact</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Highlighted titles below are clickable links to external projects
+                and partners.
+              </p>
               <ul className="space-y-2">
                 <li>
                   🎓{" "}
@@ -92,7 +104,7 @@ export default function AboutPage() {
                     href="https://itch.io/jam/gogamejam2024"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline"
+                    className={impactLinkClass}
                   >
                     Empowering The Next Generation of Game Developers
                   </a>{" "}
@@ -104,7 +116,7 @@ export default function AboutPage() {
                     href="http://mugi.mk/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline"
+                    className={impactLinkClass}
                   >
                     Macedonian Union of Gaming Industry
                   </a>{" "}
@@ -116,7 +128,7 @@ export default function AboutPage() {
                     href="https://kikerkov.itch.io/navigator"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline"
+                    className={impactLinkClass}
                   >
                     Navigator
                   </a>{" "}
@@ -128,7 +140,7 @@ export default function AboutPage() {
                     href="https://www.instagram.com/glagolitic_2.0/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline"
+                    className={impactLinkClass}
                   >
                     GLAGOLICA – VR
                   </a>{" "}
@@ -140,7 +152,7 @@ export default function AboutPage() {
                     href="https://linktr.ee/PrintNplay"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline ml-1"
+                    className={`${impactLinkClass} ml-1`}
                   >
                     PRINT N’ PLAY
                   </a>{" "}
@@ -149,7 +161,7 @@ export default function AboutPage() {
                     href="https://linktr.ee/zandana"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline ml-1"
+                    className={`${impactLinkClass} ml-1`}
                   >
                     ZANDANA
                   </a>{" "}
