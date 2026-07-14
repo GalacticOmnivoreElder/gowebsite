@@ -70,6 +70,14 @@ export function isInvitedToProject(project, user) {
 
 export function canViewProject(project, user) {
   if (!project) return false;
+
+  // Archived projects are hidden from public discovery. Platform admins and the
+  // project's own members (owner/admins/team) can still reach it — e.g. to
+  // review or restore it — but it never surfaces to anyone else.
+  if (project.archived) {
+    return isPlatformAdmin(user) || isProjectMember(project, user);
+  }
+
   if (isPlatformAdmin(user) || isProjectMember(project, user)) return true;
 
   if (project.visibility === "Public") {

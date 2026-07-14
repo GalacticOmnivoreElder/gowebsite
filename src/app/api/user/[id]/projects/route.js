@@ -27,6 +27,7 @@ async function fetchProjectsByIds(projectIds) {
             thumbnail: data.thumbnail,
             status: data.status,
             visibility: data.visibility,
+            archived: data.archived === true,
             type: data.type,
             categoryTags: data.categoryTags,
             budget: data.budget,
@@ -93,9 +94,12 @@ export async function GET(request, { params }) {
     // For other viewers, only surface projects that are genuinely public:
     // Public visibility AND in a discoverable lifecycle status (no drafts/pending/rejected).
     const filterProjects = (projects) => {
+      // Owner (and platform admins) see everything, including archived, so they
+      // can restore. Everyone else never sees archived projects.
       if (isOwnProfile || isAdmin) return projects;
       return projects.filter(
         (project) =>
+          !project.archived &&
           project.visibility === "Public" &&
           PUBLIC_PROJECT_STATUSES.includes(project.status)
       );
