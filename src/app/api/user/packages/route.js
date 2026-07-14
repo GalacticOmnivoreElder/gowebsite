@@ -7,7 +7,7 @@ export async function GET(request) {
   try {
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "No token provided" }, { status: 401 });
+      return Response.json({ error: "No token provided" }, { status: 401 });
     }
 
     const token = authHeader.split("Bearer ")[1];
@@ -18,7 +18,7 @@ export async function GET(request) {
     const userData = userDoc.data();
 
     if (!userData || !userData.unlockedPackages) {
-      return NextResponse.json([]);
+      return Response.json([]);
     }
 
     const packagesRef = adminDb.collection("packages");
@@ -31,10 +31,10 @@ export async function GET(request) {
       packages.push({ id: doc.id, ...doc.data() });
     });
 
-    return NextResponse.json(packages);
+    return Response.json(packages);
   } catch (error) {
     console.error("Error fetching user packages:", error);
-    return NextResponse.json(
+    return Response.json(
       { error: "Failed to fetch packages" },
       { status: 500 }
     );

@@ -72,6 +72,16 @@ module.exports = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      fontFamily: {
+        sans: ["Inter", "Segoe UI", "system-ui", "sans-serif"],
+        heading: ["Poppins", "Inter", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
+      },
+      fontSize: {
+        "heading-xl": ["3rem", { lineHeight: "1.2", fontWeight: "700" }],
+        "heading-lg": ["2.25rem", { lineHeight: "1.3", fontWeight: "600" }],
+        "body-lg": ["1.125rem", { lineHeight: "1.7" }],
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

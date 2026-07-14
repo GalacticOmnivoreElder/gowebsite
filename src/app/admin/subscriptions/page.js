@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { auth } from "@/firebase";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,147 +14,54 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "@/firebase";
-import { format } from "date-fns";
-import {
-  getAdminCache,
-  setAdminCache,
-  clearAdminCache,
-} from "@/lib/admin-data-cache";
 
-const CACHE_KEY = "admin-subscriptions-v1";
+function formatDate(value) {
+  if (!value) return "N/A";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString();
+}
+
+function formatAmount(amount, currency = "USD") {
+  if (amount === null || amount === undefined) return "N/A";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+  }).format(amount / 100);
+}
 
 export default function SubscriptionsPage() {
-  const [subscriptions, setSubscriptions] = useState([]);
+  const [billingData, setBillingData] = useState({
+    subscriptions: [],
+    orders: [],
+    events: [],
+  });
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(null);
 
-  const fetchSubscriptions = useCallback(async ({ skipCache = false } = {}) => {
+  const fetchBillingData = useCallback(async () => {
     try {
-      if (!skipCache) {
-        const cached = getAdminCache(CACHE_KEY);
-        if (cached) {
-          setSubscriptions(cached);
-          setLoading(false);
-          return;
-        }
-      }
-
       setLoading(true);
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/billing", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      const [subscriptionsSnapshot, usersSnapshot] = await Promise.all([
-        getDocs(collection(db, "subscriptions")),
-        getDocs(collection(db, "users")),
-      ]);
-
-      const userById = new Map(
-        usersSnapshot.docs.map((d) => [d.id, d.data()])
-      );
-
-      const subscriptionsData = [];
-
-      for (const subDoc of subscriptionsSnapshot.docs) {
-        const subData = subDoc.data();
-        const u = subData.userId ? userById.get(subData.userId) : null;
-        const userData = u
-          ? {
-              name: u.name || u.displayName || "N/A",
-              email: u.email || "N/A",
-            }
-          : { name: "N/A", email: "N/A" };
-
-        subscriptionsData.push({
-          id: subDoc.id,
-          userId: subData.userId,
-          userName: userData.name,
-          userEmail: userData.email,
-          active: subData.active || false,
-          startDate: subData.startDate
-            ? new Date(subData.startDate.toDate())
-            : null,
-          endDate: subData.endDate ? new Date(subData.endDate.toDate()) : null,
-          autoRenew: subData.autoRenew || false,
-          createdAt: subData.createdAt
-            ? new Date(subData.createdAt.toDate())
-            : new Date(),
-          duration: calculateDuration(subData),
-        });
+      if (!response.ok) {
+        throw new Error("Failed to fetch billing data");
       }
 
-      setAdminCache(CACHE_KEY, subscriptionsData);
-      setSubscriptions(subscriptionsData);
+      setBillingData(await response.json());
     } catch (error) {
-      console.error("Error fetching subscriptions:", error);
+      console.error("Error fetching billing data:", error);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchSubscriptions();
-  }, [fetchSubscriptions]);
-
-  const calculateDuration = (subscription) => {
-    if (!subscription.startDate) return 0;
-
-    const startDate = new Date(subscription.startDate.toDate());
-    const endDate = subscription.endDate
-      ? new Date(subscription.endDate.toDate())
-      : new Date();
-
-    return Math.max(
-      0,
-      (endDate.getFullYear() - startDate.getFullYear()) * 12 +
-        endDate.getMonth() -
-        startDate.getMonth()
-    );
-  };
-
-  const toggleSubscription = async (subscriptionId, currentStatus) => {
-    try {
-      setActionLoading(subscriptionId);
-
-      await updateDoc(doc(db, "subscriptions", subscriptionId), {
-        active: !currentStatus,
-        updatedAt: serverTimestamp(),
-        ...(currentStatus ? { endDate: serverTimestamp() } : { endDate: null }),
-      });
-
-      clearAdminCache("admin-");
-      await fetchSubscriptions({ skipCache: true });
-    } catch (error) {
-      console.error("Error toggling subscription:", error);
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const toggleAutoRenew = async (subscriptionId, currentStatus) => {
-    try {
-      setActionLoading(`renew-${subscriptionId}`);
-
-      await updateDoc(doc(db, "subscriptions", subscriptionId), {
-        autoRenew: !currentStatus,
-        updatedAt: serverTimestamp(),
-      });
-
-      clearAdminCache("admin-");
-      await fetchSubscriptions({ skipCache: true });
-    } catch (error) {
-      console.error("Error toggling auto-renew:", error);
-    } finally {
-      setActionLoading(null);
-    }
-  };
+    fetchBillingData();
+  }, [fetchBillingData]);
 
   if (loading) {
     return (
@@ -163,112 +74,163 @@ export default function SubscriptionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Subscriptions Management</h1>
-        <Button
-          onClick={() => {
-            clearAdminCache(CACHE_KEY);
-            fetchSubscriptions({ skipCache: true });
-          }}
-        >
-          Refresh
-        </Button>
+        <div>
+          <h1 className="text-3xl font-bold">Billing Management</h1>
+          <p className="text-muted-foreground">
+            Polar subscriptions, paid orders, and webhook events.
+          </p>
+        </div>
+        <Button onClick={fetchBillingData}>Refresh</Button>
       </div>
 
-      <div className="rounded-md border border-border">
-        <Table>
-          <TableCaption>List of all subscriptions in the system</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Start Date</TableHead>
-              <TableHead>End Date</TableHead>
-              <TableHead>Duration</TableHead>
-              <TableHead>Auto-Renew</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {subscriptions.map((subscription) => (
-              <TableRow key={subscription.id}>
-                <TableCell>
-                  <div>
-                    <div className="font-medium">{subscription.userName}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {subscription.userEmail}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={subscription.active ? "success" : "secondary"}
-                  >
-                    {subscription.active ? "Active" : "Inactive"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {subscription.startDate
-                    ? format(subscription.startDate, "MMM d, yyyy")
-                    : "N/A"}
-                </TableCell>
-                <TableCell>
-                  {subscription.endDate
-                    ? format(subscription.endDate, "MMM d, yyyy")
-                    : "N/A"}
-                </TableCell>
-                <TableCell>
-                  {`${subscription.duration} month${
-                    subscription.duration !== 1 ? "s" : ""
-                  }`}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={subscription.autoRenew ? "default" : "outline"}
-                  >
-                    {subscription.autoRenew ? "Enabled" : "Disabled"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant={subscription.active ? "destructive" : "success"}
-                      size="sm"
-                      onClick={() =>
-                        toggleSubscription(subscription.id, subscription.active)
-                      }
-                      disabled={actionLoading === subscription.id}
-                    >
-                      {actionLoading === subscription.id ? (
-                        <span className="animate-pulse">Processing...</span>
-                      ) : subscription.active ? (
-                        "Deactivate"
-                      ) : (
-                        "Activate"
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        toggleAutoRenew(subscription.id, subscription.autoRenew)
-                      }
-                      disabled={actionLoading === `renew-${subscription.id}`}
-                    >
-                      {actionLoading === `renew-${subscription.id}` ? (
-                        <span className="animate-pulse">Processing...</span>
-                      ) : subscription.autoRenew ? (
-                        "Disable Auto-Renew"
-                      ) : (
-                        "Enable Auto-Renew"
-                      )}
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Tracked Subscribers</CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-bold">
+            {billingData.subscriptions.length}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Stored Orders</CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-bold">
+            {billingData.orders.length}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Events</CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-bold">
+            {billingData.events.length}
+          </CardContent>
+        </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Subscriptions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableCaption>Users with Polar subscription/customer state.</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Renewal</TableHead>
+                <TableHead>Access Ends</TableHead>
+                <TableHead>Polar Customer</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {billingData.subscriptions.map((subscription) => (
+                <TableRow key={subscription.userId}>
+                  <TableCell>
+                    <div className="font-medium">{subscription.username}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {subscription.email}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={subscription.activeMember ? "default" : "secondary"}>
+                      {subscription.subscriptionStatus}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{subscription.willRenew ? "Renews" : "Stops"}</TableCell>
+                  <TableCell>{formatDate(subscription.subscriptionEndsAt)}</TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {subscription.polarCustomerId || "N/A"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Orders</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableCaption>Latest 100 stored Polar orders.</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Paid</TableHead>
+                <TableHead>Order ID</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {billingData.orders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell>
+                    <div className="font-medium">{order.username}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {order.userEmail}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={order.status === "paid" ? "default" : "secondary"}>
+                      {order.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{formatAmount(order.amount, order.currency)}</TableCell>
+                  <TableCell>{formatDate(order.paidAt || order.createdAt)}</TableCell>
+                  <TableCell className="font-mono text-xs">{order.polarOrderId}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Webhook Events</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableCaption>Latest 100 subscription lifecycle events.</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Event</TableHead>
+                <TableHead>Processed</TableHead>
+                <TableHead>Access Ends</TableHead>
+                <TableHead>Subscription ID</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {billingData.events.map((event) => (
+                <TableRow key={event.id}>
+                  <TableCell>
+                    <div className="font-medium">{event.username}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {event.userEmail}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{event.eventType}</Badge>
+                  </TableCell>
+                  <TableCell>{formatDate(event.processedAt)}</TableCell>
+                  <TableCell>{formatDate(event.accessEndsAt)}</TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {event.subscriptionId || "N/A"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

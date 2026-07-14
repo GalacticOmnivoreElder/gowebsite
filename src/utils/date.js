@@ -168,3 +168,83 @@ export function shouldResetProgress(frequency, lastCompletedDate) {
 
   return currentDate >= periodEndDate;
 }
+
+/**
+ * Format a Firebase date/timestamp to a readable string
+ * Handles various Firebase date formats including Firestore Timestamps
+ */
+export function formatFirebaseDate(firebaseDate, options = {}) {
+  if (!firebaseDate) return "Unknown";
+
+  let date;
+
+  try {
+    if (firebaseDate.seconds) {
+      // Firestore Timestamp object: { seconds: number, nanoseconds: number }
+      date = new Date(firebaseDate.seconds * 1000);
+    } else if (firebaseDate._seconds) {
+      // Alternative Firestore Timestamp format
+      date = new Date(firebaseDate._seconds * 1000);
+    } else if (
+      firebaseDate.toDate &&
+      typeof firebaseDate.toDate === "function"
+    ) {
+      // Firestore Timestamp with toDate method
+      date = firebaseDate.toDate();
+    } else if (
+      typeof firebaseDate === "string" ||
+      typeof firebaseDate === "number"
+    ) {
+      // Regular date string or timestamp
+      date = new Date(firebaseDate);
+    } else if (firebaseDate instanceof Date) {
+      // Already a Date object
+      date = firebaseDate;
+    } else {
+      // Try to parse whatever it is
+      date = new Date(firebaseDate);
+    }
+
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date:", firebaseDate);
+      return "Unknown";
+    }
+
+    // Return formatted date
+    return date.toLocaleDateString(options.locale || "en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      ...options,
+    });
+  } catch (error) {
+    console.error("Error formatting Firebase date:", error, firebaseDate);
+    return "Unknown";
+  }
+}
+
+/**
+ * Format a date for display with relative time if recent
+ */
+export function formatRelativeDate(firebaseDate) {
+  const date = formatFirebaseDate(firebaseDate);
+  if (date === "Unknown") return date;
+
+  const dateObj = new Date(
+    firebaseDate.seconds ? firebaseDate.seconds * 1000 : firebaseDate
+  );
+  const now = new Date();
+  const diffInDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+
+  if (diffInDays === 0) return "Today";
+  if (diffInDays === 1) return "Yesterday";
+  if (diffInDays < 7) return `${diffInDays} days ago`;
+  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+  if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`;
+
+  return date;
+}
+
+// Legacy export for backwards compatibility
+export const formatDate = formatFirebaseDate;

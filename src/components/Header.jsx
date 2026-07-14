@@ -4,35 +4,29 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Menu, X } from "lucide-react";
-import { auth } from "@/firebase";
-import { signOut } from "firebase/auth";
 import Image from "next/image";
 import logoImg from "../assets/logo.png";
-export default function Header() {
+import { UserNav } from "@/reusable-ui/ReusableProfileMenu";
+import MobxStore from "@/mobx";
+import { observer } from "mobx-react";
+import SubscribeButton from "@/components/ui/SubscribeButton";
+
+const Header = observer(() => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Auth state lives in the MobX store, which differs between the server render
+  // (logged-out) and the hydrated client. Gate every auth-dependent branch on
+  // `mounted` so the server HTML and the first client render are identical,
+  // avoiding a hydration mismatch. Real state shows after mount.
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((authUser) => {
-      setUser(authUser);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    setMounted(true);
   }, []);
+
+  const user = mounted ? MobxStore.user : null;
+  const authReady = mounted && !MobxStore.loading;
 
   // Close mobile menu when pathname changes
   useEffect(() => {
@@ -43,15 +37,6 @@ export default function Header() {
   if (pathname?.startsWith("/admin")) {
     return null;
   }
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      setIsMenuOpen(false); // Close menu after sign out
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
 
   const isActive = (path) => {
     // For login and signup routes, check for exact match
@@ -82,15 +67,26 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1 ml-6">
             {user && (
-              <Button asChild variant={isActive("/dashboard")} size="sm">
-                <Link href="/dashboard">Dashboard</Link>
+              <Button asChild variant={isActive("/profile")} size="sm">
+                <Link href="/profile">Profile</Link>
               </Button>
             )}
+            {user && (
+              <Button asChild variant={isActive("/cv")} size="sm">
+                <Link href="/cv">My CV</Link>
+              </Button>
+            )}
+            <Button asChild variant={isActive("/projects")} size="sm">
+              <Link href="/projects">Projects</Link>
+            </Button>
             <Button asChild variant={isActive("/resources")} size="sm">
               <Link href="/resources">Resources</Link>
             </Button>
             <Button asChild variant={isActive("/education")} size="sm">
               <Link href="/education">Education</Link>
+            </Button>
+            <Button asChild variant={isActive("/initiatives")} size="sm">
+              <Link href="/initiatives">Initiatives</Link>
             </Button>
             <Button asChild variant={isActive("/games")} size="sm">
               <Link href="/games">Games</Link>
@@ -98,64 +94,30 @@ export default function Header() {
             <Button asChild variant={isActive("/blog")} size="sm">
               <Link href="/blog">Blog</Link>
             </Button>
-            <Button asChild variant={isActive("/initiatives")} size="sm">
-              <Link href="/initiatives">Initiatives</Link>
-            </Button>
             <Button asChild variant={isActive("/pricing")} size="sm">
               <Link href="/pricing">Pricing</Link>
             </Button>
             <Button asChild variant={isActive("/membership")} size="sm">
-              <Link href="/membership">Join Us</Link>
+              <Link href="/membership">Membership</Link>
             </Button>
           </nav>
         </div>
 
         <div className="flex items-center gap-4">
-          {!loading && (
+          {authReady && (
             <>
+              {/* Subscribe button for logged-in users who aren't members */}
+              {user && !MobxStore.hasActiveSubscription && (
+                <SubscribeButton
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hidden md:flex"
+                  size="sm"
+                >
+                  Subscribe Premium
+                </SubscribeButton>
+              )}
+
               {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Avatar className="h-8 w-8 cursor-pointer">
-                      <AvatarImage
-                        src={user.photoURL}
-                        alt={user.displayName || "User"}
-                      />
-                      <AvatarFallback>
-                        {user.displayName
-                          ? user.displayName.charAt(0).toUpperCase()
-                          : "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" onClick={handleNavigation}>
-                        Profile
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href="/profile?tab=downloads"
-                        onClick={handleNavigation}
-                      >
-                        Downloads
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href="/profile?tab=settings"
-                        onClick={handleNavigation}
-                      >
-                        Settings
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      Log out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <UserNav user={user} logout={MobxStore.logout} />
               ) : (
                 <div className="flex items-center gap-2">
                   <Button
@@ -204,14 +166,24 @@ export default function Header() {
             {user && (
               <Button
                 asChild
-                variant={isActive("/dashboard")}
+                variant={isActive("/profile")}
                 className="justify-start"
               >
-                <Link href="/dashboard" onClick={handleNavigation}>
-                  Dashboard
+                <Link href="/profile" onClick={handleNavigation}>
+                  Profile
                 </Link>
               </Button>
             )}
+
+            <Button
+              asChild
+              variant={isActive("/projects")}
+              className="justify-start"
+            >
+              <Link href="/projects" onClick={handleNavigation}>
+                Projects
+              </Link>
+            </Button>
 
             <Button
               asChild
@@ -233,6 +205,15 @@ export default function Header() {
             </Button>
             <Button
               asChild
+              variant={isActive("/initiatives")}
+              className="justify-start"
+            >
+              <Link href="/initiatives" onClick={handleNavigation}>
+                Initiatives
+              </Link>
+            </Button>
+            <Button
+              asChild
               variant={isActive("/games")}
               className="justify-start"
             >
@@ -247,15 +228,6 @@ export default function Header() {
             >
               <Link href="/blog" onClick={handleNavigation}>
                 Blog
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant={isActive("/initiatives")}
-              className="justify-start"
-            >
-              <Link href="/initiatives" onClick={handleNavigation}>
-                Initiatives
               </Link>
             </Button>
 
@@ -274,24 +246,21 @@ export default function Header() {
               className="justify-start"
             >
               <Link href="/membership" onClick={handleNavigation}>
-                Join Us
+                Membership
               </Link>
             </Button>
 
-            {user && (
-              <Button
-                asChild
-                variant={isActive("/profile")}
-                className="justify-start"
-              >
-                <Link href="/profile" onClick={handleNavigation}>
-                  Profile
-                </Link>
-              </Button>
+            {/* Subscribe button for mobile - logged-in users who aren't members */}
+            {user && !MobxStore.hasActiveSubscription && (
+              <SubscribeButton className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 justify-start">
+                Subscribe Premium
+              </SubscribeButton>
             )}
           </nav>
         </div>
       )}
     </header>
   );
-}
+});
+
+export default Header;

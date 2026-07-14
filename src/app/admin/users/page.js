@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -17,60 +17,48 @@ import {
   getDocs,
   doc,
   updateDoc,
+  getDoc,
   setDoc,
   serverTimestamp,
+  query,
+  where,
+  deleteDoc,
   arrayUnion,
   arrayRemove,
 } from "firebase/firestore";
 import { db } from "@/firebase";
 import { format } from "date-fns";
-import {
-  getAdminCache,
-  setAdminCache,
-  clearAdminCache,
-} from "@/lib/admin-data-cache";
-
-const CACHE_KEY = "admin-users-v1";
+import { Pencil, Trash, UserPlus } from "lucide-react";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
 
-  const fetchUsers = useCallback(async ({ skipCache = false } = {}) => {
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
     try {
-      if (!skipCache) {
-        const cached = getAdminCache(CACHE_KEY);
-        if (cached) {
-          setUsers(cached);
-          setLoading(false);
-          return;
-        }
-      }
-
       setLoading(true);
-
-      const [usersSnapshot, subsSnapshot] = await Promise.all([
-        getDocs(collection(db, "users")),
-        getDocs(collection(db, "subscriptions")),
-      ]);
-
-      const subsByUserId = new Map();
-      for (const d of subsSnapshot.docs) {
-        const data = d.data();
-        const uid = data.userId;
-        if (uid && !subsByUserId.has(uid)) {
-          subsByUserId.set(uid, { id: d.id, data });
-        }
-      }
+      const usersCollection = collection(db, "users");
+      const usersSnapshot = await getDocs(usersCollection);
 
       const usersData = [];
 
       for (const userDoc of usersSnapshot.docs) {
         const userData = userDoc.data();
-        const pair = subsByUserId.get(userDoc.id);
-        const subscriptionData = pair ? pair.data : null;
-        const subscriptionId = pair ? pair.id : null;
+
+        // Get subscription data if exists
+        const subscriptionsRef = collection(db, "subscriptions");
+        const q = query(subscriptionsRef, where("userId", "==", userDoc.id));
+        const subscriptionSnapshot = await getDocs(q);
+
+        let subscriptionData = null;
+        if (!subscriptionSnapshot.empty) {
+          subscriptionData = subscriptionSnapshot.docs[0].data();
+        }
 
         usersData.push({
           id: userDoc.id,
@@ -87,23 +75,20 @@ export default function UsersPage() {
           memberDuration: subscriptionData
             ? calculateDuration(subscriptionData)
             : 0,
-          subscriptionId,
+          subscriptionId: subscriptionData
+            ? subscriptionSnapshot.docs[0].id
+            : null,
           isAdmin: userData.admin === true,
         });
       }
 
-      setAdminCache(CACHE_KEY, usersData);
       setUsers(usersData);
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  };
 
   const calculateDuration = (subscription) => {
     if (!subscription.startDate) return 0;
@@ -111,6 +96,7 @@ export default function UsersPage() {
     const startDate = new Date(subscription.startDate.toDate());
     const now = new Date();
 
+    // Calculate months between dates
     return Math.max(
       0,
       (now.getFullYear() - startDate.getFullYear()) * 12 +
@@ -125,30 +111,40 @@ export default function UsersPage() {
       const currentMonthGameId = "toxic-sewers-april-2025"; // Hardcoded for now
 
       if (currentStatus) {
+        // Deactivate membership
         if (subscriptionId) {
           await updateDoc(doc(db, "subscriptions", subscriptionId), {
             active: false,
             endDate: serverTimestamp(),
           });
-
+          
+          // Remove the game from unlocked packages
+          console.log("Deactivating membership, removing game:", currentMonthGameId);
           const userDocRef = doc(db, "users", userId);
           await updateDoc(userDocRef, {
-            unlockedPackages: arrayRemove(currentMonthGameId),
+            unlockedPackages: arrayRemove(currentMonthGameId)
           });
+          console.log("Game removed from unlocked packages");
         }
       } else {
+        // Activate membership
         if (subscriptionId) {
+          // Update existing subscription
           await updateDoc(doc(db, "subscriptions", subscriptionId), {
             active: true,
             startDate: serverTimestamp(),
             endDate: null,
           });
-
+          
+          // Add the game to unlocked packages
+          console.log("Activating membership, adding game:", currentMonthGameId);
           const userDocRef = doc(db, "users", userId);
           await updateDoc(userDocRef, {
-            unlockedPackages: arrayUnion(currentMonthGameId),
+            unlockedPackages: arrayUnion(currentMonthGameId)
           });
+          console.log("Game added to unlocked packages");
         } else {
+          // Create new subscription
           const subscriptionRef = collection(db, "subscriptions");
           const newSubscriptionId = doc(subscriptionRef).id;
           await setDoc(doc(db, "subscriptions", newSubscriptionId), {
@@ -160,16 +156,19 @@ export default function UsersPage() {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
           });
-
+          
+          // Add the game to unlocked packages
+          console.log("Activating new membership, adding game:", currentMonthGameId);
           const userDocRef = doc(db, "users", userId);
           await updateDoc(userDocRef, {
-            unlockedPackages: arrayUnion(currentMonthGameId),
+            unlockedPackages: arrayUnion(currentMonthGameId)
           });
+          console.log("Game added to unlocked packages");
         }
       }
 
-      clearAdminCache("admin-");
-      await fetchUsers({ skipCache: true });
+      // Refresh users list
+      await fetchUsers();
     } catch (error) {
       console.error("Error toggling membership:", error);
     } finally {
@@ -187,16 +186,15 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Users Management</h1>
-        <Button
-          onClick={() => {
-            clearAdminCache(CACHE_KEY);
-            fetchUsers({ skipCache: true });
-          }}
-        >
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={fetchUsers}>Refresh</Button>
+          <Button variant="outline">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add User
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-md border border-border">
@@ -237,7 +235,7 @@ export default function UsersPage() {
                     : "-"}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
                     <Button
                       variant={user.isMember ? "destructive" : "success"}
                       size="sm"
@@ -257,6 +255,9 @@ export default function UsersPage() {
                       ) : (
                         "Activate"
                       )}
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Pencil className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>

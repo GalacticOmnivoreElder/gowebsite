@@ -27,7 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import MobxStore from "@/mobx";
 import { observer } from "mobx-react";
@@ -50,7 +50,7 @@ export const SignupForm = observer(() => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [redirectTo, setRedirectTo] = useState("/dashboard");
+  const [redirectTo, setRedirectTo] = useState("/profile");
 
   // Get redirect path and plan from query params
   useEffect(() => {
@@ -183,7 +183,7 @@ const SignupCard = observer(() => {
   const searchParams = useSearchParams();
   const { isUserAnonymous, signInWithGoogle } = MobxStore;
 
-  const [redirectTo, setRedirectTo] = useState("/dashboard");
+  const [redirectTo, setRedirectTo] = useState("/profile");
 
   // Get redirect path and plan from query params
   useEffect(() => {
@@ -264,11 +264,24 @@ const SignupCard = observer(() => {
   );
 });
 
-const Signup = () => {
+const SignupContent = () => {
   return (
     <div className="flex justify-center items-center mt-8">
       <SignupCard />
     </div>
   );
 };
+
+const Signup = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center mt-8">Loading...</div>
+      }
+    >
+      <SignupContent />
+    </Suspense>
+  );
+};
+
 export default Signup;

@@ -27,7 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import MobxStore from "@/mobx";
 import { observer } from "mobx-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -48,7 +48,7 @@ export const LoginForm = observer(() => {
   const isAuthenticated = !!user;
 
   const [isLoading, setIsLoading] = useState(false);
-  const [redirectTo, setRedirectTo] = useState("/dashboard");
+  const [redirectTo, setRedirectTo] = useState("/profile");
 
   // Get redirect path and plan from query params
   useEffect(() => {
@@ -172,7 +172,7 @@ const LoginCard = observer(() => {
   const searchParams = useSearchParams();
   const { signInWithGoogle } = MobxStore;
 
-  const [redirectTo, setRedirectTo] = useState("/dashboard");
+  const [redirectTo, setRedirectTo] = useState("/profile");
   const [googleError, setGoogleError] = useState(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -216,8 +216,8 @@ const LoginCard = observer(() => {
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="grid grid-cols-1 gap-6">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handleGoogleSignIn}
             disabled={isGoogleLoading}
           >
@@ -264,11 +264,24 @@ const LoginCard = observer(() => {
   );
 });
 
-const LoginPage = () => {
+const LoginContent = () => {
   return (
     <div className="flex justify-center items-center mt-8">
       <LoginCard />
     </div>
   );
 };
+
+const LoginPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center mt-8">Loading...</div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
+  );
+};
+
 export default LoginPage;
