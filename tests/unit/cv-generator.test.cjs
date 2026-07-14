@@ -1,0 +1,92 @@
+const assert = require("node:assert/strict");
+const test = require("node:test");
+const { loadSourceModule } = require("../helpers/load-source-module.cjs");
+
+const { buildCvFromProfile, improveSummaryWithAI } = loadSourceModule("src/lib/cv-generator.js", [
+  "buildCvFromProfile",
+  "improveSummaryWithAI",
+]);
+
+function plain(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+test("buildCvFromProfile creates a deterministic CV from onboarding facts", () => {
+  const cv = buildCvFromProfile({
+    can_help_with: ["Unity prototyping"],
+    current_goal: "learning to ship a polished vertical slice.",
+    discord_username: "go#1234",
+    display_name: "Ada",
+    email: "ada@example.com",
+    location: "Warsaw",
+    looking_for_paid_work: true,
+    looking_for_projects: true,
+    past_projects: [
+      {
+        description: "A short cooperative puzzle prototype.",
+        link: "https://example.com/puzzle",
+        role: "Programmer",
+        status: "playable",
+        title: "Puzzle Jam",
+        tools: ["Unity"],
+      },
+    ],
+    preferred_time_commitment: "5 hours/week",
+    primary_role: "Programmer",
+    secondary_roles: ["Game Designer"],
+    skill_level: "intermediate",
+    timezone: "Europe/Warsaw",
+    tools: ["Unity", "C#", "Git"],
+    user_portfolio_links: ["https://ada.dev"],
+  });
+
+  assert.equal(cv.title, "Ada \u2014 Programmer");
+  assert.match(cv.summary, /Intermediate programmer working with Unity, C#, Git\./);
+  assert.match(cv.summary, /Looking for projects, paid work\./);
+  assert.equal(cv.sections.length, 8);
+
+  const projectsSection = cv.sections.find((section) => section.section_type === "projects");
+  assert.deepEqual(plain(projectsSection.content_json.projects), [
+    {
+      description: "A short cooperative puzzle prototype.",
+      link: "https://example.com/puzzle",
+      role: "Programmer",
+      status: "playable",
+      title: "Puzzle Jam",
+      tools: ["Unity"],
+    },
+  ]);
+
+  assert.deepEqual(plain(cv.suggested_improvements), []);
+  assert.deepEqual(plain(cv.missing_information), []);
+});
+
+test("buildCvFromProfile records useful gaps for incomplete profiles", () => {
+  const cv = buildCvFromProfile({
+    display_name: "New Member",
+    primary_role: "2D Artist",
+  });
+
+  assert.deepEqual(plain(cv.suggested_improvements), [
+    "Add at least one portfolio link",
+    "Describe one past prototype or game jam project",
+    "Define what type of project you want to join",
+  ]);
+  assert.deepEqual(plain(cv.missing_information), ["portfolio link", "availability"]);
+});
+
+test("improveSummaryWithAI falls back to the baseline summary when AI is not configured", async () => {
+  const originalApiKey = process.env.ANTHROPIC_API_KEY;
+  delete process.env.ANTHROPIC_API_KEY;
+
+  try {
+    const baseline = "Beginner game developer.";
+    assert.equal(await improveSummaryWithAI({}, baseline), baseline);
+  } finally {
+    if (originalApiKey === undefined) {
+      delete process.env.ANTHROPIC_API_KEY;
+    } else {
+      process.env.ANTHROPIC_API_KEY = originalApiKey;
+    }
+  }
+});
