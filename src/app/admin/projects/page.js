@@ -42,6 +42,8 @@ import {
   Calendar,
   User,
   ExternalLink,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import Link from "next/link";
 import { formatFirebaseDate } from "@/utils/date";
@@ -135,6 +137,49 @@ const AdminProjectsPage = observer(() => {
     }
   };
 
+  // Archive (soft delete) or restore a project. Hidden from the whole app while
+  // archived, but fully restorable.
+  const setArchived = async (project, archived) => {
+    if (
+      archived &&
+      !confirm(
+        `Archive "${project.title}"? It will be hidden from the app but can be restored anytime.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/projects", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ projectId: project.id, archived }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update project");
+
+      toast({
+        title: archived ? "Project archived" : "Project restored",
+        description: archived
+          ? `"${project.title}" is now hidden from the app.`
+          : `"${project.title}" is visible again.`,
+      });
+
+      fetchProjects();
+    } catch (error) {
+      console.error("Error archiving project:", error);
+      toast({
+        title: "Error",
+        description: `Failed to ${archived ? "archive" : "restore"} project`,
+        variant: "destructive",
+      });
+    }
+  };
+
   // Load projects when filter changes
   useEffect(() => {
     fetchProjects();
@@ -210,6 +255,7 @@ const AdminProjectsPage = observer(() => {
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
                   <SelectItem value="all">All Projects</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -360,6 +406,27 @@ const AdminProjectsPage = observer(() => {
                               Edit
                             </Link>
                           </Button>
+
+                          {project.archived ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setArchived(project, false)}
+                            >
+                              <ArchiveRestore className="h-3 w-3 mr-1" />
+                              Restore
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setArchived(project, true)}
+                            >
+                              <Archive className="h-3 w-3 mr-1" />
+                              Archive
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

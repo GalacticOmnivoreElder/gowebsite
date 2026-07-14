@@ -44,6 +44,8 @@ import {
   LogIn,
   CheckCircle,
   XCircle,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import UserLink from "@/components/ui/UserLink";
 import { formatBudget } from "@/utils/formatBudget";
@@ -253,6 +255,62 @@ const ProjectDetailsPage = observer(() => {
 
   const handleEdit = () => {
     router.push(`/project/${projectId}/edit`);
+  };
+
+  // Owner / project admins (and platform admins) can archive or restore.
+  const canArchive = canEdit || MobxStore.isAdmin;
+  const [archiving, setArchiving] = useState(false);
+
+  const handleArchiveToggle = async () => {
+    if (!project) return;
+    const nextArchived = !project.archived;
+
+    if (
+      nextArchived &&
+      !confirm(
+        `Archive "${project.title}"? It will be hidden from the app but you can restore it anytime.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setArchiving(true);
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ archived: nextArchived }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update project");
+      }
+
+      // Reflect the change immediately and drop the stale cache entry.
+      setProject((prev) => (prev ? { ...prev, archived: nextArchived } : prev));
+      MobxStore.cachedProjects?.delete?.(projectId);
+
+      toast({
+        title: nextArchived ? "Project archived" : "Project restored",
+        description: nextArchived
+          ? "It's now hidden from the app. You can restore it from here anytime."
+          : "It's visible again.",
+      });
+    } catch (error) {
+      console.error("Error archiving project:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong.",
+        variant: "destructive",
+      });
+    } finally {
+      setArchiving(false);
+    }
   };
 
   const handleApply = () => {
@@ -568,8 +626,40 @@ const ProjectDetailsPage = observer(() => {
                 </Button>
               </>
             )}
+            {canArchive && (
+              <Button
+                variant="outline"
+                onClick={handleArchiveToggle}
+                disabled={archiving}
+                className={
+                  project.archived
+                    ? ""
+                    : "text-destructive hover:text-destructive"
+                }
+              >
+                {project.archived ? (
+                  <>
+                    <ArchiveRestore className="h-4 w-4 mr-2" />
+                    {archiving ? "Restoring..." : "Restore"}
+                  </>
+                ) : (
+                  <>
+                    <Archive className="h-4 w-4 mr-2" />
+                    {archiving ? "Archiving..." : "Archive"}
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
+
+        {project.archived && (
+          <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+            This project is <strong>archived</strong> and hidden from the app.
+            Only you and platform admins can see it. Use{" "}
+            <strong>Restore</strong> to make it visible again.
+          </div>
+        )}
 
         {/* Project Header */}
         <div className="mb-8">

@@ -379,6 +379,15 @@ export async function PUT(request, { params }) {
       }
     }
 
+    // Archive / restore (soft delete). canEditProject already gates this to the
+    // owner, project admins, or platform admins. Archiving hides the project
+    // from the whole app (see canViewProject) but keeps it fully restorable.
+    if (typeof updateData.archived === "boolean") {
+      filteredUpdateData.archived = updateData.archived;
+      filteredUpdateData.archivedAt = updateData.archived ? new Date() : null;
+      filteredUpdateData.archivedBy = updateData.archived ? user.uid : null;
+    }
+
     filteredUpdateData.updatedAt = new Date();
 
     await adminDb.collection("projects").doc(id).update(filteredUpdateData);

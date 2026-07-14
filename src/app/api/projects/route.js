@@ -147,6 +147,11 @@ export async function GET(request) {
 
     // Apply search filter and add sourceProject details
     projectsWithSourceProjectIds.forEach((project) => {
+      // Archived projects never appear in discovery (restore them from the
+      // owner's project page or the admin panel).
+      if (project.archived) {
+        return;
+      }
       if (!canViewProject(project, user)) {
         return;
       }
