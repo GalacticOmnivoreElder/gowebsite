@@ -244,7 +244,8 @@ const ProjectDetailsPage = observer(() => {
     project &&
     MobxStore.user &&
     (project.owner === MobxStore.user.uid ||
-      project.admins?.includes(MobxStore.user.uid));
+      project.admins?.includes(MobxStore.user.uid) ||
+      MobxStore.isAdmin);
 
   const isProjectMember =
     project &&

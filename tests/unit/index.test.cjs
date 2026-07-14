@@ -10,6 +10,7 @@ require("./billing-subscription-route.test.cjs");
 require("./checkout-route.test.cjs");
 require("./polar.test.cjs");
 require("./project-id-route.test.cjs");
+require("./project-form-utils.test.cjs");
 require("./project-utils.test.cjs");
 require("./projects-route.test.cjs");
 require("./webhook-verification.test.cjs");

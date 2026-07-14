@@ -172,7 +172,7 @@ const CreateProjectContent = observer(() => {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors },
     watch,
     setValue,
     trigger,
@@ -924,10 +924,11 @@ const CreateProjectContent = observer(() => {
                     </Button>
                   ) : (
                     <Button
-                      onClick={handleSubmit(onSubmit)}
-                      disabled={isSubmitting || !isValid}
+                      type="submit"
+                      disabled={isSubmitting}
                       className="w-full"
                     >
+                      <Save className="h-4 w-4 mr-2" />
                       {isSubmitting ? "Creating..." : "Create Project"}
                     </Button>
                   )}

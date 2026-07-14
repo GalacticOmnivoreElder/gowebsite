@@ -25,6 +25,10 @@ import Link from "next/link";
 import { toast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { normalizeOptionalProjectNumber } from "@/lib/project-form-utils";
+
+const optionalProjectNumber = (schema) =>
+  z.preprocess(normalizeOptionalProjectNumber, schema.optional());
 
 // Validation schema
 const projectSchema = z.object({
@@ -41,11 +45,28 @@ const projectSchema = z.object({
     "Other",
   ]),
   visibility: z.enum(["Public", "Private", "Invite Only"]),
-  status: z.enum(["draft", "pending", "hiring", "live", "completed"]),
+  status: z.enum([
+    "draft",
+    "pending",
+    "hiring",
+    "live",
+    "completed",
+    "rejected",
+  ]),
   thumbnail: z.string().url().optional().or(z.literal("")),
   goal: z.string().optional(),
-  duration: z.number().optional(),
-  budget: z.number().optional(),
+  duration: optionalProjectNumber(
+    z
+      .number()
+      .min(1, "Duration must be at least 1 day")
+      .max(3650, "Duration is too long")
+  ),
+  budget: optionalProjectNumber(
+    z
+      .number()
+      .min(0, "Budget cannot be negative")
+      .max(Number.MAX_SAFE_INTEGER, "Budget is too large")
+  ),
   compensationType: z.enum([
     "Paid",
     "Revenue Share",
@@ -54,7 +75,9 @@ const projectSchema = z.object({
     "Equity",
     "Hybrid",
   ]),
-  requiredRoles: z.array(z.string()),
+  requiredRoles: z
+    .array(z.string())
+    .min(1, "At least one required role is needed"),
 });
 
 const CATEGORY_OPTIONS = [
@@ -188,10 +211,6 @@ const EditProjectPage = observer(() => {
             return;
           }
 
-          // Check URL for admin override
-          const searchParams = new URLSearchParams(window.location.search);
-          const isAdminMode = searchParams.get("admin") === "true";
-
           // Check if user is master admin (has platform-wide admin permissions)
           console.log(
             "🔍 [EditProject] MobxStore.permissions:",
@@ -225,11 +244,8 @@ const EditProjectPage = observer(() => {
           console.log("🔍 [EditProject] Is owner?", isOwner);
           console.log("🔍 [EditProject] Is project admin?", isProjectAdmin);
           console.log("🔍 [EditProject] Is master admin?", isMasterAdmin);
-          console.log("🔍 [EditProject] Admin mode?", isAdminMode);
-
           // Allow access if: owner, project admin, or master admin
-          const canEdit =
-            isOwner || isProjectAdmin || (isMasterAdmin && isAdminMode);
+          const canEdit = isOwner || isProjectAdmin || isMasterAdmin;
           console.log("🔍 [EditProject] Can edit?", canEdit);
 
           if (!canEdit) {
@@ -598,6 +614,16 @@ const EditProjectPage = observer(() => {
                         </span>
                       </div>
                     </SelectItem>
+                    {(MobxStore.isAdmin || formData.status === "rejected") && (
+                      <SelectItem value="rejected">
+                        <div className="flex flex-col">
+                          <span>Rejected</span>
+                          <span className="text-xs text-muted-foreground">
+                            Hidden from public discovery
+                          </span>
+                        </div>
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -611,6 +637,8 @@ const EditProjectPage = observer(() => {
                     "Project is ongoing and no longer accepting applications."}
                   {formData.status === "completed" &&
                     "Project is finished and archived."}
+                  {formData.status === "rejected" &&
+                    "Project was rejected and is hidden from public discovery."}
                 </p>
               </div>
             </CardContent>
@@ -684,24 +712,42 @@ const EditProjectPage = observer(() => {
                   <Label htmlFor="duration">Duration</Label>
                   <Input
                     id="duration"
+                    type="number"
+                    min="1"
+                    max="3650"
                     value={formData.duration}
                     onChange={(e) =>
                       handleInputChange("duration", e.target.value)
                     }
-                    placeholder="e.g., 3 months, 1 year"
+                    placeholder="e.g., 90"
+                    className={errors.duration ? "border-red-500" : ""}
                   />
+                  {errors.duration && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {errors.duration}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <Label htmlFor="budget">Budget</Label>
                   <Input
                     id="budget"
+                    type="number"
+                    min="0"
+                    max={Number.MAX_SAFE_INTEGER}
                     value={formData.budget}
                     onChange={(e) =>
                       handleInputChange("budget", e.target.value)
                     }
-                    placeholder="e.g., 50000 MKD, No budget"
+                    placeholder="e.g., 50000"
+                    className={errors.budget ? "border-red-500" : ""}
                   />
+                  {errors.budget && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {errors.budget}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -770,6 +816,11 @@ const EditProjectPage = observer(() => {
                     </Badge>
                   ))}
                 </div>
+                {errors.requiredRoles && (
+                  <p className="text-sm text-red-500">
+                    {errors.requiredRoles}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
