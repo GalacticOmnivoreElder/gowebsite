@@ -1,11 +1,12 @@
 import { Webhooks } from "@polar-sh/nextjs";
+import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import {
   isWebhookProcessed,
   markWebhookProcessed,
 } from "@/lib/webhook-deduplication";
 
-export const POST = Webhooks({
+const polarWebhookHandler = Webhooks({
   webhookSecret: process.env.POLAR_WEBHOOK_SECRET,
   onOrderPaid: (payload) => processWebhook(payload, handleOrderPaid),
   onOrderRefunded: (payload) => processWebhook(payload, handleOrderRefunded),
@@ -25,6 +26,41 @@ export const POST = Webhooks({
   onCustomerStateChanged: (payload) =>
     processWebhook(payload, handleCustomerStateChanged),
 });
+
+// Polar emits events (e.g. member.created) that our pinned @polar-sh/sdk
+// version doesn't know how to parse. The SDK throws an SDKValidationError
+// ("Unknown event type: ...") *after* the signature has already verified, which
+// the Webhooks() wrapper rethrows as a 500 — so Polar keeps retrying forever.
+// Acknowledge those with a 200 so they're dropped instead of retried. Signature
+// failures still surface as the wrapper's 403, and real handler errors (which
+// we *do* want Polar to retry) still bubble up as 500s.
+function isUnknownEventTypeError(error) {
+  for (let err = error; err; err = err?.cause) {
+    if (typeof err?.rawMessage === "string" && err.rawMessage.includes("Unknown event type")) {
+      return true;
+    }
+    if (typeof err?.message === "string" && err.message.includes("Unknown event type")) {
+      return true;
+    }
+    if (err?.cause === err) break;
+  }
+  return false;
+}
+
+export async function POST(request) {
+  try {
+    return await polarWebhookHandler(request);
+  } catch (error) {
+    if (isUnknownEventTypeError(error)) {
+      console.warn(
+        "Ignoring unhandled Polar webhook event type:",
+        error?.cause?.rawValue?.type || error?.rawValue?.type || "unknown"
+      );
+      return NextResponse.json({ received: true, ignored: true });
+    }
+    throw error;
+  }
+}
 
 async function processWebhook(payload, handler) {
   const eventId = payload.id || `${payload.type}_${payload.data?.id}`;
