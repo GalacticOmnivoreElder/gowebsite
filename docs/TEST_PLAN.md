@@ -22,18 +22,29 @@ node --test tests/unit/polar.test.cjs tests/unit/project-utils.test.cjs tests/un
 Current automated tests cover:
 
 - Polar server selection, API base URLs, portal URLs, and product id resolution.
+- Checkout API behavior for auth, missing products, missing Polar config, buyer
+  IP forwarding, authenticated customer metadata, and development error hints.
+- Billing subscription, billing portal, and billing orders route behavior with
+  mocked Firebase/Polar dependencies.
 - Project visibility and edit permissions for visitors, members, owners, project
   admins, platform admins, invitees, and archived projects.
+- Project creation, validation, company-membership gating, source-project
+  ownership, admin-only status changes, and delete cleanup behavior.
+- Application creation membership gating, duplicate prevention, project-state
+  validation, member checks, and GO CV snapshotting.
 - Webhook HMAC verification, including valid signatures, invalid signatures, and
   the local-development missing-secret path.
 - Profile validation for usernames, bios, social links, skills, and privacy.
+- `/api/me/profile` and `/api/me/cv` route behavior for auth, editable-field
+  filtering, generation, editing, serialization, and publishing.
 - Deterministic CV generation from onboarding profile data, including suggested
   improvements and missing-information flags.
+- Utility behavior for auth token extraction, admin cache TTLs, date formatting,
+  budget formatting, class-name merging, logging, local auth token storage, and
+  UI transformers.
 
 Recommended next automated layers:
 
-- Route-handler integration tests with mocked Firebase Admin for `/api/projects`,
-  `/api/projects/[id]`, `/api/checkout`, `/api/me/cv`, and billing endpoints.
 - Firebase emulator tests for `firestore.rules` around private projects, orders,
   applications, user profiles, and CV visibility.
 - Browser smoke tests for public navigation, onboarding, project creation, CV
