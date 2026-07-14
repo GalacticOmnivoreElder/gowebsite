@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/firebase";
 import { format } from "date-fns";
-import { Pencil, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -143,9 +143,6 @@ export default function UsersPage() {
                       ) : (
                         "Activate"
                       )}
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Pencil className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
