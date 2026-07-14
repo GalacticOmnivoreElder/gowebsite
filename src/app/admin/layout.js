@@ -15,16 +15,26 @@ const AdminLayout = observer(({ children }) => {
   const isAdmin = Boolean(permissions?.permissions?.isAdmin);
 
   useEffect(() => {
-    if (loading || permissionsLoading) return;
+    // Still resolving the initial Firebase auth state — decide nothing yet.
+    if (loading) return;
+
+    // Genuinely signed out → send to login.
     if (!uid) {
       router.replace("/login");
       return;
     }
+
+    // Signed in, but permissions haven't come back yet. Don't judge admin
+    // status against an unloaded permissions object — that briefly bounced real
+    // admins on navigation. Keep showing the spinner until it resolves.
+    if (permissionsLoading || !permissions) return;
+
+    // Signed in, permissions loaded, not an admin → home (not the login form).
     if (!isAdmin) {
-      router.replace("/login");
+      router.replace("/");
     }
     // Primitives only — `router` and `permissions` objects change identity often and caused effect storms.
-  }, [loading, permissionsLoading, uid, isAdmin]);
+  }, [loading, permissionsLoading, permissions, uid, isAdmin]);
 
   if (loading || permissionsLoading || !permissions) {
     return (
