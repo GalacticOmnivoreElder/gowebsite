@@ -199,7 +199,7 @@ const ProjectsPage = observer(() => {
     category: "all",
     type: "all",
     visibility: "all",
-    status: "hiring",
+    status: "all",
     sortBy: "created_desc",
   });
 
