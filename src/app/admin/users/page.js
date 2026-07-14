@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -12,168 +12,64 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  getDoc,
-  setDoc,
-  serverTimestamp,
-  query,
-  where,
-  deleteDoc,
-  arrayUnion,
-  arrayRemove,
-} from "firebase/firestore";
-import { db } from "@/firebase";
+import { auth } from "@/firebase";
 import { format } from "date-fns";
-import { Pencil, Trash, UserPlus } from "lucide-react";
+import { Pencil, UserPlus } from "lucide-react";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  // Single server-side read. Membership comes from the Polar user-doc model,
+  // so there are no per-user client Firestore queries (that was an N+1 request
+  // storm on the Firestore Listen channel).
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const usersCollection = collection(db, "users");
-      const usersSnapshot = await getDocs(usersCollection);
-
-      const usersData = [];
-
-      for (const userDoc of usersSnapshot.docs) {
-        const userData = userDoc.data();
-
-        // Get subscription data if exists
-        const subscriptionsRef = collection(db, "subscriptions");
-        const q = query(subscriptionsRef, where("userId", "==", userDoc.id));
-        const subscriptionSnapshot = await getDocs(q);
-
-        let subscriptionData = null;
-        if (!subscriptionSnapshot.empty) {
-          subscriptionData = subscriptionSnapshot.docs[0].data();
-        }
-
-        usersData.push({
-          id: userDoc.id,
-          name: userData.name || userData.displayName || "N/A",
-          email: userData.email || "N/A",
-          joined: userData.createdAt
-            ? new Date(userData.createdAt.toDate())
-            : new Date(),
-          isMember: subscriptionData ? subscriptionData.active : false,
-          memberSince:
-            subscriptionData && subscriptionData.startDate
-              ? new Date(subscriptionData.startDate.toDate())
-              : null,
-          memberDuration: subscriptionData
-            ? calculateDuration(subscriptionData)
-            : 0,
-          subscriptionId: subscriptionData
-            ? subscriptionSnapshot.docs[0].id
-            : null,
-          isAdmin: userData.admin === true,
-        });
-      }
-
-      setUsers(usersData);
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/users", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Failed to fetch users");
+      const data = await response.json();
+      setUsers(data.users || []);
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const calculateDuration = (subscription) => {
-    if (!subscription.startDate) return 0;
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
-    const startDate = new Date(subscription.startDate.toDate());
-    const now = new Date();
-
-    // Calculate months between dates
-    return Math.max(
-      0,
-      (now.getFullYear() - startDate.getFullYear()) * 12 +
-        now.getMonth() -
-        startDate.getMonth()
-    );
-  };
-
-  const toggleMembership = async (userId, currentStatus, subscriptionId) => {
+  const toggleMembership = async (userId, currentStatus) => {
     try {
       setActionLoading(userId);
-      const currentMonthGameId = "toxic-sewers-april-2025"; // Hardcoded for now
-
-      if (currentStatus) {
-        // Deactivate membership
-        if (subscriptionId) {
-          await updateDoc(doc(db, "subscriptions", subscriptionId), {
-            active: false,
-            endDate: serverTimestamp(),
-          });
-          
-          // Remove the game from unlocked packages
-          console.log("Deactivating membership, removing game:", currentMonthGameId);
-          const userDocRef = doc(db, "users", userId);
-          await updateDoc(userDocRef, {
-            unlockedPackages: arrayRemove(currentMonthGameId)
-          });
-          console.log("Game removed from unlocked packages");
-        }
-      } else {
-        // Activate membership
-        if (subscriptionId) {
-          // Update existing subscription
-          await updateDoc(doc(db, "subscriptions", subscriptionId), {
-            active: true,
-            startDate: serverTimestamp(),
-            endDate: null,
-          });
-          
-          // Add the game to unlocked packages
-          console.log("Activating membership, adding game:", currentMonthGameId);
-          const userDocRef = doc(db, "users", userId);
-          await updateDoc(userDocRef, {
-            unlockedPackages: arrayUnion(currentMonthGameId)
-          });
-          console.log("Game added to unlocked packages");
-        } else {
-          // Create new subscription
-          const subscriptionRef = collection(db, "subscriptions");
-          const newSubscriptionId = doc(subscriptionRef).id;
-          await setDoc(doc(db, "subscriptions", newSubscriptionId), {
-            userId: userId,
-            active: true,
-            startDate: serverTimestamp(),
-            endDate: null,
-            autoRenew: true,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          });
-          
-          // Add the game to unlocked packages
-          console.log("Activating new membership, adding game:", currentMonthGameId);
-          const userDocRef = doc(db, "users", userId);
-          await updateDoc(userDocRef, {
-            unlockedPackages: arrayUnion(currentMonthGameId)
-          });
-          console.log("Game added to unlocked packages");
-        }
-      }
-
-      // Refresh users list
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/users", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId, activeMember: !currentStatus }),
+      });
+      if (!response.ok) throw new Error("Failed to update membership");
       await fetchUsers();
     } catch (error) {
       console.error("Error toggling membership:", error);
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const formatJoined = (joined) => {
+    if (!joined) return "N/A";
+    const date = new Date(joined);
+    return Number.isNaN(date.getTime()) ? "N/A" : format(date, "MMM d, yyyy");
   };
 
   if (loading) {
@@ -207,7 +103,7 @@ export default function UsersPage() {
               <TableHead>Joined</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Membership Status</TableHead>
-              <TableHead>Member Duration</TableHead>
+              <TableHead>Tier</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -216,7 +112,7 @@ export default function UsersPage() {
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>{format(user.joined, "MMM d, yyyy")}</TableCell>
+                <TableCell>{formatJoined(user.joined)}</TableCell>
                 <TableCell>
                   <Badge variant={user.isAdmin ? "default" : "secondary"}>
                     {user.isAdmin ? "Admin" : "User"}
@@ -224,28 +120,20 @@ export default function UsersPage() {
                 </TableCell>
                 <TableCell>
                   <Badge variant={user.isMember ? "success" : "secondary"}>
-                    {user.isMember ? "Active" : "Inactive"}
+                    {user.isMember
+                      ? user.subscriptionStatus || "Active"
+                      : "Inactive"}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {user.isMember
-                    ? `${user.memberDuration} month${
-                        user.memberDuration !== 1 ? "s" : ""
-                      }`
-                    : "-"}
+                <TableCell className="capitalize">
+                  {user.membershipTier || "-"}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button
                       variant={user.isMember ? "destructive" : "success"}
                       size="sm"
-                      onClick={() =>
-                        toggleMembership(
-                          user.id,
-                          user.isMember,
-                          user.subscriptionId
-                        )
-                      }
+                      onClick={() => toggleMembership(user.id, user.isMember)}
                       disabled={actionLoading === user.id}
                     >
                       {actionLoading === user.id ? (

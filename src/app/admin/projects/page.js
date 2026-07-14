@@ -49,7 +49,7 @@ import { formatFirebaseDate } from "@/utils/date";
 const AdminProjectsPage = observer(() => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("draft");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedProject, setSelectedProject] = useState(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [newStatus, setNewStatus] = useState("");
