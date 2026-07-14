@@ -94,10 +94,31 @@ export async function PATCH(request) {
     if (body[field] !== undefined) update[field] = body[field];
   }
 
-  await adminDb
-    .collection("go_cvs")
-    .doc(user.uid)
-    .set({ user_id: user.uid, ...update }, { merge: true });
+  const writes = [
+    adminDb
+      .collection("go_cvs")
+      .doc(user.uid)
+      .set({ user_id: user.uid, ...update }, { merge: true }),
+  ];
+
+  if (body.visibility_public !== undefined) {
+    const visibilityPublic = body.visibility_public === true;
+    writes.push(
+      adminDb
+        .collection("user_profiles")
+        .doc(user.uid)
+        .set({ visibility_public: visibilityPublic }, { merge: true }),
+      adminDb
+        .collection("users")
+        .doc(user.uid)
+        .set(
+          { profilePrivacy: visibilityPublic ? "public" : "private" },
+          { merge: true }
+        )
+    );
+  }
+
+  await Promise.all(writes);
 
   const snap = await adminDb.collection("go_cvs").doc(user.uid).get();
   return NextResponse.json({ cv: serializeCv(snap.data()) });

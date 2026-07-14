@@ -60,8 +60,10 @@ export async function GET(request, { params }) {
     const { id: userId } = await params;
     const requestingUser = await getUserFromToken(request);
 
-    // Check if user exists
-    const userDoc = await adminDb.collection("users").doc(userId).get();
+    const [userDoc, cvDoc] = await Promise.all([
+      adminDb.collection("users").doc(userId).get(),
+      adminDb.collection("go_cvs").doc(userId).get(),
+    ]);
     if (!userDoc.exists) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -70,8 +72,12 @@ export async function GET(request, { params }) {
     const isOwnProfile = requestingUser?.uid === userId;
     const isAdmin = requestingUser?.admin === true;
 
-    // Only allow viewing own projects or if profile is public
-    if (!isOwnProfile && !isAdmin && userData.profilePrivacy === "private") {
+    const cvData = cvDoc.exists ? cvDoc.data() : null;
+    const isPublicProfile = cvDoc.exists
+      ? cvData?.status === "active" && cvData.visibility_public === true
+      : userData.profilePrivacy !== "private";
+
+    if (!isOwnProfile && !isAdmin && !isPublicProfile) {
       return NextResponse.json(
         { error: "This user's profile is private" },
         { status: 403 }
@@ -105,12 +111,18 @@ export async function GET(request, { params }) {
       );
     };
 
+    const visibleOwnerProjects = filterProjects(ownerProjects);
+    const visibleAdminProjects = filterProjects(adminProjects);
+    const visibleTeamMemberProjects = filterProjects(teamMemberProjects);
+
     return NextResponse.json({
-      ownerProjects: filterProjects(ownerProjects),
-      adminProjects: filterProjects(adminProjects),
-      teamMemberProjects: filterProjects(teamMemberProjects),
+      ownerProjects: visibleOwnerProjects,
+      adminProjects: visibleAdminProjects,
+      teamMemberProjects: visibleTeamMemberProjects,
       totalProjects:
-        ownerProjects.length + adminProjects.length + teamMemberProjects.length,
+        visibleOwnerProjects.length +
+        visibleAdminProjects.length +
+        visibleTeamMemberProjects.length,
     });
   } catch (error) {
     console.error("Error fetching user projects:", error);

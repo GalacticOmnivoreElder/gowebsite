@@ -27,3 +27,5 @@ require("./subscription-webhook-route.test.cjs");
 require("./token.test.cjs");
 require("./transformers.test.cjs");
 require("./user-packages-route.test.cjs");
+require("./user-id-route.test.cjs");
+require("./user-projects-route.test.cjs");

@@ -191,6 +191,11 @@ test("PATCH /api/me/cv only stores allowed editable fields", async () => {
   assert.equal(response.body.cv.visibility_public, true);
   assert.equal(response.body.cv.status, "draft");
   assert.equal(response.body.cv.user_id, "user-1");
+  assert.equal(
+    route.adminDb.docs.user_profiles["user-1"].visibility_public,
+    true
+  );
+  assert.equal(route.adminDb.docs.users["user-1"].profilePrivacy, "public");
 });
 
 test("PUT /api/me/cv publishes the current user's CV", async () => {

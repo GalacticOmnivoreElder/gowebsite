@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { auth } from "@/firebase";
 import MobxStore from "@/mobx";
 
@@ -14,7 +14,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
-  User,
   Settings,
   Lock,
   Calendar,
@@ -24,6 +23,9 @@ import {
   Users,
   Crown,
   UserCheck,
+  Clock,
+  MapPin,
+  MessageCircle,
 } from "lucide-react";
 
 import Link from "next/link";
@@ -144,8 +146,186 @@ const SocialLink = ({ platform, value, label }) => {
   );
 };
 
+const getCvSection = (cv, sectionType) =>
+  cv?.sections?.find((section) => section.section_type === sectionType)
+    ?.content_json || {};
+
+const getSocialLinkValue = (link) =>
+  typeof link === "string" ? link : link?.value;
+
+const formatJoinedDate = (value) => {
+  if (!value) return "Unknown";
+
+  let date;
+  if (value.seconds) {
+    date = new Date(value.seconds * 1000);
+  } else if (value._seconds) {
+    date = new Date(value._seconds * 1000);
+  } else {
+    date = new Date(value);
+  }
+
+  return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleDateString();
+};
+
+const TagList = ({ items }) => (
+  <div className="flex flex-wrap gap-2">
+    {items.map((item) => (
+      <Badge key={item} variant="secondary">
+        {item}
+      </Badge>
+    ))}
+  </div>
+);
+
+const PublicCvDetails = ({ cv }) => {
+  if (!cv) return null;
+
+  const contact = getCvSection(cv, "contact");
+  const availability = getCvSection(cv, "availability");
+  const interests = getCvSection(cv, "interests");
+  const portfolio = getCvSection(cv, "portfolio");
+  const experience = getCvSection(cv, "projects");
+  const lookingFor = interests.looking_for || [];
+  const canHelpWith = interests.can_help_with || [];
+  const needsHelpWith = interests.needs_help_with || [];
+  const portfolioLinks = portfolio.links || [];
+  const projects = experience.projects || [];
+  const hasDetails =
+    contact.location ||
+    contact.timezone ||
+    contact.discord_username ||
+    availability.available_for_projects ||
+    availability.available_for_paid_work;
+
+  return (
+    <>
+      {(hasDetails ||
+        lookingFor.length > 0 ||
+        canHelpWith.length > 0 ||
+        needsHelpWith.length > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Professional Profile</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {hasDetails && (
+              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                {contact.location && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span>{contact.location}</span>
+                  </div>
+                )}
+                {contact.timezone && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>{contact.timezone}</span>
+                  </div>
+                )}
+                {contact.discord_username && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MessageCircle className="h-4 w-4" />
+                    <span>Discord: {contact.discord_username}</span>
+                  </div>
+                )}
+                {(availability.available_for_projects ||
+                  availability.available_for_paid_work) && (
+                  <div className="flex flex-wrap gap-2">
+                    {availability.available_for_projects && (
+                      <Badge variant="outline">Available for projects</Badge>
+                    )}
+                    {availability.available_for_paid_work && (
+                      <Badge variant="outline">Open to paid work</Badge>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {hasDetails &&
+              (lookingFor.length > 0 ||
+                canHelpWith.length > 0 ||
+                needsHelpWith.length > 0) && <Separator />}
+
+            {lookingFor.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-medium">Looking for</h3>
+                <TagList items={lookingFor} />
+              </div>
+            )}
+            {canHelpWith.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-medium">Can help with</h3>
+                <TagList items={canHelpWith} />
+              </div>
+            )}
+            {needsHelpWith.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-medium">Needs help with</h3>
+                <TagList items={needsHelpWith} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {projects.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Experience</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {projects.map((project, index) => (
+              <div key={`${project.title || "project"}-${index}`}>
+                <div className="font-medium">{project.title}</div>
+                {project.role && (
+                  <div className="text-sm text-muted-foreground">
+                    {project.role}
+                  </div>
+                )}
+                {project.description && (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {project.description}
+                  </p>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {portfolioLinks.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Portfolio</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {portfolioLinks.map((link, index) => {
+              const url = typeof link === "string" ? link : link.url;
+              if (!url) return null;
+
+              return (
+                <a
+                  key={`${url}-${index}`}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>{typeof link === "string" ? link : link.label || url}</span>
+                </a>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+    </>
+  );
+};
+
 const UserProfilePage = observer(() => {
-  const router = useRouter();
   const params = useParams();
   const userId = params.id;
 
@@ -274,8 +454,10 @@ const UserProfilePage = observer(() => {
     );
   }
 
-  // Check if profile is private and user is not the owner
-  if (profile.profilePrivacy === "private" && !isOwnProfile) {
+  if (
+    (profile.isPrivate || profile.profilePrivacy === "private") &&
+    !isOwnProfile
+  ) {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
@@ -320,51 +502,15 @@ const UserProfilePage = observer(() => {
                 </Avatar>
                 <div>
                   <h1 className="text-3xl font-bold">{profile.username}</h1>
+                  {profile.cv?.title && (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {profile.cv.title}
+                    </p>
+                  )}
                   <div className="flex items-center gap-2 mt-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">
-                      Joined{" "}
-                      {(() => {
-                        console.log("Profile createdAt:", profile.createdAt);
-                        console.log(
-                          "Profile createdAt type:",
-                          typeof profile.createdAt
-                        );
-                        console.log(
-                          "Profile createdAt value:",
-                          JSON.stringify(profile.createdAt)
-                        );
-
-                        // Handle different date formats from Firebase
-                        let date;
-                        if (profile.createdAt) {
-                          if (profile.createdAt.seconds) {
-                            // Firestore Timestamp object
-                            date = new Date(profile.createdAt.seconds * 1000);
-                          } else if (profile.createdAt._seconds) {
-                            // Alternative Firestore Timestamp format
-                            date = new Date(profile.createdAt._seconds * 1000);
-                          } else if (
-                            typeof profile.createdAt === "string" ||
-                            typeof profile.createdAt === "number"
-                          ) {
-                            // Regular date string or timestamp
-                            date = new Date(profile.createdAt);
-                          } else {
-                            // Fallback
-                            date = new Date(profile.createdAt);
-                          }
-                        } else {
-                          date = new Date();
-                        }
-
-                        console.log("Parsed date:", date);
-                        console.log("Is valid date:", !isNaN(date.getTime()));
-
-                        return isNaN(date.getTime())
-                          ? "Unknown"
-                          : date.toLocaleDateString();
-                      })()}
+                      Joined {formatJoinedDate(profile.joinedAt || profile.createdAt)}
                     </span>
                   </div>
                 </div>
@@ -405,28 +551,25 @@ const UserProfilePage = observer(() => {
           </Card>
         )}
 
+        <PublicCvDetails cv={profile.cv} />
+
         {/* Social Links */}
         {profile.socialLinks &&
-          Object.values(profile.socialLinks).some(
-            (link) => link?.value && link?.visible
-          ) && (
+          Object.values(profile.socialLinks).some(getSocialLinkValue) && (
             <Card>
               <CardHeader>
                 <CardTitle>Connect</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {Object.entries(profile.socialLinks).map(
-                    ([platform, link]) =>
-                      link?.visible && (
-                        <SocialLink
-                          key={platform}
-                          platform={platform}
-                          value={link.value}
-                          label={link.label}
-                        />
-                      )
-                  )}
+                  {Object.entries(profile.socialLinks).map(([platform, link]) => (
+                    <SocialLink
+                      key={platform}
+                      platform={platform}
+                      value={getSocialLinkValue(link)}
+                      label={link?.label || platform}
+                    />
+                  ))}
                 </div>
               </CardContent>
             </Card>

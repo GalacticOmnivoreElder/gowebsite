@@ -211,7 +211,12 @@ export async function PUT(request) {
   // Mirror a couple of flags onto the user doc for quick gating/UX.
   batch.set(
     adminDb.collection("users").doc(user.uid),
-    { onboardingCompleted: true, hasCv: true, updatedAt: now },
+    {
+      onboardingCompleted: true,
+      hasCv: true,
+      profilePrivacy: profile.visibility_public ? "public" : "private",
+      updatedAt: now,
+    },
     { merge: true }
   );
   await batch.commit();

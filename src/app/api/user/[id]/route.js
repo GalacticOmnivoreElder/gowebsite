@@ -1,6 +1,38 @@
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { serializeFirestoreDate } from "@/lib/project-utils";
 import { validateProfileData } from "@/utils/validateProfile";
+
+function serializeCv(cv) {
+  if (!cv) return null;
+
+  return {
+    ...cv,
+    created_at: serializeFirestoreDate(cv.created_at),
+    updated_at: serializeFirestoreDate(cv.updated_at),
+    published_at: serializeFirestoreDate(cv.published_at),
+  };
+}
+
+function getCvSection(cv, sectionType) {
+  return cv?.sections?.find((section) => section.section_type === sectionType)
+    ?.content_json;
+}
+
+function getCvDisplayData(cv) {
+  const contact = getCvSection(cv, "contact") || {};
+  const skills = getCvSection(cv, "skills") || {};
+  const tools = getCvSection(cv, "tools") || {};
+
+  return {
+    displayName: contact.display_name,
+    skills: [
+      skills.primary_role,
+      ...(skills.secondary_roles || []),
+      ...(tools.tools || []),
+    ].filter(Boolean),
+  };
+}
 
 async function getUserFromToken(request) {
   try {
@@ -23,18 +55,28 @@ export async function GET(request, { params }) {
     const { id: userId } = await params;
     const requestingUser = await getUserFromToken(request);
 
-    // Fetch the user document
-    const userDoc = await adminDb.collection("users").doc(userId).get();
+    const [userDoc, cvDoc] = await Promise.all([
+      adminDb.collection("users").doc(userId).get(),
+      adminDb.collection("go_cvs").doc(userId).get(),
+    ]);
 
-    if (!userDoc.exists) {
+    if (!userDoc.exists && !cvDoc.exists) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const userData = userDoc.data();
+    const userData = userDoc.exists ? userDoc.data() : {};
+    const cvData = cvDoc.exists ? cvDoc.data() : null;
     const isOwnProfile = requestingUser?.uid === userId;
+    const isPublicCv =
+      cvData?.status === "active" && cvData.visibility_public === true;
+    const canViewCv = isOwnProfile || isPublicCv;
+    const isPrivateProfile = cvDoc.exists
+      ? !canViewCv
+      : userData.profilePrivacy === "private" && !isOwnProfile;
 
-    // Check if profile is private and user is not viewing their own profile
-    if (userData.profilePrivacy === "private" && !isOwnProfile) {
+    // Published GO CV visibility is authoritative for onboarded users. Users
+    // without a GO CV continue to use the legacy profilePrivacy setting.
+    if (isPrivateProfile) {
       return NextResponse.json({
         id: userId,
         username: userData.username || "Unknown User",
@@ -43,16 +85,23 @@ export async function GET(request, { params }) {
       });
     }
 
-    // Prepare public profile data
+    const cvDisplayData = canViewCv ? getCvDisplayData(cvData) : null;
+
     const publicProfile = {
       id: userId,
-      username: userData.username || "Unknown User",
+      username:
+        cvDisplayData?.displayName || userData.username || "Unknown User",
       avatar: userData.avatar || null,
-      skills: userData.skills || [],
-      bio: userData.bio || "",
+      skills:
+        cvDisplayData?.skills?.length > 0
+          ? [...new Set(cvDisplayData.skills)]
+          : userData.skills || [],
+      bio: (canViewCv && cvData?.summary) || userData.bio || "",
       joinedAt:
         userData.createdAt?.toDate?.()?.toISOString() || userData.createdAt,
+      profilePrivacy: "public",
       isPrivate: false,
+      cv: canViewCv ? serializeCv(cvData) : null,
     };
 
     // Add social links based on visibility settings
@@ -143,8 +192,35 @@ export async function PUT(request, { params }) {
     // Add update timestamp
     filteredUpdateData.updatedAt = new Date();
 
-    // Update the user document
     await adminDb.collection("users").doc(userId).update(filteredUpdateData);
+
+    if (filteredUpdateData.profilePrivacy !== undefined) {
+      const visibilityPublic = filteredUpdateData.profilePrivacy === "public";
+      const [profileDoc, cvDoc] = await Promise.all([
+        adminDb.collection("user_profiles").doc(userId).get(),
+        adminDb.collection("go_cvs").doc(userId).get(),
+      ]);
+      const visibilityWrites = [];
+
+      if (profileDoc.exists) {
+        visibilityWrites.push(
+          adminDb
+            .collection("user_profiles")
+            .doc(userId)
+            .set({ visibility_public: visibilityPublic }, { merge: true })
+        );
+      }
+      if (cvDoc.exists) {
+        visibilityWrites.push(
+          adminDb
+            .collection("go_cvs")
+            .doc(userId)
+            .set({ visibility_public: visibilityPublic }, { merge: true })
+        );
+      }
+
+      await Promise.all(visibilityWrites);
+    }
 
     // Fetch and return updated user data
     const updatedDoc = await adminDb.collection("users").doc(userId).get();
