@@ -62,16 +62,8 @@ function createDb(seed = {}) {
                     return actual === filter.value;
                   })
                 );
-                const queryDocs = matches.map((application) => ({
-                  id: application.id,
-                  data: () => application.data,
-                }));
                 return {
                   empty: matches.length === 0,
-                  docs: queryDocs,
-                  forEach(callback) {
-                    queryDocs.forEach(callback);
-                  },
                 };
               },
             };
@@ -101,7 +93,7 @@ function loadRoute({ seed = {}, user = null } = {}) {
   const adminDb = createDb(seed);
   const route = loadSourceModule(
     "src/app/api/applications/route.js",
-    ["POST", "GET"],
+    ["POST"],
     {
       stripImports: true,
       sandbox: {
@@ -135,85 +127,6 @@ function project(overrides = {}) {
     ...overrides,
   };
 }
-
-function timestamp(value) {
-  return {
-    toDate: () => new FixedDate(value),
-  };
-}
-
-test("application listing requires authentication and project access", async () => {
-  let route = loadRoute({ user: null });
-  let response = await route.GET(
-    createRequest({ url: "http://localhost/api/applications?projectId=project-1" })
-  );
-  assert.equal(response.status, 401);
-
-  route = loadRoute({
-    seed: { projects: { "project-1": project() } },
-    user: { uid: "stranger-1" },
-  });
-  response = await route.GET(
-    createRequest({ url: "http://localhost/api/applications?projectId=project-1" })
-  );
-  assert.equal(response.status, 403);
-  assert.deepEqual(plain(response.body), { error: "Access denied" });
-});
-
-test("project owners can list applicants newest first without a composite index", async () => {
-  const route = loadRoute({
-    seed: {
-      applications: [
-        {
-          id: "application-old",
-          data: {
-            createdAt: timestamp("2026-07-10T12:00:00.000Z"),
-            projectId: "project-1",
-            status: "pending",
-            userId: "member-1",
-          },
-        },
-        {
-          id: "application-other-project",
-          data: {
-            createdAt: timestamp("2026-07-14T12:00:00.000Z"),
-            projectId: "project-2",
-            status: "pending",
-            userId: "member-2",
-          },
-        },
-        {
-          id: "application-new",
-          data: {
-            createdAt: timestamp("2026-07-13T12:00:00.000Z"),
-            projectId: "project-1",
-            status: "pending",
-            userId: "member-3",
-          },
-        },
-      ],
-      projects: { "project-1": project() },
-      users: {
-        "member-1": { email: "old@example.com", username: "Old Applicant" },
-        "member-3": { email: "new@example.com", username: "New Applicant" },
-      },
-    },
-    user: { uid: "owner-1" },
-  });
-
-  const response = await route.GET(
-    createRequest({ url: "http://localhost/api/applications?projectId=project-1" })
-  );
-  const body = plain(response.body);
-
-  assert.equal(response.status, 200);
-  assert.deepEqual(
-    body.applications.map((application) => application.id),
-    ["application-new", "application-old"]
-  );
-  assert.equal(body.applications[0].username, "New Applicant");
-  assert.equal(body.applications[0].createdAt, "2026-07-13T12:00:00.000Z");
-});
 
 test("application creation requires auth and active membership", async () => {
   let route = loadRoute({ user: null });

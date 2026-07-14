@@ -124,7 +124,6 @@ const ProjectDetailsPage = observer(() => {
   const [showApplicationsDialog, setShowApplicationsDialog] = useState(false);
   const [applications, setApplications] = useState([]);
   const [applicationsLoading, setApplicationsLoading] = useState(false);
-  const [applicationsError, setApplicationsError] = useState(null);
 
   const projectId = params.id;
 
@@ -415,7 +414,6 @@ const ProjectDetailsPage = observer(() => {
     if (!projectId || !canEdit) return;
 
     setApplicationsLoading(true);
-    setApplicationsError(null);
     try {
       const headers = {
         "Content-Type": "application/json",
@@ -430,18 +428,12 @@ const ProjectDetailsPage = observer(() => {
         headers,
       });
 
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to load project applications");
+      if (response.ok) {
+        const data = await response.json();
+        setApplications(data.applications);
       }
-
-      setApplications(data.applications || []);
     } catch (error) {
       console.error("Error fetching applications:", error);
-      setApplications([]);
-      setApplicationsError(
-        error.message || "Failed to load project applications"
-      );
     } finally {
       setApplicationsLoading(false);
     }
@@ -1124,21 +1116,6 @@ const ProjectDetailsPage = observer(() => {
                     </div>
                   ))}
                 </div>
-              ) : applicationsError ? (
-                <Alert variant="destructive">
-                  <XCircle className="h-4 w-4" />
-                  <AlertDescription className="flex items-center justify-between gap-4">
-                    <span>{applicationsError}</span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={fetchApplications}
-                    >
-                      Try again
-                    </Button>
-                  </AlertDescription>
-                </Alert>
               ) : applications.length > 0 ? (
                 <div className="space-y-4">
                   {applications.map((application) => (
