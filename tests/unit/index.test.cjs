@@ -1,7 +1,10 @@
 require("./admin-data-cache.test.cjs");
+require("./admin-check-route.test.cjs");
+require("./application-id-route.test.cjs");
 require("./applications-route.test.cjs");
 require("./auth-utils.test.cjs");
 require("./billing-orders-route.test.cjs");
+require("./billing-cancel-route.test.cjs");
 require("./billing-portal-route.test.cjs");
 require("./billing-subscription-route.test.cjs");
 require("./checkout-route.test.cjs");
@@ -18,5 +21,7 @@ require("./lib-utils.test.cjs");
 require("./logger.test.cjs");
 require("./me-cv-route.test.cjs");
 require("./me-profile-route.test.cjs");
+require("./subscription-webhook-route.test.cjs");
 require("./token.test.cjs");
 require("./transformers.test.cjs");
+require("./user-packages-route.test.cjs");

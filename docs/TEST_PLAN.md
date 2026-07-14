@@ -26,14 +26,23 @@ Current automated tests cover:
   IP forwarding, authenticated customer metadata, and development error hints.
 - Billing subscription, billing portal, and billing orders route behavior with
   mocked Firebase/Polar dependencies.
+- Billing cancellation behavior, including successful Polar cancellation,
+  missing subscription checks, and fallback local cancellation when Polar returns
+  not found.
 - Project visibility and edit permissions for visitors, members, owners, project
   admins, platform admins, invitees, and archived projects.
 - Project creation, validation, company-membership gating, source-project
   ownership, admin-only status changes, and delete cleanup behavior.
 - Application creation membership gating, duplicate prevention, project-state
   validation, member checks, and GO CV snapshotting.
+- Application update behavior for applicant cancellation and owner/admin
+  approval into project teams.
+- Admin-check and unlocked-package route guards.
 - Webhook HMAC verification, including valid signatures, invalid signatures, and
   the local-development missing-secret path.
+- Polar webhook lifecycle behavior for `order.paid`, `subscription.updated`
+  past-due, `subscription.canceled`, `subscription.revoked`, full/partial
+  refunds, duplicate idempotency, and unknown event acknowledgement.
 - Profile validation for usernames, bios, social links, skills, and privacy.
 - `/api/me/profile` and `/api/me/cv` route behavior for auth, editable-field
   filtering, generation, editing, serialization, and publishing.
