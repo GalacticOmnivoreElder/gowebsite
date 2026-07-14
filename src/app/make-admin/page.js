@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { notFound } from "next/navigation";
 import { auth } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,12 @@ export default function MakeAdminPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  // Bootstrap-only tool — hidden in production (admins are already provisioned).
+  // Kept below the hooks so hook order stays stable (rules-of-hooks).
+  if (process.env.NODE_ENV !== "development") {
+    notFound();
+  }
 
   const handleMakeAdmin = async (e) => {
     e.preventDefault();

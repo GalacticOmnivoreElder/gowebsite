@@ -21,6 +21,13 @@ async function authorizeAdminGrant(request) {
 }
 
 export async function POST(request) {
+  // This is a bootstrap-only tool. Admins are already provisioned in
+  // production, so the endpoint must not be reachable there — only allow it on
+  // a local/dev server (`next dev` sets NODE_ENV="development").
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   try {
     const authorization = await authorizeAdminGrant(request);
     if (!authorization.authorized) {
