@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import {
   Edit,
   Users,
@@ -126,6 +127,7 @@ const ProjectDetailsPage = observer(() => {
   const [applicationsLoading, setApplicationsLoading] = useState(false);
 
   const projectId = params.id;
+  const userId = MobxStore.user?.uid;
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -155,7 +157,7 @@ const ProjectDetailsPage = observer(() => {
   // Check if user has applied to this project
   useEffect(() => {
     const checkUserApplication = async () => {
-      if (!MobxStore.user?.uid || !projectId) return;
+      if (!userId || !projectId) return;
 
       setApplicationLoading(true);
       try {
@@ -185,7 +187,7 @@ const ProjectDetailsPage = observer(() => {
     };
 
     checkUserApplication();
-  }, [MobxStore.user?.uid, projectId]);
+  }, [userId, projectId]);
 
   const formatDuration = (days) => {
     if (days >= 365) {
@@ -314,11 +316,34 @@ const ProjectDetailsPage = observer(() => {
     }
   };
 
+  const showMembershipRequired = (description) => {
+    toast({
+      title: "Membership required",
+      description:
+        description ||
+        "An active GO membership is required to apply to projects.",
+      action: (
+        <ToastAction
+          altText="View membership options"
+          onClick={() => router.push("/membership")}
+        >
+          View membership
+        </ToastAction>
+      ),
+    });
+  };
+
   const handleApply = () => {
     if (!MobxStore.user) {
       router.push(`/login?redirect=/project/${projectId}`);
       return;
     }
+
+    if (!MobxStore.hasActiveSubscription) {
+      showMembershipRequired();
+      return;
+    }
+
     setShowApplyDialog(true);
   };
 
@@ -350,6 +375,11 @@ const ProjectDetailsPage = observer(() => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.code === "membership_required") {
+          setShowApplyDialog(false);
+          showMembershipRequired(errorData.error);
+          return;
+        }
         throw new Error(errorData.error || "Failed to submit application");
       }
 

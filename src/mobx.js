@@ -98,6 +98,8 @@ class Store {
     this.upgradeAccount = this.upgradeAccount.bind(this);
     this.loginWithEmail = this.loginWithEmail.bind(this);
     this.signupWithEmail = this.signupWithEmail.bind(this);
+    this.signInWithGoogle = this.signInWithGoogle.bind(this);
+    this.logout = this.logout.bind(this);
 
     this.updateUser = this.updateUser.bind(this);
 
@@ -817,8 +819,9 @@ class Store {
       console.log("Setting user in MobX store:", userData);
       runInAction(() => {
         this.authStateVersion += 1;
-        MobxStore.user = userData;
+        this.user = userData;
       });
+      this.checkPermissions(true);
 
       console.log("Google sign-in process completed successfully");
     } catch (error) {

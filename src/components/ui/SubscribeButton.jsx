@@ -57,6 +57,11 @@ const SubscribeButton = observer(
     };
 
     const handleSubscribe = async () => {
+      if (!checkoutUrl && !productId) {
+        router.push("/membership");
+        return;
+      }
+
       if (MobxStore.loading || MobxStore.permissionsLoading) return;
 
       if (
