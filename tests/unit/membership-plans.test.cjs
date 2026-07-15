@@ -7,7 +7,7 @@ const { BILLING_INTERVALS, MEMBERSHIP_PLANS } = loadSourceModule(
   ["BILLING_INTERVALS", "MEMBERSHIP_PLANS"]
 );
 
-test("membership catalogue matches the four Polar products", () => {
+test("membership catalogue matches the MKD launch prices", () => {
   assert.deepEqual(
     JSON.parse(JSON.stringify(BILLING_INTERVALS.map((option) => option.id))),
     ["monthly", "annual"]
@@ -24,8 +24,7 @@ test("membership catalogue matches the four Polar products", () => {
   );
 
   assert.deepEqual(JSON.parse(JSON.stringify(prices)), {
-    company: { annual: 480, monthly: 50 },
-    member: { annual: 99, monthly: 10 },
+    company: { annual: 29000, monthly: 2999 },
+    member: { annual: 4800, monthly: 500 },
   });
 });
-

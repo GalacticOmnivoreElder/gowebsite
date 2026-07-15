@@ -22,6 +22,9 @@ const planIcons = {
   business: Building2,
 };
 
+const formatPrice = (amount) =>
+  new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(amount);
+
 export const PricingDisplay = () => {
   const [interval, setInterval] = useState("monthly");
 
@@ -94,9 +97,11 @@ export const PricingDisplay = () => {
 
                 <div className="min-h-24">
                   <div className="flex items-end gap-2">
-                    <span className="text-4xl font-bold">€{price.amount}</span>
+                    <span className="text-4xl font-bold">
+                      {formatPrice(price.amount)}
+                    </span>
                     <span className="pb-1 text-muted-foreground">
-                      / {price.period}
+                      MKD / {price.period}
                     </span>
                   </div>
                   <div className="mt-2 flex min-h-6 flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -137,8 +142,8 @@ export const PricingDisplay = () => {
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
-        Secure recurring billing through Polar. Prices are charged based on your region;
-        applicable taxes are calculated at checkout.
+        Prices shown in MKD. Polar confirms the available regional price and
+        applicable taxes at secure checkout.
       </p>
     </div>
   );

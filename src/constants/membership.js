@@ -21,15 +21,15 @@ export const MEMBERSHIP_PLANS = [
     ],
     pricing: {
       monthly: {
-        amount: 10,
+        amount: 500,
         period: "month",
         billingNote: "Billed monthly",
       },
       annual: {
-        amount: 99,
+        amount: 4800,
         period: "year",
-        billingNote: "Equivalent to €8.25/month",
-        savings: "Save €21",
+        billingNote: "Equivalent to 400 MKD/month",
+        savings: "Save 1,200 MKD",
       },
     },
   },
@@ -49,15 +49,15 @@ export const MEMBERSHIP_PLANS = [
     ],
     pricing: {
       monthly: {
-        amount: 50,
+        amount: 2999,
         period: "month",
         billingNote: "Billed monthly",
       },
       annual: {
-        amount: 480,
+        amount: 29000,
         period: "year",
-        billingNote: "Equivalent to €40/month",
-        savings: "Save €120",
+        billingNote: "Equivalent to 2,417 MKD/month",
+        savings: "Save 6,988 MKD",
       },
     },
   },
