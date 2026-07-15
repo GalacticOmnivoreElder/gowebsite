@@ -100,9 +100,9 @@ export async function GET(request, { params }) {
     // For other viewers, only surface projects that are genuinely public:
     // Public visibility AND in a discoverable lifecycle status (no drafts/pending/rejected).
     const filterProjects = (projects) => {
-      // Owner (and platform admins) see everything, including archived, so they
-      // can restore. Everyone else never sees archived projects.
-      if (isOwnProfile || isAdmin) return projects;
+      // This endpoint powers the public profile, so its response must not change
+      // based on the viewer's owner/admin privileges. Management endpoints are
+      // responsible for authorized access to drafts and archived projects.
       return projects.filter(
         (project) =>
           !project.archived &&

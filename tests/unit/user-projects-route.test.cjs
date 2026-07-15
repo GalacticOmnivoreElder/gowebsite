@@ -35,7 +35,7 @@ function loadRoute({ seed = {}, user = null } = {}) {
     stripImports: true,
     sandbox: {
       NextResponse,
-      PUBLIC_PROJECT_STATUSES: ["active", "completed"],
+      PUBLIC_PROJECT_STATUSES: ["hiring", "live", "completed"],
       adminDb: createDb(seed),
       getRequestUser: async () => user,
     },
@@ -57,7 +57,7 @@ test("public GO profile exposes only its genuinely public projects", async () =>
       projects: {
         "public-project": {
           archived: false,
-          status: "active",
+          status: "hiring",
           title: "Visible project",
           visibility: "Public",
         },
@@ -81,6 +81,47 @@ test("public GO profile exposes only its genuinely public projects", async () =>
     ["public-project"]
   );
   assert.equal(response.body.totalProjects, 1);
+});
+
+test("owner and admin tokens cannot reveal drafts on a public profile", async () => {
+  const seed = {
+    users: {
+      "user-1": {
+        ownerOfProjects: ["public-project", "draft-project"],
+        profilePrivacy: "public",
+      },
+    },
+    projects: {
+      "public-project": {
+        archived: false,
+        status: "live",
+        title: "Visible project",
+        visibility: "Public",
+      },
+      "draft-project": {
+        archived: false,
+        status: "draft",
+        title: "Hidden draft",
+        visibility: "Private",
+      },
+    },
+  };
+
+  for (const user of [
+    { uid: "user-1" },
+    { admin: true, uid: "admin-1" },
+  ]) {
+    const { GET } = loadRoute({ seed, user });
+    const response = await GET(createRequest(), { params: { id: "user-1" } });
+
+    assert.deepEqual(
+      JSON.parse(
+        JSON.stringify(response.body.ownerProjects.map((project) => project.id))
+      ),
+      ["public-project"]
+    );
+    assert.equal(response.body.totalProjects, 1);
+  }
 });
 
 test("draft GO profile keeps project history private", async () => {
