@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
+import { buildCheckoutAuthUrl } from "@/lib/checkout-navigation";
 
 const SubscribeButton = observer(
   ({
@@ -18,6 +19,7 @@ const SubscribeButton = observer(
     tier = "member",
     interval = "monthly",
     productId,
+    checkoutUrl,
     ...props
   }) => {
     const [loading, setLoading] = useState(false);
@@ -36,11 +38,32 @@ const SubscribeButton = observer(
       return () => window.removeEventListener("pageshow", handlePageShow);
     }, []);
 
-    const handleSubscribe = async () => {
-      if (requireAuth && !MobxStore.user) {
+    const redirectToAuthentication = () => {
+      if (checkoutUrl) {
         router.push(
-          "/login?redirect=" + encodeURIComponent(window.location.pathname)
+          buildCheckoutAuthUrl({
+            tier,
+            interval,
+            isAnonymous: MobxStore.isUserAnonymous,
+            redirectPath: window.location.pathname,
+          })
         );
+        return;
+      }
+
+      router.push(
+        "/login?redirect=" + encodeURIComponent(window.location.pathname)
+      );
+    };
+
+    const handleSubscribe = async () => {
+      if (MobxStore.loading || MobxStore.permissionsLoading) return;
+
+      if (
+        requireAuth &&
+        (!MobxStore.user || MobxStore.isUserAnonymous)
+      ) {
+        redirectToAuthentication();
         return;
       }
 
@@ -49,13 +72,17 @@ const SubscribeButton = observer(
         return;
       }
 
+      if (checkoutUrl) {
+        setLoading(true);
+        window.location.assign(checkoutUrl);
+        return;
+      }
+
       setLoading(true);
       try {
         const currentUser = auth.currentUser;
         if (!currentUser) {
-          router.push(
-            "/login?redirect=" + encodeURIComponent(window.location.pathname)
-          );
+          redirectToAuthentication();
           return;
         }
 
@@ -92,7 +119,9 @@ const SubscribeButton = observer(
     return (
       <Button
         onClick={handleSubscribe}
-        disabled={disabled || loading}
+        disabled={
+          disabled || loading || MobxStore.loading || MobxStore.permissionsLoading
+        }
         className={className}
         variant={variant}
         size={size}

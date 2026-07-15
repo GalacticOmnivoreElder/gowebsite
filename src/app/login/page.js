@@ -175,6 +175,7 @@ const LoginCard = observer(() => {
   const [redirectTo, setRedirectTo] = useState("/profile");
   const [googleError, setGoogleError] = useState(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const isCheckoutContinuation = Boolean(searchParams.get("plan"));
 
   // Get redirect path and plan from query params
   useEffect(() => {
@@ -211,7 +212,9 @@ const LoginCard = observer(() => {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl">Welcome Back!</CardTitle>
         <CardDescription>
-          Glad to see you again! Log in to continue your journey.
+          {isCheckoutContinuation
+            ? "Sign in to continue to secure membership checkout."
+            : "Glad to see you again! Log in to continue your journey."}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">

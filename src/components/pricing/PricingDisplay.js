@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { observer } from "mobx-react-lite";
 import { ArrowRight, Building2, Check, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import SubscribeButton from "@/components/ui/SubscribeButton";
+import MobxStore from "@/mobx";
+import { parseCheckoutPlanKey } from "@/lib/checkout-navigation";
 import {
   BILLING_INTERVALS,
   MEMBERSHIP_PLANS,
@@ -24,8 +28,51 @@ const planIcons = {
 const formatPrice = (amount) =>
   new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(amount);
 
-export const PricingDisplay = () => {
+export const PricingDisplay = observer(() => {
   const [interval, setInterval] = useState("monthly");
+  const resumedCheckout = useRef(false);
+  const user = MobxStore.user;
+  const authLoading = MobxStore.loading || MobxStore.permissionsLoading;
+  const isAnonymous = MobxStore.isUserAnonymous;
+  const hasActiveSubscription = MobxStore.hasActiveSubscription;
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const selection = parseCheckoutPlanKey(searchParams.get("plan"));
+    if (!selection) return;
+
+    setInterval(selection.interval);
+    if (
+      resumedCheckout.current ||
+      authLoading ||
+      !user ||
+      isAnonymous
+    ) {
+      return;
+    }
+
+    resumedCheckout.current = true;
+    searchParams.delete("plan");
+    const remainingQuery = searchParams.toString();
+    window.history.replaceState(
+      {},
+      "",
+      `${window.location.pathname}${remainingQuery ? `?${remainingQuery}` : ""}${window.location.hash}`
+    );
+
+    if (hasActiveSubscription) {
+      window.location.assign("/profile");
+      return;
+    }
+
+    const selectedPlan = MEMBERSHIP_PLANS.find(
+      (plan) => plan.tier === selection.tier
+    );
+    const checkoutUrl = selectedPlan?.pricing?.[selection.interval]?.checkoutUrl;
+    if (checkoutUrl) {
+      window.location.assign(checkoutUrl);
+    }
+  }, [authLoading, hasActiveSubscription, isAnonymous, user]);
 
   return (
     <div className="min-w-0 max-w-full space-y-8">
@@ -124,17 +171,17 @@ export const PricingDisplay = () => {
               </CardContent>
 
               <CardFooter className="min-w-0 px-4 pt-6 sm:px-6">
-                <Button
-                  asChild
+                <SubscribeButton
+                  tier={plan.tier}
+                  interval={interval}
+                  checkoutUrl={price.checkoutUrl}
                   className="w-full"
                   variant={plan.popular ? "default" : "outline"}
                   size="lg"
                 >
-                  <a href={price.checkoutUrl}>
-                    Choose {plan.name}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </a>
-                </Button>
+                  Choose {plan.name}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </SubscribeButton>
               </CardFooter>
             </Card>
           );
@@ -147,4 +194,4 @@ export const PricingDisplay = () => {
       </p>
     </div>
   );
-};
+});

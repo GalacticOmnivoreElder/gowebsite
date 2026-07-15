@@ -182,6 +182,7 @@ const SignupCard = observer(() => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isUserAnonymous, signInWithGoogle } = MobxStore;
+  const isCheckoutContinuation = Boolean(searchParams.get("plan"));
 
   const [redirectTo, setRedirectTo] = useState("/profile");
 
@@ -217,7 +218,9 @@ const SignupCard = observer(() => {
             : "Create an account"}
         </CardTitle>
         <CardDescription>
-          {isUserAnonymous
+          {isCheckoutContinuation
+            ? "Create or upgrade your GO account to continue to secure membership checkout."
+            : isUserAnonymous
             ? "Don't lose your hard work. Sign up to save your progress."
             : "Get started for free. No credit card required. Currently only available on desktop web"}
         </CardDescription>
