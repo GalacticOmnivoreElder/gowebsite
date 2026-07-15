@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import SubscribeButton from "@/components/ui/SubscribeButton";
 import {
   BILLING_INTERVALS,
   MEMBERSHIP_PLANS,
@@ -125,16 +124,17 @@ export const PricingDisplay = () => {
               </CardContent>
 
               <CardFooter className="min-w-0 px-4 pt-6 sm:px-6">
-                <SubscribeButton
-                  tier={plan.tier}
-                  interval={interval}
+                <Button
+                  asChild
                   className="w-full"
                   variant={plan.popular ? "default" : "outline"}
                   size="lg"
                 >
-                  Choose {plan.name}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </SubscribeButton>
+                  <a href={price.checkoutUrl}>
+                    Choose {plan.name}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
               </CardFooter>
             </Card>
           );

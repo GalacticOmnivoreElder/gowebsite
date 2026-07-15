@@ -24,12 +24,16 @@ export const MEMBERSHIP_PLANS = [
         amount: 500,
         period: "month",
         billingNote: "Billed monthly",
+        checkoutUrl:
+          "https://buy.polar.sh/polar_cl_3eQZAkgR7tt6AVntit4gkKMQJ6vM7p2jlwvLF0EyUMq",
       },
       annual: {
         amount: 4800,
         period: "year",
         billingNote: "Equivalent to 400 MKD/month",
         savings: "Save 1,200 MKD",
+        checkoutUrl:
+          "https://buy.polar.sh/polar_cl_dXXa5BGsLP8ukTHL5uFn6Ly8ijgz3VFqYAnHr4EvUxI",
       },
     },
   },
@@ -52,12 +56,16 @@ export const MEMBERSHIP_PLANS = [
         amount: 2999,
         period: "month",
         billingNote: "Billed monthly",
+        checkoutUrl:
+          "https://buy.polar.sh/polar_cl_jXCPPseL1ZnPUhkxY7JJBjUk5CdzsimvTqVum2zuJgz",
       },
       annual: {
         amount: 29000,
         period: "year",
         billingNote: "Equivalent to 2,417 MKD/month",
         savings: "Save 6,988 MKD",
+        checkoutUrl:
+          "https://buy.polar.sh/polar_cl_UtMDVEYWTIf2MyIECvoclfxLXrXvXjwEcJZAO3i0SeK",
       },
     },
   },
