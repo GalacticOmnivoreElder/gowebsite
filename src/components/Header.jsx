@@ -91,9 +91,6 @@ const Header = observer(() => {
             <Button asChild variant={isActive("/blog")} size="sm">
               <Link href="/blog">Blog</Link>
             </Button>
-            <Button asChild variant={isActive("/pricing")} size="sm">
-              <Link href="/pricing">Pricing</Link>
-            </Button>
             <Button asChild variant={isActive("/membership")} size="sm">
               <Link href="/membership">Membership</Link>
             </Button>
@@ -219,15 +216,6 @@ const Header = observer(() => {
               </Link>
             </Button>
 
-            <Button
-              asChild
-              variant={isActive("/pricing")}
-              className="justify-start"
-            >
-              <Link href="/pricing" onClick={handleNavigation}>
-                Pricing
-              </Link>
-            </Button>
             <Button
               asChild
               variant={isActive("/membership")}

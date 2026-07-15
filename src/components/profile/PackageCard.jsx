@@ -63,8 +63,8 @@ export default function PackageCard({ package: pkg, isUnlocked }) {
             </Link>
           </Button>
         ) : (
-          <Button className="w-full">
-            <Link href="/pricing" className="w-full flex justify-center">
+          <Button asChild className="w-full">
+            <Link href="/membership" className="w-full flex justify-center">
               <LockIcon className="h-4 w-4 mr-2" />
               Subscribe to Unlock
             </Link>

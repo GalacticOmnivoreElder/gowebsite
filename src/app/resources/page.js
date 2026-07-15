@@ -202,7 +202,7 @@ export default async function ResourcesPage() {
               drops, including playable prototypes, art, music, and code.
             </p>
             <Button asChild>
-              <Link href="/pricing">
+              <Link href="/membership">
                 View Membership Plans <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

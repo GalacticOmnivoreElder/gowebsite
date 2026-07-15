@@ -158,9 +158,9 @@ const CheckoutContent = observer(() => {
   return (
     <div className="container max-w-4xl mx-auto py-12 px-4">
       <Button variant="ghost" asChild className="mb-8">
-        <Link href="/pricing">
+        <Link href="/membership">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Pricing
+          Back to Membership
         </Link>
       </Button>
 
