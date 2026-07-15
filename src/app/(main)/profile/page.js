@@ -18,6 +18,7 @@ import { observer } from "mobx-react-lite";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
 import { formatBudget } from "@/utils/formatBudget";
+import { formatFirebaseDate } from "@/utils/date";
 import {
   User,
   Edit,
@@ -396,6 +397,9 @@ const ProfileContent = observer(() => {
   const [profileLoading, setProfileLoading] = useState(true);
   const [projectsLoading, setProjectsLoading] = useState(false);
   const router = useRouter();
+  const currentUser = MobxStore.user;
+  const currentUserId = currentUser?.uid;
+  const authReady = MobxStore.isReady;
 
   // Read the tab parameter from URL
   useEffect(() => {
@@ -422,15 +426,15 @@ const ProfileContent = observer(() => {
 
   // Redirect to login if not authenticated
   useEffect(() => {
-    if (MobxStore.isReady && !MobxStore.user) {
+    if (authReady && !currentUser) {
       router.push("/login");
     }
-  }, [MobxStore.isReady, MobxStore.user, router]);
+  }, [authReady, currentUser, router]);
 
   // Fetch user profile data
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!MobxStore.user?.uid) return;
+      if (!currentUserId) return;
 
       try {
         setProfileLoading(true);
@@ -443,7 +447,7 @@ const ProfileContent = observer(() => {
           headers.Authorization = `Bearer ${token}`;
         }
 
-        const response = await fetch(`/api/user/${MobxStore.user.uid}`, {
+        const response = await fetch(`/api/user/${currentUserId}`, {
           headers,
         });
 
@@ -458,15 +462,15 @@ const ProfileContent = observer(() => {
       }
     };
 
-    if (MobxStore.user?.uid) {
+    if (currentUserId) {
       fetchProfile();
     }
-  }, [MobxStore.user?.uid]);
+  }, [currentUserId]);
 
   // Fetch projects when projects tab is active
   useEffect(() => {
     const fetchProjects = async () => {
-      if (!MobxStore.user?.uid || activeTab !== "projects") return;
+      if (!currentUserId || activeTab !== "projects") return;
 
       try {
         setProjectsLoading(true);
@@ -480,7 +484,7 @@ const ProfileContent = observer(() => {
         }
 
         const response = await fetch(
-          `/api/user/${MobxStore.user.uid}/projects`,
+          `/api/user/${currentUserId}/projects`,
           { headers }
         );
 
@@ -496,18 +500,18 @@ const ProfileContent = observer(() => {
     };
 
     fetchProjects();
-  }, [MobxStore.user?.uid, activeTab]);
+  }, [currentUserId, activeTab]);
 
   // Fetch applications when applications tab is active
   useEffect(() => {
     if (
       activeTab === "applications" &&
-      MobxStore.user &&
+      currentUser &&
       !MobxStore.applicationsFetched
     ) {
       MobxStore.fetchApplications();
     }
-  }, [activeTab, MobxStore.user]);
+  }, [activeTab, currentUser]);
 
   // Show loading state while MobX is initializing or user data is loading
   if (!MobxStore.isReady || MobxStore.loading) {
@@ -679,11 +683,12 @@ const ProfileContent = observer(() => {
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">
                             Joined{" "}
-                            {new Date(
-                              profile?.createdAt ||
+                            {formatFirebaseDate(
+                              profile?.joinedAt ||
+                                profile?.createdAt ||
                                 MobxStore.user?.createdAt ||
-                                Date.now()
-                            ).toLocaleDateString()}
+                                MobxStore.user?.joined
+                            )}
                           </span>
                         </div>
                       </div>

@@ -2,7 +2,7 @@ import { makeAutoObservable, runInAction } from "mobx";
 import { auth, db } from "./firebase";
 import {
   onAuthStateChanged,
-  signInAnonymously,
+  signInAnonymously as firebaseSignInAnonymously,
   getAuth,
   EmailAuthProvider,
   linkWithCredential,
@@ -31,10 +31,7 @@ import {
 
 import Logger from "@/utils/logger";
 import { generateUserAvatar } from "@/utils/avatarGenerator";
-
-const DEFAULT_USER = {
-  joined: new Date(),
-};
+import { normalizeAuthUser } from "@/lib/auth-profile";
 
 const logger = new Logger({ debugEnabled: false }); // switch to true to see console logs from firebase
 
@@ -87,6 +84,7 @@ class Store {
   permissionsError = null;
   lastPermissionCheck = null;
   permissionCheckInProgress = null;
+  authStateVersion = 0;
 
   isReady = false;
 
@@ -109,47 +107,45 @@ class Store {
   }
 
   initializeAuth() {
-    const auth = getAuth();
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userDocRef);
+    const firebaseAuth = getAuth();
+    onAuthStateChanged(firebaseAuth, async (authUser) => {
+      const authStateVersion = ++this.authStateVersion;
+      let userProfile = null;
 
-          runInAction(() => {
-            if (!userDoc.exists()) {
-              const newUser = {
-                ...DEFAULT_USER,
-                uid: user.uid,
-                provider: "anonymous",
-                username: "Guest",
-                createdAt: new Date(),
-              };
-              setDoc(userDocRef, newUser).then(() => {
-                this.user = newUser;
-                this.checkPermissions(true);
-              });
-            } else {
-              this.user = { uid: user.uid, ...userDoc.data() };
-              this.checkPermissions(true);
-            }
-          });
-        } catch (error) {
-          console.error("Error in initializeAuth:", error);
+      try {
+        if (authUser) {
+          userProfile = await this.loadUserProfile(authUser);
         }
-      } else {
-        runInAction(() => {
-          this.user = null;
-          this.permissions = null;
-          this.lastPermissionCheck = null;
-        });
+      } catch (error) {
+        console.error("Error in initializeAuth:", error);
+        userProfile = normalizeAuthUser(authUser);
       }
 
+      if (authStateVersion !== this.authStateVersion) return;
+
       runInAction(() => {
+        this.user = userProfile;
         this.loading = false;
         this.isReady = true;
+
+        if (!userProfile) {
+          this.permissions = null;
+          this.lastPermissionCheck = null;
+        }
       });
+
+      if (userProfile) {
+        this.checkPermissions(true);
+      }
     });
+  }
+
+  async loadUserProfile(authUser) {
+    const userDoc = await getDoc(doc(db, "users", authUser.uid));
+    return normalizeAuthUser(
+      authUser,
+      userDoc.exists() ? userDoc.data() : null
+    );
   }
 
   async checkPermissions(force = false) {
@@ -583,27 +579,50 @@ class Store {
       const generatedAvatar = generateUserAvatar(username);
 
       const userDocRef = doc(db, "users", userCredential.user.uid);
-      await updateDoc(userDocRef, {
-        username,
-        email,
-        avatar: generatedAvatar, // Add the generated avatar
-      });
+      await setDoc(
+        userDocRef,
+        {
+          username,
+          email,
+          avatar: generatedAvatar,
+          provider: "password",
+        },
+        { merge: true }
+      );
 
       runInAction(() => {
+        this.authStateVersion += 1;
         this.user = {
           ...this.user,
           username,
           email,
           avatar: generatedAvatar,
+          provider: "password",
         };
       });
+      this.checkPermissions(true);
     } catch (error) {
       console.error("Error upgrading account:", error);
+      throw error;
     }
   }
 
   signInAnonymously = async () => {
-    await signInAnonymously(auth);
+    const userCredential = await firebaseSignInAnonymously(auth);
+    const userProfile = normalizeAuthUser(userCredential.user);
+    const userDocRef = doc(db, "users", userCredential.user.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+      await setDoc(userDocRef, userProfile);
+    }
+
+    runInAction(() => {
+      this.authStateVersion += 1;
+      this.user = userDoc.exists()
+        ? normalizeAuthUser(userCredential.user, userDoc.data())
+        : userProfile;
+    });
     logger.debug("Signed in anonymously");
   };
 
@@ -615,10 +634,13 @@ class Store {
         email,
         password
       );
+      const userProfile = await this.loadUserProfile(userCredential.user);
       runInAction(() => {
-        this.user = userCredential.user;
+        this.authStateVersion += 1;
+        this.user = userProfile;
         this.loading = false;
       });
+      this.checkPermissions(true);
     } catch (error) {
       console.error("Error logging in:", error);
       runInAction(() => {
@@ -642,12 +664,13 @@ class Store {
 
       // Additional user properties
       const newUserProfile = {
-        ...DEFAULT_USER,
+        joined: new Date(),
         createdAt: new Date(),
         username: username,
         email: email,
         uid: userCredential.user.uid,
-        avatar: generatedAvatar, // Add the generated avatar
+        avatar: generatedAvatar,
+        provider: "password",
       };
 
       // Create a user profile in Firestore
@@ -678,9 +701,11 @@ class Store {
       }
 
       runInAction(() => {
+        this.authStateVersion += 1;
         this.user = newUserProfile;
         this.loading = false;
       });
+      this.checkPermissions(true);
     } catch (error) {
       console.error("Error signing up:", error);
       runInAction(() => {
@@ -694,7 +719,10 @@ class Store {
     try {
       await signOut(auth); // Sign out from Firebase Authentication
       runInAction(() => {
-        this.user = null; // Reset the user in the store
+        this.authStateVersion += 1;
+        this.user = null;
+        this.permissions = null;
+        this.lastPermissionCheck = null;
       });
     } catch (error) {
       console.error("Error during logout:", error);
@@ -724,12 +752,12 @@ class Store {
           user.photoURL || generateUserAvatar(user.displayName || user.email);
 
         userData = {
-          ...DEFAULT_USER,
+          ...normalizeAuthUser(user),
           createdAt: new Date(),
           username: user.displayName || "New User",
           email: user.email,
           uid: user.uid,
-          avatar: avatarUrl, // Use Google photo or generated avatar
+          avatar: avatarUrl,
         };
 
         await setDoc(userDocRef, userData);
@@ -782,12 +810,13 @@ class Store {
         }
       } else {
         console.log("Existing user found:", userDoc.data());
-        userData = { uid: user.uid, ...userDoc.data() };
+        userData = normalizeAuthUser(user, userDoc.data());
       }
 
       // Set the user data using runInAction with a direct reference to the store
       console.log("Setting user in MobX store:", userData);
       runInAction(() => {
+        this.authStateVersion += 1;
         MobxStore.user = userData;
       });
 

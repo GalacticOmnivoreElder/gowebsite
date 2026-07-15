@@ -1,5 +1,9 @@
+const deploymentId =
+  process.env.VERCEL_DEPLOYMENT_ID || process.env.VERCEL_GIT_COMMIT_SHA;
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  ...(deploymentId ? { deploymentId } : {}),
   images: {
     domains: [
       "localhost",

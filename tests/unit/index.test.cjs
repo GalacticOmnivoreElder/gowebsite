@@ -3,6 +3,7 @@ require("./admin-check-route.test.cjs");
 require("./application-id-route.test.cjs");
 require("./applications-route.test.cjs");
 require("./auth-utils.test.cjs");
+require("./auth-profile.test.cjs");
 require("./billing-orders-route.test.cjs");
 require("./billing-cancel-route.test.cjs");
 require("./billing-portal-route.test.cjs");
