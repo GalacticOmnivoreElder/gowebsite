@@ -101,7 +101,7 @@ const Header = observer(() => {
           {authReady && (
             <>
               {/* Subscribe button for logged-in users who aren't members */}
-              {user && !MobxStore.hasActiveSubscription && (
+              {!MobxStore.hasActiveSubscription && (
                 <SubscribeButton
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hidden md:flex"
                   size="sm"
@@ -250,7 +250,7 @@ const Header = observer(() => {
             )}
 
             {/* Subscribe button for mobile - logged-in users who aren't members */}
-            {user && !MobxStore.hasActiveSubscription && (
+            {authReady && !MobxStore.hasActiveSubscription && (
               <SubscribeButton className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 justify-start">
                 Subscribe Premium
               </SubscribeButton>

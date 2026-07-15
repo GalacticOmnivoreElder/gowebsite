@@ -58,6 +58,16 @@ const SubscribeButton = observer(
 
     const handleSubscribe = async () => {
       if (!checkoutUrl && !productId) {
+        if (
+          requireAuth &&
+          (!MobxStore.user || MobxStore.isUserAnonymous)
+        ) {
+          router.push(
+            "/login?redirect=" + encodeURIComponent("/membership")
+          );
+          return;
+        }
+
         router.push("/membership");
         return;
       }
