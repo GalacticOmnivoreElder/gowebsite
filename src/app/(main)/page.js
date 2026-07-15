@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 
 // New Landing Components
 import { HeroSection } from "@/components/landing/HeroSection";
@@ -45,12 +45,10 @@ import {
   Twitch,
   Twitter,
   Youtube,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { GameOfTheMonth } from "../membership/page";
+import { GameOfTheMonth } from "@/components/landing/GameOfTheMonth";
 
 const magenta = "#CA2280";
 
@@ -351,172 +349,6 @@ const CarouselItem = ({ title, image, text, link }) => {
             LEARN MORE
           </Button>
         </a>
-      </div>
-    </div>
-  );
-};
-
-export const GenericCarousel = ({
-  slides,
-  itemsPerViewDesktop = 3,
-  itemsPerViewTablet = 2,
-  itemsPerViewMobile = 1,
-  backgroundColor = "transparent",
-  title,
-  className = "",
-}) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [itemsPerView, setItemsPerView] = useState(itemsPerViewDesktop);
-  const [startX, setStartX] = useState(0);
-  const [currentX, setCurrentX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    const handleResize = () => {
-      let newItemsPerView = itemsPerViewDesktop;
-      if (window.innerWidth < 768) {
-        newItemsPerView = itemsPerViewMobile;
-      } else if (window.innerWidth < 1024) {
-        newItemsPerView = itemsPerViewTablet;
-      }
-      setItemsPerView(newItemsPerView);
-      const maxIndex = Math.max(0, slides.length - newItemsPerView);
-      if (currentIndex > maxIndex) {
-        setCurrentIndex(maxIndex);
-      }
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [
-    slides.length,
-    itemsPerViewDesktop,
-    itemsPerViewTablet,
-    itemsPerViewMobile,
-    currentIndex,
-  ]);
-
-  const maxIndex = Math.max(0, slides.length - itemsPerView);
-
-  const handleStart = (e) => {
-    setIsDragging(true);
-    setStartX(e.type === "mousedown" ? e.pageX : e.touches[0].clientX);
-  };
-
-  const handleMove = (e) => {
-    if (!isDragging) return;
-    const x = e.type === "mousemove" ? e.pageX : e.touches[0].clientX;
-    const walk = x - startX;
-    setCurrentX(walk);
-  };
-
-  const handleEnd = () => {
-    if (!isDragging) return;
-    const threshold = containerRef.current?.offsetWidth / itemsPerView / 2;
-
-    let newIndex = currentIndex;
-    if (Math.abs(currentX) > threshold) {
-      if (currentX > 0 && currentIndex > 0) {
-        newIndex = currentIndex - 1;
-      } else if (currentX < 0 && currentIndex < maxIndex) {
-        newIndex = currentIndex + 1;
-      }
-    }
-    setCurrentIndex(newIndex);
-    setIsDragging(false);
-    setCurrentX(0);
-  };
-
-  const goToNext = () => {
-    setCurrentIndex((prev) => Math.min(prev + 1, maxIndex));
-  };
-
-  const goToPrev = () => {
-    setCurrentIndex((prev) => Math.max(prev - 1, 0));
-  };
-
-  return (
-    <div
-      className={`${
-        backgroundColor === "transparent" ? "" : `bg-[${backgroundColor}]`
-      } ${className}`}
-    >
-      {title && (
-        <div className="text-4xl text-center text-white pt-8 mb-12">
-          {title}
-        </div>
-      )}
-      <div className="relative py-4">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="relative overflow-hidden">
-            <div
-              ref={containerRef}
-              className="flex"
-              style={{
-                transform: `translateX(-${
-                  (currentIndex * 100) / slides.length
-                }%)`,
-                width: `${(slides.length / itemsPerView) * 100}%`,
-                transition: isDragging ? "none" : "transform 0.3s ease-out",
-              }}
-            >
-              {slides.map((slide, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 px-2"
-                  style={{ width: `${100 / slides.length}%` }}
-                >
-                  {slide}
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={goToPrev}
-              disabled={currentIndex === 0}
-              className={`absolute left-0 top-1/2 -translate-y-1/2 bg-white/10 p-2 rounded-full z-10 transition-opacity duration-200 ${
-                currentIndex === 0
-                  ? "opacity-30 cursor-not-allowed"
-                  : "opacity-100 hover:bg-white/20"
-              }`}
-            >
-              <ChevronLeft className="text-white" />
-            </button>
-
-            <button
-              onClick={goToNext}
-              disabled={currentIndex === maxIndex}
-              className={`absolute right-0 top-1/2 -translate-y-1/2 bg-white/10 p-2 rounded-full z-10 transition-opacity duration-200 ${
-                currentIndex === maxIndex
-                  ? "opacity-30 cursor-not-allowed"
-                  : "opacity-100 hover:bg-white/20"
-              }`}
-            >
-              <ChevronRight className="text-white" />
-            </button>
-          </div>
-
-          <div className="flex justify-center mt-8 gap-2">
-            {Array.from({
-              length: Math.ceil(slides.length / itemsPerView),
-            }).map((_, pageIndex) => (
-              <button
-                key={pageIndex}
-                className={`w-3 h-3 rounded-sm transition-colors ${
-                  currentIndex >= pageIndex * itemsPerView &&
-                  currentIndex < (pageIndex + 1) * itemsPerView
-                    ? "bg-white"
-                    : "bg-white/30"
-                }`}
-                onClick={() =>
-                  setCurrentIndex(Math.min(pageIndex * itemsPerView, maxIndex))
-                }
-              />
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { GenericCarousel } from "@/app/(main)/page"; // Assuming GenericCarousel is exported from here or moved
+import { GenericCarousel } from "@/components/landing/GenericCarousel";
 
 // Import existing data or define it here
 import avatar1Img from "@/assets/avatar1.png";

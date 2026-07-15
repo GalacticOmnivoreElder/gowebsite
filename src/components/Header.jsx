@@ -116,7 +116,7 @@ const Header = observer(() => {
               {user ? (
                 <UserNav user={user} logout={MobxStore.logout} />
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="hidden items-center gap-2 md:flex">
                   <Button
                     asChild
                     variant={pathname === "/login" ? "default" : "ghost"}
@@ -237,6 +237,29 @@ const Header = observer(() => {
                 Membership
               </Link>
             </Button>
+
+            {authReady && !user && (
+              <>
+                <Button
+                  asChild
+                  variant={pathname === "/login" ? "default" : "ghost"}
+                  className="justify-start"
+                >
+                  <Link href="/login" onClick={handleNavigation}>
+                    Log in
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant={pathname === "/signup" ? "default" : "ghost"}
+                  className="justify-start"
+                >
+                  <Link href="/signup" onClick={handleNavigation}>
+                    Sign up
+                  </Link>
+                </Button>
+              </>
+            )}
 
             {/* Subscribe button for mobile - logged-in users who aren't members */}
             {user && !MobxStore.hasActiveSubscription && (

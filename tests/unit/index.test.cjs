@@ -20,6 +20,7 @@ require("./date.test.cjs");
 require("./format-budget.test.cjs");
 require("./lib-utils.test.cjs");
 require("./logger.test.cjs");
+require("./membership-plans.test.cjs");
 require("./me-cv-route.test.cjs");
 require("./me-profile-route.test.cjs");
 require("./package-slug-route.test.cjs");
