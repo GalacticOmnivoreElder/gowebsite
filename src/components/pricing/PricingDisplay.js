@@ -137,7 +137,7 @@ export const PricingDisplay = () => {
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
-        Secure recurring billing through Polar. Prices are charged in EUR;
+        Secure recurring billing through Polar. Prices are charged based on your region;
         applicable taxes are calculated at checkout.
       </p>
     </div>
