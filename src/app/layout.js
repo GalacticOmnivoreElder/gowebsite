@@ -17,6 +17,7 @@ export const metadata = {
 
 // Create a client component wrapper for ThemeProvider
 import ThemeProviderWrapper from "@/components/ThemeProviderWrapper";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function RootLayout({ children }) {
   return (
@@ -24,6 +25,7 @@ export default function RootLayout({ children }) {
       <body className={inter.className}>
         <ThemeProviderWrapper>
           <ReusableLayout>{children}</ReusableLayout>
+          <Toaster />
         </ThemeProviderWrapper>
         {/* <CookieConsent /> */}
       </body>

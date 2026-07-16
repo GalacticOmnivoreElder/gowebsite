@@ -47,6 +47,7 @@ import {
   XCircle,
   Archive,
   ArchiveRestore,
+  Loader2,
 } from "lucide-react";
 import UserLink from "@/components/ui/UserLink";
 import { formatBudget } from "@/utils/formatBudget";
@@ -125,6 +126,8 @@ const ProjectDetailsPage = observer(() => {
   const [showApplicationsDialog, setShowApplicationsDialog] = useState(false);
   const [applications, setApplications] = useState([]);
   const [applicationsLoading, setApplicationsLoading] = useState(false);
+  const [checkingApplicationAccess, setCheckingApplicationAccess] =
+    useState(false);
 
   const projectId = params.id;
   const userId = MobxStore.user?.uid;
@@ -333,18 +336,37 @@ const ProjectDetailsPage = observer(() => {
     });
   };
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!MobxStore.user) {
       router.push(`/login?redirect=/project/${projectId}`);
       return;
     }
 
-    if (!MobxStore.hasActiveSubscription) {
-      showMembershipRequired();
-      return;
-    }
+    setCheckingApplicationAccess(true);
+    try {
+      if (!MobxStore.hasActiveSubscription) {
+        const permissions = await MobxStore.checkPermissions(true);
 
-    setShowApplyDialog(true);
+        if (!MobxStore.hasActiveSubscription) {
+          if (!permissions) {
+            toast({
+              title: "Could not verify membership",
+              description:
+                "Please check your connection and try applying again.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          showMembershipRequired();
+          return;
+        }
+      }
+
+      setShowApplyDialog(true);
+    } finally {
+      setCheckingApplicationAccess(false);
+    }
   };
 
   const submitApplication = async () => {
@@ -815,8 +837,18 @@ const ProjectDetailsPage = observer(() => {
                         to this project.
                       </p>
                     </div>
-                    <Button size="lg" onClick={handleApply} className="ml-4">
-                      {MobxStore.user ? (
+                    <Button
+                      size="lg"
+                      onClick={handleApply}
+                      disabled={checkingApplicationAccess}
+                      className="ml-4 min-w-40"
+                    >
+                      {checkingApplicationAccess ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Checking membership
+                        </>
+                      ) : MobxStore.user ? (
                         <>
                           <Send className="h-4 w-4 mr-2" />
                           Apply to Project
