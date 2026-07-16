@@ -31,7 +31,7 @@ import {
 
 import Logger from "@/utils/logger";
 import { generateUserAvatar } from "@/utils/avatarGenerator";
-import { normalizeAuthUser } from "@/lib/auth-profile";
+import { normalizeAuthUser, normalizeUsername } from "@/lib/auth-profile";
 
 const logger = new Logger({ debugEnabled: false }); // switch to true to see console logs from firebase
 
@@ -189,8 +189,15 @@ class Store {
           this.permissions = data;
           this.permissionsLoading = false;
           this.lastPermissionCheck = Date.now();
-          if (data.user && this.user) {
-            this.user = { ...this.user, ...data.user };
+          if (
+            data.user &&
+            this.user &&
+            auth.currentUser?.uid === this.user.uid
+          ) {
+            this.user = normalizeAuthUser(auth.currentUser, {
+              ...this.user,
+              ...data.user,
+            });
           }
         });
 
@@ -571,6 +578,10 @@ class Store {
   // AUTH FUNCTIONS
   async upgradeAccount(email, password, username) {
     try {
+      const normalizedUsername = normalizeUsername(
+        username,
+        email?.split("@")[0] || "New User"
+      );
       const credential = EmailAuthProvider.credential(email, password);
       const userCredential = await linkWithCredential(
         auth.currentUser,
@@ -578,13 +589,13 @@ class Store {
       );
 
       // Generate unique avatar for the upgraded account
-      const generatedAvatar = generateUserAvatar(username);
+      const generatedAvatar = generateUserAvatar(normalizedUsername);
 
       const userDocRef = doc(db, "users", userCredential.user.uid);
       await setDoc(
         userDocRef,
         {
-          username,
+          username: normalizedUsername,
           email,
           avatar: generatedAvatar,
           provider: "password",
@@ -596,7 +607,7 @@ class Store {
         this.authStateVersion += 1;
         this.user = {
           ...this.user,
-          username,
+          username: normalizedUsername,
           email,
           avatar: generatedAvatar,
           provider: "password",
@@ -655,6 +666,10 @@ class Store {
   async signupWithEmail(email, password, username) {
     try {
       this.loading = true;
+      const normalizedUsername = normalizeUsername(
+        username,
+        email?.split("@")[0] || "New User"
+      );
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -662,13 +677,13 @@ class Store {
       );
 
       // Generate unique avatar for the user
-      const generatedAvatar = generateUserAvatar(username);
+      const generatedAvatar = generateUserAvatar(normalizedUsername);
 
       // Additional user properties
       const newUserProfile = {
         joined: new Date(),
         createdAt: new Date(),
-        username: username,
+        username: normalizedUsername,
         email: email,
         uid: userCredential.user.uid,
         avatar: generatedAvatar,
@@ -686,9 +701,9 @@ class Store {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: username,
+            name: normalizedUsername,
             email: email,
-            username: username,
+            username: normalizedUsername,
           }),
         });
 
@@ -749,14 +764,19 @@ class Store {
       if (!userDoc.exists()) {
         console.log("Creating new user profile");
 
+        const normalizedUsername = normalizeUsername(
+          user.displayName,
+          user.email?.split("@")[0] || "New User"
+        );
+
         // For Google users, use their Google profile picture if available, otherwise generate one
         const avatarUrl =
-          user.photoURL || generateUserAvatar(user.displayName || user.email);
+          user.photoURL || generateUserAvatar(normalizedUsername);
 
         userData = {
           ...normalizeAuthUser(user),
           createdAt: new Date(),
-          username: user.displayName || "New User",
+          username: normalizedUsername,
           email: user.email,
           uid: user.uid,
           avatar: avatarUrl,
@@ -769,9 +789,9 @@ class Store {
         try {
           console.log("=== CALLING WELCOME EMAIL API (Google User) ===");
           console.log("Sending data:", {
-            name: user.displayName || "New User",
+            name: normalizedUsername,
             email: user.email,
-            username: user.displayName || "New User",
+            username: normalizedUsername,
           });
 
           const emailResponse = await fetch("/api/welcomeEmail", {
@@ -780,9 +800,9 @@ class Store {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              name: user.displayName || "New User",
+              name: normalizedUsername,
               email: user.email,
-              username: user.displayName || "New User",
+              username: normalizedUsername,
             }),
           });
 

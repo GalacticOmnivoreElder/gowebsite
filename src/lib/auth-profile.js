@@ -7,6 +7,13 @@ export function getAuthProvider(authUser) {
   );
 }
 
+export function normalizeUsername(username, fallback = "") {
+  const normalized = typeof username === "string" ? username.trim() : "";
+  if (normalized) return normalized;
+
+  return typeof fallback === "string" ? fallback.trim() : "";
+}
+
 export function normalizeAuthUser(
   authUser,
   profileData = null,
@@ -16,9 +23,10 @@ export function normalizeAuthUser(
 
   const provider = getAuthProvider(authUser);
   const fallbackUsername =
-    authUser.displayName?.trim() ||
+    normalizeUsername(authUser.displayName) ||
     authUser.email?.split("@")[0] ||
     (provider === "anonymous" ? "Guest" : "New User");
+  const storedUsername = normalizeUsername(profileData?.username);
 
   const fallbackProfile = {
     joined: now,
@@ -35,6 +43,7 @@ export function normalizeAuthUser(
     ...(profileData || {}),
     uid: authUser.uid,
     provider,
+    username: storedUsername || fallbackUsername,
     email: authUser.email || profileData?.email || "",
   };
 }

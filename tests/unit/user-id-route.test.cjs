@@ -3,6 +3,14 @@ const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs");
 
+const { normalizeUsername } = loadSourceModule("src/lib/auth-profile.js", [
+  "normalizeUsername",
+]);
+const { validateProfileData } = loadSourceModule(
+  "src/utils/validateProfile.js",
+  ["validateProfileData"]
+);
+
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -25,6 +33,9 @@ function createDb(seed = {}) {
                 data: () => docs[name][id] || {},
               };
             },
+            async update(update) {
+              docs[name][id] = { ...(docs[name][id] || {}), ...update };
+            },
           };
         },
       };
@@ -34,7 +45,7 @@ function createDb(seed = {}) {
 
 function loadRoute({ decodedToken = null, seed = {} } = {}) {
   const adminDb = createDb(seed);
-  return loadSourceModule("src/app/api/user/[id]/route.js", ["GET"], {
+  return loadSourceModule("src/app/api/user/[id]/route.js", ["GET", "PUT"], {
     stripImports: true,
     sandbox: {
       NextResponse,
@@ -42,10 +53,30 @@ function loadRoute({ decodedToken = null, seed = {} } = {}) {
         verifyIdToken: async () => decodedToken,
       },
       adminDb,
+      normalizeUsername,
       serializeFirestoreDate: (value) => value?.toISOString?.() || value,
+      validateProfileData,
     },
   });
 }
+
+test("profile updates trim usernames before writing them", async () => {
+  const { PUT } = loadRoute({
+    decodedToken: { uid: "user-1" },
+    seed: { users: { "user-1": { username: "OldName" } } },
+  });
+
+  const response = await PUT(
+    createRequest({
+      headers: { Authorization: "Bearer owner-token" },
+      jsonBody: { username: "Kikerkov " },
+    }),
+    { params: { id: "user-1" } }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.username, "Kikerkov");
+});
 
 function cv(overrides = {}) {
   return {
@@ -173,4 +204,3 @@ test("legacy profiles without a GO CV keep profilePrivacy behavior", async () =>
   response = await route.GET(createRequest(), { params: { id: "user-1" } });
   assert.equal(response.body.isPrivate, true);
 });
-

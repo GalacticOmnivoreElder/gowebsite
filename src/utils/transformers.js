@@ -5,21 +5,12 @@ export function addValueToObjects(events) {
 }
 
 export function getAvatarShortcut(username) {
-  if (!username) return "AA";
-  const words = username.split(" ");
-  let shortcut = "";
+  if (typeof username !== "string") return "AA";
 
-  if (words.length === 1) {
-    // If there's only one word, return the first letter
-    shortcut = words[0][0].toUpperCase();
-  } else {
-    // If there are two or more words, concatenate the initials
-    for (let i = 0; i < words.length; i++) {
-      shortcut += words[i][0].toUpperCase();
-    }
-  }
+  const words = username.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "AA";
 
-  return shortcut;
+  return words.map((word) => word.charAt(0).toUpperCase()).join("");
 }
 
 export function formatTimeFromSteps(steps) {

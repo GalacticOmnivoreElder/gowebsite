@@ -27,6 +27,10 @@ test("getAvatarShortcut derives initials from names", () => {
   assert.equal(getAvatarShortcut("ada"), "A");
   assert.equal(getAvatarShortcut("Ada Lovelace"), "AL");
   assert.equal(getAvatarShortcut("Grace Brewster Hopper"), "GBH");
+  assert.equal(getAvatarShortcut("Kikerkov "), "K");
+  assert.equal(getAvatarShortcut("  Ada   Lovelace  "), "AL");
+  assert.equal(getAvatarShortcut("   "), "AA");
+  assert.equal(getAvatarShortcut({ username: "Ada" }), "AA");
 });
 
 test("formatTimeFromSteps sums step timers into hours and minutes", () => {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { serializeFirestoreDate } from "@/lib/project-utils";
 import { validateProfileData } from "@/utils/validateProfile";
+import { normalizeUsername } from "@/lib/auth-profile";
 
 function serializeCv(cv) {
   if (!cv) return null;
@@ -186,6 +187,12 @@ export async function PUT(request, { params }) {
       return NextResponse.json(
         { error: Object.values(validationErrors)[0], validationErrors },
         { status: 400 },
+      );
+    }
+
+    if (filteredUpdateData.username !== undefined) {
+      filteredUpdateData.username = normalizeUsername(
+        filteredUpdateData.username
       );
     }
 

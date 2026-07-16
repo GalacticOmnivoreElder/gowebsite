@@ -2,9 +2,9 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
-const { getAuthProvider, normalizeAuthUser } = loadSourceModule(
+const { getAuthProvider, normalizeAuthUser, normalizeUsername } = loadSourceModule(
   "src/lib/auth-profile.js",
-  ["getAuthProvider", "normalizeAuthUser"]
+  ["getAuthProvider", "normalizeAuthUser", "normalizeUsername"]
 );
 
 test("email auth users are normalized into a plain profile shape", () => {
@@ -48,6 +48,27 @@ test("stored profile data is merged without allowing a stale uid", () => {
   assert.equal(profile.username, "Current Player");
   assert.equal(profile.email, "current@example.com");
   assert.equal(profile.provider, "password");
+});
+
+test("stored usernames are trimmed before reaching authenticated UI", () => {
+  const authUser = {
+    uid: "current-user",
+    email: "current@example.com",
+    displayName: "Current User",
+    isAnonymous: false,
+    providerData: [{ providerId: "google.com" }],
+  };
+
+  assert.equal(
+    normalizeAuthUser(authUser, { username: "Kikerkov " }).username,
+    "Kikerkov"
+  );
+  assert.equal(
+    normalizeAuthUser(authUser, { username: "   " }).username,
+    "Current User"
+  );
+  assert.equal(normalizeUsername("  New Member  "), "New Member");
+  assert.equal(normalizeUsername("   ", "Fallback User "), "Fallback User");
 });
 
 test("anonymous auth users remain explicitly anonymous", () => {

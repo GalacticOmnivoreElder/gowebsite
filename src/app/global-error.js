@@ -1,11 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function GlobalError({ error, reset }) {
+  const [signingOut, setSigningOut] = useState(false);
+
   useEffect(() => {
     console.error("Global application error:", error);
   }, [error]);
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+
+    try {
+      const [{ signOut }, { auth }] = await Promise.all([
+        import("firebase/auth"),
+        import("@/firebase"),
+      ]);
+      await signOut(auth);
+      window.location.assign("/login");
+    } catch (signOutError) {
+      console.error("Emergency sign out failed:", signOutError);
+      setSigningOut(false);
+    }
+  };
 
   return (
     <html lang="en">
@@ -31,6 +49,14 @@ export default function GlobalError({ error, reset }) {
                 onClick={reset}
               >
                 Try again
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-10 items-center justify-center px-4 text-sm font-medium text-muted-foreground"
+                disabled={signingOut}
+                onClick={handleSignOut}
+              >
+                {signingOut ? "Signing out..." : "Sign out"}
               </button>
             </div>
           </div>
