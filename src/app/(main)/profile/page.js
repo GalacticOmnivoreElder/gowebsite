@@ -578,6 +578,7 @@ const ProfileContent = observer(() => {
       case "rejected":
         return "bg-red-100 text-red-800 border-red-200";
       case "cancelled":
+      case "removed":
         return "bg-gray-100 text-gray-800 border-gray-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -933,6 +934,11 @@ const ProfileContent = observer(() => {
                             {application.status === "rejected" && (
                               <span className="text-xs text-red-600">
                                 Application declined
+                              </span>
+                            )}
+                            {application.status === "removed" && (
+                              <span className="text-xs text-muted-foreground">
+                                Removed from the project team
                               </span>
                             )}
                           </div>

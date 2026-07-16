@@ -48,32 +48,41 @@ import {
   Archive,
   ArchiveRestore,
   Loader2,
+  UserMinus,
 } from "lucide-react";
 import UserLink from "@/components/ui/UserLink";
 import { formatBudget } from "@/utils/formatBudget";
 
-const UserCard = ({ user, role }) => {
+const UserCard = ({ user, role, onRemove }) => {
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-center space-x-3">
-          <UserLink user={user} showUsername={false} avatarSize="default" />
-          <div className="flex-1 min-w-0">
-            <UserLink
-              user={user}
-              showAvatar={false}
-              className="font-medium truncate block"
-            />
-            <p className="text-sm text-muted-foreground">{role}</p>
-            {user.email && (
-              <p className="text-xs text-muted-foreground truncate">
-                {user.email}
-              </p>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-3 rounded-md border p-4 transition-colors hover:bg-muted/40">
+      <UserLink user={user} showUsername={false} avatarSize="default" />
+      <div className="min-w-0 flex-1">
+        <UserLink
+          user={user}
+          showAvatar={false}
+          className="block truncate font-medium"
+        />
+        <p className="text-sm text-muted-foreground">{role}</p>
+        {user.email && (
+          <p className="truncate text-xs text-muted-foreground">
+            {user.email}
+          </p>
+        )}
+      </div>
+      {onRemove && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="shrink-0 text-destructive hover:text-destructive"
+          onClick={onRemove}
+        >
+          <UserMinus className="mr-2 h-4 w-4" />
+          Remove
+        </Button>
+      )}
+    </div>
   );
 };
 
@@ -128,6 +137,8 @@ const ProjectDetailsPage = observer(() => {
   const [applicationsLoading, setApplicationsLoading] = useState(false);
   const [checkingApplicationAccess, setCheckingApplicationAccess] =
     useState(false);
+  const [memberToRemove, setMemberToRemove] = useState(null);
+  const [removingMember, setRemovingMember] = useState(false);
 
   const projectId = params.id;
   const userId = MobxStore.user?.uid;
@@ -178,7 +189,9 @@ const ProjectDetailsPage = observer(() => {
         if (response.ok) {
           const data = await response.json();
           const application = data.applications.find(
-            (app) => app.projectId === projectId && app.status !== "cancelled"
+            (app) =>
+              app.projectId === projectId &&
+              !["cancelled", "removed"].includes(app.status)
           );
           setUserApplication(application || null);
         }
@@ -220,9 +233,14 @@ const ProjectDetailsPage = observer(() => {
       case "pending":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "hiring":
+      case "approved":
         return "bg-green-100 text-green-800 border-green-200";
       case "live":
         return "bg-blue-100 text-blue-800 border-blue-200";
+      case "rejected":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "cancelled":
+      case "removed":
       case "completed":
         return "bg-gray-100 text-gray-800 border-gray-200";
       default:
@@ -251,6 +269,11 @@ const ProjectDetailsPage = observer(() => {
     (project.owner === MobxStore.user.uid ||
       project.admins?.includes(MobxStore.user.uid) ||
       MobxStore.isAdmin);
+
+  const canRemoveMembers =
+    project &&
+    MobxStore.user &&
+    (project.owner === MobxStore.user.uid || MobxStore.isAdmin);
 
   const isProjectMember =
     project &&
@@ -459,6 +482,64 @@ const ProjectDetailsPage = observer(() => {
         description: error.message || "Failed to cancel application",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleRemoveMember = async () => {
+    if (!memberToRemove || !auth.currentUser) return;
+
+    setRemovingMember(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(
+        `/api/projects/${projectId}/members/${encodeURIComponent(memberToRemove.uid)}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to remove project member");
+      }
+
+      setProject((currentProject) => {
+        if (!currentProject) return currentProject;
+
+        return {
+          ...currentProject,
+          teamMembers: (currentProject.teamMembers || []).filter(
+            (uid) => uid !== memberToRemove.uid
+          ),
+          teamMemberDetails: (
+            currentProject.teamMemberDetails || []
+          ).filter((member) => member.uid !== memberToRemove.uid),
+        };
+      });
+      setApplications((currentApplications) =>
+        currentApplications.map((application) =>
+          application.userId === memberToRemove.uid &&
+          application.status === "approved"
+            ? { ...application, status: "removed" }
+            : application
+        )
+      );
+
+      toast({
+        title: "Member removed",
+        description: `${memberToRemove.username || "The user"} no longer has access to this project.`,
+      });
+      setMemberToRemove(null);
+    } catch (error) {
+      console.error("Error removing project member:", error);
+      toast({
+        title: "Could not remove member",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setRemovingMember(false);
     }
   };
 
@@ -1033,7 +1114,18 @@ const ProjectDetailsPage = observer(() => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {project.teamMemberDetails.map((member) => (
-                  <UserCard key={member.uid} user={member} role="Team Member" />
+                  <UserCard
+                    key={member.uid}
+                    user={member}
+                    role="Team Member"
+                    onRemove={
+                      canRemoveMembers &&
+                      member.uid !== project.owner &&
+                      !project.admins?.includes(member.uid)
+                        ? () => setMemberToRemove(member)
+                        : undefined
+                    }
+                  />
                 ))}
               </div>
             </CardContent>
@@ -1140,6 +1232,55 @@ const ProjectDetailsPage = observer(() => {
                 disabled={!consentGiven || applying}
               >
                 {applying ? "Submitting..." : "Submit Application"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Remove Member Confirmation */}
+        <Dialog
+          open={Boolean(memberToRemove)}
+          onOpenChange={(open) => {
+            if (!open && !removingMember) setMemberToRemove(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                Remove {memberToRemove?.username || "this member"}?
+              </DialogTitle>
+              <DialogDescription>
+                They will lose access to this project immediately. Their
+                accepted application will remain in the project history with a
+                Removed status.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={removingMember}
+                onClick={() => setMemberToRemove(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={removingMember}
+                onClick={handleRemoveMember}
+              >
+                {removingMember ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Removing
+                  </>
+                ) : (
+                  <>
+                    <UserMinus className="mr-2 h-4 w-4" />
+                    Remove member
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
