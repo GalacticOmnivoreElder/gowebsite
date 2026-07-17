@@ -7,11 +7,13 @@ const {
   getPolarPortalBase,
   getPolarServer,
   resolvePolarProductId,
+  resolvePolarProductTier,
 } = loadSourceModule("src/lib/polar.js", [
   "getPolarApiBase",
   "getPolarPortalBase",
   "getPolarServer",
   "resolvePolarProductId",
+  "resolvePolarProductTier",
 ]);
 
 const polarEnvKeys = [
@@ -94,6 +96,36 @@ test("resolvePolarProductId normalizes unknown input to member monthly", () => {
   withEnv({ NEXT_PUBLIC_POLAR_MEMBER_MONTHLY_PRODUCT_ID: "member-monthly" }, () => {
     assert.equal(resolvePolarProductId("unknown", "weekly"), "member-monthly");
   });
+});
+
+test("resolvePolarProductTier recognizes configured and Checkout Link products", () => {
+  withEnv(
+    {
+      NEXT_PUBLIC_POLAR_MEMBER_MONTHLY_PRODUCT_ID: "configured-member",
+      NEXT_PUBLIC_POLAR_COMPANY_ANNUAL_PRODUCT_ID: "configured-company",
+    },
+    () => {
+      assert.equal(resolvePolarProductTier("configured-member"), "member");
+      assert.equal(resolvePolarProductTier("configured-company"), "company");
+      assert.equal(
+        resolvePolarProductTier("126bbba8-f3c7-4fcd-b2a1-0b3ab86032f6"),
+        "company"
+      );
+      assert.equal(resolvePolarProductTier("unknown-product"), null);
+    }
+  );
+});
+
+test("resolvePolarProductTier refuses ambiguous product configuration", () => {
+  withEnv(
+    {
+      NEXT_PUBLIC_POLAR_MEMBER_MONTHLY_PRODUCT_ID: "same-product",
+      NEXT_PUBLIC_POLAR_COMPANY_MONTHLY_PRODUCT_ID: "same-product",
+    },
+    () => {
+      assert.equal(resolvePolarProductTier("same-product"), null);
+    }
+  );
 });
 
 test("getPolarPortalBase requires an organization slug and uses the active server", () => {

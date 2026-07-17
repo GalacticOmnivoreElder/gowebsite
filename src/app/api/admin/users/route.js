@@ -41,6 +41,11 @@ export async function GET(request) {
     const users = snapshot.docs.map((doc) => {
       const data = doc.data();
       const isMember = isActiveMember(data);
+      const membershipTier = ["member", "company"].includes(
+        data.membershipTier
+      )
+        ? data.membershipTier
+        : null;
       return {
         id: doc.id,
         name: data.name || data.displayName || data.username || "N/A",
@@ -48,7 +53,7 @@ export async function GET(request) {
         joined: toIso(data.createdAt),
         isAdmin: data.admin === true,
         isMember,
-        membershipTier: isMember ? data.membershipTier || "member" : null,
+        membershipTier,
         subscriptionStatus: data.subscriptionStatus || null,
         subscriptionEndsAt: toIso(data.subscriptionEndsAt),
         willRenew: data.willRenew ?? null,
@@ -65,34 +70,60 @@ export async function GET(request) {
   }
 }
 
-// PUT /api/admin/users  { userId, activeMember }
+// PUT /api/admin/users  { userId, activeMember?, membershipTier? }
 // Manual membership override for admins, written to the Polar user-doc model.
 export async function PUT(request) {
   try {
     const gate = await requireAdmin(request);
     if (gate.error) return Response.json({ error: gate.error }, { status: gate.status });
 
-    const { userId, activeMember } = await request.json();
-    if (!userId || typeof activeMember !== "boolean") {
+    const { userId, activeMember, membershipTier } = await request.json();
+    const hasActiveMember = typeof activeMember === "boolean";
+    const hasMembershipTier = membershipTier !== undefined;
+
+    if (!userId || (!hasActiveMember && !hasMembershipTier)) {
       return Response.json(
-        { error: "userId and boolean activeMember are required" },
+        { error: "userId and a membership update are required" },
         { status: 400 }
       );
     }
 
+    if (
+      hasMembershipTier &&
+      !["member", "company"].includes(membershipTier)
+    ) {
+      return Response.json(
+        { error: "membershipTier must be member or company" },
+        { status: 400 }
+      );
+    }
+
+    const update = {
+      updatedAt: new Date(),
+      membershipOverrideBy: gate.adminUser.uid,
+      membershipOverrideAt: new Date(),
+    };
+
+    if (hasActiveMember) {
+      update.activeMember = activeMember;
+      update.subscriptionStatus = activeMember ? "active" : "canceled";
+      update.willRenew = activeMember;
+    }
+    if (hasMembershipTier) {
+      update.membershipTier = membershipTier;
+    }
+
     await adminDb.collection("users").doc(userId).set(
-      {
-        activeMember,
-        subscriptionStatus: activeMember ? "active" : "canceled",
-        willRenew: activeMember,
-        updatedAt: new Date(),
-        membershipOverrideBy: gate.adminUser.uid,
-        membershipOverrideAt: new Date(),
-      },
+      update,
       { merge: true }
     );
 
-    return Response.json({ success: true, userId, activeMember });
+    return Response.json({
+      success: true,
+      userId,
+      ...(hasActiveMember ? { activeMember } : {}),
+      ...(hasMembershipTier ? { membershipTier } : {}),
+    });
   } catch (error) {
     console.error("Error updating user membership:", error);
     return Response.json({ error: "Failed to update membership" }, { status: 500 });

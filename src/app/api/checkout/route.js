@@ -38,8 +38,9 @@ export async function POST(request) {
 
   const tier = body?.tier === "company" ? "company" : "member";
   const interval = body?.interval === "annual" ? "annual" : "monthly";
-  // Explicit productId wins; otherwise resolve from (tier, interval).
-  const productId = body?.productId || resolvePolarProductId(tier, interval);
+  // Product selection is server-owned. Accepting an arbitrary productId from
+  // the browser could pair a Community price with Business tier metadata.
+  const productId = resolvePolarProductId(tier, interval);
 
   if (!productId) {
     return NextResponse.json(

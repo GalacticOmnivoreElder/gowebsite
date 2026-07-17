@@ -134,6 +134,12 @@ function loadRoute({ processed = new Set(), seed = {}, webhookThrows } = {}) {
           processed.add(`${eventType}:${eventId}`);
           marks.push({ eventId, eventType, payload });
         },
+        resolvePolarProductTier: (productId) =>
+          productId === "company-product"
+            ? "company"
+            : productId === "member-product"
+            ? "member"
+            : null,
       },
     }
   );
@@ -186,6 +192,31 @@ test("order.paid grants access, stores order data, and marks webhook processed",
   assert.equal(route.adminDb.docs.users["user-1"].subscriptionId, "sub_1");
   assert.equal(route.adminDb.docs.orders.order_1.status, "paid");
   assert.equal(route.marks[0].eventType, "order.paid");
+});
+
+test("order.paid derives Business creator access from the Polar product", async () => {
+  const route = loadRoute({
+    seed: {
+      users: {
+        "user-1": { email: "creator@example.com" },
+      },
+    },
+  });
+
+  await route.captured.onOrderPaid({
+    data: {
+      customer: { email: "creator@example.com", id: "cus_creator" },
+      id: "order_creator",
+      product_id: "company-product",
+      status: "paid",
+      subscription_id: "sub_creator",
+    },
+    id: "evt_order_creator",
+    type: "order.paid",
+  });
+
+  assert.equal(route.adminDb.docs.users["user-1"].activeMember, true);
+  assert.equal(route.adminDb.docs.users["user-1"].membershipTier, "company");
 });
 
 test("processed webhook events are skipped", async () => {

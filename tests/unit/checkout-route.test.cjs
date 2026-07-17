@@ -150,6 +150,31 @@ test("checkout route creates Polar checkout with authenticated identity and buye
   );
 });
 
+test("checkout route ignores client-supplied product ids", async () => {
+  await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
+    const { POST, polarCalls } = loadRoute({
+      productId: "configured-company-product",
+      user: { email: "creator@example.com", uid: "creator-1" },
+    });
+
+    const response = await POST(
+      createRequest({
+        jsonBody: {
+          interval: "monthly",
+          productId: "cheaper-member-product",
+          tier: "company",
+        },
+      })
+    );
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(plain(polarCalls[0].input.products), [
+      "configured-company-product",
+    ]);
+    assert.equal(polarCalls[0].input.metadata.tier, "company");
+  });
+});
+
 test("checkout route surfaces useful Polar config hints in development", async () => {
   await withEnv(
     {

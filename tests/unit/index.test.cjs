@@ -1,5 +1,6 @@
 require("./admin-data-cache.test.cjs");
 require("./admin-check-route.test.cjs");
+require("./admin-users-route.test.cjs");
 require("./application-id-route.test.cjs");
 require("./applications-route.test.cjs");
 require("./auth-utils.test.cjs");

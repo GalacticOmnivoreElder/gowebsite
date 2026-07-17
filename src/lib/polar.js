@@ -8,6 +8,47 @@ export function getPolarApiBase() {
     : "https://sandbox-api.polar.sh/v1";
 }
 
+// Product IDs exposed by the four production Checkout Links currently used on
+// /membership. Product IDs are public identifiers (the checkout pages expose
+// them); keeping them here lets webhooks recover the entitlement when an older
+// static Checkout Link does not include tier metadata.
+const CHECKOUT_LINK_PRODUCT_IDS = {
+  member: [
+    "73c27030-6c24-4961-882b-f24f6b150144",
+    "b748afb7-902c-4727-80ab-d9525b1d23aa",
+  ],
+  company: [
+    "126bbba8-f3c7-4fcd-b2a1-0b3ab86032f6",
+    "dd316098-f962-456e-a14a-080464b670b5",
+  ],
+};
+
+export function resolvePolarProductTier(productId) {
+  if (typeof productId !== "string" || !productId) return null;
+
+  const env = process.env;
+  const productIdsByTier = {
+    member: new Set([
+      ...CHECKOUT_LINK_PRODUCT_IDS.member,
+      env.NEXT_PUBLIC_POLAR_PRODUCT_ID,
+      env.NEXT_PUBLIC_POLAR_MEMBER_MONTHLY_PRODUCT_ID,
+      env.NEXT_PUBLIC_POLAR_MEMBER_ANNUAL_PRODUCT_ID,
+    ].filter(Boolean)),
+    company: new Set([
+      ...CHECKOUT_LINK_PRODUCT_IDS.company,
+      env.NEXT_PUBLIC_POLAR_COMPANY_PRODUCT_ID,
+      env.NEXT_PUBLIC_POLAR_COMPANY_MONTHLY_PRODUCT_ID,
+      env.NEXT_PUBLIC_POLAR_COMPANY_ANNUAL_PRODUCT_ID,
+    ].filter(Boolean)),
+  };
+
+  const matches = Object.entries(productIdsByTier)
+    .filter(([, ids]) => ids.has(productId))
+    .map(([tier]) => tier);
+
+  return matches.length === 1 ? matches[0] : null;
+}
+
 /**
  * Resolve the Polar product id for a (tier, interval) pair.
  *

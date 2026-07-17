@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { auth } from "@/firebase";
 import { format } from "date-fns";
 import { UserPlus } from "lucide-react";
@@ -45,9 +52,9 @@ export default function UsersPage() {
     fetchUsers();
   }, [fetchUsers]);
 
-  const toggleMembership = async (userId, currentStatus) => {
+  const updateMembership = async (userId, update, action) => {
     try {
-      setActionLoading(userId);
+      setActionLoading(`${userId}:${action}`);
       const token = await auth.currentUser.getIdToken();
       const response = await fetch("/api/admin/users", {
         method: "PUT",
@@ -55,7 +62,7 @@ export default function UsersPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userId, activeMember: !currentStatus }),
+        body: JSON.stringify({ userId, ...update }),
       });
       if (!response.ok) throw new Error("Failed to update membership");
       await fetchUsers();
@@ -65,6 +72,19 @@ export default function UsersPage() {
       setActionLoading(null);
     }
   };
+
+  const toggleMembership = (userId, currentStatus, membershipTier) =>
+    updateMembership(
+      userId,
+      {
+        activeMember: !currentStatus,
+        membershipTier: membershipTier || "member",
+      },
+      "status"
+    );
+
+  const updateMembershipTier = (userId, membershipTier) =>
+    updateMembership(userId, { membershipTier }, "tier");
 
   const formatJoined = (joined) => {
     if (!joined) return "N/A";
@@ -103,7 +123,7 @@ export default function UsersPage() {
               <TableHead>Joined</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Membership Status</TableHead>
-              <TableHead>Tier</TableHead>
+              <TableHead>Membership Tier</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -125,18 +145,46 @@ export default function UsersPage() {
                       : "Inactive"}
                   </Badge>
                 </TableCell>
-                <TableCell className="capitalize">
-                  {user.membershipTier || "-"}
+                <TableCell className="min-w-52">
+                  <Select
+                    value={user.membershipTier || "unassigned"}
+                    onValueChange={(membershipTier) =>
+                      updateMembershipTier(user.id, membershipTier)
+                    }
+                    disabled={actionLoading?.startsWith(`${user.id}:`)}
+                  >
+                    <SelectTrigger className="h-9 w-48">
+                      <SelectValue placeholder="Unassigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned" disabled>
+                        Unassigned
+                      </SelectItem>
+                      <SelectItem value="member">Community Member</SelectItem>
+                      <SelectItem value="company">Business Creator</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {user.isMember && !user.membershipTier && (
+                    <p className="mt-1 text-xs text-destructive">
+                      Tier missing; Community permissions currently apply
+                    </p>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button
                       variant={user.isMember ? "destructive" : "success"}
                       size="sm"
-                      onClick={() => toggleMembership(user.id, user.isMember)}
-                      disabled={actionLoading === user.id}
+                      onClick={() =>
+                        toggleMembership(
+                          user.id,
+                          user.isMember,
+                          user.membershipTier
+                        )
+                      }
+                      disabled={actionLoading?.startsWith(`${user.id}:`)}
                     >
-                      {actionLoading === user.id ? (
+                      {actionLoading === `${user.id}:status` ? (
                         <span className="animate-pulse">Processing...</span>
                       ) : user.isMember ? (
                         "Deactivate"

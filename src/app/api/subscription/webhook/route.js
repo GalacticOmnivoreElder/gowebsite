@@ -5,6 +5,7 @@ import {
   isWebhookProcessed,
   markWebhookProcessed,
 } from "@/lib/webhook-deduplication";
+import { resolvePolarProductTier } from "@/lib/polar";
 
 const polarWebhookHandler = Webhooks({
   webhookSecret: process.env.POLAR_WEBHOOK_SECRET,
@@ -95,12 +96,30 @@ function getMetadataUid(data) {
 }
 
 function getMetadataTier(data) {
-  const tier =
+  const productId =
+    data?.product_id ||
+    data?.productId ||
+    data?.product?.id ||
+    data?.subscription?.product_id ||
+    data?.subscription?.productId ||
+    data?.subscription?.product?.id ||
+    data?.checkout?.product_id ||
+    data?.checkout?.productId ||
+    data?.checkout?.product?.id ||
+    null;
+  const productTier = resolvePolarProductTier(productId);
+  if (productTier) return productTier;
+
+  const metadataTier =
     data?.metadata?.tier ||
     data?.subscription?.metadata?.tier ||
     data?.checkout?.metadata?.tier ||
     null;
-  return tier === "company" ? "company" : tier === "member" ? "member" : null;
+  return metadataTier === "company"
+    ? "company"
+    : metadataTier === "member"
+    ? "member"
+    : null;
 }
 
 function parsePolarDate(value) {
