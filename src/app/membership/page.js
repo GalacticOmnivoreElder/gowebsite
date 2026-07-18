@@ -3,12 +3,14 @@ import { CreditCard, RefreshCw, ShieldCheck } from "lucide-react";
 import { PricingDisplay } from "@/components/pricing/PricingDisplay";
 import { Button } from "@/components/ui/button";
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
+import { createMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "GO Membership | Galactic Omnivore",
+export const metadata = createMetadata({
+  title: "GO Membership",
   description:
-    "Choose a Galactic Omnivore Community or Business membership with monthly or annual billing.",
-};
+    "Choose a Galactic Omnivore Community or Business membership for resources, projects, team-building tools, and game development support.",
+  path: "/membership",
+});
 
 const checkoutNotes = [
   {

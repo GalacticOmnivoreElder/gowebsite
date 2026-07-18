@@ -1,4 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createMetadata } from "@/lib/seo";
+
+export const metadata = createMetadata({
+  title: "Contact",
+  description:
+    "Contact Galactic Omnivore for support, partnerships, business inquiries, and game development community questions in Skopje, Macedonia.",
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

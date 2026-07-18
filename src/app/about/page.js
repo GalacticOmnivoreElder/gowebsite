@@ -1,11 +1,13 @@
 import { FullCTA } from "@/components/landing/FullCTA";
 import { Card, CardContent } from "@/components/ui/card";
+import { createMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "About Us | Galactic Omnivore",
+export const metadata = createMetadata({
+  title: "About Galactic Omnivore",
   description:
-    "Learn about Galactic Omnivore's mission, impact, and community initiatives.",
-};
+    "Learn about Galactic Omnivore's mission, values, impact, and role in growing Macedonia's game development community.",
+  path: "/about",
+});
 
 const impactLinkClass =
   "text-primary font-medium underline underline-offset-4 decoration-primary/60 hover:decoration-primary hover:text-primary/80 transition-colors";

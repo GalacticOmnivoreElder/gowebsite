@@ -24,9 +24,16 @@ import FeaturedPackageCardWrapper from "@/components/packages/FeaturedPackageCar
 import PackageList from "@/components/packages/PackageList"; // Reverted import path & name
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
 import { FullCTA } from "@/components/landing/FullCTA";
+import { createMetadata } from "@/lib/seo";
 
 // This enables Static Site Generation / Incremental Static Regeneration
 export const revalidate = 3600; // Revalidate every hour
+export const metadata = createMetadata({
+  title: "Game Development Resources",
+  description:
+    "Explore Galactic Omnivore educational content, asset packs, media resources, tutorials, and premium drops for game developers.",
+  path: "/resources",
+});
 
 // Fetching function (renamed from getPackages)
 async function getResources() {

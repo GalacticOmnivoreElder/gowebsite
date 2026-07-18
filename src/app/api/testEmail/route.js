@@ -1,7 +1,5 @@
-import { Resend } from "resend";
 import { NextResponse } from "next/server";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { getResend } from "@/lib/resend";
 
 export async function POST(request) {
   try {
@@ -16,7 +14,7 @@ export async function POST(request) {
     );
 
     // Simple test email
-    const testResult = await resend.emails.send({
+    const testResult = await getResend().emails.send({
       from: "onboarding@galacticomnivore.com",
       to: email,
       subject: "Test Email from Galactic Omnivore",

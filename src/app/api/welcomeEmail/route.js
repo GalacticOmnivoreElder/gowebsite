@@ -1,7 +1,5 @@
-import { Resend } from "resend";
 import { NextResponse } from "next/server";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { getResend } from "@/lib/resend";
 
 export async function POST(request) {
   try {
@@ -276,7 +274,7 @@ Join our Discord: https://discord.gg/ZbSShxu6K4
       textLength: textContent.length,
     });
 
-    const emailResult = await resend.emails.send({
+    const emailResult = await getResend().emails.send({
       from: "galacticomnivore@galacticomnivore.com",
       to: email,
       subject:

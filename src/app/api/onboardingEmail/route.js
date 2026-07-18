@@ -1,7 +1,5 @@
-import { Resend } from "resend";
 import { NextResponse } from "next/server";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { getResend } from "@/lib/resend";
 
 export async function POST(request) {
   try {
@@ -23,7 +21,7 @@ Date: ${new Date().toLocaleString()}
     `;
 
     // Send email
-    await resend.emails.send({
+    await getResend().emails.send({
       from: "onboarding@galacticomnivore.com",
       to: email,
       subject: `Onboarding: ${subject}`,

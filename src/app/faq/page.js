@@ -4,7 +4,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { createMetadata } from "@/lib/seo";
 
+export const metadata = createMetadata({
+  title: "FAQ",
+  description:
+    "Find answers about Galactic Omnivore membership, assets, licensing, support, and game development community resources.",
+  path: "/faq",
+});
 
 const faqs = [
   {
