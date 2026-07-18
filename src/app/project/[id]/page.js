@@ -48,6 +48,7 @@ import {
   Archive,
   ArchiveRestore,
   Loader2,
+  Trash2,
   UserMinus,
 } from "lucide-react";
 import UserLink from "@/components/ui/UserLink";
@@ -139,6 +140,8 @@ const ProjectDetailsPage = observer(() => {
     useState(false);
   const [memberToRemove, setMemberToRemove] = useState(null);
   const [removingMember, setRemovingMember] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletingProject, setDeletingProject] = useState(false);
 
   const projectId = params.id;
   const userId = MobxStore.user?.uid;
@@ -275,6 +278,11 @@ const ProjectDetailsPage = observer(() => {
     MobxStore.user &&
     (project.owner === MobxStore.user.uid || MobxStore.isAdmin);
 
+  const canDelete =
+    project &&
+    MobxStore.user &&
+    (project.owner === MobxStore.user.uid || MobxStore.isAdmin);
+
   const isProjectMember =
     project &&
     MobxStore.user &&
@@ -357,6 +365,47 @@ const ProjectDetailsPage = observer(() => {
         </ToastAction>
       ),
     });
+  };
+
+  const handleDeleteProject = async () => {
+    if (!project || !auth.currentUser) return;
+
+    setDeletingProject(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to delete project");
+      }
+
+      MobxStore.cachedProjects?.delete?.(projectId);
+      MobxStore.projectDetails?.delete?.(projectId);
+      MobxStore.projects = MobxStore.projects.filter(
+        (storedProject) => storedProject.id !== projectId
+      );
+
+      setShowDeleteDialog(false);
+      toast({
+        title: "Project deleted",
+        description: `"${project.title}" was permanently deleted.`,
+      });
+      router.replace("/projects");
+      router.refresh();
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast({
+        title: "Could not delete project",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingProject(false);
+    }
   };
 
   const handleApply = async () => {
@@ -782,6 +831,16 @@ const ProjectDetailsPage = observer(() => {
                     {archiving ? "Archiving..." : "Archive"}
                   </>
                 )}
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={deletingProject}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
               </Button>
             )}
           </div>
@@ -1245,7 +1304,53 @@ const ProjectDetailsPage = observer(() => {
           </DialogContent>
         </Dialog>
 
-        {/* Remove Member Confirmation */}
+        {/* Delete Project Confirmation */}
+        <Dialog
+          open={showDeleteDialog}
+          onOpenChange={(open) => {
+            if (!deletingProject) setShowDeleteDialog(open);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delete {project.title} permanently?</DialogTitle>
+              <DialogDescription>
+                This cannot be undone. The project, its applications, and its
+                links from member profiles will be removed permanently.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={deletingProject}
+                onClick={() => setShowDeleteDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={deletingProject}
+                onClick={handleDeleteProject}
+              >
+                {deletingProject ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete permanently
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Project Confirmation */}
         <Dialog
           open={Boolean(memberToRemove)}
           onOpenChange={(open) => {

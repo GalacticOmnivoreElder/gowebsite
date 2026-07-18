@@ -266,6 +266,7 @@ test("project delete requires owner or platform admin", async () => {
     seed: {
       applications: [{ id: "application-1", projectId: "project-1" }],
       projects: { "project-1": existingProject() },
+      sourceProjects: { "source-1": { projectIds: ["project-1"] } },
     },
     user: { uid: "owner-1" },
   });
@@ -290,5 +291,32 @@ test("project delete requires owner or platform admin", async () => {
       (record) => record.type === "update" && record.ref.collectionName === "sourceProjects"
     ),
     true
+  );
+  const userCleanup = route.adminDb.records.find(
+    (record) => record.type === "set" && record.ref.collectionName === "users"
+  );
+  assert.equal(userCleanup.options.merge, true);
+  assert.deepEqual(plain(userCleanup.data.ownerOfProjects.values), ["project-1"]);
+  assert.deepEqual(plain(userCleanup.data.adminOfProjects.values), ["project-1"]);
+  assert.deepEqual(plain(userCleanup.data.teamMemberOfProjects.values), ["project-1"]);
+});
+
+test("project delete tolerates a missing source project", async () => {
+  const route = loadRoute({
+    seed: { projects: { "project-1": existingProject() } },
+    user: { uid: "owner-1" },
+  });
+  const response = await route.DELETE(createRequest(), {
+    params: { id: "project-1" },
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(
+    route.adminDb.records.some(
+      (record) =>
+        record.type === "update" &&
+        record.ref.collectionName === "sourceProjects"
+    ),
+    false
   );
 });

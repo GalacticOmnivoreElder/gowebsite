@@ -6,15 +6,6 @@ import Image from "next/image";
 import heroImg from "@/assets/HERO.png"; // Assuming you want to use the existing hero image
 
 export const HeroSection = () => {
-  const sendEmail = () => {
-    fetch("/api/welcomeEmail", {
-      method: "POST",
-      body: JSON.stringify({
-        name: "galacticomnivore",
-        email: "galacticomnivore@galacticomnivore.com",
-      }),
-    });
-  };
   return (
     <section className="relative flex items-center justify-center text-center text-white bg-black py-20 md:py-32 lg:py-40 overflow-hidden">
       {/* Optional Background Image/Effect */}
@@ -40,13 +31,6 @@ export const HeroSection = () => {
             className="bg-primary hover:bg-primary/90 rounded-sm w-full sm:w-auto"
           >
             <Link href="/signup">Join Our Platform</Link>
-          </Button> */}
-          {/* <Button
-            onClick={() => {
-              sendEmail();
-            }}
-          >
-            TEST EMAIL
           </Button> */}
           <Button
             asChild

@@ -32,8 +32,18 @@ import {
 import Logger from "@/utils/logger";
 import { generateUserAvatar } from "@/utils/avatarGenerator";
 import { normalizeAuthUser, normalizeUsername } from "@/lib/auth-profile";
+import { requestWelcomeEmail } from "@/lib/welcome-email";
 
 const logger = new Logger({ debugEnabled: false }); // switch to true to see console logs from firebase
+
+async function sendWelcomeEmail(user, username) {
+  try {
+    await requestWelcomeEmail(user, username);
+  } catch (error) {
+    // Account creation must still succeed when the email provider is unavailable.
+    console.error("Could not send welcome email:", error);
+  }
+}
 
 class Store {
   // App Data
@@ -603,6 +613,8 @@ class Store {
         { merge: true }
       );
 
+      await sendWelcomeEmail(userCredential.user, normalizedUsername);
+
       runInAction(() => {
         this.authStateVersion += 1;
         this.user = {
@@ -693,29 +705,7 @@ class Store {
       // Create a user profile in Firestore
       await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
 
-      // Send welcome email
-      try {
-        const emailResponse = await fetch("/api/welcomeEmail", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: normalizedUsername,
-            email: email,
-            username: normalizedUsername,
-          }),
-        });
-
-        const emailResponseData = await emailResponse.json();
-
-        if (!emailResponse.ok) {
-          console.error("Welcome email API returned error:", emailResponseData);
-        }
-      } catch (emailError) {
-        console.error("Error calling welcome email API:", emailError);
-        // Don't throw here - we don't want email failure to break signup
-      }
+      await sendWelcomeEmail(userCredential.user, normalizedUsername);
 
       runInAction(() => {
         this.authStateVersion += 1;
@@ -785,51 +775,7 @@ class Store {
         await setDoc(userDocRef, userData);
         console.log("New user profile created:", userData);
 
-        // Send welcome email for new Google users
-        try {
-          console.log("=== CALLING WELCOME EMAIL API (Google User) ===");
-          console.log("Sending data:", {
-            name: normalizedUsername,
-            email: user.email,
-            username: normalizedUsername,
-          });
-
-          const emailResponse = await fetch("/api/welcomeEmail", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              name: normalizedUsername,
-              email: user.email,
-              username: normalizedUsername,
-            }),
-          });
-
-          console.log(
-            "Email API response status (Google):",
-            emailResponse.status
-          );
-          console.log("Email API response ok (Google):", emailResponse.ok);
-
-          const emailResponseData = await emailResponse.json();
-          console.log("Email API response data (Google):", emailResponseData);
-
-          if (emailResponse.ok) {
-            console.log("Welcome email sent successfully to Google user");
-          } else {
-            console.error(
-              "Welcome email API returned error (Google):",
-              emailResponseData
-            );
-          }
-        } catch (emailError) {
-          console.error(
-            "Error calling welcome email API (Google user):",
-            emailError
-          );
-          // Don't throw here - we don't want email failure to break signup
-        }
+        await sendWelcomeEmail(user, normalizedUsername);
       } else {
         console.log("Existing user found:", userDoc.data());
         userData = normalizeAuthUser(user, userDoc.data());

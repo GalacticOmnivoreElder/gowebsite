@@ -456,10 +456,17 @@ export async function DELETE(request, { params }) {
     batch.delete(adminDb.collection("projects").doc(id));
 
     if (existingProject.sourceProject) {
-      batch.update(adminDb.collection("sourceProjects").doc(existingProject.sourceProject), {
-        projectIds: admin.firestore.FieldValue.arrayRemove(id),
-        updatedAt: new Date(),
-      });
+      const sourceProjectRef = adminDb
+        .collection("sourceProjects")
+        .doc(existingProject.sourceProject);
+      const sourceProjectDoc = await sourceProjectRef.get();
+
+      if (sourceProjectDoc.exists) {
+        batch.update(sourceProjectRef, {
+          projectIds: admin.firestore.FieldValue.arrayRemove(id),
+          updatedAt: new Date(),
+        });
+      }
     }
 
     const relatedUserIds = [
