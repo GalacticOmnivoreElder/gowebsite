@@ -9,6 +9,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
 import { toast } from "@/components/ui/use-toast";
+import {
+  getProjectFormStepForField,
+  normalizeOptionalProjectNumber,
+} from "@/lib/project-form-utils";
+import { CREATOR_MEMBERSHIP_URL } from "@/lib/project-access";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -82,6 +87,9 @@ const VISIBILITY_OPTIONS = ["Public", "Private", "Invite Only"];
 const IMAGE_URL_PATTERN =
   /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?.*)?$/i;
 
+const optionalProjectNumber = (schema) =>
+  z.preprocess(normalizeOptionalProjectNumber, schema.optional());
+
 // Validation Schema
 const projectSchema = z
   .object({
@@ -120,10 +128,12 @@ const projectSchema = z
       .number()
       .min(1, "Duration must be at least 1 day")
       .max(3650, "Duration too long"),
-    budget: z
-      .number()
-      .min(0, "Budget cannot be negative")
-      .max(Number.MAX_SAFE_INTEGER, "Budget is too large"),
+    budget: optionalProjectNumber(
+      z
+        .number()
+        .min(0, "Budget cannot be negative")
+        .max(Number.MAX_SAFE_INTEGER, "Budget is too large")
+    ),
     compensationType: z.enum(COMPENSATION_TYPES, {
       required_error: "Compensation type is required",
     }),
@@ -166,6 +176,9 @@ const CreateProjectContent = observer(() => {
   const [newCategoryTag, setNewCategoryTag] = useState("");
   const [sourceProjects, setSourceProjects] = useState([]);
   const [loadingSourceProjects, setLoadingSourceProjects] = useState(false);
+  const [checkingCreatorAccess, setCheckingCreatorAccess] = useState(true);
+  const [accessCheckError, setAccessCheckError] = useState("");
+  const [accessCheckVersion, setAccessCheckVersion] = useState(0);
 
   const totalSteps = 4;
 
@@ -189,7 +202,7 @@ const CreateProjectContent = observer(() => {
       visibility: "Public",
       goal: "",
       duration: 90,
-      budget: 0,
+      budget: "",
       compensationType: "",
       requiredRoles: [],
       linkedProjects: [],
@@ -201,11 +214,48 @@ const CreateProjectContent = observer(() => {
 
   const watchedValues = watch();
 
+  const authReady = MobxStore.isReady;
+  const currentUserId = MobxStore.user?.uid;
+
   useEffect(() => {
-    if (!MobxStore.user) {
-      router.push("/login?redirect=/project/create");
+    if (!authReady) return;
+
+    if (!currentUserId) {
+      router.replace("/login?redirect=/project/create");
+      return;
     }
-  }, [MobxStore.user, router]);
+
+    let active = true;
+    setCheckingCreatorAccess(true);
+    setAccessCheckError("");
+
+    const verifyCreatorAccess = async () => {
+      const result = await MobxStore.checkPermissions(true);
+      if (!active) return;
+
+      const canCreateProjects =
+        result?.permissions?.canCreateProjects ??
+        MobxStore.permissions?.permissions?.canCreateProjects;
+
+      if (canCreateProjects === false) {
+        router.replace(CREATOR_MEMBERSHIP_URL);
+        return;
+      }
+
+      if (canCreateProjects !== true) {
+        setAccessCheckError(
+          "We could not verify your project creation access. Please try again."
+        );
+      }
+
+      setCheckingCreatorAccess(false);
+    };
+
+    verifyCreatorAccess();
+    return () => {
+      active = false;
+    };
+  }, [accessCheckVersion, authReady, currentUserId, router]);
 
   // Fetch user's source projects when they select "existing" option
   const fetchSourceProjects = async () => {
@@ -340,6 +390,10 @@ const CreateProjectContent = observer(() => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.code === "company_membership_required") {
+          router.replace(CREATOR_MEMBERSHIP_URL);
+          return;
+        }
         throw new Error(errorData.error || "Failed to create project");
       }
 
@@ -363,6 +417,21 @@ const CreateProjectContent = observer(() => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleInvalidSubmit = (formErrors) => {
+    const firstInvalidField = Object.keys(formErrors)[0];
+    setCurrentStep(getProjectFormStepForField(firstInvalidField));
+    setSubmitError(
+      "Please review the highlighted fields before creating the project."
+    );
+    toast({
+      title: "Project details need attention",
+      description:
+        formErrors[firstInvalidField]?.message ||
+        "Please check the highlighted fields.",
+      variant: "destructive",
+    });
   };
 
   const getStepProgress = () => (currentStep / totalSteps) * 100;
@@ -772,7 +841,7 @@ const CreateProjectContent = observer(() => {
         </div>
 
         <div>
-          <Label htmlFor="budget">Budget (MKD) *</Label>
+          <Label htmlFor="budget">Budget (MKD)</Label>
           <Controller
             name="budget"
             control={control}
@@ -783,7 +852,8 @@ const CreateProjectContent = observer(() => {
                 type="number"
                 min="0"
                 max={Number.MAX_SAFE_INTEGER}
-                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                placeholder="Optional"
+                onChange={(e) => field.onChange(e.target.value)}
                 className={errors.budget ? "border-red-500" : ""}
               />
             )}
@@ -851,6 +921,28 @@ const CreateProjectContent = observer(() => {
     }
   };
 
+  if (!authReady || checkingCreatorAccess) {
+    return (
+      <div className="container mx-auto flex min-h-[420px] items-center justify-center px-4 py-12">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (accessCheckError) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="mx-auto max-w-2xl text-center">
+          <h1 className="mb-4 text-2xl font-bold">Access check unavailable</h1>
+          <p className="mb-6 text-muted-foreground">{accessCheckError}</p>
+          <Button onClick={() => setAccessCheckVersion((value) => value + 1)}>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!MobxStore.user) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -894,7 +986,7 @@ const CreateProjectContent = observer(() => {
         {/* Form */}
         <Card>
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onSubmit, handleInvalidSubmit)} noValidate>
               {renderCurrentStep()}
 
               {submitError && (

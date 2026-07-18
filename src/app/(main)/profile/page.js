@@ -18,7 +18,7 @@ import Settings from "@/components/profile/Settings";
 import { observer } from "mobx-react-lite";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
-import { formatBudget } from "@/utils/formatBudget";
+import { formatBudget, hasProjectBudget } from "@/utils/formatBudget";
 import { formatFirebaseDate } from "@/utils/date";
 import {
   User,
@@ -152,7 +152,7 @@ const SubscriptionStatusOverview = ({ user }) => {
               <div className="text-sm">{statusInfo.description}</div>
             </div>
           </div>
-          {!MobxStore.hasActiveSubscription && (
+          {statusInfo.status !== "active" && (
             <SubscribeButton size="sm" className="ml-4">
               Subscribe Now
             </SubscribeButton>
@@ -285,14 +285,12 @@ const ProjectCard = ({ project, role }) => {
           </p>
 
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <Coins className="h-4 w-4" />
-              <span>
-                {project.budget
-                  ? formatBudget(project.budget)
-                  : "Not specified"}
-              </span>
-            </div>
+            {hasProjectBudget(project.budget) && (
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Coins className="h-4 w-4" />
+                <span>{formatBudget(project.budget)}</span>
+              </div>
+            )}
             <div className="flex items-center gap-1 text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>{formatDuration(project.duration)}</span>
@@ -653,14 +651,22 @@ const ProfileContent = observer(() => {
                   Cancel
                 </Button>
               </div>
-              <ProfileEditor onSave={() => setIsEditMode(false)} />
+              <ProfileEditor
+                onSave={(updatedProfile) => {
+                  setProfile((currentProfile) => ({
+                    ...currentProfile,
+                    ...updatedProfile,
+                  }));
+                  setIsEditMode(false);
+                }}
+              />
             </div>
           ) : (
             <div className="space-y-6">
               {/* Profile Header */}
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-20 w-20">
                         <AvatarImage
@@ -695,10 +701,18 @@ const ProfileContent = observer(() => {
                         </div>
                       </div>
                     </div>
-                    <Button onClick={toggleEditMode}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Profile
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" asChild>
+                        <Link href="/onboarding?edit=1">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Update Onboarding
+                        </Link>
+                      </Button>
+                      <Button onClick={toggleEditMode}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Profile
+                      </Button>
+                    </div>
                   </div>
 
                   {profile?.bio && (

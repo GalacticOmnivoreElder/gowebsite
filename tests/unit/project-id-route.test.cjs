@@ -84,7 +84,12 @@ function createDb(seed = {}) {
               };
             },
             async update(data) {
-              docs[name][id] = { ...(docs[name][id] || {}), ...data };
+              const updated = { ...(docs[name][id] || {}) };
+              for (const [key, value] of Object.entries(data)) {
+                if (value?.op === "delete") delete updated[key];
+                else updated[key] = value;
+              }
+              docs[name][id] = updated;
               records.push({ data, ref: targetRef, type: "direct-update" });
             },
           };
@@ -131,6 +136,7 @@ function loadRoute({ seed = {}, user = null } = {}) {
             FieldValue: {
               arrayRemove: (...values) => ({ op: "arrayRemove", values }),
               arrayUnion: (...values) => ({ op: "arrayUnion", values }),
+              delete: () => ({ op: "delete" }),
             },
           },
         },
@@ -227,6 +233,25 @@ test("platform admins can update status and numeric project fields", async () =>
   assert.equal(response.body.duration, 45);
   assert.equal(response.body.ignoredField, undefined);
   assert.equal(route.adminDb.docs.projects["project-1"].title, "Updated Prototype");
+});
+
+test("project owners can remove an existing budget", async () => {
+  const route = loadRoute({
+    seed: { projects: { "project-1": existingProject({ budget: 5000 }) } },
+    user: { uid: "owner-1" },
+  });
+
+  const response = await route.PUT(
+    createRequest({ jsonBody: { budget: null } }),
+    { params: { id: "project-1" } }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.budget, undefined);
+  assert.equal(
+    Object.hasOwn(route.adminDb.docs.projects["project-1"], "budget"),
+    false
+  );
 });
 
 test("project delete requires owner or platform admin", async () => {

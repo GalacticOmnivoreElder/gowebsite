@@ -15,6 +15,7 @@ import {
 import SubscribeButton from "@/components/ui/SubscribeButton";
 import MobxStore from "@/mobx";
 import { parseCheckoutPlanKey } from "@/lib/checkout-navigation";
+import { canChooseMembershipPlan } from "@/lib/membership-ui";
 import {
   BILLING_INTERVALS,
   MEMBERSHIP_PLANS,
@@ -60,7 +61,17 @@ export const PricingDisplay = observer(() => {
       `${window.location.pathname}${remainingQuery ? `?${remainingQuery}` : ""}${window.location.hash}`
     );
 
-    if (hasActiveSubscription) {
+    const canChoosePlan = canChooseMembershipPlan({
+      hasActiveSubscription,
+      currentTier:
+        MobxStore.permissions?.permissions?.membershipTier ||
+        user?.membershipTier,
+      targetTier: selection.tier,
+      subscriptionStatus: user?.subscriptionStatus,
+      willRenew: user?.willRenew,
+    });
+
+    if (!canChoosePlan) {
       window.location.assign("/profile");
       return;
     }

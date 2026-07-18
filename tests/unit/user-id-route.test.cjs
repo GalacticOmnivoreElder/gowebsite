@@ -76,6 +76,7 @@ test("profile updates trim usernames before writing them", async () => {
 
   assert.equal(response.status, 200);
   assert.equal(response.body.username, "Kikerkov");
+  assert.ok(response.body.profileEditedAt);
 });
 
 function cv(overrides = {}) {
@@ -134,6 +135,30 @@ test("published public GO CV supplies the public profile data", async () => {
   assert.deepEqual(body.skills, ["Game Designer", "Programmer", "Unity"]);
   assert.equal(body.joinedAt, "2025-07-10T12:27:56.098Z");
   assert.equal(body.cv.published_at, "2026-07-14T11:00:00.000Z");
+});
+
+test("explicit profile edits override generated CV display fields", async () => {
+  const { GET } = loadRoute({
+    seed: {
+      users: {
+        "user-1": {
+          bio: "Updated public bio",
+          profileEditedAt: new Date("2026-07-15T12:00:00.000Z"),
+          skills: ["Godot", "Writing"],
+          username: "Galactic Omnivore",
+        },
+      },
+      go_cvs: { "user-1": cv() },
+    },
+  });
+
+  const response = await GET(createRequest(), { params: { id: "user-1" } });
+  const body = plain(response.body);
+
+  assert.equal(response.status, 200);
+  assert.equal(body.username, "Galactic Omnivore");
+  assert.equal(body.bio, "Updated public bio");
+  assert.deepEqual(body.skills, ["Godot", "Writing"]);
 });
 
 test("draft or non-public GO CV returns only the private profile shell", async () => {

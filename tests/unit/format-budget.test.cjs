@@ -2,7 +2,10 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
-const { formatBudget } = loadSourceModule("src/utils/formatBudget.js", ["formatBudget"]);
+const { formatBudget, hasProjectBudget } = loadSourceModule(
+  "src/utils/formatBudget.js",
+  ["formatBudget", "hasProjectBudget"]
+);
 
 test("formatBudget handles missing and invalid values", () => {
   assert.equal(formatBudget(null), "N/A");
@@ -27,4 +30,13 @@ test("formatBudget formats large MKD amounts compactly", () => {
 
 test("formatBudget rejects values beyond Number.MAX_SAFE_INTEGER", () => {
   assert.equal(formatBudget(Number.MAX_SAFE_INTEGER + 1), "Budget too large");
+});
+
+test("hasProjectBudget distinguishes omitted budgets from valid zero budgets", () => {
+  assert.equal(hasProjectBudget(undefined), false);
+  assert.equal(hasProjectBudget(null), false);
+  assert.equal(hasProjectBudget(""), false);
+  assert.equal(hasProjectBudget("not-a-number"), false);
+  assert.equal(hasProjectBudget(0), true);
+  assert.equal(hasProjectBudget("5000"), true);
 });

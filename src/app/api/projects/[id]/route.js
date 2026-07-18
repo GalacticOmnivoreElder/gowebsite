@@ -318,14 +318,18 @@ export async function PUT(request, { params }) {
     }
 
     if (filteredUpdateData.budget !== undefined) {
-      const budget = Number(filteredUpdateData.budget);
-      if (!Number.isFinite(budget) || budget < 0) {
-        return NextResponse.json(
-          { error: "Budget must be a non-negative number" },
-          { status: 400 }
-        );
+      if (filteredUpdateData.budget === null || filteredUpdateData.budget === "") {
+        filteredUpdateData.budget = admin.firestore.FieldValue.delete();
+      } else {
+        const budget = Number(filteredUpdateData.budget);
+        if (!Number.isFinite(budget) || budget < 0) {
+          return NextResponse.json(
+            { error: "Budget must be a non-negative number" },
+            { status: 400 }
+          );
+        }
+        filteredUpdateData.budget = budget;
       }
-      filteredUpdateData.budget = budget;
     }
 
     if (filteredUpdateData.status !== undefined) {

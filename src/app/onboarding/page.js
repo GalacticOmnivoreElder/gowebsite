@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { observer } from "mobx-react-lite";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
@@ -69,29 +69,40 @@ function Chips({ options, value = [], onChange }) {
   );
 }
 
-const OnboardingPage = observer(() => {
+const OnboardingContent = observer(() => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editCompletedOnboarding = searchParams.get("edit") === "1";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [draft, setDraft] = useState({});
   const [error, setError] = useState("");
+  const authReady = MobxStore.isReady;
+  const currentUserId = MobxStore.user?.uid;
 
   const step = ONBOARDING_STEPS[stepIndex];
 
   useEffect(() => {
-    if (!MobxStore.isReady) return;
-    if (!MobxStore.user) {
+    if (!authReady) return;
+    if (!currentUserId) {
       router.replace("/login?redirect=/onboarding");
       return;
     }
     (async () => {
       try {
         const data = await authedFetch("/api/onboarding", "GET");
-        if (data.onboardingCompleted) {
+        if (data.onboardingCompleted && !editCompletedOnboarding) {
           router.replace("/cv");
           return;
         }
+
+        if (data.onboardingCompleted && data.session) {
+          setDraft(data.session.draft_data_json || {});
+          setStepIndex(0);
+          return;
+        }
+
         const started = await authedFetch("/api/onboarding", "POST");
         setDraft(started.draft_data_json || {});
         const idx = ONBOARDING_STEPS.indexOf(started.current_step);
@@ -102,7 +113,7 @@ const OnboardingPage = observer(() => {
         setLoading(false);
       }
     })();
-  }, [MobxStore.isReady, MobxStore.user, router]);
+  }, [authReady, currentUserId, editCompletedOnboarding, router]);
 
   const stepData = draft[step] || {};
   const setField = (key, val) =>
@@ -350,4 +361,16 @@ function CheckRow({ checked, onChange, label }) {
   );
 }
 
-export default OnboardingPage;
+export default function OnboardingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      }
+    >
+      <OnboardingContent />
+    </Suspense>
+  );
+}

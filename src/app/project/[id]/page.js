@@ -51,7 +51,7 @@ import {
   UserMinus,
 } from "lucide-react";
 import UserLink from "@/components/ui/UserLink";
-import { formatBudget } from "@/utils/formatBudget";
+import { formatBudget, hasProjectBudget } from "@/utils/formatBudget";
 
 const UserCard = ({ user, role, onRemove }) => {
   return (
@@ -995,14 +995,22 @@ const ProjectDetailsPage = observer(() => {
         </div>
 
         {/* Project Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Coins className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="font-semibold">{formatBudget(project.budget)}</p>
-              <p className="text-sm text-muted-foreground">Budget</p>
-            </CardContent>
-          </Card>
+        <div
+          className={`grid grid-cols-1 gap-4 mb-8 ${
+            hasProjectBudget(project.budget)
+              ? "md:grid-cols-4"
+              : "md:grid-cols-3"
+          }`}
+        >
+          {hasProjectBudget(project.budget) && (
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Coins className="h-6 w-6 mx-auto mb-2 text-primary" />
+                <p className="font-semibold">{formatBudget(project.budget)}</p>
+                <p className="text-sm text-muted-foreground">Budget</p>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardContent className="p-4 text-center">

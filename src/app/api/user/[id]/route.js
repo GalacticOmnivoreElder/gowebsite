@@ -87,17 +87,30 @@ export async function GET(request, { params }) {
     }
 
     const cvDisplayData = canViewCv ? getCvDisplayData(cvData) : null;
+    const hasExplicitProfileEdits = !!userData.profileEditedAt;
+    const hasEditedSkills =
+      hasExplicitProfileEdits && Array.isArray(userData.skills);
+    const hasEditedBio =
+      hasExplicitProfileEdits &&
+      Object.prototype.hasOwnProperty.call(userData, "bio");
 
     const publicProfile = {
       id: userId,
       username:
-        cvDisplayData?.displayName || userData.username || "Unknown User",
+        (hasExplicitProfileEdits && userData.username) ||
+        cvDisplayData?.displayName ||
+        userData.username ||
+        "Unknown User",
       avatar: userData.avatar || null,
       skills:
-        cvDisplayData?.skills?.length > 0
+        hasEditedSkills
+          ? userData.skills
+          : cvDisplayData?.skills?.length > 0
           ? [...new Set(cvDisplayData.skills)]
           : userData.skills || [],
-      bio: (canViewCv && cvData?.summary) || userData.bio || "",
+      bio: hasEditedBio
+        ? userData.bio
+        : (canViewCv && cvData?.summary) || userData.bio || "",
       joinedAt:
         userData.createdAt?.toDate?.()?.toISOString() || userData.createdAt,
       profilePrivacy: "public",
@@ -196,8 +209,9 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Add update timestamp
-    filteredUpdateData.updatedAt = new Date();
+    const now = new Date();
+    filteredUpdateData.profileEditedAt = now;
+    filteredUpdateData.updatedAt = now;
 
     await adminDb.collection("users").doc(userId).update(filteredUpdateData);
 
@@ -242,6 +256,9 @@ export async function PUT(request, { params }) {
       socialVisibility: updatedData.socialVisibility,
       profilePrivacy: updatedData.profilePrivacy,
       avatar: updatedData.avatar,
+      profileEditedAt:
+        updatedData.profileEditedAt?.toDate?.()?.toISOString() ||
+        updatedData.profileEditedAt,
       updatedAt:
         updatedData.updatedAt?.toDate?.()?.toISOString() ||
         updatedData.updatedAt,

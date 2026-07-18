@@ -226,3 +226,22 @@ test("project creation writes a draft project, source project, and user project 
     values: ["project-1"],
   });
 });
+
+test("project creation accepts an omitted budget", async () => {
+  const route = loadRoute({
+    user: { canCreateProjects: true, uid: "company-1" },
+  });
+  const projectWithoutBudget = validProject();
+  delete projectWithoutBudget.budget;
+
+  const response = await route.POST(
+    createRequest({ jsonBody: projectWithoutBudget })
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.budget, undefined);
+  const projectSet = route.adminDb.records.find(
+    (record) => record.type === "set" && record.ref.collectionName === "projects"
+  );
+  assert.equal(Object.hasOwn(projectSet.data, "budget"), false);
+});

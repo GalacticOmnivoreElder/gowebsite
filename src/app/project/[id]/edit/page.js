@@ -272,8 +272,8 @@ const EditProjectPage = observer(() => {
             status: projectData.status || "draft",
             thumbnail: projectData.thumbnail || "",
             goal: projectData.goal || "",
-            duration: projectData.duration || "",
-            budget: projectData.budget || "",
+            duration: projectData.duration ?? "",
+            budget: projectData.budget ?? "",
             compensationType: projectData.compensationType || "Volunteer",
             requiredRoles: projectData.requiredRoles || [],
           });
@@ -337,6 +337,7 @@ const EditProjectPage = observer(() => {
 
       const requestBody = {
         ...validatedData,
+        budget: validatedData.budget ?? null,
         updatedAt: new Date().toISOString(),
       };
 

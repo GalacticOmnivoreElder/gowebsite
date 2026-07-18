@@ -178,6 +178,8 @@ const ProfileEditor = observer(({ onSave }) => {
         throw new Error(errorData.error || "Failed to update profile");
       }
 
+      const updatedProfile = await response.json();
+
       // Update MobxStore user data
       await MobxStore.updateUser({
         username: formData.username,
@@ -195,7 +197,7 @@ const ProfileEditor = observer(({ onSave }) => {
 
       // Call onSave callback to exit edit mode
       if (onSave) {
-        onSave();
+        onSave(updatedProfile);
       }
     } catch (error) {
       console.error("Error updating profile:", error);

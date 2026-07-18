@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
 import { buildCheckoutAuthUrl } from "@/lib/checkout-navigation";
+import { canChooseMembershipPlan } from "@/lib/membership-ui";
 
 const SubscribeButton = observer(
   ({
@@ -23,9 +24,24 @@ const SubscribeButton = observer(
     ...props
   }) => {
     const [loading, setLoading] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const router = useRouter();
+    const canChoosePlan = canChooseMembershipPlan({
+      hasActiveSubscription: mounted && MobxStore.hasActiveSubscription,
+      currentTier:
+        (mounted && MobxStore.permissions?.permissions?.membershipTier) ||
+        (mounted && MobxStore.user?.membershipTier),
+      targetTier: tier,
+      subscriptionStatus: mounted
+        ? MobxStore.user?.subscriptionStatus
+        : null,
+      willRenew: mounted ? MobxStore.user?.willRenew : null,
+    });
+    const authStateLoading =
+      mounted && (MobxStore.loading || MobxStore.permissionsLoading);
 
     useEffect(() => {
+      setMounted(true);
       setLoading(false);
 
       const handlePageShow = (event) => {
@@ -57,6 +73,8 @@ const SubscribeButton = observer(
     };
 
     const handleSubscribe = async () => {
+      if (!mounted) return;
+
       if (!checkoutUrl && !productId) {
         if (
           requireAuth &&
@@ -72,7 +90,7 @@ const SubscribeButton = observer(
         return;
       }
 
-      if (MobxStore.loading || MobxStore.permissionsLoading) return;
+      if (authStateLoading) return;
 
       if (
         requireAuth &&
@@ -82,7 +100,7 @@ const SubscribeButton = observer(
         return;
       }
 
-      if (MobxStore.hasActiveSubscription) {
+      if (!canChoosePlan) {
         router.push("/profile");
         return;
       }
@@ -127,7 +145,7 @@ const SubscribeButton = observer(
       }
     };
 
-    if (MobxStore.hasActiveSubscription) {
+    if (!canChoosePlan) {
       return null;
     }
 
@@ -135,7 +153,7 @@ const SubscribeButton = observer(
       <Button
         onClick={handleSubscribe}
         disabled={
-          disabled || loading || MobxStore.loading || MobxStore.permissionsLoading
+          disabled || loading || authStateLoading
         }
         className={className}
         variant={variant}

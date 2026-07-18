@@ -28,3 +28,10 @@ export function formatBudget(budget) {
 
   return `${num.toLocaleString()} MKD`;
 }
+
+export function hasProjectBudget(budget) {
+  if (budget === null || budget === undefined || budget === "") return false;
+
+  const value = Number(budget);
+  return Number.isFinite(value) && value >= 0;
+}

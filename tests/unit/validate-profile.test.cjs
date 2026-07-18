@@ -22,6 +22,14 @@ test("validateProfileData accepts a complete valid profile patch", () => {
     ),
     []
   );
+  assert.equal(
+    Object.keys(validateProfileData({ username: "Galactic Omnivore" })).length,
+    0
+  );
+  assert.equal(
+    Object.keys(validateProfileData({ username: "Галактички Корисник" })).length,
+    0
+  );
 });
 
 test("validateProfileData rejects invalid usernames", () => {
@@ -35,8 +43,8 @@ test("validateProfileData rejects invalid usernames", () => {
     "Username must be 30 characters or less"
   );
   assert.equal(
-    validateProfileData({ username: "go member" }).username,
-    "Username can only contain letters, numbers, underscores, and hyphens"
+    validateProfileData({ username: "go.member" }).username,
+    "Username can only contain letters, numbers, spaces, underscores, and hyphens"
   );
 });
 

@@ -1,4 +1,4 @@
-const USERNAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
+const USERNAME_PATTERN = /^[\p{L}\p{N}_ -]+$/u;
 const URL_PATTERN = /^https?:\/\/.+/i;
 
 export function validateProfileData(data) {
@@ -14,7 +14,7 @@ export function validateProfileData(data) {
       errors.username = "Username must be 30 characters or less";
     } else if (!USERNAME_PATTERN.test(username)) {
       errors.username =
-        "Username can only contain letters, numbers, underscores, and hyphens";
+        "Username can only contain letters, numbers, spaces, underscores, and hyphens";
     }
   }
 

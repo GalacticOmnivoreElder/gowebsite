@@ -36,7 +36,9 @@ import {
   Briefcase,
   ExclamationTriangle,
 } from "lucide-react";
-import { formatBudget } from "@/utils/formatBudget";
+import { formatBudget, hasProjectBudget } from "@/utils/formatBudget";
+import { getProjectCreationDestination } from "@/lib/project-access";
+import { toast } from "@/components/ui/use-toast";
 
 const ProjectCard = ({ project }) => {
   const router = useRouter();
@@ -166,10 +168,12 @@ const ProjectCard = ({ project }) => {
           </p>
 
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <DollarSign className="h-4 w-4" />
-              <span>{formatBudget(project.budget)}</span>
-            </div>
+            {hasProjectBudget(project.budget) && (
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <DollarSign className="h-4 w-4" />
+                <span>{formatBudget(project.budget)}</span>
+              </div>
+            )}
             <div className="flex items-center gap-1 text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>{formatDuration(project.duration)}</span>
@@ -222,21 +226,47 @@ const ProjectsPage = observer(() => {
     }
   };
 
-  const handleCreateProject = () => {
-    if (MobxStore.user) {
-      router.push("/project/create");
-    } else {
-      router.push("/login?redirect=/project/create");
+  const handleCreateProject = async () => {
+    if (!MobxStore.user) {
+      router.push(
+        getProjectCreationDestination({
+          isAuthenticated: false,
+          canCreateProjects: false,
+        })
+      );
+      return;
     }
+
+    const result = await MobxStore.checkPermissions(true);
+    const canCreateProjects =
+      result?.permissions?.canCreateProjects ??
+      MobxStore.permissions?.permissions?.canCreateProjects;
+
+    if (canCreateProjects === undefined) {
+      toast({
+        title: "Could not verify creator access",
+        description: "Please try again in a moment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    router.push(
+      getProjectCreationDestination({
+        isAuthenticated: true,
+        canCreateProjects,
+      })
+    );
   };
 
+  const projectList = MobxStore.projects;
   const uniqueCategories = React.useMemo(() => {
     const categories = new Set();
-    MobxStore.projects.forEach((project) => {
+    projectList.forEach((project) => {
       project.categoryTags?.forEach((tag) => categories.add(tag));
     });
     return Array.from(categories).sort();
-  }, [MobxStore.projects]);
+  }, [projectList]);
 
   const uniqueTypes = [
     "Game Development",

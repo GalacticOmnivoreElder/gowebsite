@@ -1,9 +1,15 @@
 import Link from "next/link";
-import { CreditCard, RefreshCw, ShieldCheck } from "lucide-react";
+import {
+  Briefcase,
+  CreditCard,
+  RefreshCw,
+  ShieldCheck,
+} from "lucide-react";
 import { PricingDisplay } from "@/components/pricing/PricingDisplay";
 import { Button } from "@/components/ui/button";
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
 import { createMetadata } from "@/lib/seo";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export const metadata = createMetadata({
   title: "GO Membership",
@@ -30,7 +36,10 @@ const checkoutNotes = [
   },
 ];
 
-export default function MembershipPage() {
+export default async function MembershipPage({ searchParams }) {
+  const params = await searchParams;
+  const creatorMembershipRequired = params?.reason === "creator";
+
   return (
     <div className="min-w-0 overflow-x-hidden bg-background text-foreground">
       <main>
@@ -50,6 +59,15 @@ export default function MembershipPage() {
         </section>
 
         <section id="plans" className="container mx-auto px-4 py-10 md:py-14">
+          {creatorMembershipRequired && (
+            <Alert className="mx-auto mb-8 max-w-5xl">
+              <Briefcase className="h-4 w-4" />
+              <AlertTitle>Business membership required</AlertTitle>
+              <AlertDescription>
+                Choose GO Business to create projects and manage project teams.
+              </AlertDescription>
+            </Alert>
+          )}
           <PricingDisplay />
         </section>
 

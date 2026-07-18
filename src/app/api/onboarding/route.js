@@ -101,7 +101,8 @@ export async function PUT(request) {
   if (error) return error;
 
   const ref = adminDb.collection("onboarding_sessions").doc(user.uid);
-  const snap = await ref.get();
+  const cvRef = adminDb.collection("go_cvs").doc(user.uid);
+  const [snap, existingCvSnap] = await Promise.all([ref.get(), cvRef.get()]);
   if (!snap.exists) {
     return NextResponse.json({ error: "No onboarding session found" }, { status: 400 });
   }
@@ -133,6 +134,7 @@ export async function PUT(request) {
   }
 
   const now = new Date();
+  const existingCv = existingCvSnap.exists ? existingCvSnap.data() : null;
   const profile = {
     user_id: user.uid,
     display_name: identity.display_name,
@@ -183,7 +185,7 @@ export async function PUT(request) {
 
   const cv = {
     user_id: user.uid,
-    status: "draft",
+    status: existingCv?.status || "draft",
     title: cvDraft.title,
     summary: cvDraft.summary,
     sections: cvDraft.sections,
@@ -195,14 +197,14 @@ export async function PUT(request) {
     visibility_project_creators: profile.visibility_project_creators,
     visibility_job_matching: profile.visibility_job_matching,
     generated_from_onboarding_id: user.uid,
-    created_at: now,
+    created_at: existingCv?.created_at || now,
     updated_at: now,
-    published_at: null,
+    published_at: existingCv?.published_at || null,
   };
 
   const batch = adminDb.batch();
   batch.set(adminDb.collection("user_profiles").doc(user.uid), profile, { merge: true });
-  batch.set(adminDb.collection("go_cvs").doc(user.uid), cv, { merge: true });
+  batch.set(cvRef, cv, { merge: true });
   batch.set(
     ref,
     { status: "completed", completed_at: now, updated_at: now },

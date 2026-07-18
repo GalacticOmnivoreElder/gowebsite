@@ -246,7 +246,6 @@ export async function POST(request) {
       "type",
       "visibility",
       "duration",
-      "budget",
       "compensationType",
       "requiredRoles",
     ];
@@ -307,14 +306,18 @@ export async function POST(request) {
     }
 
     const duration = Number(projectData.duration);
-    const budget = Number(projectData.budget);
+    const hasBudget =
+      projectData.budget !== undefined &&
+      projectData.budget !== null &&
+      projectData.budget !== "";
+    const budget = hasBudget ? Number(projectData.budget) : undefined;
     if (!Number.isFinite(duration) || duration < 1 || duration > 3650) {
       return NextResponse.json(
         { error: "Duration must be between 1 and 3650 days" },
         { status: 400 }
       );
     }
-    if (!Number.isFinite(budget) || budget < 0) {
+    if (hasBudget && (!Number.isFinite(budget) || budget < 0)) {
       return NextResponse.json(
         { error: "Budget must be a non-negative number" },
         { status: 400 }
@@ -397,7 +400,7 @@ export async function POST(request) {
       visibility: projectData.visibility,
       goal: projectData.goal,
       duration,
-      budget,
+      ...(hasBudget ? { budget } : {}),
       compensationType: projectData.compensationType,
       requiredRoles: projectData.requiredRoles,
       linkedProjects: Array.isArray(projectData.linkedProjects)
