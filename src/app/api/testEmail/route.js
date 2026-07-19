@@ -1,60 +1,77 @@
 import { NextResponse } from "next/server";
+import { getRequestUser } from "@/lib/auth-utils";
 import { getResend } from "@/lib/resend";
 
+async function getAdmin(request) {
+  const user = await getRequestUser(request);
+
+  if (!user) {
+    return {
+      response: NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      ),
+    };
+  }
+
+  if (!user.admin) {
+    return {
+      response: NextResponse.json(
+        { error: "Platform admin access required" },
+        { status: 403 }
+      ),
+    };
+  }
+
+  if (!user.email) {
+    return {
+      response: NextResponse.json(
+        { error: "The admin account does not have an email address" },
+        { status: 400 }
+      ),
+    };
+  }
+
+  return { user };
+}
+
 export async function POST(request) {
+  const { response, user } = await getAdmin(request);
+  if (response) return response;
+
   try {
-    const { email } = await request.json();
-
-    console.log("=== TEST EMAIL API CALLED ===");
-    console.log("Test email to:", email);
-    console.log("RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
-    console.log(
-      "RESEND_API_KEY preview:",
-      process.env.RESEND_API_KEY?.substring(0, 10) + "..."
-    );
-
-    // Simple test email
-    const testResult = await getResend().emails.send({
-      from: "onboarding@galacticomnivore.com",
-      to: email,
-      subject: "Test Email from Galactic Omnivore",
-      html: `
-        <h1>Test Email</h1>
-        <p>This is a test email to verify Resend is working.</p>
-        <p>Timestamp: ${new Date().toISOString()}</p>
-      `,
-      text: `Test Email\n\nThis is a test email to verify Resend is working.\nTimestamp: ${new Date().toISOString()}`,
+    const timestamp = new Date().toISOString();
+    const result = await getResend().emails.send({
+      from: "Galactic Omnivore <onboarding@galacticomnivore.com>",
+      to: user.email,
+      subject: "Galactic Omnivore email delivery test",
+      html: `<h1>Email delivery test</h1><p>Sent at ${timestamp}</p>`,
+      text: `Email delivery test\n\nSent at ${timestamp}`,
     });
 
-    console.log("=== TEST EMAIL RESEND RESPONSE ===");
-    console.log("Full response:", JSON.stringify(testResult, null, 2));
+    if (result.error) {
+      throw new Error(result.error.message || "Resend rejected the email");
+    }
 
     return NextResponse.json({
       success: true,
-      result: testResult,
-      timestamp: new Date().toISOString(),
+      emailId: result.data?.id || null,
+      timestamp,
     });
   } catch (error) {
-    console.error("=== TEST EMAIL ERROR ===");
-    console.error("Error:", error);
-    console.error("Error message:", error.message);
-    console.error("Error stack:", error.stack);
-
+    console.error("Email delivery test failed:", error);
     return NextResponse.json(
-      {
-        error: "Test email failed",
-        details: error.message,
-        timestamp: new Date().toISOString(),
-      },
+      { error: "Email delivery test failed" },
       { status: 500 }
     );
   }
 }
 
-export async function GET() {
+export async function GET(request) {
+  const { response } = await getAdmin(request);
+  if (response) return response;
+
   return NextResponse.json({
-    message: "Test email endpoint - use POST with { email: 'your@email.com' }",
-    hasApiKey: !!process.env.RESEND_API_KEY,
-    timestamp: new Date().toISOString(),
+    configured: Boolean(process.env.RESEND_API_KEY),
   });
 }

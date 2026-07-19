@@ -1,39 +1,73 @@
 import { NextResponse } from "next/server";
+import { getRequestUser } from "@/lib/auth-utils";
 import { getResend } from "@/lib/resend";
+
+const MAX_FIELD_LENGTH = 200;
+const MAX_MESSAGE_LENGTH = 5000;
+
+function cleanText(value, maxLength) {
+  return typeof value === "string"
+    ? value.replace(/[\r\n]+/g, " ").trim().slice(0, maxLength)
+    : "";
+}
 
 export async function POST(request) {
   try {
-    const { name, email, subject, message } = await request.json();
+    const user = await getRequestUser(request);
 
-    // Create email content
-    const emailContent = `
-New Contact Form Submission
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
 
-From: ${name}
-Email: ${email}
-Subject: ${subject}
+    if (!user.admin) {
+      return NextResponse.json(
+        { error: "Platform admin access required" },
+        { status: 403 }
+      );
+    }
 
-Message:
---------
-${message}
+    if (!user.email) {
+      return NextResponse.json(
+        { error: "The admin account does not have an email address" },
+        { status: 400 }
+      );
+    }
 
-Date: ${new Date().toLocaleString()}
-    `;
+    const body = await request.json().catch(() => ({}));
+    const name = cleanText(body.name, MAX_FIELD_LENGTH) || "Unknown";
+    const contactEmail = cleanText(body.email, MAX_FIELD_LENGTH) || "Not provided";
+    const subject = cleanText(body.subject, MAX_FIELD_LENGTH) || "No subject";
+    const message = cleanText(body.message, MAX_MESSAGE_LENGTH);
 
-    // Send email
-    await getResend().emails.send({
-      from: "onboarding@galacticomnivore.com",
-      to: email,
-      subject: `Onboarding: ${subject}`,
-      text: emailContent,
-      reply_to: email,
+    if (!message) {
+      return NextResponse.json(
+        { error: "Message is required" },
+        { status: 400 }
+      );
+    }
+
+    const result = await getResend().emails.send({
+      from: "Galactic Omnivore <onboarding@galacticomnivore.com>",
+      to: user.email,
+      subject: `Onboarding note: ${subject}`,
+      text: `Name: ${name}\nContact email: ${contactEmail}\n\n${message}`,
     });
 
-    return NextResponse.json({ success: true });
+    if (result.error) {
+      throw new Error(result.error.message || "Resend rejected the email");
+    }
+
+    return NextResponse.json({
+      success: true,
+      emailId: result.data?.id || null,
+    });
   } catch (error) {
-    console.error("Error processing contact form:", error);
+    console.error("Error sending onboarding note:", error);
     return NextResponse.json(
-      { error: "Failed to send message" },
+      { error: "Failed to send onboarding note" },
       { status: 500 }
     );
   }
