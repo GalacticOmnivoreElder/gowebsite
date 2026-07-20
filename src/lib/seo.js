@@ -7,6 +7,17 @@ export const SITE_URL = (
 export const DEFAULT_DESCRIPTION =
   "Galactic Omnivore is Macedonia's game development community for learning, collaboration, portfolio building, and finding a game dev team.";
 export const DEFAULT_OG_IMAGE = "/opengraph-image";
+export const DEFAULT_KEYWORDS = [
+  "Galactic Omnivore",
+  "Macedonia game development",
+  "Skopje game development",
+  "game dev community",
+  "game development education",
+  "indie game development",
+  "game development projects",
+  "game developer portfolio",
+  "game jam Macedonia",
+];
 
 export const sameAs = [
   "https://www.facebook.com/profile.php?id=100088917386120",
@@ -101,9 +112,20 @@ export function createMetadata({
   };
 }
 
+export const noIndexMetadata = {
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+};
+
 export const organizationJsonLd = {
-  "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": `${SITE_URL}/#organization`,
   name: SITE_NAME,
   url: SITE_URL,
   logo: absoluteUrl("/logos/logo9.png"),
@@ -117,6 +139,23 @@ export const organizationJsonLd = {
     addressCountry: "MK",
   },
   sameAs,
+};
+
+export const websiteJsonLd = {
+  "@type": "WebSite",
+  "@id": `${SITE_URL}/#website`,
+  name: SITE_NAME,
+  url: SITE_URL,
+  description: DEFAULT_DESCRIPTION,
+  publisher: {
+    "@id": `${SITE_URL}/#organization`,
+  },
+  inLanguage: "en",
+};
+
+export const seoJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [organizationJsonLd, websiteJsonLd],
 };
 
 export async function getWordPressPostBySlug(slug) {

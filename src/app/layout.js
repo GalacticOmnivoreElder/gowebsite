@@ -4,14 +4,22 @@ import ReusableLayout from "@/reusable-ui/ReusableLayout";
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_OG_IMAGE,
+  DEFAULT_KEYWORDS,
   SITE_NAME,
   SITE_URL,
-  organizationJsonLd,
+  seoJsonLd,
 } from "@/lib/seo";
 // import CookieConsent from "@/components/cookies/CookieConsent";
 
 const inter = Inter({ subsets: ["latin"] });
 // new font
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  colorScheme: "dark",
+  themeColor: "#CA2280",
+};
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -21,19 +29,31 @@ export const metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: DEFAULT_DESCRIPTION,
-  keywords: [
-    "Galactic Omnivore",
-    "Macedonia game development",
-    "game dev community",
-    "Skopje game development",
-    "game development education",
-    "indie game development",
-    "game development projects",
-  ],
+  keywords: DEFAULT_KEYWORDS,
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: SITE_NAME,
   publisher: SITE_NAME,
   category: "Game development community",
+  alternates: {
+    canonical: SITE_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  referrer: "origin-when-cross-origin",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   openGraph: {
     title: SITE_NAME,
     description: DEFAULT_DESCRIPTION,
@@ -75,7 +95,7 @@ export default function RootLayout({ children }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationJsonLd),
+            __html: JSON.stringify(seoJsonLd),
           }}
         />
         <ThemeProviderWrapper>
