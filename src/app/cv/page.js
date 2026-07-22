@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
-import { CheckCircle, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { CheckCircle, Pencil, Plus, Trash2 } from "lucide-react";
 
 async function authedFetch(url, method, body) {
   const token = await auth.currentUser.getIdToken();
@@ -594,15 +594,7 @@ const CvPage = observer(() => {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline" disabled={!!busy}>
-              <Link href="/onboarding?edit=1">Update onboarding answers</Link>
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!!busy || editing}
-              onClick={() => run("regen", () => authedFetch("/api/me/cv", "POST"))}
-            >
-              <Sparkles className="mr-2 h-4 w-4" />
-              {busy === "regen" ? "Regenerating…" : "Regenerate"}
+              <Link href="/onboarding?edit=1">Update your onboarding answers</Link>
             </Button>
             {cv.status !== "active" && (
               <Button

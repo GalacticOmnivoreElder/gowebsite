@@ -109,7 +109,7 @@ function loadRoute(seed) {
   return { ...route, adminDb };
 }
 
-test("updating onboarding preserves an already published CV", async () => {
+test("updating onboarding regenerates the CV and preserves its published state", async () => {
   const publishedAt = new Date("2026-07-10T12:00:00.000Z");
   const createdAt = new Date("2026-07-09T12:00:00.000Z");
   const route = loadRoute({
@@ -144,8 +144,16 @@ test("updating onboarding preserves an already published CV", async () => {
 
   assert.equal(response.status, 200);
   assert.equal(response.body.cv.status, "active");
+  assert.equal(response.body.cv.title, "Ada CV");
+  assert.equal(response.body.cv.summary, "Updated summary");
+  assert.equal(response.body.cv.sections[0].content_json.text, "Updated summary");
   assert.equal(response.body.cv.created_at, createdAt.toISOString());
   assert.equal(response.body.cv.published_at, publishedAt.toISOString());
   assert.equal(route.adminDb.docs.go_cvs["user-1"].status, "active");
+  assert.equal(route.adminDb.docs.go_cvs["user-1"].title, "Ada CV");
+  assert.equal(
+    route.adminDb.docs.go_cvs["user-1"].sections[0].content_json.text,
+    "Updated summary"
+  );
   assert.equal(route.adminDb.docs.user_profiles["user-1"].display_name, "Ada");
 });
