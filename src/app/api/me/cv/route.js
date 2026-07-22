@@ -84,6 +84,8 @@ export async function PATCH(request) {
   const body = await request.json().catch(() => ({}));
   const update = { updated_at: new Date() };
   for (const field of [
+    "primary_role",
+    "skill_level",
     "title",
     "summary",
     "sections",

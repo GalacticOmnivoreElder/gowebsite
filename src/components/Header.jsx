@@ -47,6 +47,11 @@ const Header = observer(() => {
     return pathname?.startsWith(path) ? "default" : "ghost";
   };
 
+  const isMyCvActive =
+    pathname?.startsWith("/cv") || pathname?.startsWith("/onboarding")
+      ? "default"
+      : "ghost";
+
   // Function to handle navigation and close menu
   const handleNavigation = () => {
     setIsMenuOpen(false);
@@ -72,7 +77,7 @@ const Header = observer(() => {
               </Button>
             )}
             {user && (
-              <Button asChild variant={isActive("/cv")} size="sm">
+              <Button asChild variant={isMyCvActive} size="sm">
                 <Link href="/cv">My CV</Link>
               </Button>
             )}
@@ -162,6 +167,18 @@ const Header = observer(() => {
               >
                 <Link href="/profile" onClick={handleNavigation}>
                   Profile
+                </Link>
+              </Button>
+            )}
+
+            {user && (
+              <Button
+                asChild
+                variant={isMyCvActive}
+                className="justify-start"
+              >
+                <Link href="/cv" onClick={handleNavigation}>
+                  My CV
                 </Link>
               </Button>
             )}

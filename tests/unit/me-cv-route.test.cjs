@@ -176,6 +176,15 @@ test("PATCH /api/me/cv only stores allowed editable fields", async () => {
   const response = await route.PATCH(
     createRequest({
       jsonBody: {
+        sections: [
+          {
+            content_json: { text: "Updated summary" },
+            section_type: "summary",
+            title: "About me",
+          },
+        ],
+        primary_role: "Narrative Designer",
+        skill_level: "senior",
         status: "active",
         summary: "Updated summary",
         title: "Updated CV",
@@ -188,6 +197,15 @@ test("PATCH /api/me/cv only stores allowed editable fields", async () => {
   assert.equal(response.status, 200);
   assert.equal(response.body.cv.title, "Updated CV");
   assert.equal(response.body.cv.summary, "Updated summary");
+  assert.deepEqual(plain(response.body.cv.sections), [
+    {
+      content_json: { text: "Updated summary" },
+      section_type: "summary",
+      title: "About me",
+    },
+  ]);
+  assert.equal(response.body.cv.primary_role, "Narrative Designer");
+  assert.equal(response.body.cv.skill_level, "senior");
   assert.equal(response.body.cv.visibility_public, true);
   assert.equal(response.body.cv.status, "draft");
   assert.equal(response.body.cv.user_id, "user-1");
