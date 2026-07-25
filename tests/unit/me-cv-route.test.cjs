@@ -8,6 +8,10 @@ function plain(value) {
 }
 
 const fixedNow = new Date("2026-07-14T12:00:00.000Z");
+const { buildCvFeedbackFromSections } = loadSourceModule(
+  "src/lib/cv-generator.js",
+  ["buildCvFeedbackFromSections"]
+);
 
 class FixedDate extends Date {
   constructor(value) {
@@ -82,6 +86,7 @@ function loadRoute({ user = { uid: "user-1" }, seed = {} } = {}) {
           summary: "Baseline summary",
           title: `${profile.display_name} CV`,
         }),
+        buildCvFeedbackFromSections,
         getRequestUser: async () => user,
         improveSummaryWithAI: async () => "Improved summary",
         serializeFirestoreDate: (value) => value?.toISOString?.() || value,
@@ -209,11 +214,61 @@ test("PATCH /api/me/cv only stores allowed editable fields", async () => {
   assert.equal(response.body.cv.visibility_public, true);
   assert.equal(response.body.cv.status, "draft");
   assert.equal(response.body.cv.user_id, "user-1");
+  assert.deepEqual(plain(response.body.cv.suggested_improvements), [
+    "Add at least one portfolio link",
+    "Describe one past prototype or game jam project",
+    "Define what type of project you want to join",
+  ]);
   assert.equal(
     route.adminDb.docs.user_profiles["user-1"].visibility_public,
     true
   );
   assert.equal(route.adminDb.docs.users["user-1"].profilePrivacy, "public");
+});
+
+test("PATCH /api/me/cv clears completed CV suggestions", async () => {
+  const route = loadRoute({
+    seed: {
+      go_cvs: {
+        "user-1": {
+          missing_information: ["portfolio link", "availability"],
+          suggested_improvements: [
+            "Add at least one portfolio link",
+            "Describe one past prototype or game jam project",
+          ],
+          user_id: "user-1",
+        },
+      },
+    },
+  });
+
+  const response = await route.PATCH(
+    createRequest({
+      jsonBody: {
+        sections: [
+          {
+            section_type: "portfolio",
+            content_json: { links: ["https://example.com/work"] },
+          },
+          {
+            section_type: "projects",
+            content_json: { projects: [{ title: "Game Jam" }] },
+          },
+          {
+            section_type: "interests",
+            content_json: { looking_for: ["Projects"] },
+          },
+          {
+            section_type: "availability",
+            content_json: { preferred_time_commitment: "Evenings" },
+          },
+        ],
+      },
+    })
+  );
+
+  assert.deepEqual(plain(response.body.cv.suggested_improvements), []);
+  assert.deepEqual(plain(response.body.cv.missing_information), []);
 });
 
 test("PUT /api/me/cv publishes the current user's CV", async () => {

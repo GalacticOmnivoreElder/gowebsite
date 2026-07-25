@@ -2,7 +2,12 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
-const { buildCvFromProfile, improveSummaryWithAI } = loadSourceModule("src/lib/cv-generator.js", [
+const {
+  buildCvFeedbackFromSections,
+  buildCvFromProfile,
+  improveSummaryWithAI,
+} = loadSourceModule("src/lib/cv-generator.js", [
+  "buildCvFeedbackFromSections",
   "buildCvFromProfile",
   "improveSummaryWithAI",
 ]);
@@ -73,6 +78,34 @@ test("buildCvFromProfile records useful gaps for incomplete profiles", () => {
     "Define what type of project you want to join",
   ]);
   assert.deepEqual(plain(cv.missing_information), ["portfolio link", "availability"]);
+});
+
+test("CV feedback follows the edited sections instead of stale onboarding data", () => {
+  const feedback = buildCvFeedbackFromSections([
+    {
+      section_type: "portfolio",
+      content_json: { links: ["https://ada.dev"] },
+    },
+    {
+      section_type: "projects",
+      content_json: {
+        projects: [{ title: "Game Jam", description: "A playable prototype." }],
+      },
+    },
+    {
+      section_type: "interests",
+      content_json: { looking_for: ["Projects"] },
+    },
+    {
+      section_type: "availability",
+      content_json: { preferred_time_commitment: "5 hours per week" },
+    },
+  ]);
+
+  assert.deepEqual(plain(feedback), {
+    missing_information: [],
+    suggested_improvements: [],
+  });
 });
 
 test("improveSummaryWithAI falls back to the baseline summary when AI is not configured", async () => {

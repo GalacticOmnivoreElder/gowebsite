@@ -613,7 +613,7 @@ class Store {
         { merge: true }
       );
 
-      await sendWelcomeEmail(userCredential.user, normalizedUsername);
+      void sendWelcomeEmail(userCredential.user, normalizedUsername);
 
       runInAction(() => {
         this.authStateVersion += 1;
@@ -705,7 +705,7 @@ class Store {
       // Create a user profile in Firestore
       await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
 
-      await sendWelcomeEmail(userCredential.user, normalizedUsername);
+      void sendWelcomeEmail(userCredential.user, normalizedUsername);
 
       runInAction(() => {
         this.authStateVersion += 1;
@@ -775,7 +775,7 @@ class Store {
         await setDoc(userDocRef, userData);
         console.log("New user profile created:", userData);
 
-        await sendWelcomeEmail(user, normalizedUsername);
+        void sendWelcomeEmail(user, normalizedUsername);
       } else {
         console.log("Existing user found:", userDoc.data());
         userData = normalizeAuthUser(user, userDoc.data());

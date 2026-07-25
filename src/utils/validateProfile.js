@@ -22,6 +22,18 @@ export function validateProfileData(data) {
     errors.bio = "Bio must be 500 characters or less";
   }
 
+  if (data.avatar !== undefined && data.avatar) {
+    const avatar = String(data.avatar);
+    if (avatar.length > 250000) {
+      errors.avatar = "Profile image is too large";
+    } else if (
+      !/^https?:\/\/.+/i.test(avatar) &&
+      !/^data:image\/(?:svg\+xml|png|jpeg|gif|webp)[;,]/i.test(avatar)
+    ) {
+      errors.avatar = "Profile image must be a valid image URL";
+    }
+  }
+
   if (data.skills !== undefined) {
     if (!Array.isArray(data.skills)) {
       errors.skills = "Skills must be an array";

@@ -114,6 +114,22 @@ export async function PUT(request) {
   const help = draft.help || {};
   const consent = draft.consent || {};
   const portfolio = draft.portfolio || {};
+  const portfolioLinks = [
+    ...(Array.isArray(portfolio.links) ? portfolio.links : []),
+    portfolio.portfolio,
+    portfolio.github,
+    portfolio.other_link,
+  ]
+    .filter((link) => typeof link === "string")
+    .map((link) => link.trim())
+    .filter(
+      (link, index, links) =>
+        link &&
+        links.findIndex(
+          (candidate) =>
+            candidate.toLocaleLowerCase() === link.toLocaleLowerCase()
+        ) === index
+    );
 
   // Required consent gates (spec: cannot complete without consent).
   if (
@@ -149,7 +165,7 @@ export async function PUT(request) {
     skill_level: roleSkills.skill_level || "beginner",
     tools: roleSkills.tools || [],
     experience_level: roleSkills.experience_level || null,
-    portfolio_links: portfolio.links || [],
+    portfolio_links: portfolioLinks,
     past_projects: portfolio.past_projects || [],
     current_goal: goals.current_goal || null,
     looking_for_projects: !!goals.looking_for_projects,

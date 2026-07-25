@@ -79,6 +79,24 @@ test("profile updates trim usernames before writing them", async () => {
   assert.ok(response.body.profileEditedAt);
 });
 
+test("profile updates persist a generated avatar", async () => {
+  const { PUT } = loadRoute({
+    decodedToken: { uid: "user-1" },
+    seed: { users: { "user-1": { username: "Ada" } } },
+  });
+
+  const response = await PUT(
+    createRequest({
+      headers: { Authorization: "Bearer owner-token" },
+      jsonBody: { avatar: "data:image/svg+xml;base64,avatar" },
+    }),
+    { params: { id: "user-1" } }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.avatar, "data:image/svg+xml;base64,avatar");
+});
+
 function cv(overrides = {}) {
   return {
     created_at: new Date("2026-07-14T10:00:00.000Z"),

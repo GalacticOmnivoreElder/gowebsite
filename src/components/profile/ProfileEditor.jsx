@@ -33,14 +33,17 @@ import {
   Globe,
   Mail,
   ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 
 import { GAMING_TECH_SKILLS, SOCIAL_PLATFORMS } from "@/constants/skills";
 import { validateProfileData } from "@/utils/validateProfile";
+import { generateUserAvatar } from "@/utils/avatarGenerator";
 
 const ProfileEditor = observer(({ onSave }) => {
   const [formData, setFormData] = useState({
     username: "",
+    avatar: "",
     bio: "",
     skills: [],
     socialLinks: {},
@@ -72,6 +75,7 @@ const ProfileEditor = observer(({ onSave }) => {
           const profileData = await response.json();
           setFormData({
             username: profileData.username || "",
+            avatar: profileData.avatar || "",
             bio: profileData.bio || "",
             skills: profileData.skills || [],
             socialLinks: profileData.socialLinks || {},
@@ -106,6 +110,18 @@ const ProfileEditor = observer(({ onSave }) => {
     setFormData((prev) => ({
       ...prev,
       skills: prev.skills.filter((s) => s !== skill),
+    }));
+  };
+
+  const generateNewAvatar = () => {
+    const randomSeed =
+      globalThis.crypto?.randomUUID?.() ||
+      `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setFormData((previous) => ({
+      ...previous,
+      avatar: generateUserAvatar(
+        `${previous.username || MobxStore.user?.email || "GO Member"}-${randomSeed}`
+      ),
     }));
   };
 
@@ -183,6 +199,7 @@ const ProfileEditor = observer(({ onSave }) => {
       // Update MobxStore user data
       await MobxStore.updateUser({
         username: formData.username,
+        avatar: formData.avatar,
         bio: formData.bio,
         skills: formData.skills,
         socialLinks: formData.socialLinks,
@@ -238,9 +255,9 @@ const ProfileEditor = observer(({ onSave }) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={MobxStore.user?.avatar} />
+              <AvatarImage src={formData.avatar || MobxStore.user?.avatar} />
               <AvatarFallback className="text-2xl">
                 {formData.username?.charAt(0)?.toUpperCase() || "U"}
               </AvatarFallback>
@@ -259,6 +276,14 @@ const ProfileEditor = observer(({ onSave }) => {
                 <p className="text-sm text-red-500 mt-1">{fieldErrors.username}</p>
               )}
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={generateNewAvatar}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Generate avatar
+            </Button>
           </div>
 
           <div>

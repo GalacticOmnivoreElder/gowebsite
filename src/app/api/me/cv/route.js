@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
 import { serializeFirestoreDate } from "@/lib/project-utils";
-import { buildCvFromProfile, improveSummaryWithAI } from "@/lib/cv-generator";
+import {
+  buildCvFeedbackFromSections,
+  buildCvFromProfile,
+  improveSummaryWithAI,
+} from "@/lib/cv-generator";
 
 export const dynamic = "force-dynamic";
 
@@ -94,6 +98,10 @@ export async function PATCH(request) {
     "visibility_job_matching",
   ]) {
     if (body[field] !== undefined) update[field] = body[field];
+  }
+
+  if (Array.isArray(update.sections)) {
+    Object.assign(update, buildCvFeedbackFromSections(update.sections));
   }
 
   const writes = [

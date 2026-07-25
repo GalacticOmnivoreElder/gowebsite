@@ -5,6 +5,10 @@ const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs
 
 const fixedNow = new Date("2026-07-18T12:00:00.000Z");
 
+function plain(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
 class FixedDate extends Date {
   constructor(value) {
     super(arguments.length === 0 ? fixedNow.getTime() : value);
@@ -133,6 +137,11 @@ test("updating onboarding regenerates the CV and preserves its published state",
             display_name: "Ada",
             full_name: "Ada Lovelace",
           },
+          portfolio: {
+            portfolio: "https://ada.dev",
+            github: "https://github.com/ada",
+            other_link: "https://ada.itch.io",
+          },
           "role-skills": { primary_role: "Programmer" },
         },
         status: "completed",
@@ -156,4 +165,8 @@ test("updating onboarding regenerates the CV and preserves its published state",
     "Updated summary"
   );
   assert.equal(route.adminDb.docs.user_profiles["user-1"].display_name, "Ada");
+  assert.deepEqual(
+    plain(route.adminDb.docs.user_profiles["user-1"].portfolio_links),
+    ["https://ada.dev", "https://github.com/ada", "https://ada.itch.io"]
+  );
 });
