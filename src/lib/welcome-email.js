@@ -6,7 +6,6 @@ export async function requestWelcomeEmail(user, username, fetchImpl = fetch) {
   const token = await user.getIdToken();
   const response = await fetchImpl("/api/welcomeEmail", {
     method: "POST",
-    keepalive: true,
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",

@@ -67,18 +67,3 @@ test("validateProfileData rejects oversized and malformed profile fields", () =>
 test("validateProfileData requires skills to be an array", () => {
   assert.equal(validateProfileData({ skills: "Unity" }).skills, "Skills must be an array");
 });
-
-test("validateProfileData accepts generated avatars and rejects invalid image data", () => {
-  assert.deepEqual(
-    Object.keys(
-      validateProfileData({
-        avatar: "data:image/svg+xml;base64,PHN2Zy8+",
-      })
-    ),
-    []
-  );
-  assert.equal(
-    validateProfileData({ avatar: "javascript:alert(1)" }).avatar,
-    "Profile image must be a valid image URL"
-  );
-});

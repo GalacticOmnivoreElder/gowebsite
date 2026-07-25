@@ -110,13 +110,12 @@ export function buildCvFromProfile(profile = {}) {
     },
   ];
 
-  const feedback = buildCvFeedbackFromSections(sections);
-
   return {
     title: `${displayName} — ${primaryRole}`,
     summary,
     sections,
-    ...feedback,
+    suggested_improvements: buildSuggestions({ portfolioLinks, pastProjects, lookingFor }),
+    missing_information: buildMissing({ portfolioLinks, profile }),
   };
 }
 
@@ -136,53 +135,20 @@ function buildBaselineSummary({ primaryRole, skillLevel, tools, currentGoal, loo
   return summary;
 }
 
-export function buildCvFeedbackFromSections(sections = []) {
-  const content = (type) =>
-    arr(sections).find((section) => section?.section_type === type)?.content_json ||
-    {};
-  const portfolioLinks = arr(content("portfolio").links).filter((link) => {
-    const value = typeof link === "string" ? link : link?.url;
-    return typeof value === "string" && value.trim();
-  });
-  const pastProjects = arr(content("projects").projects).filter(
-    (project) =>
-      project &&
-      [project.title, project.description, project.link].some(
-        (value) => typeof value === "string" && value.trim()
-      )
-  );
-  const lookingFor = arr(content("interests").looking_for).filter(
-    (value) => typeof value === "string" && value.trim()
-  );
-  const preferredTimeCommitment =
-    content("availability").preferred_time_commitment;
+function buildSuggestions({ portfolioLinks, pastProjects, lookingFor }) {
+  const s = [];
+  if (!portfolioLinks.length) s.push("Add at least one portfolio link");
+  if (!pastProjects.length)
+    s.push("Describe one past prototype or game jam project");
+  if (!lookingFor.length) s.push("Define what type of project you want to join");
+  return s;
+}
 
-  const suggestedImprovements = [];
-  if (!portfolioLinks.length) {
-    suggestedImprovements.push("Add at least one portfolio link");
-  }
-  if (!pastProjects.length) {
-    suggestedImprovements.push(
-      "Describe one past prototype or game jam project"
-    );
-  }
-  if (!lookingFor.length) {
-    suggestedImprovements.push("Define what type of project you want to join");
-  }
-
-  const missingInformation = [];
-  if (!portfolioLinks.length) missingInformation.push("portfolio link");
-  if (
-    typeof preferredTimeCommitment !== "string" ||
-    !preferredTimeCommitment.trim()
-  ) {
-    missingInformation.push("availability");
-  }
-
-  return {
-    suggested_improvements: suggestedImprovements,
-    missing_information: missingInformation,
-  };
+function buildMissing({ portfolioLinks, profile }) {
+  const m = [];
+  if (!portfolioLinks.length) m.push("portfolio link");
+  if (!profile.preferred_time_commitment) m.push("availability");
+  return m;
 }
 
 function capitalize(s) {

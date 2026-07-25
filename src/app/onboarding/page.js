@@ -12,12 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { TagInput } from "@/components/ui/tag-input";
 import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
 import {
   ONBOARDING_STEPS,
   PRIMARY_ROLES,
-  SKILL_LEVEL_OPTIONS,
+  SKILL_LEVELS,
   COMMON_TOOLS,
   HELP_TOPICS,
 } from "@/constants/onboarding";
@@ -238,62 +237,26 @@ const OnboardingContent = observer(() => {
                     onChange={(e) => setField("primary_role", e.target.value)}
                   >
                     <option value="">Select…</option>
-                    {stepData.primary_role &&
-                      !PRIMARY_ROLES.includes(stepData.primary_role) && (
-                        <option value={stepData.primary_role}>
-                          {stepData.primary_role}
-                        </option>
-                      )}
                     {PRIMARY_ROLES.map((r) => (
                       <option key={r} value={r}>{r}</option>
                     ))}
                   </select>
                 </Field>
                 <Field label="Secondary roles (optional)">
-                  <TagInput
-                    suggestions={PRIMARY_ROLES}
-                    value={stepData.secondary_roles || []}
-                    onChange={(value) => setField("secondary_roles", value)}
-                    placeholder="Add another role"
-                    ariaLabel="Add a secondary role"
-                  />
+                  <Chips options={PRIMARY_ROLES} value={stepData.secondary_roles || []} onChange={(v) => setField("secondary_roles", v)} />
                 </Field>
                 <Field label="Skill level *">
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {SKILL_LEVEL_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setField("skill_level", option.value)}
-                        aria-pressed={stepData.skill_level === option.value}
-                        className={`min-h-20 rounded-md border p-3 text-left transition-colors ${
-                          stepData.skill_level === option.value
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border bg-background hover:border-primary/50"
-                        }`}
-                      >
-                        <span className="block text-sm font-medium">{option.label}</span>
-                        <span
-                          className={`mt-1 block text-xs ${
-                            stepData.skill_level === option.value
-                              ? "text-primary-foreground/80"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {option.description}
-                        </span>
+                  <div className="flex flex-wrap gap-2">
+                    {SKILL_LEVELS.map((l) => (
+                      <button key={l} type="button" onClick={() => setField("skill_level", l)}
+                        className={`px-3 py-1 rounded-full border text-sm capitalize ${stepData.skill_level === l ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"}`}>
+                        {l}
                       </button>
                     ))}
                   </div>
                 </Field>
                 <Field label="Tools used (optional)">
-                  <TagInput
-                    suggestions={COMMON_TOOLS}
-                    value={stepData.tools || []}
-                    onChange={(value) => setField("tools", value)}
-                    placeholder="Add a tool, engine, or language"
-                    ariaLabel="Add a tool, engine, or language"
-                  />
+                  <Chips options={COMMON_TOOLS} value={stepData.tools || []} onChange={(v) => setField("tools", v)} />
                 </Field>
               </>
             )}

@@ -28,7 +28,6 @@ test("welcome email request authenticates the user without sending their email i
   });
 
   assert.equal(request.url, "/api/welcomeEmail");
-  assert.equal(request.options.keepalive, true);
   assert.equal(request.options.headers.Authorization, "Bearer firebase-token");
   assert.deepEqual(JSON.parse(request.options.body), { username: "Member" });
   assert.deepEqual(plain(result), { emailId: "email-1", success: true });

@@ -24,13 +24,7 @@ NEXT_PUBLIC_POLAR_COMPANY_MONTHLY_PRODUCT_ID=<id>
 NEXT_PUBLIC_POLAR_COMPANY_ANNUAL_PRODUCT_ID=<id>
 ADMIN_BOOTSTRAP_SECRET=<any long random string>    # to make yourself admin (step F)
 ANTHROPIC_API_KEY=<optional — enables AI CV wording; leave blank = deterministic CV>
-RESEND_API_KEY=<Resend API key for welcome and purchase emails>
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
-
-Verify `onboarding@galacticomnivore.com` and
-`membership@galacticomnivore.com` under the `galacticomnivore.com` domain in
-Resend before testing email delivery.
 
 > ⚠️ The `.env` still contains a **legacy production** Polar token. Replace it with a
 > sandbox token now, and **rotate that production token** in the Polar dashboard since
@@ -91,7 +85,6 @@ npm run dev      # http://localhost:3000
 4. Verify in Firestore: `users/{uid}` has `activeMember`, `membershipTier`,
    `polarCustomerId`, `subscriptionEndsAt`; and `orders`, `subscription_events`,
    `user_profiles`, `go_cvs` collections got docs.
-   The paid order should also have `purchaseEmailStatus=sent`.
 5. As a **Member**, apply to a hiring project → the application stores a **CV snapshot**.
 6. As a **Company** account, create a project (Members can't).
 7. ✅ Discord role granted (Polar benefit) · ✅ subscription shows in Polar and in
@@ -104,8 +97,6 @@ npm run dev      # http://localhost:3000
 - [ ] New **production** webhook endpoint at `https://<prod-domain>/api/subscription/webhook`
       with the same 10 events; production signing secret in env. (Replace the old ngrok one.)
 - [ ] `POLAR_SUCCESS_URL=https://<prod-domain>/subscription/success`.
-- [ ] `RESEND_API_KEY` and `NEXT_PUBLIC_SITE_URL=https://www.galacticomnivore.com`
-      configured; onboarding and membership senders verified.
 - [ ] `firestore.rules` deployed to the production Firebase project.
 - [ ] `ADMIN_BOOTSTRAP_SECRET` cleared.
 - [ ] Remove/lock the dev-only `/test-polar` page.

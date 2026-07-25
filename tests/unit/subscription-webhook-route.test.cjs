@@ -25,7 +25,7 @@ class FixedDate extends Date {
 
 function createAdminDb(seed = {}) {
   const docs = {
-    orders: { ...(seed.orders || {}) },
+    orders: {},
     processed_webhooks: {},
     subscription_events: [],
     users: { ...(seed.users || {}) },
@@ -83,12 +83,6 @@ function createAdminDb(seed = {}) {
         return {
           doc(id) {
             return {
-              async get() {
-                return {
-                  exists: !!docs.orders[id],
-                  data: () => docs.orders[id] || {},
-                };
-              },
               async set(data, options = {}) {
                 docs.orders[id] = options.merge
                   ? { ...(docs.orders[id] || {}), ...data }
@@ -113,16 +107,10 @@ function createAdminDb(seed = {}) {
   };
 }
 
-function loadRoute({
-  processed = new Set(),
-  purchaseEmailThrows,
-  seed = {},
-  webhookThrows,
-} = {}) {
+function loadRoute({ processed = new Set(), seed = {}, webhookThrows } = {}) {
   const captured = {};
   const adminDb = createAdminDb(seed);
   const marks = [];
-  const purchaseEmails = [];
 
   const route = loadSourceModule(
     "src/app/api/subscription/webhook/route.js",
@@ -152,23 +140,11 @@ function loadRoute({
             : productId === "member-product"
             ? "member"
             : null,
-        sendPurchaseConfirmationEmail: async (payload) => {
-          purchaseEmails.push(payload);
-          if (purchaseEmailThrows) throw purchaseEmailThrows;
-          return { emailId: "purchase-email-1" };
-        },
       },
     }
   );
 
-  return {
-    ...route,
-    adminDb,
-    captured,
-    marks,
-    processed,
-    purchaseEmails,
-  };
+  return { ...route, adminDb, captured, marks, processed };
 }
 
 test("webhook route ignores unknown Polar event types without retrying", async () => {
@@ -215,47 +191,7 @@ test("order.paid grants access, stores order data, and marks webhook processed",
   assert.equal(route.adminDb.docs.users["user-1"].membershipTier, "company");
   assert.equal(route.adminDb.docs.users["user-1"].subscriptionId, "sub_1");
   assert.equal(route.adminDb.docs.orders.order_1.status, "paid");
-  assert.equal(
-    route.adminDb.docs.orders.order_1.purchaseEmailStatus,
-    "sent"
-  );
-  assert.equal(route.purchaseEmails[0].to, "member@example.com");
   assert.equal(route.marks[0].eventType, "order.paid");
-});
-
-test("purchase email failure does not block paid membership access", async () => {
-  const originalError = console.error;
-  console.error = () => {};
-  try {
-    const route = loadRoute({
-      purchaseEmailThrows: new Error("Resend unavailable"),
-      seed: {
-        users: {
-          "user-1": { email: "member@example.com" },
-        },
-      },
-    });
-
-    await route.captured.onOrderPaid({
-      data: {
-        customer: { email: "member@example.com", id: "cus_123" },
-        id: "order_email_failure",
-        metadata: { tier: "member", uid: "user-1" },
-        status: "paid",
-      },
-      id: "evt_order_email_failure",
-      type: "order.paid",
-    });
-
-    assert.equal(route.adminDb.docs.users["user-1"].activeMember, true);
-    assert.equal(
-      route.adminDb.docs.orders.order_email_failure.purchaseEmailStatus,
-      "failed"
-    );
-    assert.equal(route.marks[0].eventType, "order.paid");
-  } finally {
-    console.error = originalError;
-  }
 });
 
 test("order.paid derives Business creator access from the Polar product", async () => {

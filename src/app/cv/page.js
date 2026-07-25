@@ -13,48 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { TagInput } from "@/components/ui/tag-input";
 import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
 import { CheckCircle, Pencil, Plus, Trash2 } from "lucide-react";
-import {
-  COMMON_TOOLS,
-  HELP_TOPICS,
-  PRIMARY_ROLES,
-  SKILL_LEVEL_OPTIONS,
-} from "@/constants/onboarding";
-
-const LOOKING_FOR_SUGGESTIONS = [
-  "Projects",
-  "Paid work",
-  "Team members",
-  "Mentorship",
-  "Jobs / internships",
-];
-
-function cvFeedbackItems(cv) {
-  const suggestions = Array.isArray(cv?.suggested_improvements)
-    ? cv.suggested_improvements
-    : [];
-  const missing = (Array.isArray(cv?.missing_information)
-    ? cv.missing_information
-    : []
-  )
-    .filter(
-      (item) =>
-        !suggestions.some((suggestion) =>
-          String(suggestion)
-            .toLocaleLowerCase()
-            .includes(String(item).toLocaleLowerCase())
-        )
-    )
-    .map((item) =>
-      item === "availability"
-        ? "Add your preferred time commitment"
-        : `Add ${item}`
-    );
-
-  return [...new Set([...suggestions, ...missing])];
-}
 
 async function authedFetch(url, method, body) {
   const token = await auth.currentUser.getIdToken();
@@ -84,6 +44,17 @@ function createDraft(cv) {
       },
     })),
   };
+}
+
+function listToText(value) {
+  return Array.isArray(value) ? value.filter(Boolean).join(", ") : "";
+}
+
+function textToList(value) {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function portfolioUrl(link) {
@@ -235,74 +206,14 @@ function Field({ label, value, onChange, placeholder, type = "text" }) {
   );
 }
 
-function SuggestedField({ label, value, onChange, options, placeholder }) {
-  const listId = useId();
-  const inputId = useId();
-
+function ListField({ label, value, onChange, placeholder }) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor={inputId}>{label}</Label>
-      <Input
-        id={inputId}
-        list={listId}
-        value={value || ""}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-      />
-      <datalist id={listId}>
-        {options.map((option) => (
-          <option key={option} value={option} />
-        ))}
-      </datalist>
-    </div>
-  );
-}
-
-function SkillLevelField({ value, onChange }) {
-  const inputId = useId();
-
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={inputId}>Skill level</Label>
-      <select
-        id={inputId}
-        className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-        value={value || ""}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        <option value="">Select a level</option>
-        {value &&
-          !SKILL_LEVEL_OPTIONS.some((option) => option.value === value) && (
-            <option value={value}>{value}</option>
-          )}
-        {SKILL_LEVEL_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-function TagsField({
-  label,
-  value,
-  onChange,
-  suggestions = [],
-  placeholder,
-}) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <TagInput
-        value={Array.isArray(value) ? value : []}
-        onChange={onChange}
-        suggestions={suggestions}
-        placeholder={placeholder}
-        ariaLabel={label}
-      />
-    </div>
+    <Field
+      label={label}
+      value={listToText(value)}
+      onChange={(text) => onChange(textToList(text))}
+      placeholder={placeholder || "Separate entries with commas"}
+    />
   );
 }
 
@@ -330,24 +241,21 @@ function CvSectionEditor({ section, onChange }) {
     case "skills":
       fields = (
         <div className="grid gap-4 md:grid-cols-2">
-          <SuggestedField
+          <Field
             label="Primary role"
             value={content.primary_role}
             onChange={(primary_role) => setContent({ primary_role })}
-            options={PRIMARY_ROLES}
-            placeholder="Choose or enter a role"
           />
-          <SkillLevelField
+          <Field
+            label="Skill level"
             value={content.skill_level}
             onChange={(skill_level) => setContent({ skill_level })}
           />
           <div className="md:col-span-2">
-            <TagsField
+            <ListField
               label="Other roles"
               value={content.secondary_roles}
               onChange={(secondary_roles) => setContent({ secondary_roles })}
-              suggestions={PRIMARY_ROLES}
-              placeholder="Add another role"
             />
           </div>
         </div>
@@ -355,12 +263,10 @@ function CvSectionEditor({ section, onChange }) {
       break;
     case "tools":
       fields = (
-        <TagsField
+        <ListField
           label="Tools and engines"
           value={content.tools}
           onChange={(tools) => setContent({ tools })}
-          suggestions={COMMON_TOOLS}
-          placeholder="Add a tool, engine, or language"
         />
       );
       break;
@@ -412,12 +318,10 @@ function CvSectionEditor({ section, onChange }) {
                     type="url"
                   />
                   <div className="md:col-span-2">
-                    <TagsField
+                    <ListField
                       label="Tools"
                       value={project.tools}
                       onChange={(tools) => updateProject({ tools })}
-                      suggestions={COMMON_TOOLS}
-                      placeholder="Add a tool used on this project"
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
@@ -511,23 +415,20 @@ function CvSectionEditor({ section, onChange }) {
     case "interests":
       fields = (
         <div className="space-y-4">
-          <TagsField
+          <ListField
             label="Looking for"
             value={content.looking_for}
             onChange={(looking_for) => setContent({ looking_for })}
-            suggestions={LOOKING_FOR_SUGGESTIONS}
           />
-          <TagsField
+          <ListField
             label="Can help with"
             value={content.can_help_with}
             onChange={(can_help_with) => setContent({ can_help_with })}
-            suggestions={HELP_TOPICS}
           />
-          <TagsField
+          <ListField
             label="Needs help with"
             value={content.needs_help_with}
             onChange={(needs_help_with) => setContent({ needs_help_with })}
-            suggestions={HELP_TOPICS}
           />
         </div>
       );
@@ -599,7 +500,6 @@ const CvPage = observer(() => {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
-  const feedbackItems = cvFeedbackItems(cv);
 
   const syncCv = (nextCv) => {
     setCv(nextCv);
@@ -708,12 +608,12 @@ const CvPage = observer(() => {
           </div>
         </div>
 
-        {feedbackItems.length > 0 ? (
+        {cv.suggested_improvements?.length || cv.missing_information?.length ? (
           <Card className="border-amber-500/30">
             <CardContent className="pt-6">
               <p className="mb-2 font-medium">Suggestions to strengthen your CV</p>
               <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                {feedbackItems.map((suggestion, index) => (
+                {cv.suggested_improvements?.map((suggestion, index) => (
                   <li key={`suggestion-${index}`}>{suggestion}</li>
                 ))}
               </ul>

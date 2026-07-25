@@ -37,15 +37,7 @@ NEXT_PUBLIC_POLAR_COMPANY_ANNUAL_PRODUCT_ID=
 
 # Optional: grants the FIRST admin via x-admin-bootstrap-secret header
 ADMIN_BOOTSTRAP_SECRET=
-
-# Transactional email and absolute links
-RESEND_API_KEY=
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
-
-The `galacticomnivore.com` sending domain must be verified in Resend. Welcome
-mail uses `onboarding@galacticomnivore.com`; paid-order confirmations use
-`membership@galacticomnivore.com`.
 
 > ⚠️ The `.env` currently holds a **legacy production** `POLAR_ACCESS_TOKEN`
 > (`polar_oat_…`). For local sandbox testing, replace it with a **sandbox** token,

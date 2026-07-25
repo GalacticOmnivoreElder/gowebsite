@@ -6,7 +6,6 @@ import {
   markWebhookProcessed,
 } from "@/lib/webhook-deduplication";
 import { resolvePolarProductTier } from "@/lib/polar";
-import { sendPurchaseConfirmationEmail } from "@/lib/purchase-email";
 
 const polarWebhookHandler = Webhooks({
   webhookSecret: process.env.POLAR_WEBHOOK_SECRET,
@@ -188,15 +187,9 @@ async function handleOrderPaid(orderData) {
   const subscriptionId = getSubscriptionId(orderData);
   const customerId = getCustomerId(orderData);
   const currentPeriodEnd = getCurrentPeriodEnd(orderData);
-  const amount =
-    orderData.amount ??
-    orderData.total_amount ??
-    orderData.subtotal_amount ??
-    null;
+  const amount = orderData.amount || orderData.total_amount || orderData.subtotal_amount || null;
 
-  const userData = userDoc.data();
-  const tier =
-    getMetadataTier(orderData) || userData.membershipTier || "member";
+  const tier = getMetadataTier(orderData);
   const userUpdate = {
     activeMember: true,
     polarCustomerId: customerId,
@@ -219,87 +212,27 @@ async function handleOrderPaid(orderData) {
 
   await userDoc.ref.update(userUpdate);
 
-  const orderRef = adminDb.collection("orders").doc(orderData.id);
-  const existingOrder = await orderRef.get();
-  await orderRef.set(
-    {
-      userId: userDoc.id,
-      polarOrderId: orderData.id,
-      polarCustomerId: customerId,
-      customerEmail: getCustomerEmail(orderData),
-      status: orderData.status || "paid",
-      amount,
-      currency: orderData.currency,
-      productId:
-        orderData.product_id ||
-        orderData.productId ||
-        orderData.product?.id ||
-        null,
-      subscriptionId,
-      createdAt:
-        parsePolarDate(orderData.created_at || orderData.createdAt) ||
-        new Date(),
-      paidAt: new Date(),
-      webhookProcessedAt: new Date(),
-      processed: true,
-      purchaseEmailStatus:
-        existingOrder.data()?.purchaseEmailStatus === "sent"
-          ? "sent"
-          : "pending",
-    },
-    { merge: true }
-  );
-
-  if (existingOrder.data()?.purchaseEmailStatus !== "sent") {
-    const recipient = userData.email || getCustomerEmail(orderData);
-    if (!recipient) {
-      await orderRef.set(
-        {
-          purchaseEmailStatus: "skipped",
-          purchaseEmailError: "No customer email address was available",
-        },
-        { merge: true }
-      );
-      return;
-    }
-
-    try {
-      const result = await sendPurchaseConfirmationEmail({
+  await adminDb
+    .collection("orders")
+    .doc(orderData.id)
+    .set(
+      {
+        userId: userDoc.id,
+        polarOrderId: orderData.id,
+        polarCustomerId: customerId,
+        customerEmail: getCustomerEmail(orderData),
+        status: orderData.status || "paid",
         amount,
         currency: orderData.currency,
-        displayName:
-          userData.username ||
-          userData.displayName ||
-          recipient.split("@")[0],
-        interval:
-          orderData.product?.recurring_interval ||
-          orderData.product?.recurringInterval ||
-          orderData.subscription?.recurring_interval ||
-          null,
-        orderId: orderData.id,
-        tier,
-        to: recipient,
-      });
-      await orderRef.set(
-        {
-          purchaseEmailStatus: "sent",
-          purchaseEmailId: result.emailId,
-          purchaseEmailSentAt: new Date(),
-          purchaseEmailError: null,
-        },
-        { merge: true }
-      );
-    } catch (error) {
-      console.error("Could not send purchase confirmation email:", error);
-      await orderRef.set(
-        {
-          purchaseEmailStatus: "failed",
-          purchaseEmailError: String(error?.message || error).slice(0, 500),
-        },
-        { merge: true }
-      );
-    }
-  }
+        productId: orderData.product_id || orderData.productId || orderData.product?.id || null,
+        subscriptionId,
+        createdAt: parsePolarDate(orderData.created_at || orderData.createdAt) || new Date(),
+        paidAt: new Date(),
+        webhookProcessedAt: new Date(),
+        processed: true,
+      },
+      { merge: true }
+    );
 }
 
 async function handleSubscriptionCreated(subscriptionData) {
