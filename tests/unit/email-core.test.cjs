@@ -163,7 +163,11 @@ function loadOutbox({ sendError } = {}) {
   };
   const module = loadSourceModule(
     "src/lib/email/outbox.js",
-    ["createEmailOutboxJob", "processEmailOutbox"],
+    [
+      "createEmailOutboxJob",
+      "isMissingFirestoreIndexError",
+      "processEmailOutbox",
+    ],
     {
       stripImports: true,
       sandbox: {
@@ -232,4 +236,29 @@ test("outbox retries transient errors and finalizes permanent failures", async (
   await outbox.processEmailOutbox();
   assert.equal(outbox.getJob().status, "failed");
   assert.ok(outbox.getJob().expiresAt instanceof Date);
+});
+
+test("outbox recognizes only Firestore missing-index failures", () => {
+  const outbox = loadOutbox();
+  assert.equal(
+    outbox.isMissingFirestoreIndexError({
+      code: 9,
+      details: "The query requires an index.",
+    }),
+    true
+  );
+  assert.equal(
+    outbox.isMissingFirestoreIndexError({
+      code: 9,
+      details: "A different failed precondition",
+    }),
+    false
+  );
+  assert.equal(
+    outbox.isMissingFirestoreIndexError({
+      code: 13,
+      details: "The query requires an index.",
+    }),
+    false
+  );
 });

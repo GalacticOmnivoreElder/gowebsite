@@ -43,6 +43,48 @@ test("public newsletter signup passes signed-out visitors through server-side co
   assert.equal(calls[0].consent, true);
 });
 
+test("newsletter signup logs the server-side cause without logging the address", async () => {
+  const logs = [];
+  const route = loadSourceModule(
+    "src/app/api/newsletter/subscribe/route.js",
+    ["POST"],
+    {
+      stripImports: true,
+      sandbox: {
+        NextResponse,
+        console: {
+          log() {},
+          error(value) {
+            logs.push(value);
+          },
+        },
+        consumeNewsletterRateLimit: async () => true,
+        getRequestUser: async () => null,
+        newsletterFingerprint: () => "safe-fingerprint",
+        requestNewsletterSubscription: async () => {
+          throw new Error("NEWSLETTER_TOKEN_SECRET is not configured");
+        },
+      },
+    }
+  );
+
+  const response = await route.POST(
+    createRequest({
+      headers: { "x-vercel-id": "request-1" },
+      jsonBody: {
+        email: "private@example.com",
+        consent: true,
+        source: "homepage",
+      },
+    })
+  );
+
+  assert.equal(response.status, 500);
+  assert.equal(logs.length, 1);
+  assert.match(logs[0], /NEWSLETTER_TOKEN_SECRET is not configured/);
+  assert.doesNotMatch(logs[0], /private@example\.com/);
+});
+
 test("newsletter preferences support signed, login-free reads and unsubscribe", async () => {
   const updates = [];
   const route = loadSourceModule(

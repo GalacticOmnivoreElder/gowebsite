@@ -15,6 +15,8 @@ function requestIp(request) {
 }
 
 export async function POST(request) {
+  const startedAt = Date.now();
+  const requestId = request.headers.get("x-vercel-id") || null;
   try {
     const body = await request.json().catch(() => ({}));
     const fingerprint = newsletterFingerprint(requestIp(request), body.email);
@@ -35,11 +37,35 @@ export async function POST(request) {
       userId: user?.uid || null,
       verifiedUserEmail: user?.email || null,
     });
+    console.log(
+      JSON.stringify({
+        level: "info",
+        message: "newsletter_signup_completed",
+        route: "/api/newsletter/subscribe",
+        requestId,
+        durationMs: Date.now() - startedAt,
+      })
+    );
     return NextResponse.json(result);
   } catch (error) {
     const status = ["invalid_email", "consent_required"].includes(error.code)
       ? 400
       : 500;
+    console.error(
+      JSON.stringify({
+        level: "error",
+        message: "newsletter_signup_failed",
+        route: "/api/newsletter/subscribe",
+        requestId,
+        status,
+        errorCode: error?.code || error?.name || "unknown",
+        error: String(error?.message || "Unknown newsletter signup error").slice(
+          0,
+          500
+        ),
+        durationMs: Date.now() - startedAt,
+      })
+    );
     return NextResponse.json(
       {
         error:

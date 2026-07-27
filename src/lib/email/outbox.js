@@ -11,9 +11,90 @@ import { validateEmailEvent } from "./events";
 
 const MAX_ATTEMPTS = 5;
 const LEASE_MS = 5 * 60 * 1000;
+const INDEX_FALLBACK_SCAN_LIMIT = 500;
 
 function backoffMs(attempt) {
   return Math.min(6 * 60 * 60 * 1000, 30_000 * 2 ** Math.max(0, attempt - 1));
+}
+
+export function isMissingFirestoreIndexError(error) {
+  return (
+    Number(error?.code) === 9 &&
+    /query requires an index/i.test(
+      `${error?.message || ""} ${error?.details || ""}`
+    )
+  );
+}
+
+function firestoreDate(value) {
+  return value?.toDate?.() || value || null;
+}
+
+function logIndexFallback(query) {
+  console.warn(
+    JSON.stringify({
+      level: "warning",
+      message: "email_outbox_index_fallback",
+      query,
+      scanLimit: INDEX_FALLBACK_SCAN_LIMIT,
+    })
+  );
+}
+
+async function loadDuePendingJobs(now, limit) {
+  const collection = adminDb.collection("email_outbox");
+  try {
+    return await collection
+      .where("status", "==", "pending")
+      .where("nextAttemptAt", "<=", now)
+      .orderBy("nextAttemptAt", "asc")
+      .limit(limit)
+      .get();
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) throw error;
+    logIndexFallback("pending_nextAttemptAt");
+    const fallback = await collection
+      .where("status", "==", "pending")
+      .limit(INDEX_FALLBACK_SCAN_LIMIT)
+      .get();
+    const docs = fallback.docs
+      .filter((doc) => {
+        const nextAttemptAt = firestoreDate(doc.data().nextAttemptAt);
+        return !nextAttemptAt || new Date(nextAttemptAt) <= now;
+      })
+      .sort((left, right) => {
+        const leftAt = firestoreDate(left.data().nextAttemptAt);
+        const rightAt = firestoreDate(right.data().nextAttemptAt);
+        return new Date(leftAt || 0) - new Date(rightAt || 0);
+      })
+      .slice(0, limit);
+    return { docs, empty: docs.length === 0, size: docs.length };
+  }
+}
+
+async function loadExpiredProcessingJobs(now, limit) {
+  const collection = adminDb.collection("email_outbox");
+  try {
+    return await collection
+      .where("status", "==", "processing")
+      .where("leaseUntil", "<=", now)
+      .limit(limit)
+      .get();
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) throw error;
+    logIndexFallback("processing_leaseUntil");
+    const fallback = await collection
+      .where("status", "==", "processing")
+      .limit(INDEX_FALLBACK_SCAN_LIMIT)
+      .get();
+    const docs = fallback.docs
+      .filter((doc) => {
+        const leaseUntil = firestoreDate(doc.data().leaseUntil);
+        return leaseUntil && new Date(leaseUntil) <= now;
+      })
+      .slice(0, limit);
+    return { docs, empty: docs.length === 0, size: docs.length };
+  }
 }
 
 export function createEmailOutboxJob(event, now = new Date()) {
@@ -188,13 +269,8 @@ async function finishJob(ref, update) {
 
 export async function processEmailOutbox({ limit = 25 } = {}) {
   const now = new Date();
-  const snapshot = await adminDb
-    .collection("email_outbox")
-    .where("status", "==", "pending")
-    .where("nextAttemptAt", "<=", now)
-    .orderBy("nextAttemptAt", "asc")
-    .limit(Math.min(Math.max(Number(limit) || 25, 1), 100))
-    .get();
+  const boundedLimit = Math.min(Math.max(Number(limit) || 25, 1), 100);
+  const snapshot = await loadDuePendingJobs(now, boundedLimit);
 
   const summary = { claimed: 0, sent: 0, failed: 0, suppressed: 0 };
 
@@ -277,12 +353,8 @@ export async function processEmailOutbox({ limit = 25 } = {}) {
 }
 
 export async function requeueExpiredEmailJobs({ limit = 50 } = {}) {
-  const snapshot = await adminDb
-    .collection("email_outbox")
-    .where("status", "==", "processing")
-    .where("leaseUntil", "<=", new Date())
-    .limit(limit)
-    .get();
+  const boundedLimit = Math.min(Math.max(Number(limit) || 50, 1), 100);
+  const snapshot = await loadExpiredProcessingJobs(new Date(), boundedLimit);
   const batch = adminDb.batch();
   snapshot.docs.forEach((doc) => {
     batch.update(doc.ref, {
