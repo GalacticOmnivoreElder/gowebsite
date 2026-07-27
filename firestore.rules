@@ -85,6 +85,7 @@ service cloud.firestore {
     match /user_profiles/{doc}       { allow read, write: if false; }
     match /onboarding_sessions/{doc} { allow read, write: if false; }
     match /go_cvs/{doc}              { allow read, write: if false; }
+    match /skill_catalog/{doc}       { allow read, write: if false; }
 
     // Default deny for anything not explicitly matched above.
     match /{document=**} {

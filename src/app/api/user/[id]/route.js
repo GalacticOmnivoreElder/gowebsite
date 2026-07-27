@@ -3,6 +3,8 @@ import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { serializeFirestoreDate } from "@/lib/project-utils";
 import { validateProfileData } from "@/utils/validateProfile";
 import { normalizeUsername } from "@/lib/auth-profile";
+import { sanitizeSkills } from "@/lib/skills";
+import { syncUserSkillUsage } from "@/lib/skill-catalog";
 
 function serializeCv(cv) {
   if (!cv) return null;
@@ -208,12 +210,29 @@ export async function PUT(request, { params }) {
         filteredUpdateData.username
       );
     }
+    if (filteredUpdateData.skills !== undefined) {
+      filteredUpdateData.skills = sanitizeSkills(filteredUpdateData.skills);
+    }
 
     const now = new Date();
     filteredUpdateData.profileEditedAt = now;
     filteredUpdateData.updatedAt = now;
 
-    await adminDb.collection("users").doc(userId).update(filteredUpdateData);
+    const userReference = adminDb.collection("users").doc(userId);
+    const previousDoc = await userReference.get();
+    const previousSkills = previousDoc.exists
+      ? previousDoc.data().skills || []
+      : [];
+
+    await userReference.update(filteredUpdateData);
+
+    if (filteredUpdateData.skills !== undefined) {
+      await syncUserSkillUsage({
+        previousSkills,
+        nextSkills: filteredUpdateData.skills,
+        userId,
+      });
+    }
 
     if (filteredUpdateData.profilePrivacy !== undefined) {
       const visibilityPublic = filteredUpdateData.profilePrivacy === "public";
@@ -244,7 +263,7 @@ export async function PUT(request, { params }) {
     }
 
     // Fetch and return updated user data
-    const updatedDoc = await adminDb.collection("users").doc(userId).get();
+    const updatedDoc = await userReference.get();
     const updatedData = updatedDoc.data();
 
     return NextResponse.json({

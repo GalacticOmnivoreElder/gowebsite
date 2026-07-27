@@ -29,3 +29,236 @@
  GET /_next/static/media/logo.1b0fbdf6.png 404 in 1784ms
  GET /_next/static/media/discord.8edd4b0f.png 404 in 1765ms
  GET /manifest.webmanifest 200 in 1842ms
+ GET / 200 in 4969ms
+ ✓ Compiled in 11.3s (980 modules)
+ ○ Compiling /_not-found ...
+ GET / 200 in 1005ms
+ ✓ Compiled /_not-found in 2.2s (2326 modules)
+ ○ Compiling /api/wordpress ...
+ ✓ Compiled /api/auth/verify in 1990ms (2353 modules)
+ GET /api/auth/verify 401 in 4098ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 5453ms
+ ✓ Compiled in 1025ms (983 modules)
+ GET / 200 in 216ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 273ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 217ms
+ ○ Compiling /manifest.webmanifest ...
+ ✓ Compiled /manifest.webmanifest in 549ms (1388 modules)
+ GET /manifest.webmanifest 200 in 1179ms
+ ✓ Compiled in 662ms (983 modules)
+ GET / 200 in 275ms
+ ✓ Compiled in 2.5s (2357 modules)
+ GET / 200 in 1839ms
+ GET / 200 in 35ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 262ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 177ms
+ GET /manifest.webmanifest 200 in 202ms
+ ✓ Compiled in 792ms (983 modules)
+ ✓ Compiled in 2.1s (2357 modules)
+ GET / 404 in 1950ms
+ GET / 200 in 71ms
+ GET / 200 in 34ms
+ GET / 200 in 1627ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 216ms
+ GET /api/auth/verify 404 in 130ms
+ ✓ Compiled in 389ms (983 modules)
+ GET / 200 in 37ms
+ GET /_next/static/webpack/08b66fc7dfde5aa9.webpack.hot-update.json 404 in 75ms
+ GET / 200 in 202ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 137ms
+ GET /api/auth/verify 404 in 98ms
+ ✓ Compiled in 682ms (983 modules)
+ GET / 200 in 70ms
+ GET /_next/static/webpack/1e5e5f33049e973c.webpack.hot-update.json 404 in 246ms
+ GET / 200 in 508ms
+ ✓ Compiled in 1180ms (983 modules)
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 374ms
+ ✓ Compiled in 1939ms (2353 modules)
+ GET /api/auth/verify 404 in 2651ms
+ GET / 200 in 123ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 115ms
+ ✓ Compiled /manifest.webmanifest in 258ms (1388 modules)
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 990ms
+ GET /manifest.webmanifest 200 in 999ms
+ ✓ Compiled in 8s (2373 modules)
+ GET / 200 in 396ms
+ ○ Compiling /api/skills ...
+ ✓ Compiled /api/skills in 2.5s (2364 modules)
+ GET /manifest.webmanifest 200 in 2305ms
+ GET /api/skills?popular=true&limit=14 200 in 2670ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 2517ms
+ GET /api/skills?popular=true&limit=14 200 in 45ms
+ GET /api/skills?popular=true&limit=14 200 in 58ms
+ ✓ Compiled in 524ms (981 modules)
+ ✓ Compiled in 925ms (2338 modules)
+ ✓ Compiled in 507ms (981 modules)
+ GET / 200 in 934ms
+ ✓ Compiled in 422ms (981 modules)
+ GET / 200 in 252ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1904ms (2328 modules)
+ GET /_next/static/css/app/layout.css?v=1785175290892 404 in 3294ms
+ GET /_next/static/chunks/main-app.js?v=1785175290892 404 in 3033ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 3032ms
+ GET /_next/static/chunks/app/error.js 404 in 3031ms
+ GET /_next/static/chunks/app/(main)/page.js 404 in 3030ms
+ GET /_next/static/chunks/app/global-error.js 404 in 2459ms
+ GET / 200 in 446ms
+ GET /_next/static/css/app/layout.css?v=1785175296442 404 in 106ms
+ GET /_next/static/chunks/main-app.js?v=1785175296442 404 in 520ms
+ GET /_next/static/chunks/app/error.js 404 in 571ms
+ GET /_next/static/chunks/app/(main)/page.js 404 in 570ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 574ms
+ GET /_next/static/chunks/app/global-error.js 404 in 575ms
+ GET / 200 in 244ms
+ GET /_next/static/css/app/layout.css?v=1785175303524 404 in 110ms
+ GET /_next/static/chunks/main-app.js?v=1785175303524 404 in 384ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 436ms
+ GET /_next/static/chunks/app/(main)/page.js 404 in 435ms
+ GET /_next/static/chunks/app/error.js 404 in 436ms
+ GET /_next/static/chunks/app/global-error.js 404 in 439ms
+ ○ Compiling /api/skills ...
+ ✓ Compiled /api/skills in 730ms (2357 modules)
+ GET /api/admin/skills 401 in 1037ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1476ms (2688 modules)
+ GET /api/skills?popular=true&limit=14 500 in 3800ms
+ ○ Compiling /membership ...
+ ✓ Compiled /membership in 2.4s (2734 modules)
+ GET /membership 200 in 3756ms
+ GET /_next/static/css/app/layout.css?v=1785175323976 404 in 145ms
+ GET /_next/static/chunks/main-app.js?v=1785175323976 404 in 287ms
+ GET /_next/static/chunks/app/global-error.js 404 in 343ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 345ms
+ GET /_next/static/chunks/app/error.js 404 in 344ms
+ GET /membership 200 in 95ms
+ GET /_next/static/css/app/layout.css?v=1785175342212 404 in 67ms
+ GET /_next/static/chunks/main-app.js?v=1785175342212 404 in 365ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 433ms
+ GET /_next/static/chunks/app/global-error.js 404 in 433ms
+ GET /_next/static/chunks/app/error.js 404 in 432ms
+ GET /membership 200 in 152ms
+ GET /_next/static/css/app/layout.css?v=1785175343087 404 in 92ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 247ms
+ GET /_next/static/chunks/main-app.js?v=1785175343087 404 in 318ms
+ GET /_next/static/chunks/app/global-error.js 404 in 316ms
+ GET /_next/static/chunks/app/error.js 404 in 316ms
+ GET / 500 in 4708ms
+ ✓ Compiled in 1105ms (1230 modules)
+ ✓ Compiled in 1730ms (2632 modules)
+ GET / 200 in 3212ms
+ ○ Compiling /api/skills ...
+ ✓ Compiled /api/skills in 634ms (1428 modules)
+ GET /api/skills?popular=true&limit=14 200 in 1541ms
+ GET / 200 in 2606ms
+ GET / 200 in 318ms
+ ○ Compiling /api/wordpress ...
+ ✓ Compiled /api/wordpress in 831ms (1431 modules)
+ GET /api/skills?popular=true&limit=14 200 in 1942ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 2257ms
+ ✓ Compiled in 1049ms (1230 modules)
+ GET / 200 in 323ms
+ GET /api/wordpress?category=blog 404 in 347ms
+ ○ Compiling /manifest.webmanifest ...
+ ✓ Compiled /manifest.webmanifest in 3.9s (2669 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2.2s (2698 modules)
+ GET /api/skills?popular=true&limit=14 500 in 6834ms
+ GET /api/wordpress?category=blog 500 in 6481ms
+ GET /manifest.webmanifest 404 in 7086ms
+ GET / 404 in 3312ms
+ GET /api/skills?popular=true&limit=14 404 in 734ms
+ GET / 200 in 1942ms
+ GET /api/skills?popular=true&limit=14 404 in 372ms
+ GET /api/wordpress?category=blog 404 in 368ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 6.2s (2770 modules)
+ GET /login 200 in 7398ms
+ GET /login 200 in 72ms
+ GET /login 200 in 454ms
+ ✓ Compiled in 1175ms (1261 modules)
+ GET /login 200 in 443ms
+ GET / 200 in 1258ms
+ GET /api/skills?popular=true&limit=14 200 in 220ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 304ms
+ GET / 200 in 1197ms
+ GET / 200 in 394ms
+ GET / 200 in 270ms
+ ✓ Compiled in 5.4s (2659 modules)
+ GET / 200 in 924ms
+ ○ Compiling /manifest.webmanifest ...
+ ✓ Compiled /manifest.webmanifest in 572ms (1428 modules)
+ ✓ Compiled (1435 modules)
+ GET /api/skills?popular=true&limit=14 200 in 1432ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 1773ms
+ GET /manifest.webmanifest 200 in 1884ms
+ GET /api/skills?popular=true&limit=14 200 in 86ms
+ ✓ Compiled /login in 400ms (1466 modules)
+ GET /login 200 in 578ms
+ GET /manifest.webmanifest 200 in 27ms
+ GET / 200 in 1797ms
+ GET / 200 in 823ms
+ GET /api/skills?popular=true&limit=14 200 in 165ms
+ GET /api/skills?popular=true&limit=14 200 in 223ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 7.6s (2713 modules)
+ GET /api/wordpress?category=blog 404 in 10539ms
+ GET /api/wordpress?category=blog 404 in 10726ms
+ GET /_next/static/webpack/834f8d0e353159d9.webpack.hot-update.json 404 in 855ms
+ GET /_next/static/webpack/834f8d0e353159d9.webpack.hot-update.json 404 in 853ms
+ GET / 200 in 1212ms
+ GET / 200 in 1239ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 964ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 943ms
+ GET /api/skills?popular=true&limit=14 200 in 2467ms
+ GET /api/skills?popular=true&limit=14 200 in 2247ms
+ GET / 200 in 414ms
+ GET /api/skills?popular=true&limit=14 200 in 69ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 159ms
+ ✓ Compiled in 2.9s (1257 modules)
+ ✓ Compiled in 418ms (1257 modules)
+ ✓ Compiled in 640ms (1257 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 717ms (2706 modules)
+ GET /api/skills?popular=true&limit=20 404 in 4271ms
+ ○ Compiling /profile ...
+ ✓ Compiled /profile in 7s (2807 modules)
+ GET /profile 200 in 7939ms
+ GET /api/skills?popular=true&limit=20 200 in 103ms
+ GET /login 200 in 1837ms

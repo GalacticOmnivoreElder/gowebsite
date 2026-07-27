@@ -1,5 +1,6 @@
 const USERNAME_PATTERN = /^[\p{L}\p{N}_ -]+$/u;
 const URL_PATTERN = /^https?:\/\/.+/i;
+export const MAX_PROFILE_BIO_LENGTH = 10000;
 
 export function validateProfileData(data) {
   const errors = {};
@@ -18,8 +19,11 @@ export function validateProfileData(data) {
     }
   }
 
-  if (data.bio !== undefined && String(data.bio).length > 500) {
-    errors.bio = "Bio must be 500 characters or less";
+  if (
+    data.bio !== undefined &&
+    String(data.bio).length > MAX_PROFILE_BIO_LENGTH
+  ) {
+    errors.bio = `Bio must be ${MAX_PROFILE_BIO_LENGTH.toLocaleString()} characters or less`;
   }
 
   if (data.skills !== undefined) {
@@ -27,6 +31,15 @@ export function validateProfileData(data) {
       errors.skills = "Skills must be an array";
     } else if (data.skills.length > 20) {
       errors.skills = "You can select at most 20 skills";
+    } else if (
+      data.skills.some(
+        (skill) =>
+          typeof skill !== "string" ||
+          !skill.trim() ||
+          skill.trim().replace(/\s+/g, " ").length > 40
+      )
+    ) {
+      errors.skills = "Each skill must be between 1 and 40 characters";
     }
   }
 

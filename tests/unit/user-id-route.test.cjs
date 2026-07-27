@@ -10,6 +10,9 @@ const { validateProfileData } = loadSourceModule(
   "src/utils/validateProfile.js",
   ["validateProfileData"]
 );
+const { sanitizeSkills } = loadSourceModule("src/lib/skills.js", [
+  "sanitizeSkills",
+]);
 
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
@@ -55,6 +58,8 @@ function loadRoute({ decodedToken = null, seed = {} } = {}) {
       adminDb,
       normalizeUsername,
       serializeFirestoreDate: (value) => value?.toISOString?.() || value,
+      sanitizeSkills,
+      syncUserSkillUsage: async () => {},
       validateProfileData,
     },
   });
