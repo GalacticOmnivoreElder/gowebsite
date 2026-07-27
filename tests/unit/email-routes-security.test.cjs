@@ -119,6 +119,26 @@ test("email cron requires its bearer secret before processing jobs", async () =>
   assert.equal(processed, 1);
 });
 
+test("GitHub schedules the protected email worker without a Vercel Hobby cron", () => {
+  const workflow = fs.readFileSync(
+    ".github/workflows/email-outbox.yml",
+    "utf8"
+  );
+
+  assert.match(workflow, /cron:\s*["']\*\/5 \* \* \* \*["']/);
+  assert.match(
+    workflow,
+    /https:\/\/www\.galacticomnivore\.com\/api\/cron\/email-outbox/
+  );
+  assert.match(workflow, /\$\{\{\s*secrets\.CRON_SECRET\s*\}\}/);
+  assert.match(workflow, /Authorization: Bearer \$CRON_SECRET/);
+  assert.equal(
+    fs.existsSync("vercel.json"),
+    false,
+    "Vercel Hobby deployments must not register a frequent Vercel cron"
+  );
+});
+
 test("email, delivery, and newsletter Firestore collections are server-only", () => {
   const rules = fs.readFileSync("firestore.rules", "utf8");
   [

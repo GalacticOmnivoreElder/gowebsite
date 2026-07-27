@@ -166,10 +166,27 @@ automatically.
 
 ## Worker and scheduler
 
-`vercel.json` invokes `/api/cron/email-outbox` every five minutes. Vercel sends
-`Authorization: Bearer <CRON_SECRET>` when the project secret is configured.
-Confirm the selected Vercel plan supports this frequency. On another host,
-schedule an HTTPS GET or POST with the same bearer header.
+`.github/workflows/email-outbox.yml` invokes
+`https://www.galacticomnivore.com/api/cron/email-outbox` every five minutes.
+The workflow uses `Authorization: Bearer <CRON_SECRET>` and can also be run
+manually from the GitHub Actions page.
+
+Configure the same randomly generated value in both places:
+
+1. Vercel project environment variable `CRON_SECRET` for Production.
+2. GitHub repository > Settings > Secrets and variables > Actions >
+   Repository secrets > `CRON_SECRET`.
+
+Do not put the value in the workflow, repository, logs, or a URL. The workflow
+uses no repository permissions, validates that the secret exists, sends a POST
+request with timeouts and retries, and fails visibly on non-2xx responses.
+
+The scheduler is intentionally external because Vercel Hobby permits cron jobs
+only once per day; a five-minute entry in `vercel.json` prevents deployment.
+GitHub scheduled workflows run from the default branch and can occasionally be
+delayed during periods of high load. The durable outbox safely catches up on
+the next run. GitHub may disable scheduled workflows on inactive public
+repositories, so monitor the Actions page and re-enable the workflow if needed.
 
 The worker:
 
@@ -257,7 +274,8 @@ and cron retry.
 - [ ] Firebase verification/reset templates and continue URLs are tested.
 - [ ] Firestore rules, composite indexes, and TTL policies are deployed.
 - [ ] Resend Topics/Segment and signed webhook are configured.
-- [ ] `CRON_SECRET` is set and a cron invocation processes a staging job.
+- [ ] The same `CRON_SECRET` is set in Vercel Production and GitHub Actions.
+- [ ] The `Process email outbox` workflow succeeds manually and on schedule.
 - [ ] `ADMIN_NOTIFICATION_EMAILS` reaches monitored mailboxes.
 - [ ] Engagement tracking is off unless specifically approved.
 - [ ] A staging bounce suppresses future marketing.

@@ -1,0 +1,43 @@
+name: Process email outbox
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: production-email-outbox
+  cancel-in-progress: false
+
+jobs:
+  process-email-outbox:
+    name: Process queued email
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the protected production worker
+        env:
+          CRON_ENDPOINT: https://www.galacticomnivore.com/api/cron/email-outbox
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        shell: bash
+        run: |
+          if [[ -z "$CRON_SECRET" ]]; then
+            echo "::error::Add CRON_SECRET in GitHub Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          curl \
+            --request POST \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --retry-all-errors \
+            --connect-timeout 10 \
+            --max-time 240 \
+            --header "Authorization: Bearer $CRON_SECRET" \
+            --header "Accept: application/json" \
+            --header "User-Agent: github-actions-email-outbox/1.0" \
+            "$CRON_ENDPOINT"
