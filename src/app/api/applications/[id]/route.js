@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
+import {
+  enqueueEmailEventForUsers,
+  projectManagers,
+} from "@/lib/email";
 
 async function getUserFromToken(request) {
   return getRequestUser(request);
@@ -90,6 +94,7 @@ export async function PUT(request, { params }) {
     }
 
     const applicationData = applicationDoc.data();
+    let notificationProject = null;
 
     // Check permissions
     if (status === "cancelled") {
@@ -111,6 +116,7 @@ export async function PUT(request, { params }) {
       }
 
       const projectData = projectDoc.data();
+      notificationProject = projectData;
       if (
         projectData.owner !== user.uid &&
         !projectData.admins?.includes(user.uid) &&
@@ -213,6 +219,46 @@ export async function PUT(request, { params }) {
     // Enrich with user details
     const enrichedApplication =
       await enrichApplicationWithUserDetails(baseApplication);
+
+    if (!notificationProject) {
+      const projectDoc = await adminDb
+        .collection("projects")
+        .doc(applicationData.projectId)
+        .get();
+      if (projectDoc.exists) notificationProject = projectDoc.data();
+    }
+    if (["approved", "rejected"].includes(status)) {
+      await enqueueEmailEventForUsers({
+        type:
+          status === "approved"
+            ? "application.approved"
+            : "application.rejected",
+        eventId: id,
+        userIds: [applicationData.userId],
+        data: {
+          projectId: applicationData.projectId,
+          projectTitle:
+            applicationData.projectTitle ||
+            notificationProject?.title ||
+            "Project",
+        },
+      });
+    }
+    if (status === "cancelled" && notificationProject) {
+      await enqueueEmailEventForUsers({
+        type: "application.cancelled",
+        eventId: id,
+        userIds: projectManagers(notificationProject).filter(
+          (uid) => uid !== applicationData.userId
+        ),
+        data: {
+          projectId: applicationData.projectId,
+          projectTitle:
+            applicationData.projectTitle || notificationProject.title,
+          applicantName: enrichedApplication.username,
+        },
+      });
+    }
 
     return NextResponse.json(enrichedApplication);
   } catch (error) {

@@ -402,7 +402,7 @@ const CreateProjectContent = observer(() => {
       toast({
         title: "Project Created!",
         description:
-          "Your project has been submitted for review. It will appear publicly once approved by an admin.",
+          "Your project draft has been created. Submit it for review when it is ready for moderation.",
       });
 
       router.push(`/project/${newProject.id}`);

@@ -7,7 +7,12 @@ export async function GET() {
 
     const packages = [];
     snapshot.forEach((doc) => {
-      packages.push({ id: doc.id, ...doc.data() });
+      const data = doc.data();
+      // Packages created before publication states were introduced are public
+      // for backwards compatibility. New drafts must never leave this route.
+      if (data.status !== "draft") {
+        packages.push({ id: doc.id, ...data });
+      }
     });
 
     return Response.json(packages);

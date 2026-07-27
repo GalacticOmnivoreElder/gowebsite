@@ -12,6 +12,7 @@ import {
   signInWithPopup,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
 } from "firebase/auth";
 import {
   doc,
@@ -614,6 +615,11 @@ class Store {
       );
 
       await sendWelcomeEmail(userCredential.user, normalizedUsername);
+      await sendEmailVerification(userCredential.user, {
+        url: `${window.location.origin}/login?verified=1`,
+      }).catch((error) => {
+        console.error("Could not send verification email:", error);
+      });
 
       runInAction(() => {
         this.authStateVersion += 1;
@@ -706,6 +712,11 @@ class Store {
       await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
 
       await sendWelcomeEmail(userCredential.user, normalizedUsername);
+      await sendEmailVerification(userCredential.user, {
+        url: `${window.location.origin}/login?verified=1`,
+      }).catch((error) => {
+        console.error("Could not send verification email:", error);
+      });
 
       runInAction(() => {
         this.authStateVersion += 1;
@@ -798,12 +809,36 @@ class Store {
 
   async sendPasswordReset(email) {
     try {
-      await sendPasswordResetEmail(auth, email);
-      // Handle success, such as showing a message to the user
+      await sendPasswordResetEmail(auth, email, {
+        url: `${window.location.origin}/login?reset=1`,
+      });
     } catch (error) {
       console.error("Error sending password reset email:", error);
-      // Handle errors, such as invalid email, etc.
+      if (error?.code === "auth/user-not-found") return;
+      throw new Error("Password reset email could not be sent");
     }
+  }
+
+  async sendVerificationEmail() {
+    if (!auth.currentUser || auth.currentUser.emailVerified) {
+      return { skipped: true };
+    }
+    const idToken = await auth.currentUser.getIdToken();
+    const gate = await fetch("/api/auth/verification-resend", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    const gateResult = await gate.json().catch(() => ({}));
+    if (gateResult.alreadyVerified) return { skipped: true };
+    if (!gate.ok || gateResult.allowed !== true) {
+      const error = new Error("Please wait before requesting another email.");
+      error.code = "verification_rate_limited";
+      throw error;
+    }
+    await sendEmailVerification(auth.currentUser, {
+      url: `${window.location.origin}/login?verified=1`,
+    });
+    return { sent: true };
   }
 
   get isUserAnonymous() {

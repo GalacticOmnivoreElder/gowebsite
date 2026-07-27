@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function SettingsPage() {
   return (
@@ -64,6 +65,8 @@ export default function SettingsPage() {
                   name="email-new-subscription"
                   type="checkbox"
                   className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+                  checked
+                  readOnly
                   disabled
                 />
                 <label
@@ -79,6 +82,8 @@ export default function SettingsPage() {
                   name="email-subscription-cancelled"
                   type="checkbox"
                   className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+                  checked
+                  readOnly
                   disabled
                 />
                 <label
@@ -90,7 +95,13 @@ export default function SettingsPage() {
               </div>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Email notification settings will be enabled in a future update
+              Transactional and administrative notifications are active.
+              Recipients are configured with server environment variables;
+              delivery and consent health is available in the{" "}
+              <Link href="/admin/newsletter" className="underline">
+                newsletter dashboard
+              </Link>
+              .
             </p>
           </div>
 

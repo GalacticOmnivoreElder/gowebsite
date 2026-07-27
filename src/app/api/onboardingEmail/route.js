@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/auth-utils";
-import { getResend } from "@/lib/resend";
+import { enqueueEmailEvent } from "@/lib/email";
+import { hashValue } from "@/lib/email/utils";
 
 const MAX_FIELD_LENGTH = 200;
 const MAX_MESSAGE_LENGTH = 5000;
@@ -49,20 +50,20 @@ export async function POST(request) {
       );
     }
 
-    const result = await getResend().emails.send({
-      from: "Galactic Omnivore <onboarding@galacticomnivore.com>",
-      to: user.email,
-      subject: `Onboarding note: ${subject}`,
-      text: `Name: ${name}\nContact email: ${contactEmail}\n\n${message}`,
+    const result = await enqueueEmailEvent({
+      type: "admin.onboarding_note",
+      eventId: hashValue(
+        `${user.uid}:${name}:${contactEmail}:${subject}:${message}`
+      ),
+      userId: user.uid,
+      recipient: user.email,
+      data: { name, contactEmail, subject, message },
     });
-
-    if (result.error) {
-      throw new Error(result.error.message || "Resend rejected the email");
-    }
 
     return NextResponse.json({
       success: true,
-      emailId: result.data?.id || null,
+      queued: result.created,
+      emailJobId: result.id,
     });
   } catch (error) {
     console.error("Error sending onboarding note:", error);

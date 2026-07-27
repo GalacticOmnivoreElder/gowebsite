@@ -6,6 +6,11 @@ import {
   markWebhookProcessed,
 } from "@/lib/webhook-deduplication";
 import { resolvePolarProductTier } from "@/lib/polar";
+import {
+  cancelPendingEmailEvents,
+  enqueueAdminEmailEvent,
+  enqueueEmailEvent,
+} from "@/lib/email";
 
 const polarWebhookHandler = Webhooks({
   webhookSecret: process.env.POLAR_WEBHOOK_SECRET,
@@ -190,6 +195,13 @@ async function handleOrderPaid(orderData) {
   const amount = orderData.amount || orderData.total_amount || orderData.subtotal_amount || null;
 
   const tier = getMetadataTier(orderData);
+  const interval =
+    orderData.recurring_interval ||
+    orderData.recurringInterval ||
+    orderData.product?.recurring_interval ||
+    orderData.product?.recurringInterval ||
+    null;
+  const previousUserData = userDoc.data();
   const userUpdate = {
     activeMember: true,
     polarCustomerId: customerId,
@@ -233,6 +245,64 @@ async function handleOrderPaid(orderData) {
       },
       { merge: true }
     );
+
+  if (previousUserData.email) {
+    const firstActivation =
+      !previousUserData.activeMember || !previousUserData.lastOrderId;
+    await enqueueEmailEvent({
+      type: firstActivation
+        ? "billing.membership_activated"
+        : "billing.renewal_paid",
+      eventId: orderData.id,
+      userId: userDoc.id,
+      recipient: previousUserData.email,
+      data: {
+        displayName: previousUserData.username || previousUserData.name,
+        tier: tier || previousUserData.membershipTier || "member",
+        interval,
+        amount,
+        currency: orderData.currency,
+        subscriptionId,
+        endsAt: currentPeriodEnd,
+      },
+    });
+
+    if (currentPeriodEnd) {
+      const reminderDays = interval === "year" ? 7 : 3;
+      const scheduledFor = new Date(
+        currentPeriodEnd.getTime() - reminderDays * 24 * 60 * 60 * 1000
+      );
+      if (scheduledFor > new Date()) {
+        await enqueueEmailEvent({
+          type: "billing.renewal_reminder",
+          eventId: `${subscriptionId || orderData.id}-${currentPeriodEnd.toISOString()}`,
+          userId: userDoc.id,
+          recipient: previousUserData.email,
+          scheduledFor,
+          data: {
+            tier: tier || previousUserData.membershipTier || "member",
+            endsAt: currentPeriodEnd,
+          },
+        });
+      }
+    }
+  }
+  if (!previousUserData.activeMember) {
+    await enqueueAdminEmailEvent({
+      type: "admin.membership_activated",
+      eventId: orderData.id,
+      data: {
+        subject: "New Galactic Omnivore membership",
+        heading: "Membership activated",
+        message: `A ${tier || "member"} membership was activated.`,
+        ctaLabel: "Open subscriptions",
+        ctaUrl: `${
+          process.env.NEXT_PUBLIC_SITE_URL ||
+          "https://www.galacticomnivore.com"
+        }/admin/subscriptions`,
+      },
+    });
+  }
 }
 
 async function handleSubscriptionCreated(subscriptionData) {
@@ -277,7 +347,7 @@ async function handleSubscriptionUpdated(subscriptionData) {
     isPastDue ||
     (status === "canceled" && !!currentPeriodEnd);
 
-  await updateSubscriptionUser(subscriptionData, {
+  const result = await updateSubscriptionUser(subscriptionData, {
     activeMember: keepsAccess,
     subscriptionStatus: cancelAtPeriodEnd ? "canceled" : status,
     willRenew: !cancelAtPeriodEnd && status === "active",
@@ -287,37 +357,152 @@ async function handleSubscriptionUpdated(subscriptionData) {
         new Date()
       : null,
   });
+  const previous = result?.previousData;
+  const nextTier = getMetadataTier(subscriptionData);
+  if (previous?.email && isPastDue && previous.subscriptionStatus !== "past_due") {
+    await enqueueEmailEvent({
+      type: "billing.payment_failed",
+      eventId: `${getSubscriptionId(subscriptionData)}-${getCurrentPeriodEnd(subscriptionData)?.toISOString() || "current"}`,
+      userId: result.userId,
+      recipient: previous.email,
+      data: {
+        displayName: previous.username || previous.name,
+        endsAt: getCurrentPeriodEnd(subscriptionData),
+      },
+    });
+    await enqueueAdminEmailEvent({
+      type: "admin.payment_failure",
+      eventId: `${getSubscriptionId(subscriptionData)}-${getCurrentPeriodEnd(subscriptionData)?.toISOString() || "current"}`,
+      data: {
+        subject: "Membership payment is past due",
+        heading: "Payment failure",
+        message: "A member subscription entered the past-due grace period.",
+        ctaLabel: "Open subscriptions",
+      },
+    });
+  }
+  if (
+    previous?.email &&
+    nextTier &&
+    previous.membershipTier &&
+    nextTier !== previous.membershipTier
+  ) {
+    await enqueueEmailEvent({
+      type: "billing.plan_changed",
+      eventId: `${getSubscriptionId(subscriptionData)}-${nextTier}`,
+      userId: result.userId,
+      recipient: previous.email,
+      data: {
+        previousTier: previous.membershipTier,
+        tier: nextTier,
+        effectiveAt: new Date(),
+        endsAt: getCurrentPeriodEnd(subscriptionData),
+      },
+    });
+  }
 }
 
 async function handleSubscriptionUncanceled(subscriptionData) {
   // Member re-enabled auto-renew before the period ended.
-  await updateSubscriptionUser(subscriptionData, {
+  const result = await updateSubscriptionUser(subscriptionData, {
     activeMember: true,
     subscriptionStatus: "active",
     willRenew: true,
     canceledAt: null,
   });
+  await cancelPendingEmailEvents({
+    userId: result?.userId,
+    eventType: "billing.access_expiring",
+    reason: "subscription_reactivated",
+  });
+  if (result?.previousData?.email) {
+    await enqueueEmailEvent({
+      type: "billing.reactivated",
+      eventId: getSubscriptionId(subscriptionData),
+      userId: result.userId,
+      recipient: result.previousData.email,
+      data: { endsAt: getCurrentPeriodEnd(subscriptionData) },
+    });
+  }
 }
 
 async function handleSubscriptionCanceled(subscriptionData) {
   const currentPeriodEnd = getCurrentPeriodEnd(subscriptionData);
-  await updateSubscriptionUser(subscriptionData, {
+  const result = await updateSubscriptionUser(subscriptionData, {
     activeMember: !!currentPeriodEnd,
     subscriptionStatus: "canceled",
     willRenew: false,
     canceledAt: parsePolarDate(subscriptionData.canceled_at || subscriptionData.canceledAt) || new Date(),
     subscriptionEndsAt: currentPeriodEnd || new Date(),
   });
+  await cancelPendingEmailEvents({
+    userId: result?.userId,
+    eventType: "billing.renewal_reminder",
+    reason: "subscription_cancelled",
+  });
+  if (result?.previousData?.email) {
+    await enqueueEmailEvent({
+      type: "billing.cancellation_scheduled",
+      eventId: getSubscriptionId(subscriptionData),
+      userId: result.userId,
+      recipient: result.previousData.email,
+      data: { endsAt: currentPeriodEnd || new Date() },
+    });
+    const reminderAt = currentPeriodEnd
+      ? new Date(currentPeriodEnd.getTime() - 3 * 24 * 60 * 60 * 1000)
+      : null;
+    if (reminderAt && reminderAt > new Date()) {
+      await enqueueEmailEvent({
+        type: "billing.access_expiring",
+        eventId: `${getSubscriptionId(subscriptionData)}-${currentPeriodEnd.toISOString()}`,
+        userId: result.userId,
+        recipient: result.previousData.email,
+        scheduledFor: reminderAt,
+        data: { endsAt: currentPeriodEnd },
+      });
+    }
+  }
+  await enqueueAdminEmailEvent({
+    type: "admin.subscription_cancelled",
+    eventId: getSubscriptionId(subscriptionData),
+    data: {
+      subject: "Membership cancellation scheduled",
+      heading: "Subscription cancelled",
+      message: `A membership cancellation was scheduled${currentPeriodEnd ? ` through ${currentPeriodEnd.toISOString()}` : ""}.`,
+      ctaLabel: "Open subscriptions",
+    },
+  });
 }
 
 async function handleSubscriptionRevoked(subscriptionData) {
-  await updateSubscriptionUser(subscriptionData, {
+  const result = await updateSubscriptionUser(subscriptionData, {
     activeMember: false,
     subscriptionStatus: "revoked",
     willRenew: false,
     canceledAt: new Date(),
     subscriptionEndsAt: new Date(),
   });
+  await Promise.all([
+    cancelPendingEmailEvents({
+      userId: result?.userId,
+      eventType: "billing.renewal_reminder",
+      reason: "subscription_revoked",
+    }),
+    cancelPendingEmailEvents({
+      userId: result?.userId,
+      eventType: "billing.access_expiring",
+      reason: "subscription_revoked",
+    }),
+  ]);
+  if (result?.previousData?.email) {
+    await enqueueEmailEvent({
+      type: "billing.access_revoked",
+      eventId: getSubscriptionId(subscriptionData),
+      userId: result.userId,
+      recipient: result.previousData.email,
+      data: {},
+    });
+  }
 }
 
 async function handleOrderUpdated(orderData) {
@@ -348,8 +533,8 @@ async function handleOrderRefunded(orderData) {
   const isFullRefund =
     refundedAmount == null || total == null || refundedAmount >= total;
 
+  const userDoc = await findUserForPolarData(orderData);
   if (isFullRefund) {
-    const userDoc = await findUserForPolarData(orderData);
     if (userDoc) {
       await userDoc.ref.update({
         activeMember: false,
@@ -359,6 +544,34 @@ async function handleOrderRefunded(orderData) {
         webhookProcessedAt: new Date(),
       });
     }
+  }
+  if (userDoc) {
+    const userData = userDoc.data();
+    if (userData.email) {
+      await enqueueEmailEvent({
+        type: "billing.refund_processed",
+        eventId: orderData.id,
+        userId: userDoc.id,
+        recipient: userData.email,
+        data: {
+          isFullRefund,
+          amount: refundedAmount,
+          currency: orderData.currency,
+        },
+      });
+    }
+  }
+  if (isFullRefund) {
+    await enqueueAdminEmailEvent({
+      type: "admin.refund_processed",
+      eventId: orderData.id,
+      data: {
+        subject: "Full Polar refund processed",
+        heading: "Full refund processed",
+        message: "A full Polar refund was processed and membership access ended.",
+        ctaLabel: "Open subscriptions",
+      },
+    });
   }
 }
 
@@ -389,6 +602,7 @@ async function updateSubscriptionUser(subscriptionData, state, options = {}) {
     throw new Error(`No user found for Polar subscription ${subscriptionData?.id}`);
   }
 
+  const previousData = userDoc.data();
   const currentPeriodEnd =
     state.subscriptionEndsAt || getCurrentPeriodEnd(subscriptionData);
   const subscriptionId = getSubscriptionId(subscriptionData);
@@ -412,8 +626,8 @@ async function updateSubscriptionUser(subscriptionData, state, options = {}) {
     userId: userDoc.id,
     subscriptionId,
     eventType: state.subscriptionStatus,
-    eventData: subscriptionData,
     processedAt: new Date(),
     accessEndsAt: updateData.subscriptionEndsAt || null,
   });
+  return { userId: userDoc.id, previousData, updateData };
 }

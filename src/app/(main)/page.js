@@ -10,6 +10,7 @@ import { FullCTA } from "@/components/landing/FullCTA";
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
 import { LandingOpenHours } from "@/components/landing/LandingOpenHours";
 import { LandingDiscordJoin } from "@/components/landing/LandingDiscordJoin";
+import { NewsletterSignup } from "@/components/newsletter/NewsletterSignup";
 
 import background1Img from "../../assets/background1.png";
 import heroImg from "../../assets/HERO.png";
@@ -238,28 +239,6 @@ const SocialFooter = () => {
   );
 };
 
-const Newsletter = () => {
-  return (
-    <div
-      className={`flex justify-center flex-col p-4 pt-16 bg-[${magenta}] text-white`}
-    >
-      <div className="text-4xl text-center mb-4">NEWSLETTER</div>
-      <div className="text-center lg:mx-[10%]">
-        Want exclusive insights, the latest updates, and new opportunities from
-        the Galactic Omnivore community?
-      </div>
-      <a
-        href="https://forms.gle/QGDQWhbRQGfc8YaY9"
-        className="w-full flex justify-center"
-      >
-        <Button className="bg-white text-black p-4 mt-4 w-full lg:w-[200px] rounded-[0px]">
-          SUBSCRIBE!
-        </Button>
-      </a>
-    </div>
-  );
-};
-
 const About = () => {
   return (
     <div className="relative lg:my-16">
@@ -485,6 +464,12 @@ const HomePage = () => {
       <section className="relative">
         <div id="openhours" className="absolute top-[-80px]"></div>
         <LandingOpenHours />
+      </section>
+
+      <section id="newsletter" className="bg-primary text-white px-4 py-16">
+        <div className="container mx-auto">
+          <NewsletterSignup source="homepage" />
+        </div>
       </section>
 
       <FullCTA />

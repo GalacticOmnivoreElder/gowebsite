@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
 import { canViewProject } from "@/lib/project-utils";
+import {
+  enqueueEmailEvent,
+  enqueueEmailEventForUsers,
+  projectManagers,
+} from "@/lib/email";
 
 async function getUserFromToken(request) {
   return getRequestUser(request);
@@ -191,6 +196,33 @@ export async function POST(request) {
     // Enrich with user details before returning
     const enrichedApplication =
       await enrichApplicationWithUserDetails(baseApplication);
+
+    const applicantEmail = user.email || enrichedApplication.userEmail;
+    if (applicantEmail) {
+      await enqueueEmailEvent({
+        type: "application.submitted",
+        eventId: applicationRef.id,
+        userId: user.uid,
+        recipient: applicantEmail,
+        data: {
+          projectId,
+          projectTitle: projectData.title,
+          roleAppliedFor: roleAppliedFor || null,
+          submittedAt: applicationData.createdAt,
+        },
+      });
+    }
+    await enqueueEmailEventForUsers({
+      type: "application.received",
+      eventId: applicationRef.id,
+      userIds: projectManagers(projectData).filter((uid) => uid !== user.uid),
+      data: {
+        projectId,
+        projectTitle: projectData.title,
+        applicantName: enrichedApplication.username,
+        roleAppliedFor: roleAppliedFor || null,
+      },
+    });
 
     return NextResponse.json(enrichedApplication);
   } catch (error) {

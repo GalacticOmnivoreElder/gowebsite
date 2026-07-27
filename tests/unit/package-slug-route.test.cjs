@@ -142,3 +142,25 @@ test("package detail route grants access to active members, admins, and legacy u
     },
   ]);
 });
+
+test("package drafts are private to platform admins", async () => {
+  const draft = { ...monthlyPackage(), status: "draft" };
+  let route = loadRoute({ packageData: draft });
+  let response = await route.GET(createRequest(), {
+    params: Promise.resolve({ slug: "starter-pack" }),
+  });
+  assert.equal(response.status, 404);
+
+  route = loadRoute({
+    packageData: draft,
+    user: {
+      admin: true,
+      userData: { activeMember: false, unlockedPackages: [] },
+    },
+  });
+  response = await route.GET(createRequest(), {
+    params: Promise.resolve({ slug: "starter-pack" }),
+  });
+  assert.equal(response.status, 200);
+  assert.equal(response.body.hasAccess, true);
+});

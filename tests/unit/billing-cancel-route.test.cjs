@@ -62,6 +62,8 @@ function loadRoute({ fetchImpl, tokenUid = "user-1", userData } = {}) {
         fetch: fetchImpl || (async () => ({ ok: true, status: 200, json: async () => ({}) })),
         getPolarApiBase: () => "https://polar.test/v1",
         getTokenFromRequest: (request) => request.headers.get("authorization")?.replace("Bearer ", "") || null,
+        cancelPendingEmailEvents: async () => 0,
+        enqueueEmailEvent: async () => ({ created: true, id: "email-job" }),
         verifyToken: async () => ({ uid: tokenUid }),
       },
     }

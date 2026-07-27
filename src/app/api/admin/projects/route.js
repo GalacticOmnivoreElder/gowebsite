@@ -1,5 +1,12 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
+import {
+  enqueueAdminEmailEvent,
+  enqueueEmailEventForUsers,
+  getEmailRecipientForUser,
+  projectManagers,
+  projectParticipants,
+} from "@/lib/email";
 
 export async function GET(request) {
   try {
@@ -186,6 +193,11 @@ export async function PUT(request) {
 
     // Update project
     const projectRef = adminDb.collection("projects").doc(projectId);
+    const previousSnapshot = await projectRef.get();
+    if (!previousSnapshot.exists) {
+      return Response.json({ error: "Project not found" }, { status: 404 });
+    }
+    const previousProject = previousSnapshot.data();
     await projectRef.update(updateData);
 
     // Get updated project
@@ -194,6 +206,48 @@ export async function PUT(request) {
       id: updatedDoc.id,
       ...updatedDoc.data(),
     };
+
+    if (status !== undefined && status !== previousProject.status) {
+      await enqueueEmailEventForUsers({
+        type: "project.status_changed",
+        eventId: `${projectId}-${previousProject.status}-${status}-${updateData.updatedAt.toISOString()}`,
+        userIds: ["live", "completed"].includes(status)
+          ? projectParticipants(updatedProject)
+          : projectManagers(updatedProject),
+        data: {
+          projectId,
+          projectTitle: updatedProject.title,
+          status,
+          adminNotes: adminNotes || null,
+        },
+      });
+      if (status === "pending") {
+        const owner = await getEmailRecipientForUser(updatedProject.owner);
+        await enqueueAdminEmailEvent({
+          type: "admin.project_review_required",
+          eventId: `${projectId}-${updateData.updatedAt.toISOString()}`,
+          data: {
+            projectId,
+            projectTitle: updatedProject.title,
+            ownerName: owner?.displayName || "a creator",
+          },
+        });
+      }
+    }
+    if (
+      typeof archived === "boolean" &&
+      archived !== (previousProject.archived === true)
+    ) {
+      await enqueueEmailEventForUsers({
+        type: archived ? "project.archived" : "project.restored",
+        eventId: `${projectId}-${archived ? "archived" : "restored"}-${updateData.updatedAt.toISOString()}`,
+        userIds: projectParticipants(updatedProject),
+        data: {
+          projectId,
+          projectTitle: updatedProject.title,
+        },
+      });
+    }
 
     return Response.json(updatedProject);
   } catch (error) {

@@ -90,7 +90,9 @@ export const SignupForm = observer(() => {
         await signupWithEmail(email, password, username);
       }
       setIsLoading(false);
-      router.push(redirectTo); // Redirect after successful operation
+      router.push(
+        `/verify-email?redirect=${encodeURIComponent(redirectTo)}`
+      );
     } catch (error) {
       // Handle errors
       setIsLoading(false);

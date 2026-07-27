@@ -60,9 +60,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Public catalog the client renders directly; only admins edit it.
+    // Legacy packages without a publication state remain public. New drafts
+    // are available only to admins and must never appear in public list reads.
     match /packages/{doc} {
-      allow read: if true;
+      allow read: if isAdmin()
+        || !resource.data.keys().hasAny(['status'])
+        || resource.data.status == 'published';
       allow write: if isAdmin();
     }
 
@@ -81,6 +84,14 @@ service cloud.firestore {
     match /orders/{doc}              { allow read, write: if false; }
     match /subscription_events/{doc} { allow read, write: if false; }
     match /processed_webhooks/{doc}  { allow read, write: if false; }
+    match /email_outbox/{doc}        { allow read, write: if false; }
+    match /email_delivery_events/{doc} { allow read, write: if false; }
+    match /email_suppressions/{doc}   { allow read, write: if false; }
+    match /processed_email_webhooks/{doc} { allow read, write: if false; }
+    match /newsletter_subscribers/{doc} { allow read, write: if false; }
+    match /newsletter_events/{doc}   { allow read, write: if false; }
+    match /newsletter_rate_limits/{doc} { allow read, write: if false; }
+    match /email_action_rate_limits/{doc} { allow read, write: if false; }
     // GO 2.0 onboarding / profile / CV — all go through /api (Admin SDK).
     match /user_profiles/{doc}       { allow read, write: if false; }
     match /onboarding_sessions/{doc} { allow read, write: if false; }

@@ -111,6 +111,7 @@ function loadRoute({ processed = new Set(), seed = {}, webhookThrows } = {}) {
   const captured = {};
   const adminDb = createAdminDb(seed);
   const marks = [];
+  const emailEvents = [];
 
   const route = loadSourceModule(
     "src/app/api/subscription/webhook/route.js",
@@ -128,6 +129,15 @@ function loadRoute({ processed = new Set(), seed = {}, webhookThrows } = {}) {
           };
         },
         adminDb,
+        cancelPendingEmailEvents: async () => 0,
+        enqueueAdminEmailEvent: async (event) => {
+          emailEvents.push(event);
+          return [];
+        },
+        enqueueEmailEvent: async (event) => {
+          emailEvents.push(event);
+          return { created: true, id: "email-job" };
+        },
         isWebhookProcessed: async (eventId, eventType) =>
           processed.has(`${eventType}:${eventId}`),
         markWebhookProcessed: async (eventId, eventType, payload) => {
@@ -144,7 +154,7 @@ function loadRoute({ processed = new Set(), seed = {}, webhookThrows } = {}) {
     }
   );
 
-  return { ...route, adminDb, captured, marks, processed };
+  return { ...route, adminDb, captured, emailEvents, marks, processed };
 }
 
 test("webhook route ignores unknown Polar event types without retrying", async () => {
@@ -217,6 +227,44 @@ test("order.paid derives Business creator access from the Polar product", async 
 
   assert.equal(route.adminDb.docs.users["user-1"].activeMember, true);
   assert.equal(route.adminDb.docs.users["user-1"].membershipTier, "company");
+});
+
+test("order.paid and subscription.active produce one activation email", async () => {
+  const route = loadRoute({
+    seed: {
+      users: {
+        "user-1": { activeMember: false, email: "member@example.com" },
+      },
+    },
+  });
+
+  await route.captured.onOrderPaid({
+    data: {
+      customer: { email: "member@example.com", id: "cus_123" },
+      id: "order_1",
+      metadata: { uid: "user-1" },
+      status: "paid",
+      subscription_id: "sub_1",
+    },
+    id: "evt_paid",
+    type: "order.paid",
+  });
+  await route.captured.onSubscriptionActive({
+    data: {
+      customer_id: "cus_123",
+      id: "sub_1",
+      status: "active",
+    },
+    id: "evt_active_after_paid",
+    type: "subscription.active",
+  });
+
+  assert.equal(
+    route.emailEvents.filter(
+      (event) => event.type === "billing.membership_activated"
+    ).length,
+    1
+  );
 });
 
 test("processed webhook events are skipped", async () => {

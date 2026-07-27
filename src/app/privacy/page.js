@@ -2,7 +2,7 @@ import LegalPageLayout from "@/components/legal/LegalPageLayout";
 
 export default function PrivacyPage() {
   return (
-    <LegalPageLayout title="Privacy Policy" lastUpdated="March 10, 2024">
+    <LegalPageLayout title="Privacy Policy" lastUpdated="July 27, 2026">
       <h2>1. Information We Collect</h2>
       <p>We collect information that you provide directly to us, including:</p>
       <ul>
@@ -10,6 +10,10 @@ export default function PrivacyPage() {
         <li>Payment information</li>
         <li>Usage data and preferences</li>
         <li>Communications with our support team</li>
+        <li>
+          Newsletter consent records, topic choices, signup source, and
+          subscription status
+        </li>
       </ul>
 
       <h2>2. How We Use Your Information</h2>
@@ -20,6 +24,11 @@ export default function PrivacyPage() {
         <li>Send you important updates and notifications</li>
         <li>Improve our services</li>
         <li>Respond to your requests and support needs</li>
+        <li>
+          Deliver newsletters only when you have given specific consent, and
+          maintain suppression records so an unsubscribed address is not
+          accidentally re-added
+        </li>
       </ul>
 
       <h2>3. Information Sharing</h2>
@@ -32,6 +41,12 @@ export default function PrivacyPage() {
         <li>Legal authorities when required by law</li>
         <li>Third parties with your explicit consent</li>
       </ul>
+      <p>
+        These providers include Firebase for authentication and application
+        data, Polar for membership billing, and Resend for transactional and
+        newsletter delivery. Each provider processes only the information
+        needed for its role.
+      </p>
 
       <h2>4. Data Security</h2>
       <p>
@@ -46,7 +61,55 @@ export default function PrivacyPage() {
         <li>Correct inaccurate information</li>
         <li>Request deletion of your information</li>
         <li>Opt-out of marketing communications</li>
+        <li>Withdraw newsletter consent at any time without affecting your account</li>
+        <li>Request deletion or anonymization where applicable</li>
       </ul>
+
+      <h2>6. Newsletter Consent and Unsubscribe</h2>
+      <p>
+        Newsletter signup is optional and separate from account creation,
+        membership purchases, and acceptance of our Terms. We use double
+        opt-in, which means an address is not activated until the confirmation
+        link is used. We record the consent wording and version, policy
+        version, source, and relevant timestamps so consent can be audited.
+      </p>
+      <p>
+        Every newsletter includes preference and unsubscribe options that do
+        not require an account login. Unsubscribing stops future marketing but
+        does not stop essential account, security, service, or billing
+        messages. We retain a minimal suppression record to prevent accidental
+        re-import. A new explicit double opt-in is required to resubscribe.
+      </p>
+
+      <h2>7. Delivery and Engagement Data</h2>
+      <p>
+        We process delivery events such as sent, delivered, delayed, failed,
+        bounced, complained, and suppressed to operate the service and protect
+        sender reputation. Bounces and complaints immediately suppress future
+        marketing. Open and click events are optional and are stored only when
+        engagement tracking is explicitly enabled; these signals are
+        approximate and are never used to make account, access, or billing
+        decisions.
+      </p>
+
+      <h2>8. Retention</h2>
+      <p>
+        Email delivery and outbox records are scheduled for deletion after
+        approximately 90 days, webhook deduplication records after 30 days, and
+        newsletter consent audit events after approximately three years.
+        Active consent and minimal unsubscribe, bounce, complaint, or
+        suppression records may be retained while needed to honor your choices
+        and legal obligations. Support or legal requirements may require a
+        different period.
+      </p>
+
+      <h2>9. Contact and Review</h2>
+      <p>
+        Contact us through the website to exercise your rights or ask about
+        this processing. This policy wording should be reviewed by Galactic
+        Omnivore&apos;s business or legal owner before production launch and
+        is not presented as legal advice.
+      </p>
     </LegalPageLayout>
   );
 }

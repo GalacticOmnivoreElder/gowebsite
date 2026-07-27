@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import MobxStore from "@/mobx";
 import { Facebook, Instagram, Linkedin, Youtube, Twitch } from "lucide-react";
 import Image from "next/image";
 import discordImg from "@/assets/discord.png";
+import { NewsletterSignup } from "@/components/newsletter/NewsletterSignup";
 
 // Custom X (Twitter) icon component
 const TwitterIcon = () => (
@@ -93,9 +92,9 @@ export default function Footer() {
               and creative collaboration.
             </p>
             <div className="flex gap-4 mt-4">
-              {socialMedia.map((social, index) => (
+              {socialMedia.map((social) => (
                 <Link
-                  key={index}
+                  key={social.name}
                   href={social.src}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -177,6 +176,10 @@ export default function Footer() {
               </li>
             </ul>
           </div>
+        </div>
+
+        <div className="border-t mt-8 pt-8">
+          <NewsletterSignup source="footer" compact />
         </div>
 
         <div className="border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">

@@ -73,6 +73,7 @@ export default function PackageForm({ initialData, onSubmit, onCancel }) {
     theme: "",
     coverImage: "",
     brandColor: "#32671d", // Default brand color
+    status: "draft",
     assets: [
       {
         type: "music",
@@ -182,6 +183,28 @@ export default function PackageForm({ initialData, onSubmit, onCancel }) {
               placeholder="e.g., Sakura February 2024"
               required
             />
+          </div>
+
+          <div>
+            <Label htmlFor="status">Publication status</Label>
+            <Select
+              value={formData.status || "draft"}
+              onValueChange={(status) =>
+                setFormData((previous) => ({ ...previous, status }))
+              }
+            >
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Choose status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Publishing for the first time queues one member notification.
+              Later edits do not send another alert.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

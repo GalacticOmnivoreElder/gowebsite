@@ -90,6 +90,7 @@ function createDb(seed = {}) {
 
 function loadRoute({ seed = {}, user = null } = {}) {
   const adminDb = createDb(seed);
+  const emailEvents = [];
   const route = loadSourceModule(
     "src/app/api/applications/[id]/route.js",
     ["PUT"],
@@ -106,12 +107,19 @@ function loadRoute({ seed = {}, user = null } = {}) {
           }),
         },
         adminDb,
+        enqueueEmailEventForUsers: async (event) => {
+          emailEvents.push(event);
+          return [];
+        },
+        projectManagers: (project) => [
+          ...new Set([project?.owner, ...(project?.admins || [])].filter(Boolean)),
+        ],
         getRequestUser: async () => user,
       },
     }
   );
 
-  return { ...route, adminDb };
+  return { ...route, adminDb, emailEvents };
 }
 
 test("application update requires auth and a valid status", async () => {
@@ -213,4 +221,6 @@ test("project owner can approve an application and add applicant to team", async
   assert.deepEqual(plain(route.adminDb.docs.users["applicant-1"].teamMemberOfProjects), [
     "project-1",
   ]);
+  assert.equal(route.emailEvents[0].type, "application.approved");
+  assert.deepEqual(plain(route.emailEvents[0].userIds), ["applicant-1"]);
 });

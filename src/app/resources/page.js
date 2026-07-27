@@ -45,7 +45,9 @@ async function getResources() {
       return [];
     }
 
-    return resourcesSnapshot.docs.map((doc) => {
+    return resourcesSnapshot.docs
+      .filter((doc) => doc.data().status !== "draft")
+      .map((doc) => {
       const data = doc.data();
       const assets =
         data.assets?.map((asset) => ({
@@ -70,7 +72,7 @@ async function getResources() {
         brandColor: data.brandColor,
         shortDescription: data.shortDescription,
       };
-    });
+      });
   } catch (error) {
     console.error("Error fetching resources from Firestore:", error);
     return [];

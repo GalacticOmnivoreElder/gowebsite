@@ -122,6 +122,7 @@ function createDb(seed = {}) {
 
 function loadRoute({ seed = {}, user = null } = {}) {
   const adminDb = createDb(seed);
+  const emailEvents = [];
   const route = loadSourceModule(
     "src/app/api/projects/[id]/route.js",
     ["PUT", "DELETE"],
@@ -142,12 +143,37 @@ function loadRoute({ seed = {}, user = null } = {}) {
         },
         adminAuth: {},
         adminDb,
+        enqueueAdminEmailEvent: async (event) => {
+          emailEvents.push(event);
+          return [];
+        },
+        enqueueEmailEventForUsers: async (event) => {
+          emailEvents.push(event);
+          return [];
+        },
+        getEmailRecipientForUser: async (userId) => ({
+          userId,
+          email: `${userId}@example.com`,
+          displayName: userId,
+        }),
+        projectManagers: (project) => [
+          ...new Set([project?.owner, ...(project?.admins || [])].filter(Boolean)),
+        ],
+        projectParticipants: (project) => [
+          ...new Set(
+            [
+              project?.owner,
+              ...(project?.admins || []),
+              ...(project?.teamMembers || []),
+            ].filter(Boolean)
+          ),
+        ],
         getRequestUser: async () => user,
       },
     }
   );
 
-  return { ...route, adminDb };
+  return { ...route, adminDb, emailEvents };
 }
 
 function existingProject(overrides = {}) {
@@ -233,6 +259,8 @@ test("platform admins can update status and numeric project fields", async () =>
   assert.equal(response.body.duration, 45);
   assert.equal(response.body.ignoredField, undefined);
   assert.equal(route.adminDb.docs.projects["project-1"].title, "Updated Prototype");
+  assert.equal(route.emailEvents[0].type, "project.status_changed");
+  assert.equal(route.emailEvents[0].data.status, "hiring");
 });
 
 test("project owners can remove an existing budget", async () => {

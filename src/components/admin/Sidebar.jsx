@@ -14,6 +14,7 @@ import {
   Package,
   FolderOpen,
   Tags,
+  Mail,
 } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase";
@@ -38,6 +39,7 @@ export function Sidebar() {
     { name: "Projects", href: "/admin/projects", icon: FolderOpen },
     { name: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
     { name: "Packages", href: "/admin/packages", icon: Package },
+    { name: "Newsletter", href: "/admin/newsletter", icon: Mail },
     { name: "Skills", href: "/admin/skills", icon: Tags },
     { name: "Analytics", href: "/admin/analytics", icon: BarChart4 },
     { name: "Settings", href: "/admin/settings", icon: Settings },

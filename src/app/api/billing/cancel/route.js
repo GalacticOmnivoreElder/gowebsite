@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
 import { createPolarCustomerSession, getPolarApiBase } from "@/lib/polar";
+import {
+  cancelPendingEmailEvents,
+  enqueueEmailEvent,
+} from "@/lib/email";
 
 function parsePolarDate(value) {
   if (!value) return null;
@@ -101,6 +105,7 @@ export async function POST(request) {
     // Update user document regardless of Polar response (for local tracking)
     const updateData = {
       subscriptionStatus: "canceled",
+      willRenew: false,
       canceledAt: new Date(),
       updatedAt: new Date(),
     };
@@ -118,6 +123,33 @@ export async function POST(request) {
     }
 
     await userDoc.ref.update(updateData);
+    await cancelPendingEmailEvents({
+      userId: decodedToken.uid,
+      eventType: "billing.renewal_reminder",
+      reason: "subscription_cancelled",
+    });
+    if (userData.email) {
+      await enqueueEmailEvent({
+        type: "billing.cancellation_scheduled",
+        eventId: userData.subscriptionId,
+        userId: decodedToken.uid,
+        recipient: userData.email,
+        data: { endsAt: updateData.subscriptionEndsAt },
+      });
+      const reminderAt = new Date(
+        updateData.subscriptionEndsAt.getTime() - 3 * 24 * 60 * 60 * 1000
+      );
+      if (reminderAt > new Date()) {
+        await enqueueEmailEvent({
+          type: "billing.access_expiring",
+          eventId: `${userData.subscriptionId}-${updateData.subscriptionEndsAt.toISOString()}`,
+          userId: decodedToken.uid,
+          recipient: userData.email,
+          scheduledFor: reminderAt,
+          data: { endsAt: updateData.subscriptionEndsAt },
+        });
+      }
+    }
 
     console.log("✅ User document updated with cancellation");
 

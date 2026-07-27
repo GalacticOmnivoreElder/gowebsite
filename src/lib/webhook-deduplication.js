@@ -23,12 +23,13 @@ export async function markWebhookProcessed(webhookId, eventType, eventData) {
         webhookId,
         eventType,
         processedAt: new Date(),
-        eventData: eventData,
+        // Retain only the subject identifier required for support/debugging.
+        // Full Polar payloads may contain customer and payment information.
+        subjectId: eventData?.data?.id || eventData?.id || null,
         // Auto-delete after 30 days to keep collection clean
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       });
 
-    console.log(`✅ Marked webhook ${webhookId} as processed`);
   } catch (error) {
     console.error("Error marking webhook as processed:", error);
   }

@@ -9,12 +9,19 @@ function plain(value) {
 
 function loadRoute(path, exports, { resendResult, user } = {}) {
   const sends = [];
+  const jobs = [];
   const route = loadSourceModule(path, exports, {
     stripImports: true,
     sandbox: {
       console: { ...console, error() {} },
       NextResponse,
+      process: { env: { ...process.env, VERCEL_ENV: "production" } },
       getRequestUser: async () => user || null,
+      hashValue: () => "event-hash",
+      enqueueEmailEvent: async (event) => {
+        jobs.push(event);
+        return { created: true, id: "email-job-1" };
+      },
       getResend: () => ({
         emails: {
           async send(payload) {
@@ -26,7 +33,7 @@ function loadRoute(path, exports, { resendResult, user } = {}) {
     },
   });
 
-  return { ...route, sends };
+  return { ...route, jobs, sends };
 }
 
 test("email diagnostics require a platform admin", async () => {
@@ -86,6 +93,7 @@ test("onboarding email utility cannot relay mail to a supplied address", async (
   );
 
   assert.equal(response.status, 200);
-  assert.equal(route.sends[0].to, "admin@example.com");
-  assert.match(route.sends[0].text, /external@example.com/);
+  assert.equal(route.jobs[0].recipient, "admin@example.com");
+  assert.equal(route.jobs[0].data.contactEmail, "external@example.com");
+  assert.equal(route.jobs[0].type, "admin.onboarding_note");
 });

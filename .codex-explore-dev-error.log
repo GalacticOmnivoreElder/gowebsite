@@ -1085,3 +1085,1089 @@ Import trace for requested module:
 ./src/components/profile/ProfileEditor.jsx
 ./src/app/(main)/profile/page.js
 <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\server-development\7.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\server-development\7.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\server-development\2.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\server-development\2.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\server-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\server-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\2.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\2.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+GET /api/skills failed; using static catalogue Error: Firebase Admin: set FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY (or FIREBASE_PRIVATE_KEY_BASE64), or FIREBASE_SERVICE_ACCOUNT_PATH / FIREBASE_SERVICE_ACCOUNT_JSON, or GOOGLE_APPLICATION_CREDENTIALS
+    at getAdminCredential (src\lib\firebase-admin.js:162:8)
+    at getFirebaseAdminApp (src\lib\firebase-admin.js:179:36)
+    at eval (src\lib\firebase-admin.js:203:15)
+    at Object.get (src\lib\firebase-admin.js:189:21)
+    at ensureDefaultSkillCatalog (src\lib\skill-catalog.js:46:29)
+    at getSkillCatalog (src\lib\skill-catalog.js:66:8)
+    at getPopularSkills (src\lib\skill-catalog.js:78:23)
+    at GET (src\app\api\skills\route.js:29:31)
+  160 |   }
+  161 |
+> 162 |   throw new Error(
+      |        ^
+  163 |     "Firebase Admin: set FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY (or FIREBASE_PRIVATE_KEY_BASE64), or FIREBASE_SERVICE_ACCOUNT_PATH / FIREBASE_SERVICE_ACCOUNT_JSON, or GOOGLE_APPLICATION_CREDENTIALS"
+  164 |   );
+  165 | }
+Error fetching category ID: TypeError: Failed to parse URL from undefined/categories?slug=blog
+    at getCategoryId (src\app\api\wordpress\route.js:110:27)
+    at GET (src\app\api\wordpress\route.js:22:35)
+  108 |     // console.log(`Category URL: ${categoryUrl}`);
+  109 |
+> 110 |     const response = await fetch(categoryUrl);
+      |                           ^
+  111 |
+  112 |     if (!response.ok) {
+  113 |       const errorText = await response.text(); {
+  [cause]: TypeError: Invalid URL
+      at getCategoryId (src\app\api\wordpress\route.js:110:27)
+      at GET (src\app\api\wordpress\route.js:22:35)
+    108 |     // console.log(`Category URL: ${categoryUrl}`);
+    109 |
+  > 110 |     const response = await fetch(categoryUrl);
+        |                           ^
+    111 |
+    112 |     if (!response.ok) {
+    113 |       const errorText = await response.text(); {
+    code: 'ERR_INVALID_URL',
+    input: 'undefined/categories?slug=blog'
+  }
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\resources\page.js:1293:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\resources\page.js:1296:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/resources'
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\education\page.js:1115:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\education\page.js:1118:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/education'
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\projects\page.js:1148:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\projects\page.js:1151:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/projects'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\pages\_document.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\pages\_document.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\pages\_document.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\blog\page.js:1087:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\blog\page.js:1090:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/blog'
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\games\page.js:1093:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\games\page.js:1096:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/games'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\pages\_document.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\pages\_document.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\resources\page.js:1293:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\resources\page.js:1296:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/resources'
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\education\page.js:1115:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\education\page.js:1118:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/education'
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\projects\page.js:1148:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\projects\page.js:1151:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/projects'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\pages\_document.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\pages\_document.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\pages\_document.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\blog\page.js:1087:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\blog\page.js:1090:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/blog'
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\games\page.js:1093:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\games\page.js:1096:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/games'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\pages\_document.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\pages\_document.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\about\page.js:1072:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\about\page.js:1075:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/about'
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\membership\page.js:1182:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\membership\page.js:1185:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/membership'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1098:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1101:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/login'
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\signup\page.js:1098:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\signup\page.js:1101:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/signup'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\about\page.js:1072:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\about\page.js:1075:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/about'
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\membership\page.js:1182:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\membership\page.js:1185:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/membership'
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1098:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1101:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/login'
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\signup\page.js:1098:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\signup\page.js:1101:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/signup'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1098:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1101:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/login'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1098:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1101:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/login'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1098:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1101:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/login'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1098:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1101:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/login'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}
+ ⨯ Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1098:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1101:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/login'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\server\vendor-chunks\@firebase.js'
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1098:47)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\app\login\page.js:1101:3) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\server\\vendor-chunks\\@firebase.js',
+  page: '/login'
+}
+ ⨯ Error: Cannot find module './8548.js'
+Require stack:
+- G:\GO Website\gowebsite\.next\server\webpack-runtime.js
+- G:\GO Website\gowebsite\.next\server\app\about\page.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\require.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\load-components.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\utils.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\options.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\swc\index.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\parse-module.js
+- G:\GO Website\gowebsite\node_modules\next\dist\build\analysis\get-page-static-info.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\router-server.js
+- G:\GO Website\gowebsite\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:277:28)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:185:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:184:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (G:\GO Website\gowebsite\.next\server\webpack-runtime.js:236:22)
+    at <unknown> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:345)
+    at Object.<anonymous> (G:\GO Website\gowebsite\.next\server\pages\_document.js:1:388) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'G:\GO Website\gowebsite\.next\fallback-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'G:\\GO Website\\gowebsite\\.next\\fallback-build-manifest.json'
+}

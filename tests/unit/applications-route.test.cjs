@@ -91,6 +91,7 @@ function createDb(seed = {}) {
 
 function loadRoute({ seed = {}, user = null } = {}) {
   const adminDb = createDb(seed);
+  const emailEvents = [];
   const route = loadSourceModule(
     "src/app/api/applications/route.js",
     ["POST"],
@@ -108,12 +109,23 @@ function loadRoute({ seed = {}, user = null } = {}) {
         },
         adminDb,
         canViewProject,
+        enqueueEmailEvent: async (event) => {
+          emailEvents.push(event);
+          return { created: true, id: "email-job" };
+        },
+        enqueueEmailEventForUsers: async (event) => {
+          emailEvents.push(event);
+          return [];
+        },
+        projectManagers: (project) => [
+          ...new Set([project?.owner, ...(project?.admins || [])].filter(Boolean)),
+        ],
         getRequestUser: async () => user,
       },
     }
   );
 
-  return { ...route, adminDb };
+  return { ...route, adminDb, emailEvents };
 }
 
 function project(overrides = {}) {
@@ -143,7 +155,11 @@ test("application creation requires auth and active membership", async () => {
 test("application creation validates project existence and hiring state", async () => {
   let route = loadRoute({
     seed: { projects: {} },
-    user: { activeMember: true, uid: "member-1" },
+    user: {
+      activeMember: true,
+      email: "member@example.com",
+      uid: "member-1",
+    },
   });
   let response = await route.POST(createRequest({ jsonBody: { projectId: "missing" } }));
   assert.equal(response.status, 404);
@@ -238,4 +254,8 @@ test("application creation snapshots the active GO CV and enriches user details"
   assert.equal(body.goCvSnapshot.title, "Ada CV");
   assert.equal(body.goCvSnapshot.summary, "Builds prototypes.");
   assert.equal(body.goCvSnapshot.snapshottedAt, "2026-07-14T12:00:00.000Z");
+  assert.deepEqual(
+    route.emailEvents.map((event) => event.type),
+    ["application.submitted", "application.received"]
+  );
 });

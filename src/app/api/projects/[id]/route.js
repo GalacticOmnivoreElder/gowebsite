@@ -14,6 +14,13 @@ import {
   validateArrayValues,
   VISIBILITY_OPTIONS,
 } from "@/lib/project-utils";
+import {
+  enqueueAdminEmailEvent,
+  enqueueEmailEventForUsers,
+  getEmailRecipientForUser,
+  projectManagers,
+  projectParticipants,
+} from "@/lib/email";
 
 async function getUserFromToken(request) {
   return getRequestUser(request);
@@ -406,6 +413,79 @@ export async function PUT(request, { params }) {
     const updatedDoc = await adminDb.collection("projects").doc(id).get();
     const updatedData = updatedDoc.data();
 
+    const statusChanged =
+      updatedData.status !== undefined &&
+      updatedData.status !== existingProject.status;
+    if (statusChanged) {
+      const significantForTeam = ["live", "completed"].includes(
+        updatedData.status
+      );
+      await enqueueEmailEventForUsers({
+        type: "project.status_changed",
+        eventId: `${id}-${existingProject.status}-${updatedData.status}-${filteredUpdateData.updatedAt.toISOString()}`,
+        userIds: significantForTeam
+          ? projectParticipants(updatedData)
+          : projectManagers(updatedData),
+        data: {
+          projectId: id,
+          projectTitle: updatedData.title,
+          status: updatedData.status,
+          adminNotes: updatedData.adminNotes || null,
+        },
+      });
+      if (updatedData.status === "pending") {
+        const owner = await getEmailRecipientForUser(updatedData.owner);
+        await enqueueAdminEmailEvent({
+          type: "admin.project_review_required",
+          eventId: `${id}-${filteredUpdateData.updatedAt.toISOString()}`,
+          data: {
+            projectId: id,
+            projectTitle: updatedData.title,
+            ownerName: owner?.displayName || "a creator",
+          },
+        });
+      }
+    }
+
+    if (
+      typeof filteredUpdateData.archived === "boolean" &&
+      filteredUpdateData.archived !== (existingProject.archived === true)
+    ) {
+      await enqueueEmailEventForUsers({
+        type: filteredUpdateData.archived
+          ? "project.archived"
+          : "project.restored",
+        eventId: `${id}-${filteredUpdateData.archived ? "archived" : "restored"}-${filteredUpdateData.updatedAt.toISOString()}`,
+        userIds: projectParticipants(updatedData),
+        data: { projectId: id, projectTitle: updatedData.title },
+      });
+    }
+
+    if (filteredUpdateData.admins) {
+      const previousAdmins = new Set(existingProject.admins || []);
+      const nextAdmins = new Set(updatedData.admins || []);
+      const roleChanges = [
+        ...[...nextAdmins]
+          .filter((uid) => !previousAdmins.has(uid))
+          .map((uid) => ({ uid, granted: true })),
+        ...[...previousAdmins]
+          .filter((uid) => !nextAdmins.has(uid))
+          .map((uid) => ({ uid, granted: false })),
+      ];
+      for (const change of roleChanges) {
+        await enqueueEmailEventForUsers({
+          type: "project.admin_role_changed",
+          eventId: `${id}-${change.uid}-${change.granted ? "granted" : "removed"}-${filteredUpdateData.updatedAt.toISOString()}`,
+          userIds: [change.uid],
+          data: {
+            projectId: id,
+            projectTitle: updatedData.title,
+            granted: change.granted,
+          },
+        });
+      }
+    }
+
     return NextResponse.json({
       id,
       ...updatedData,
@@ -497,6 +577,16 @@ export async function DELETE(request, { params }) {
     });
 
     await batch.commit();
+
+    await enqueueEmailEventForUsers({
+      type: "project.deleted",
+      eventId: id,
+      userIds: [...new Set(relatedUserIds)].filter((uid) => uid !== user.uid),
+      data: {
+        projectId: id,
+        projectTitle: existingProject.title || "Project",
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

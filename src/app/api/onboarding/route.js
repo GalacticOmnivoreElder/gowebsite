@@ -10,6 +10,11 @@ import {
 import { buildCvFromProfile, improveSummaryWithAI } from "@/lib/cv-generator";
 import { sanitizeSkills } from "@/lib/skills";
 import { syncUserSkillUsage } from "@/lib/skill-catalog";
+import {
+  addEmailEventToBatch,
+  cancelPendingEmailEvents,
+  enqueueEmailEvent,
+} from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +90,27 @@ export async function POST(request) {
     updated_at: now,
     completed_at: null,
   };
-  await ref.set(session, { merge: true });
+  const batch = adminDb.batch();
+  batch.set(ref, session, { merge: true });
+  if (user.email) {
+    const baseEvent = {
+      type: "onboarding.incomplete_reminder",
+      userId: user.uid,
+      recipient: user.email,
+      data: { displayName: user.userData?.username || null },
+    };
+    addEmailEventToBatch(batch, {
+      ...baseEvent,
+      eventId: `${user.uid}-24h`,
+      scheduledFor: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+    }, now);
+    addEmailEventToBatch(batch, {
+      ...baseEvent,
+      eventId: `${user.uid}-72h`,
+      scheduledFor: new Date(now.getTime() + 72 * 60 * 60 * 1000),
+    }, now);
+  }
+  await batch.commit();
   return NextResponse.json({ id: user.uid, ...serializeSession(session) });
 }
 
@@ -269,6 +294,24 @@ export async function PUT(request) {
     nextSkills: skills,
     userId: user.uid,
   });
+  await cancelPendingEmailEvents({
+    userId: user.uid,
+    eventType: "onboarding.incomplete_reminder",
+    reason: "onboarding_completed",
+  }).catch((emailError) => {
+    console.error("Could not cancel onboarding reminder emails:", emailError);
+  });
+  if (user.email) {
+    await enqueueEmailEvent({
+      type: "onboarding.completed",
+      eventId: user.uid,
+      userId: user.uid,
+      recipient: user.email,
+      data: { displayName: profile.display_name },
+    }).catch((emailError) => {
+      console.error("Could not queue onboarding completion email:", emailError);
+    });
+  }
 
   return NextResponse.json({
     ok: true,

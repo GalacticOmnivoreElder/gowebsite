@@ -41,10 +41,27 @@ export async function POST(request) {
 
   try {
     const timestamp = new Date().toISOString();
+    const production =
+      process.env.VERCEL_ENV
+        ? process.env.VERCEL_ENV === "production"
+        : process.env.NODE_ENV === "production";
+    const recipient = production
+      ? user.email
+      : process.env.EMAIL_TEST_RECIPIENT;
+    if (!recipient) {
+      return NextResponse.json(
+        { error: "Set EMAIL_TEST_RECIPIENT for non-production delivery tests" },
+        { status: 503 }
+      );
+    }
     const result = await getResend().emails.send({
-      from: "Galactic Omnivore <onboarding@galacticomnivore.com>",
-      to: user.email,
-      subject: "Galactic Omnivore email delivery test",
+      from:
+        process.env.EMAIL_FROM_TRANSACTIONAL ||
+        "Galactic Omnivore <disabled@example.invalid>",
+      to: recipient,
+      subject: `${
+        production ? "" : `[${process.env.VERCEL_ENV || "development"}] `
+      }Galactic Omnivore email delivery test`,
       html: `<h1>Email delivery test</h1><p>Sent at ${timestamp}</p>`,
       text: `Email delivery test\n\nSent at ${timestamp}`,
     });
@@ -72,6 +89,12 @@ export async function GET(request) {
   if (response) return response;
 
   return NextResponse.json({
-    configured: Boolean(process.env.RESEND_API_KEY),
+    configured: Boolean(
+      process.env.RESEND_API_KEY &&
+        (process.env.VERCEL_ENV === "production" ||
+          (!process.env.VERCEL_ENV &&
+            process.env.NODE_ENV === "production") ||
+          process.env.EMAIL_TEST_RECIPIENT)
+    ),
   });
 }

@@ -13,6 +13,7 @@ import {
   validateArrayValues,
   VISIBILITY_OPTIONS,
 } from "@/lib/project-utils";
+import { addEmailEventToBatch } from "@/lib/email";
 
 async function getUserFromToken(request) {
   return getRequestUser(request);
@@ -436,6 +437,19 @@ export async function POST(request) {
       { merge: true }
     );
 
+    if (user.email) {
+      addEmailEventToBatch(batch, {
+        type: "project.created",
+        eventId: projectId,
+        userId: user.uid,
+        recipient: user.email,
+        data: {
+          projectId,
+          projectTitle: newProject.title,
+          status: newProject.status,
+        },
+      });
+    }
     await batch.commit();
 
     return NextResponse.json({

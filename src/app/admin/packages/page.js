@@ -50,15 +50,7 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
-import { db, auth } from "@/firebase";
-import {
-  collection,
-  getDocs,
-  doc,
-  setDoc,
-  deleteDoc,
-  writeBatch,
-} from "firebase/firestore";
+import { auth } from "@/firebase";
 import { dummyPackages } from "@/data/dummyPackages";
 import PackageForm from "@/components/admin/PackageForm";
 
@@ -72,6 +64,25 @@ export default function AdminPackagesPage() {
   const [editingPackage, setEditingPackage] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const router = useRouter();
+
+  const packageRequest = async (options = {}) => {
+    const token = await auth.currentUser.getIdToken();
+    return fetch("/api/admin/packages", {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+  };
+
+  const refreshPackages = async () => {
+    const response = await packageRequest();
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to load packages");
+    setPackages(data);
+  };
 
   useEffect(() => {
     const checkAdminAndFetchPackages = async () => {
@@ -95,14 +106,14 @@ export default function AdminPackagesPage() {
           return;
         }
 
-        // Fetch packages
-        const packagesCollection = collection(db, "packages");
-        const packagesSnapshot = await getDocs(packagesCollection);
-        const packagesList = packagesSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
+        const response = await fetch("/api/admin/packages", {
+          headers: { Authorization: `Bearer ${idToken}` },
+          cache: "no-store",
+        });
+        const packagesList = await response.json();
+        if (!response.ok) {
+          throw new Error(packagesList.error || "Failed to load packages");
+        }
         setPackages(packagesList);
       } catch (error) {
         console.error("Error:", error);
@@ -118,7 +129,7 @@ export default function AdminPackagesPage() {
 
     checkAdminAndFetchPackages();
     // Do not depend on `router` — in Next.js App Router its identity can change every render and retrigger this forever.
-  }, []);
+  }, [router]);
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -154,24 +165,21 @@ export default function AdminPackagesPage() {
   const handleBulkUpload = async () => {
     setIsUploading(true);
     try {
-      const batch = writeBatch(db);
-
-      for (const pkg of dummyPackages) {
-        const packageRef = doc(db, "packages", pkg.id);
-        batch.set(packageRef, pkg);
+      const response = await packageRequest({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          packages: dummyPackages.map((pkg) => ({
+            ...pkg,
+            status: "draft",
+          })),
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Upload failed");
       }
-
-      await batch.commit();
-
-      // Refresh the packages list
-      const packagesCollection = collection(db, "packages");
-      const packagesSnapshot = await getDocs(packagesCollection);
-      const packagesList = packagesSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setPackages(packagesList);
+      await refreshPackages();
 
       toast({
         title: "Success",
@@ -202,14 +210,15 @@ export default function AdminPackagesPage() {
 
     setIsDeleting(true);
     try {
-      const batch = writeBatch(db);
-
-      for (const packageId of selectedPackages) {
-        const packageRef = doc(db, "packages", packageId);
-        batch.delete(packageRef);
+      const response = await packageRequest({
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedPackages }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Delete failed");
       }
-
-      await batch.commit();
 
       // Update local state
       setPackages((prev) =>
@@ -248,7 +257,15 @@ export default function AdminPackagesPage() {
     }
 
     try {
-      await deleteDoc(doc(db, "packages", packageId));
+      const response = await packageRequest({
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [packageId] }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Delete failed");
+      }
 
       // Update local state
       setPackages((prev) => prev.filter((pkg) => pkg.id !== packageId));
@@ -277,17 +294,25 @@ export default function AdminPackagesPage() {
       const isEditing = !!editingPackage;
       const packageId = isEditing ? editingPackage.id : packageData.id;
 
-      await setDoc(doc(db, "packages", packageId), packageData);
+      const response = await packageRequest({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: packageId, package: packageData }),
+      });
+      const savedPackage = await response.json();
+      if (!response.ok) {
+        throw new Error(savedPackage.error || "Save failed");
+      }
 
       // Update local state
       if (isEditing) {
         setPackages((prev) =>
           prev.map((pkg) =>
-            pkg.id === packageId ? { ...packageData, id: packageId } : pkg
+            pkg.id === packageId ? savedPackage : pkg
           )
         );
       } else {
-        setPackages((prev) => [...prev, { ...packageData, id: packageId }]);
+        setPackages((prev) => [...prev, savedPackage]);
       }
 
       setIsFormOpen(false);

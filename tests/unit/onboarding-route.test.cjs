@@ -91,6 +91,8 @@ function loadRoute(seed) {
           "consent",
         ],
         adminDb,
+        cancelPendingEmailEvents: async () => 0,
+        enqueueEmailEvent: async () => ({ created: true, id: "email-job" }),
         buildCvFromProfile: (profile) => ({
           missing_information: [],
           sections: [

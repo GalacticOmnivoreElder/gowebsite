@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as admin from "firebase-admin";
 import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
+import { enqueueEmailEventForUsers } from "@/lib/email";
 
 export async function DELETE(request, { params }) {
   try {
@@ -61,6 +62,7 @@ export async function DELETE(request, { params }) {
 
     const batch = adminDb.batch();
     const removedAt = new Date();
+    let removedApprovedApplication = false;
 
     batch.update(projectRef, {
       teamMembers: admin.firestore.FieldValue.arrayRemove(memberId),
@@ -78,6 +80,7 @@ export async function DELETE(request, { params }) {
 
     applicationsSnapshot.docs.forEach((applicationDoc) => {
       if (applicationDoc.data().status === "approved") {
+        removedApprovedApplication = true;
         batch.update(applicationDoc.ref, {
           status: "removed",
           removedAt,
@@ -88,6 +91,18 @@ export async function DELETE(request, { params }) {
     });
 
     await batch.commit();
+
+    await enqueueEmailEventForUsers({
+      type: removedApprovedApplication
+        ? "application.member_removed"
+        : "project.member_removed",
+      eventId: `${projectId}-${memberId}`,
+      userIds: [memberId],
+      data: {
+        projectId,
+        projectTitle: project.title || "Project",
+      },
+    });
 
     return NextResponse.json({ success: true, memberId });
   } catch (error) {

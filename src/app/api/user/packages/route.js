@@ -25,7 +25,10 @@ export async function GET(request) {
 
     const packages = [];
     snapshot.forEach((doc) => {
-      packages.push({ id: doc.id, ...doc.data() });
+      const data = doc.data();
+      if (user.admin || data.status !== "draft") {
+        packages.push({ id: doc.id, ...data });
+      }
     });
 
     return Response.json(packages);

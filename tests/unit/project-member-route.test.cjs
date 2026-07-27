@@ -90,6 +90,7 @@ function loadRoute({ seed = {}, user = null } = {}) {
           },
         },
         adminDb,
+        enqueueEmailEventForUsers: async () => [],
         getRequestUser: async () => user,
       },
     }

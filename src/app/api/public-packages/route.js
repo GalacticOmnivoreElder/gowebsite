@@ -4,7 +4,9 @@ export async function GET() {
   try {
     const packagesSnapshot = await adminDb.collection("packages").get();
 
-    const packages = packagesSnapshot.docs.map((doc) => {
+    const packages = packagesSnapshot.docs
+      .filter((doc) => doc.data().status !== "draft")
+      .map((doc) => {
       const data = doc.data();
       // Sanitize the package data to remove sensitive information
       const assets =
@@ -27,7 +29,7 @@ export async function GET() {
         slug: data.slug,
         assets,
       };
-    });
+      });
 
     return Response.json(packages);
   } catch (error) {

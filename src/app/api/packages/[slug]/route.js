@@ -20,6 +20,10 @@ export async function GET(request, { params }) {
     const packageData = { id: packageDoc.id, ...packageDoc.data() };
 
     const user = await getRequestUser(request);
+    if (packageData.status === "draft" && user?.admin !== true) {
+      // Do not reveal whether a private draft slug exists.
+      return Response.json({ error: "Package not found" }, { status: 404 });
+    }
     const isAuthenticated = !!user;
     const membership = getEffectiveMembership(user?.userData || {}, {
       admin: user?.admin === true,
@@ -36,7 +40,7 @@ export async function GET(request, { params }) {
 
     // If user doesn't have access, remove download URLs from assets
     if (!hasAccess) {
-      responseData.assets = packageData.assets.map((asset) => ({
+      responseData.assets = (packageData.assets || []).map((asset) => ({
         ...asset,
         downloadUrl: undefined, // Remove download URL
       }));
