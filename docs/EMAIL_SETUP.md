@@ -168,18 +168,18 @@ automatically.
 
 `.github/workflows/email-outbox.yml` invokes
 `https://www.galacticomnivore.com/api/cron/email-outbox` every five minutes.
-The workflow uses `Authorization: Bearer <CRON_SECRET>` and can also be run
-manually from the GitHub Actions page.
+It can also be run manually from the GitHub Actions page.
 
-Configure the same randomly generated value in both places:
+The workflow requests a short-lived GitHub OIDC identity token instead of using
+a stored scheduler secret. The worker verifies the token signature, issuer,
+audience, repository and owner IDs, production branch, workflow path, subject,
+and trigger type before processing email. The workflow receives only
+`id-token: write`; it does not check out or read repository contents.
 
-1. Vercel project environment variable `CRON_SECRET` for Production.
-2. GitHub repository > Settings > Secrets and variables > Actions >
-   Repository secrets > `CRON_SECRET`.
-
-Do not put the value in the workflow, repository, logs, or a URL. The workflow
-uses no repository permissions, validates that the secret exists, sends a POST
-request with timeouts and retries, and fails visibly on non-2xx responses.
+No GitHub or Vercel secret is required for this scheduler. `CRON_SECRET` remains
+an optional fallback for a trusted non-GitHub scheduler or an operator request.
+If configured, generate a strong random value, store it only in Vercel
+Production, and send it in the `Authorization: Bearer <CRON_SECRET>` header.
 
 The scheduler is intentionally external because Vercel Hobby permits cron jobs
 only once per day; a five-minute entry in `vercel.json` prevents deployment.
@@ -274,8 +274,8 @@ and cron retry.
 - [ ] Firebase verification/reset templates and continue URLs are tested.
 - [ ] Firestore rules, composite indexes, and TTL policies are deployed.
 - [ ] Resend Topics/Segment and signed webhook are configured.
-- [ ] The same `CRON_SECRET` is set in Vercel Production and GitHub Actions.
-- [ ] The `Process email outbox` workflow succeeds manually and on schedule.
+- [ ] The OIDC-protected `Process email outbox` workflow succeeds manually and
+      on schedule.
 - [ ] `ADMIN_NOTIFICATION_EMAILS` reaches monitored mailboxes.
 - [ ] Engagement tracking is off unless specifically approved.
 - [ ] A staging bounce suppresses future marketing.

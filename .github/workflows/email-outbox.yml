@@ -5,7 +5,8 @@ on:
     - cron: "*/5 * * * *"
   workflow_dispatch:
 
-permissions: {}
+permissions:
+  id-token: write
 
 concurrency:
   group: production-email-outbox
@@ -20,13 +21,30 @@ jobs:
       - name: Call the protected production worker
         env:
           CRON_ENDPOINT: https://www.galacticomnivore.com/api/cron/email-outbox
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          OIDC_AUDIENCE: https://www.galacticomnivore.com/api/cron/email-outbox
         shell: bash
         run: |
-          if [[ -z "$CRON_SECRET" ]]; then
-            echo "::error::Add CRON_SECRET in GitHub Settings > Secrets and variables > Actions."
+          set -euo pipefail
+
+          if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" || -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
+            echo "::error::GitHub did not provide an OIDC token request context."
             exit 1
           fi
+
+          OIDC_AUDIENCE_ENCODED="$(
+            printf '%s' "$OIDC_AUDIENCE" | jq --slurp --raw-input --raw-output @uri
+          )"
+          GITHUB_OIDC_TOKEN="$(
+            curl \
+              --fail-with-body \
+              --silent \
+              --show-error \
+              --connect-timeout 10 \
+              --max-time 30 \
+              --header "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${OIDC_AUDIENCE_ENCODED}" |
+              jq --exit-status --raw-output '.value'
+          )"
 
           curl \
             --request POST \
@@ -37,7 +55,7 @@ jobs:
             --retry-all-errors \
             --connect-timeout 10 \
             --max-time 240 \
-            --header "Authorization: Bearer $CRON_SECRET" \
+            --header "Authorization: Bearer $GITHUB_OIDC_TOKEN" \
             --header "Accept: application/json" \
             --header "User-Agent: github-actions-email-outbox/1.0" \
             "$CRON_ENDPOINT"

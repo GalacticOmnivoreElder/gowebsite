@@ -49,6 +49,7 @@
     "firebase": "^10.5.0",
     "firebase-admin": "^11.11.1",
     "he": "^1.2.0",
+    "jose": "^4.15.9",
     "local-storage": "^2.0.0",
     "lucide-react": "^0.288.0",
     "marked": "^15.0.7",

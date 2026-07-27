@@ -4,15 +4,19 @@ import {
   processEmailOutbox,
   requeueExpiredEmailJobs,
 } from "@/lib/email";
+import { verifyGithubActionsOidcToken } from "@/lib/githubActionsOidc";
 
-function authorized(request) {
+async function authorized(request) {
+  const authorization = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  return request.headers.get("authorization") === `Bearer ${secret}`;
+  if (secret && authorization === `Bearer ${secret}`) return true;
+  if (!authorization?.startsWith("Bearer ")) return false;
+
+  return verifyGithubActionsOidcToken(authorization.slice("Bearer ".length));
 }
 
 async function run(request) {
-  if (!authorized(request)) {
+  if (!(await authorized(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const requeued = await requeueExpiredEmailJobs();

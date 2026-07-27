@@ -96,6 +96,7 @@ test("email cron requires its bearer secret before processing jobs", async () =>
       sandbox: {
         NextResponse,
         process: { env: { CRON_SECRET: "cron-test-secret" } },
+        verifyGithubActionsOidcToken: async () => false,
         enqueueDailyEmailFailureDigest: async () => ({ queued: 0 }),
         processEmailOutbox: async () => {
           processed += 1;
@@ -119,6 +120,41 @@ test("email cron requires its bearer secret before processing jobs", async () =>
   assert.equal(processed, 1);
 });
 
+test("email cron accepts the pinned GitHub Actions OIDC identity", async () => {
+  let processed = 0;
+  const route = loadSourceModule(
+    "src/app/api/cron/email-outbox/route.js",
+    ["POST"],
+    {
+      stripImports: true,
+      sandbox: {
+        NextResponse,
+        process: { env: {} },
+        verifyGithubActionsOidcToken: async (token) =>
+          token === "signed-github-token",
+        enqueueDailyEmailFailureDigest: async () => ({ queued: 0 }),
+        processEmailOutbox: async () => {
+          processed += 1;
+          return { sent: 0 };
+        },
+        requeueExpiredEmailJobs: async () => 0,
+      },
+    }
+  );
+
+  let response = await route.POST(createRequest());
+  assert.equal(response.status, 401);
+  assert.equal(processed, 0);
+
+  response = await route.POST(
+    createRequest({
+      headers: { authorization: "Bearer signed-github-token" },
+    })
+  );
+  assert.equal(response.status, 200);
+  assert.equal(processed, 1);
+});
+
 test("GitHub schedules the protected email worker without a Vercel Hobby cron", () => {
   const workflow = fs.readFileSync(
     ".github/workflows/email-outbox.yml",
@@ -130,8 +166,27 @@ test("GitHub schedules the protected email worker without a Vercel Hobby cron", 
     workflow,
     /https:\/\/www\.galacticomnivore\.com\/api\/cron\/email-outbox/
   );
-  assert.match(workflow, /\$\{\{\s*secrets\.CRON_SECRET\s*\}\}/);
-  assert.match(workflow, /Authorization: Bearer \$CRON_SECRET/);
+  assert.match(workflow, /id-token:\s*write/);
+  assert.match(workflow, /ACTIONS_ID_TOKEN_REQUEST_URL/);
+  assert.match(workflow, /ACTIONS_ID_TOKEN_REQUEST_TOKEN/);
+  assert.match(workflow, /Authorization: Bearer \$GITHUB_OIDC_TOKEN/);
+  assert.doesNotMatch(workflow, /secrets\.CRON_SECRET/);
+
+  const oidcVerifier = fs.readFileSync(
+    "src/lib/githubActionsOidc.js",
+    "utf8"
+  );
+  [
+    "https://token.actions.githubusercontent.com",
+    "https://www.galacticomnivore.com/api/cron/email-outbox",
+    "GalacticOmnivoreElder/gowebsite",
+    "821858267",
+    "194530138",
+    "refs/heads/prod",
+    ".github/workflows/email-outbox.yml",
+    "schedule",
+    "workflow_dispatch",
+  ].forEach((value) => assert.match(oidcVerifier, new RegExp(value)));
   assert.equal(
     fs.existsSync("vercel.json"),
     false,
