@@ -25,6 +25,7 @@ require("./skill-banner.test.cjs");
 require("./profile-skills-ui.test.cjs");
 require("./resend-webhook.test.cjs");
 require("./cv-generator.test.cjs");
+require("./cv-editor-ui.test.cjs");
 require("./date.test.cjs");
 require("./email-admin-routes.test.cjs");
 require("./email-core.test.cjs");

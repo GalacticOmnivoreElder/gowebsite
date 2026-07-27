@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { observer } from "mobx-react-lite";
@@ -207,13 +207,42 @@ function Field({ label, value, onChange, placeholder, type = "text" }) {
 }
 
 function ListField({ label, value, onChange, placeholder }) {
+  const inputId = useId();
+  const focusedRef = useRef(false);
+  const [draftText, setDraftText] = useState(() => listToText(value));
+
+  useEffect(() => {
+    if (!focusedRef.current) {
+      setDraftText(listToText(value));
+    }
+  }, [value]);
+
+  const updateDraft = (text) => {
+    setDraftText(text);
+    onChange(textToList(text));
+  };
+
+  const finishEditing = () => {
+    focusedRef.current = false;
+    const normalizedValue = textToList(draftText);
+    setDraftText(listToText(normalizedValue));
+    onChange(normalizedValue);
+  };
+
   return (
-    <Field
-      label={label}
-      value={listToText(value)}
-      onChange={(text) => onChange(textToList(text))}
-      placeholder={placeholder || "Separate entries with commas"}
-    />
+    <div className="space-y-2">
+      <Label htmlFor={inputId}>{label}</Label>
+      <Input
+        id={inputId}
+        value={draftText}
+        onFocus={() => {
+          focusedRef.current = true;
+        }}
+        onChange={(event) => updateDraft(event.target.value)}
+        onBlur={finishEditing}
+        placeholder={placeholder || "Separate entries with commas"}
+      />
+    </div>
   );
 }
 
