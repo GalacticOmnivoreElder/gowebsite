@@ -269,7 +269,7 @@ const ProfileEditor = observer(({ onSave }) => {
               onChange={(e) => handleInputChange("bio", e.target.value)}
               placeholder="Tell others about yourself..."
               rows={4}
-              maxLength={500}
+              maxLength={10000}
               className={fieldErrors.bio ? "border-red-500" : ""}
             />
             <div className="flex justify-between mt-1">
@@ -279,7 +279,7 @@ const ProfileEditor = observer(({ onSave }) => {
                 <span />
               )}
               <p className="text-xs text-muted-foreground">
-                {formData.bio.length}/500
+                {formData.bio.length}/10000
               </p>
             </div>
           </div>
