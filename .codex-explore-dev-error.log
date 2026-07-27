@@ -1,0 +1,52 @@
+ ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\G:\GO Website\gowebsite\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\G:\GO Website\gowebsite\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+
+[1m[33mwarn[39m[22m - As of Tailwind CSS v2.2, `lightBlue` has been renamed to `sky`.
+[1m[33mwarn[39m[22m - Update your configuration file to silence this warning.
+
+[1m[33mwarn[39m[22m - As of Tailwind CSS v3.0, `warmGray` has been renamed to `stone`.
+[1m[33mwarn[39m[22m - Update your configuration file to silence this warning.
+
+[1m[33mwarn[39m[22m - As of Tailwind CSS v3.0, `trueGray` has been renamed to `neutral`.
+[1m[33mwarn[39m[22m - Update your configuration file to silence this warning.
+
+[1m[33mwarn[39m[22m - As of Tailwind CSS v3.0, `coolGray` has been renamed to `gray`.
+[1m[33mwarn[39m[22m - Update your configuration file to silence this warning.
+
+[1m[33mwarn[39m[22m - As of Tailwind CSS v3.0, `blueGray` has been renamed to `slate`.
+[1m[33mwarn[39m[22m - Update your configuration file to silence this warning.
+Image with src "/_next/static/media/HERO.a88853e5.png" has legacy prop "layout". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/_next/static/media/HERO.a88853e5.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/logos/logo1.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/logos/logo2.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/logos/logo3.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/logos/logo4.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/logos/logo5.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/logos/logo6.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/logos/logo7.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/logos/logo8.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/logos/logo9.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/_next/static/media/joinus.cac498d6.png" has legacy prop "layout". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/_next/static/media/joinus.cac498d6.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/_next/static/media/openhours.1db9bf6c.png" has legacy prop "layout". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+Image with src "/_next/static/media/openhours.1db9bf6c.png" has legacy prop "objectFit". Did you forget to run the codemod?
+Read more: https://nextjs.org/docs/messages/next-image-upgrade-to-13
+ ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+ ⨯ The requested resource isn't a valid image for /_next/static/media/logo.1b0fbdf6.png received text/html; charset=utf-8
+ ⨯ The requested resource isn't a valid image for /_next/static/media/discord.8edd4b0f.png received text/html; charset=utf-8
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }

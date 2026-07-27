@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { GameOfTheMonth } from "@/components/landing/GameOfTheMonth";
+import { ExploreGo } from "@/components/landing/ExploreGo";
 
 const magenta = "#CA2280";
 
@@ -470,9 +470,7 @@ const HomePage = () => {
         </div>
       </div>
 
-      <div className="sm:px-8 px-4">
-        <GameOfTheMonth fromLanding={true} />
-      </div>
+      <ExploreGo />
 
       <section className="relative">
         <div id="testimonials" className="absolute top-[-80px]"></div>

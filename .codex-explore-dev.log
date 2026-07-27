@@ -1,0 +1,31 @@
+
+> go-platform@0.1.0 dev
+> next dev --port 3000
+
+   ▲ Next.js 15.3.8
+   - Local:        http://localhost:3000
+   - Network:      http://100.78.153.75:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 8s
+ ○ Compiling / ...
+ ✓ Compiled / in 11.8s (2335 modules)
+ GET / 200 in 15374ms
+ GET / 200 in 991ms
+ GET / 200 in 1033ms
+ ✓ Compiled in 5s (979 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1290ms (2325 modules)
+ GET / 404 in 2430ms
+ GET /_next/static/css/app/layout.css?v=1785172338526 404 in 80ms
+ GET /_next/static/chunks/main-app.js?v=1785172338526 404 in 337ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 342ms
+ GET /_next/static/chunks/app/error.js 404 in 283ms
+ GET /_next/static/chunks/app/layout.js 404 in 277ms
+ GET /_next/static/chunks/app/global-error.js 404 in 272ms
+ ○ Compiling /manifest.webmanifest ...
+ ✓ Compiled /manifest.webmanifest in 942ms (2346 modules)
+ GET /_next/static/media/logo.1b0fbdf6.png 404 in 1784ms
+ GET /_next/static/media/discord.8edd4b0f.png 404 in 1765ms
+ GET /manifest.webmanifest 200 in 1842ms
