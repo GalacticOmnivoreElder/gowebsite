@@ -8,6 +8,8 @@ import {
   isValidOnboardingStep,
 } from "@/constants/onboarding";
 import { buildCvFromProfile, improveSummaryWithAI } from "@/lib/cv-generator";
+import { sanitizeSkills } from "@/lib/skills";
+import { syncUserSkillUsage } from "@/lib/skill-catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -22,14 +24,21 @@ export async function GET(request) {
   const { user, error } = await requireUser(request);
   if (error) return error;
 
-  const [sessionSnap, profileSnap] = await Promise.all([
+  const [sessionSnap, profileSnap, userSnap] = await Promise.all([
     adminDb.collection("onboarding_sessions").doc(user.uid).get(),
     adminDb.collection("user_profiles").doc(user.uid).get(),
+    adminDb.collection("users").doc(user.uid).get(),
   ]);
 
   return NextResponse.json({
     session: sessionSnap.exists
-      ? { id: sessionSnap.id, ...serializeSession(sessionSnap.data()) }
+      ? {
+          id: sessionSnap.id,
+          ...serializeSession(
+            sessionSnap.data(),
+            userSnap.exists ? userSnap.data().skills : []
+          ),
+        }
       : null,
     onboardingCompleted: profileSnap.exists
       ? !!profileSnap.data().onboarding_completed
@@ -44,20 +53,34 @@ export async function POST(request) {
   if (error) return error;
 
   const ref = adminDb.collection("onboarding_sessions").doc(user.uid);
-  const existing = await ref.get();
+  const [existing, userSnap] = await Promise.all([
+    ref.get(),
+    adminDb.collection("users").doc(user.uid).get(),
+  ]);
   if (existing.exists && existing.data().status !== "completed") {
     return NextResponse.json({
       id: existing.id,
-      ...serializeSession(existing.data()),
+      ...serializeSession(
+        existing.data(),
+        userSnap.exists ? userSnap.data().skills : []
+      ),
     });
   }
 
   const now = new Date();
+  const existingSkills = sanitizeSkills(
+    userSnap.exists ? userSnap.data().skills : []
+  );
   const session = {
     user_id: user.uid,
     current_step: ONBOARDING_STEPS[0],
     status: "in_progress",
-    draft_data_json: { identity: { email: user.email || "" } },
+    draft_data_json: {
+      identity: { email: user.email || "" },
+      ...(existingSkills.length > 0
+        ? { "role-skills": { skills: existingSkills } }
+        : {}),
+    },
     created_at: now,
     updated_at: now,
     completed_at: null,
@@ -102,7 +125,12 @@ export async function PUT(request) {
 
   const ref = adminDb.collection("onboarding_sessions").doc(user.uid);
   const cvRef = adminDb.collection("go_cvs").doc(user.uid);
-  const [snap, existingCvSnap] = await Promise.all([ref.get(), cvRef.get()]);
+  const userRef = adminDb.collection("users").doc(user.uid);
+  const [snap, existingCvSnap, existingUserSnap] = await Promise.all([
+    ref.get(),
+    cvRef.get(),
+    userRef.get(),
+  ]);
   if (!snap.exists) {
     return NextResponse.json({ error: "No onboarding session found" }, { status: 400 });
   }
@@ -135,6 +163,15 @@ export async function PUT(request) {
 
   const now = new Date();
   const existingCv = existingCvSnap.exists ? existingCvSnap.data() : null;
+  const skills = sanitizeSkills(
+    Array.isArray(roleSkills.skills)
+      ? roleSkills.skills
+      : [
+          roleSkills.primary_role,
+          ...(roleSkills.secondary_roles || []),
+          ...(roleSkills.tools || []),
+        ]
+  );
   const profile = {
     user_id: user.uid,
     display_name: identity.display_name,
@@ -146,6 +183,7 @@ export async function PUT(request) {
     discord_username: (draft.discord || {}).discord_username || null,
     primary_role: roleSkills.primary_role,
     secondary_roles: roleSkills.secondary_roles || [],
+    skills,
     skill_level: roleSkills.skill_level || "beginner",
     tools: roleSkills.tools || [],
     experience_level: roleSkills.experience_level || null,
@@ -212,16 +250,25 @@ export async function PUT(request) {
   );
   // Mirror a couple of flags onto the user doc for quick gating/UX.
   batch.set(
-    adminDb.collection("users").doc(user.uid),
+    userRef,
     {
       onboardingCompleted: true,
       hasCv: true,
       profilePrivacy: profile.visibility_public ? "public" : "private",
+      profileEditedAt: now,
+      skills,
       updatedAt: now,
     },
     { merge: true }
   );
   await batch.commit();
+  await syncUserSkillUsage({
+    previousSkills: existingUserSnap.exists
+      ? existingUserSnap.data().skills || []
+      : [],
+    nextSkills: skills,
+    userId: user.uid,
+  });
 
   return NextResponse.json({
     ok: true,
@@ -230,12 +277,29 @@ export async function PUT(request) {
   });
 }
 
-function serializeSession(s) {
-  return {
+function serializeSession(s, userSkills = []) {
+  const session = {
     ...s,
     created_at: serializeFirestoreDate(s.created_at),
     updated_at: serializeFirestoreDate(s.updated_at),
     completed_at: serializeFirestoreDate(s.completed_at),
+  };
+  const savedRoleSkills = session.draft_data_json?.["role-skills"] || {};
+  const existingSkills = sanitizeSkills(userSkills);
+
+  if (Array.isArray(savedRoleSkills.skills) || existingSkills.length === 0) {
+    return session;
+  }
+
+  return {
+    ...session,
+    draft_data_json: {
+      ...(session.draft_data_json || {}),
+      "role-skills": {
+        ...savedRoleSkills,
+        skills: existingSkills,
+      },
+    },
   };
 }
 

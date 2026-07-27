@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
+import { SkillSelector } from "@/components/profile/SkillSelector";
 import {
   ONBOARDING_STEPS,
   PRIMARY_ROLES,
@@ -244,6 +245,21 @@ const OnboardingContent = observer(() => {
                 </Field>
                 <Field label="Secondary roles (optional)">
                   <Chips options={PRIMARY_ROLES} value={stepData.secondary_roles || []} onChange={(v) => setField("secondary_roles", v)} />
+                </Field>
+                <Field label="Skills & expertise (optional)">
+                  <SkillSelector
+                    value={
+                      Array.isArray(stepData.skills)
+                        ? stepData.skills
+                        : [
+                            stepData.primary_role,
+                            ...(stepData.secondary_roles || []),
+                            ...(stepData.tools || []),
+                          ].filter(Boolean)
+                    }
+                    onChange={(skills) => setField("skills", skills)}
+                    submissionLabel="complete onboarding"
+                  />
                 </Field>
                 <Field label="Skill level *">
                   <div className="flex flex-wrap gap-2">

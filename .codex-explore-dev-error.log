@@ -1076,3 +1076,12 @@ GET /api/skills failed; using static catalogue Error: Firebase Admin: set FIREBA
   163 |     "Firebase Admin: set FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY (or FIREBASE_PRIVATE_KEY_BASE64), or FIREBASE_SERVICE_ACCOUNT_PATH / FIREBASE_SERVICE_ACCOUNT_JSON, or GOOGLE_APPLICATION_CREDENTIALS"
   164 |   );
   165 | }
+<w> [webpack.cache.PackFileCacheStrategy] Restoring pack failed from G:\GO Website\gowebsite\.next\cache\webpack\client-development.pack.gz: Error: incorrect header check
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'
+ ⚠ ./src/components/profile/ProfileEditor.jsx
+Attempted import error: '@/components/profile/SkillSelector' does not contain a default export (imported as 'SkillSelector').
+
+Import trace for requested module:
+./src/components/profile/ProfileEditor.jsx
+./src/app/(main)/profile/page.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz_' -> 'G:\GO Website\gowebsite\.next\cache\webpack\client-development\0.pack.gz'

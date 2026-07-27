@@ -67,47 +67,98 @@ function createDb(seed = {}) {
 
 function loadRoute(seed) {
   const adminDb = createDb(seed);
-  const route = loadSourceModule("src/app/api/onboarding/route.js", ["PUT"], {
-    stripImports: true,
-    sandbox: {
-      Date: FixedDate,
-      DEFAULT_PROFILE_VISIBILITY: {
-        visibility_job_matching: false,
-        visibility_project_creators: true,
-        visibility_public: false,
-      },
-      NextResponse,
-      ONBOARDING_STEPS: [
-        "identity",
-        "discord",
-        "role-skills",
-        "portfolio",
-        "goals",
-        "help",
-        "consent",
-      ],
-      adminDb,
-      buildCvFromProfile: (profile) => ({
-        missing_information: [],
-        sections: [
-          {
-            content_json: { text: "Updated summary" },
-            section_type: "summary",
-          },
+  const skillSyncCalls = [];
+  const route = loadSourceModule(
+    "src/app/api/onboarding/route.js",
+    ["GET", "PUT"],
+    {
+      stripImports: true,
+      sandbox: {
+        Date: FixedDate,
+        DEFAULT_PROFILE_VISIBILITY: {
+          visibility_job_matching: false,
+          visibility_project_creators: true,
+          visibility_public: false,
+        },
+        NextResponse,
+        ONBOARDING_STEPS: [
+          "identity",
+          "discord",
+          "role-skills",
+          "portfolio",
+          "goals",
+          "help",
+          "consent",
         ],
-        suggested_improvements: [],
-        summary: "Updated summary",
-        title: `${profile.display_name} CV`,
-      }),
-      getRequestUser: async () => ({ email: "ada@example.com", uid: "user-1" }),
-      improveSummaryWithAI: async (_profile, summary) => summary,
-      isValidOnboardingStep: () => true,
-      serializeFirestoreDate: (value) => value?.toISOString?.() || value,
+        adminDb,
+        buildCvFromProfile: (profile) => ({
+          missing_information: [],
+          sections: [
+            {
+              content_json: { text: "Updated summary" },
+              section_type: "summary",
+            },
+          ],
+          suggested_improvements: [],
+          summary: "Updated summary",
+          title: `${profile.display_name} CV`,
+        }),
+        getRequestUser: async () => ({
+          email: "ada@example.com",
+          uid: "user-1",
+        }),
+        improveSummaryWithAI: async (_profile, summary) => summary,
+        isValidOnboardingStep: () => true,
+        sanitizeSkills: (values) => {
+          const seen = new Set();
+          return (Array.isArray(values) ? values : [])
+            .map((value) => (typeof value === "string" ? value.trim() : ""))
+            .filter((value) => {
+              const key = value.toLowerCase();
+              if (!value || value.length > 40 || seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            })
+            .slice(0, 20);
+        },
+        serializeFirestoreDate: (value) => value?.toISOString?.() || value,
+        syncUserSkillUsage: async (payload) => {
+          skillSyncCalls.push(payload);
+        },
+      },
+    }
+  );
+
+  return { ...route, adminDb, skillSyncCalls };
+}
+
+test("editing onboarding preserves skills already selected in the profile", async () => {
+  const route = loadRoute({
+    onboarding_sessions: {
+      "user-1": {
+        current_step: "role-skills",
+        draft_data_json: {
+          "role-skills": { primary_role: "Programmer" },
+        },
+        status: "completed",
+      },
+    },
+    user_profiles: {
+      "user-1": { onboarding_completed: true },
+    },
+    users: {
+      "user-1": { skills: ["Unity", "Custom Tool"] },
     },
   });
 
-  return { ...route, adminDb };
-}
+  const response = await route.GET(createRequest());
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    response.body.session.draft_data_json["role-skills"].skills,
+    ["Unity", "Custom Tool"]
+  );
+});
 
 test("updating onboarding regenerates the CV and preserves its published state", async () => {
   const publishedAt = new Date("2026-07-10T12:00:00.000Z");
@@ -133,7 +184,10 @@ test("updating onboarding regenerates the CV and preserves its published state",
             display_name: "Ada",
             full_name: "Ada Lovelace",
           },
-          "role-skills": { primary_role: "Programmer" },
+          "role-skills": {
+            primary_role: "Programmer",
+            skills: ["Unity", " unity ", "Custom Tool"],
+          },
         },
         status: "completed",
       },
@@ -156,4 +210,18 @@ test("updating onboarding regenerates the CV and preserves its published state",
     "Updated summary"
   );
   assert.equal(route.adminDb.docs.user_profiles["user-1"].display_name, "Ada");
+  assert.deepEqual(
+    route.adminDb.docs.user_profiles["user-1"].skills,
+    ["Unity", "Custom Tool"]
+  );
+  assert.deepEqual(route.adminDb.docs.users["user-1"].skills, [
+    "Unity",
+    "Custom Tool",
+  ]);
+  assert.equal(route.skillSyncCalls.length, 1);
+  assert.deepEqual(route.skillSyncCalls[0].nextSkills, [
+    "Unity",
+    "Custom Tool",
+  ]);
+  assert.equal(route.skillSyncCalls[0].userId, "user-1");
 });
