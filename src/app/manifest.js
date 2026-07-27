@@ -11,12 +11,12 @@ export default function manifest() {
     theme_color: "#CA2280",
     icons: [
       {
-        src: "/favicon.ico",
-        sizes: "any",
-        type: "image/x-icon",
+        src: "/galactic-omnivore-skull-v1-192.png",
+        sizes: "192x192",
+        type: "image/png",
       },
       {
-        src: "/logos/logo9.png",
+        src: "/galactic-omnivore-skull-v1-512.png",
         sizes: "512x512",
         type: "image/png",
       },

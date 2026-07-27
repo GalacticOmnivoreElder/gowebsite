@@ -461,3 +461,53 @@ Category "blog" not found. No filtering applied.
  GET /login 500 in 262ms
  GET /login 500 in 557ms
  GET /login 500 in 259ms
+ ✓ Compiled in 7.9s (2761 modules)
+ ✓ Compiled in 1784ms (2761 modules)
+ ✓ Compiled in 1045ms (2761 modules)
+ GET / 200 in 264ms
+ ○ Compiling /manifest.webmanifest ...
+ ✓ Compiled /education in 1618ms (1430 modules)
+ ✓ Compiled (1575 modules)
+ GET /api/skills?popular=true&limit=14 200 in 2361ms
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 2515ms
+ GET /manifest.webmanifest 200 in 3740ms
+ ○ Compiling /blog ...
+ ✓ Compiled /blog in 1871ms (2978 modules)
+ GET /resources 500 in 5181ms
+ GET /resources 500 in 359ms
+ GET /projects 500 in 5196ms
+ GET /projects 500 in 356ms
+ GET /education 500 in 5204ms
+ GET /education 500 in 357ms
+ GET /blog 500 in 2765ms
+ GET /blog 500 in 343ms
+ GET /games 500 in 2821ms
+ GET /games 500 in 335ms
+ ○ Compiling /signup ...
+ ✓ Compiled /signup in 573ms (1643 modules)
+ ✓ Compiled (1653 modules)
+ GET /about 500 in 1911ms
+ GET /about 500 in 373ms
+ GET /membership 500 in 1924ms
+ GET /membership 500 in 364ms
+ GET /login 500 in 1936ms
+ GET /login 500 in 357ms
+ GET /signup 500 in 1818ms
+ GET /signup 500 in 347ms
+ ○ Compiling /cookies ...
+ ✓ Compiled /cookies in 1759ms (3019 modules)
+ GET /faq 500 in 2520ms
+ GET /faq 500 in 398ms
+ GET /contact 500 in 2531ms
+ GET /contact 500 in 394ms
+ GET /terms 500 in 2464ms
+ GET /terms 500 in 387ms
+ GET /cookies 500 in 2476ms
+ GET /cookies 500 in 383ms
+ GET /privacy 500 in 2699ms
+ GET /privacy 500 in 379ms
+ ✓ Compiled in 2.4s (2769 modules)
+ ✓ Compiled in 1036ms (2769 modules)
+ ✓ Compiled in 713ms (2769 modules)

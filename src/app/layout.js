@@ -77,9 +77,26 @@ export const metadata = {
     images: [DEFAULT_OG_IMAGE],
   },
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/logos/logo9.png",
+    icon: [
+      {
+        url: "/galactic-omnivore-skull-v1-32.png",
+        sizes: "32x32",
+        type: "image/png",
+      },
+      {
+        url: "/galactic-omnivore-skull-v1-192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+    ],
+    shortcut: "/galactic-omnivore-skull-v1-32.png",
+    apple: [
+      {
+        url: "/galactic-omnivore-skull-v1-180.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
   },
   manifest: "/manifest.webmanifest",
 };

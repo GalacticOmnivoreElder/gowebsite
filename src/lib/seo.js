@@ -128,7 +128,7 @@ export const organizationJsonLd = {
   "@id": `${SITE_URL}/#organization`,
   name: SITE_NAME,
   url: SITE_URL,
-  logo: absoluteUrl("/logos/logo9.png"),
+  logo: absoluteUrl("/galactic-omnivore-skull-v1-512.png"),
   description: DEFAULT_DESCRIPTION,
   email: "galacticomnivore@galacticomnivore.com",
   address: {
