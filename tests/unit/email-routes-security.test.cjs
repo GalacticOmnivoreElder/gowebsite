@@ -139,12 +139,14 @@ test("email cron requires its bearer secret before processing jobs", async () =>
         NextResponse,
         process: { env: { CRON_SECRET: "cron-test-secret" } },
         verifyGithubActionsOidcToken: async () => false,
+        getEmailConfigurationStatus: () => ({ configured: true }),
         enqueueDailyEmailFailureDigest: async () => ({ queued: 0 }),
         processEmailOutbox: async () => {
           processed += 1;
           return { sent: 0 };
         },
         requeueExpiredEmailJobs: async () => 0,
+        sendEmailDeliveryTest: async () => null,
       },
     }
   );
@@ -174,12 +176,14 @@ test("email cron accepts the pinned GitHub Actions OIDC identity", async () => {
         process: { env: {} },
         verifyGithubActionsOidcToken: async (token) =>
           token === "signed-github-token",
+        getEmailConfigurationStatus: () => ({ configured: true }),
         enqueueDailyEmailFailureDigest: async () => ({ queued: 0 }),
         processEmailOutbox: async () => {
           processed += 1;
           return { sent: 0 };
         },
         requeueExpiredEmailJobs: async () => 0,
+        sendEmailDeliveryTest: async () => null,
       },
     }
   );
@@ -197,6 +201,46 @@ test("email cron accepts the pinned GitHub Actions OIDC identity", async () => {
   assert.equal(processed, 1);
 });
 
+test("email cron can send an OIDC-protected production delivery test", async () => {
+  const recipients = [];
+  const route = loadSourceModule(
+    "src/app/api/cron/email-outbox/route.js",
+    ["POST"],
+    {
+      stripImports: true,
+      sandbox: {
+        NextResponse,
+        process: { env: {} },
+        verifyGithubActionsOidcToken: async () => true,
+        getEmailConfigurationStatus: () => ({
+          configured: true,
+          deliveryReady: true,
+        }),
+        enqueueDailyEmailFailureDigest: async () => ({ queued: 0 }),
+        processEmailOutbox: async () => ({ sent: 0 }),
+        requeueExpiredEmailJobs: async () => 0,
+        sendEmailDeliveryTest: async (recipient) => {
+          recipients.push(recipient);
+          return { providerEmailId: "email-test-1" };
+        },
+      },
+    }
+  );
+
+  const response = await route.POST(
+    createRequest({
+      headers: {
+        authorization: "Bearer signed-github-token",
+        "x-email-test-recipient": "operator@example.com",
+      },
+    })
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(recipients, ["operator@example.com"]);
+  assert.equal(response.body.deliveryTest.providerEmailId, "email-test-1");
+});
+
 test("GitHub schedules the protected email worker without a Vercel Hobby cron", () => {
   const workflow = fs.readFileSync(
     ".github/workflows/email-outbox.yml",
@@ -212,6 +256,8 @@ test("GitHub schedules the protected email worker without a Vercel Hobby cron", 
   assert.match(workflow, /ACTIONS_ID_TOKEN_REQUEST_URL/);
   assert.match(workflow, /ACTIONS_ID_TOKEN_REQUEST_TOKEN/);
   assert.match(workflow, /Authorization: Bearer \$GITHUB_OIDC_TOKEN/);
+  assert.match(workflow, /test_email:/);
+  assert.match(workflow, /X-Email-Test-Recipient: \$TEST_EMAIL_RECIPIENT/);
   assert.doesNotMatch(workflow, /secrets\.CRON_SECRET/);
 
   const oidcVerifier = fs.readFileSync(

@@ -38,6 +38,96 @@ function senderForCategory(category) {
   return sender || "Galactic Omnivore <disabled@example.invalid>";
 }
 
+export function getEmailConfigurationStatus() {
+  const required = [
+    "RESEND_API_KEY",
+    "RESEND_WEBHOOK_SECRET",
+    "EMAIL_FROM_TRANSACTIONAL",
+    "EMAIL_FROM_MARKETING",
+    "EMAIL_REPLY_TO",
+    "EMAIL_MARKETING_ADDRESS",
+    "NEWSLETTER_TOKEN_SECRET",
+  ];
+  const missing = required.filter(
+    (name) => !String(process.env[name] || "").trim()
+  );
+  const sendingDisabled = process.env.EMAIL_DISABLE_SEND === "true";
+  return {
+    configured: missing.length === 0 && !sendingDisabled,
+    deliveryReady:
+      Boolean(
+        process.env.RESEND_API_KEY &&
+          process.env.EMAIL_FROM_TRANSACTIONAL
+      ) && !sendingDisabled,
+    newsletterReady:
+      Boolean(
+        process.env.NEWSLETTER_TOKEN_SECRET &&
+          process.env.EMAIL_FROM_MARKETING &&
+          process.env.EMAIL_MARKETING_ADDRESS
+      ) && !sendingDisabled,
+    webhookReady: Boolean(process.env.RESEND_WEBHOOK_SECRET),
+    sendingDisabled,
+    missing,
+  };
+}
+
+export async function sendEmailDeliveryTest(recipientValue) {
+  const recipient = normalizeEmail(recipientValue);
+  if (!recipient) {
+    const error = new Error("A valid test email recipient is required");
+    error.code = "invalid_test_recipient";
+    error.permanent = true;
+    throw error;
+  }
+
+  const configuration = getEmailConfigurationStatus();
+  if (configuration.sendingDisabled) {
+    const error = new Error("Email delivery is disabled");
+    error.code = "email_delivery_disabled";
+    error.permanent = true;
+    throw error;
+  }
+  if (!configuration.deliveryReady) {
+    const error = new Error(
+      `Email delivery is missing: ${configuration.missing
+        .filter((name) =>
+          ["RESEND_API_KEY", "EMAIL_FROM_TRANSACTIONAL"].includes(name)
+        )
+        .join(", ")}`
+    );
+    error.code = "email_delivery_not_configured";
+    error.permanent = true;
+    throw error;
+  }
+
+  const timestamp = new Date().toISOString();
+  const result = await getResend().emails.send({
+    from: process.env.EMAIL_FROM_TRANSACTIONAL,
+    to: recipient,
+    replyTo: process.env.EMAIL_REPLY_TO || undefined,
+    subject: "Galactic Omnivore production email delivery test",
+    html: `<h1>Email delivery test</h1><p>Your Galactic Omnivore production email service sent this message successfully at ${timestamp}.</p>`,
+    text: `Galactic Omnivore production email delivery test\n\nSent successfully at ${timestamp}.`,
+    tags: [
+      { name: "environment", value: sanitizeTag(environmentName()) },
+      { name: "category", value: "diagnostic" },
+      { name: "event", value: "delivery_test" },
+    ],
+  });
+
+  if (result.error) {
+    const error = new Error(result.error.message || "Resend rejected the email");
+    error.code = result.error.name || "provider_error";
+    error.permanent = true;
+    throw error;
+  }
+
+  return {
+    providerEmailId: result.data?.id || null,
+    timestamp,
+  };
+}
+
 export async function sendEmailJob(job) {
   const recipient = normalizeEmail(job.recipient);
   if (!recipient) {

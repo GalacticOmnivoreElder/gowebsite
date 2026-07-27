@@ -1,5 +1,8 @@
 import { adminDb } from "@/lib/firebase-admin";
-import { enqueueEmailEvents } from "./outbox";
+import {
+  enqueueEmailEvents,
+  isMissingFirestoreIndexError,
+} from "./outbox";
 import { normalizeEmail } from "./utils";
 
 export function getAdminNotificationRecipients() {
@@ -31,12 +34,37 @@ export async function enqueueDailyEmailFailureDigest(now = new Date()) {
   if (!recipients.length) return { queued: 0, failedCount: 0 };
   const dayStart = new Date(now);
   dayStart.setUTCHours(0, 0, 0, 0);
-  const snapshot = await adminDb
-    .collection("email_outbox")
-    .where("status", "==", "failed")
-    .where("updatedAt", ">=", dayStart)
-    .limit(100)
-    .get();
+  const collection = adminDb.collection("email_outbox");
+  let snapshot;
+  try {
+    snapshot = await collection
+      .where("status", "==", "failed")
+      .where("updatedAt", ">=", dayStart)
+      .limit(100)
+      .get();
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) throw error;
+    console.warn(
+      JSON.stringify({
+        level: "warning",
+        message: "email_outbox_index_fallback",
+        query: "failed_updatedAt",
+        scanLimit: 500,
+      })
+    );
+    const fallback = await collection
+      .where("status", "==", "failed")
+      .limit(500)
+      .get();
+    const docs = fallback.docs
+      .filter((doc) => {
+        const updatedAt =
+          doc.data().updatedAt?.toDate?.() || doc.data().updatedAt;
+        return updatedAt && new Date(updatedAt) >= dayStart;
+      })
+      .slice(0, 100);
+    snapshot = { docs, empty: docs.length === 0, size: docs.length };
+  }
   if (snapshot.empty) return { queued: 0, failedCount: 0 };
 
   const failedCount = snapshot.size;

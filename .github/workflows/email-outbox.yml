@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
+    inputs:
+      test_email:
+        description: Optional recipient for a production delivery test
+        required: false
+        type: string
 
 permissions:
   id-token: write
@@ -22,6 +27,7 @@ jobs:
         env:
           CRON_ENDPOINT: https://www.galacticomnivore.com/api/cron/email-outbox
           OIDC_AUDIENCE: https://www.galacticomnivore.com/api/cron/email-outbox
+          TEST_EMAIL_RECIPIENT: ${{ inputs.test_email || '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -46,7 +52,7 @@ jobs:
               jq --exit-status --raw-output '.value'
           )"
 
-          curl \
+          CURL_ARGUMENTS=(
             --request POST \
             --fail-with-body \
             --silent \
@@ -57,5 +63,12 @@ jobs:
             --max-time 240 \
             --header "Authorization: Bearer $GITHUB_OIDC_TOKEN" \
             --header "Accept: application/json" \
-            --header "User-Agent: github-actions-email-outbox/1.0" \
-            "$CRON_ENDPOINT"
+            --header "User-Agent: github-actions-email-outbox/1.0"
+          )
+          if [[ -n "$TEST_EMAIL_RECIPIENT" ]]; then
+            CURL_ARGUMENTS+=(
+              --header "X-Email-Test-Recipient: $TEST_EMAIL_RECIPIENT"
+            )
+          fi
+
+          curl "${CURL_ARGUMENTS[@]}" "$CRON_ENDPOINT"

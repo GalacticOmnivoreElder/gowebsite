@@ -19,6 +19,10 @@ export {
 } from "./preferences";
 export { renderEmailEventTemplate } from "./templates/events";
 export {
+  getEmailConfigurationStatus,
+  sendEmailDeliveryTest,
+} from "./send-email";
+export {
   enqueueDailyEmailFailureDigest,
   enqueueAdminEmailEvent,
   getAdminNotificationRecipients,
