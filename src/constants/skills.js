@@ -100,8 +100,20 @@ export const GAMING_TECH_SKILLS = DEFAULT_SKILL_DIRECTORY.map(
 );
 
 export const SOCIAL_PLATFORMS = [
-  { key: "discord", label: "Discord", placeholder: "username#1234" },
-  { key: "email", label: "Work Email", placeholder: "work@example.com" },
+  {
+    key: "discord",
+    label: "Discord",
+    placeholder: "@username or username#1234",
+    helperText: "Enter your Discord username, not a URL.",
+    inputType: "text",
+  },
+  {
+    key: "email",
+    label: "Work Email",
+    placeholder: "work@example.com",
+    helperText: "Enter a valid email address.",
+    inputType: "email",
+  },
   {
     key: "linkedin",
     label: "LinkedIn",

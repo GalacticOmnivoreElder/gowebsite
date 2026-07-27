@@ -2,10 +2,19 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
-const { MAX_PROFILE_BIO_LENGTH, validateProfileData } = loadSourceModule(
-  "src/utils/validateProfile.js",
-  ["MAX_PROFILE_BIO_LENGTH", "validateProfileData"]
-);
+const {
+  MAX_PROFILE_BIO_LENGTH,
+  isValidDiscordUsername,
+  isValidEmail,
+  isValidProfileUrl,
+  validateProfileData,
+} = loadSourceModule("src/utils/validateProfile.js", [
+  "MAX_PROFILE_BIO_LENGTH",
+  "isValidDiscordUsername",
+  "isValidEmail",
+  "isValidProfileUrl",
+  "validateProfileData",
+]);
 
 test("validateProfileData accepts a complete valid profile patch", () => {
   assert.deepEqual(
@@ -74,6 +83,43 @@ test("validateProfileData rejects oversized and malformed profile fields", () =>
 
 test("validateProfileData requires skills to be an array", () => {
   assert.equal(validateProfileData({ skills: "Unity" }).skills, "Skills must be an array");
+});
+
+test("profile validation accepts email addresses and Discord usernames", () => {
+  for (const discord of ["ikikerkov", "@ikikerkov", "Kiker#1234"]) {
+    const errors = validateProfileData({
+      socialLinks: { discord, email: "mugi@mugi.mk" },
+    });
+    assert.deepEqual(Object.keys(errors), []);
+  }
+
+  assert.equal(isValidEmail("creator+work@example.com"), true);
+  assert.equal(isValidDiscordUsername("game.dev"), true);
+  assert.equal(isValidProfileUrl("https://github.com/KIKERKOV"), true);
+});
+
+test("profile validation rejects malformed email and Discord values", () => {
+  let errors = validateProfileData({
+    socialLinks: {
+      discord: "https://discord.com/users/username",
+      email: "mugi@mugi",
+    },
+  });
+
+  assert.equal(
+    errors["socialLinks.email"],
+    "Work email must be a valid email address"
+  );
+  assert.equal(
+    errors["socialLinks.discord"],
+    "Discord must be a valid username, such as username or username#1234"
+  );
+
+  errors = validateProfileData({
+    socialLinks: { discord: "bad..username", email: "two@@example.com" },
+  });
+  assert.ok(errors["socialLinks.discord"]);
+  assert.ok(errors["socialLinks.email"]);
 });
 
 test("validateProfileData rejects empty or oversized skill tags", () => {

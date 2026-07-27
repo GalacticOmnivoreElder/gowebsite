@@ -178,6 +178,13 @@ const ProfileEditor = observer(({ onSave }) => {
         [platform]: value,
       },
     }));
+    setFieldErrors((prev) => {
+      const errorKey = `socialLinks.${platform}`;
+      if (!prev[errorKey]) return prev;
+      const nextErrors = { ...prev };
+      delete nextErrors[errorKey];
+      return nextErrors;
+    });
   };
 
   const updateSocialVisibility = (platform, visible) => {
@@ -503,10 +510,41 @@ const ProfileEditor = observer(({ onSave }) => {
               </div>
               <Input
                 id={platform.key}
+                type={platform.inputType || "url"}
                 value={formData.socialLinks[platform.key] || ""}
                 onChange={(e) => updateSocialLink(platform.key, e.target.value)}
                 placeholder={platform.placeholder}
+                autoComplete={platform.key === "email" ? "email" : "off"}
+                aria-invalid={
+                  Boolean(fieldErrors[`socialLinks.${platform.key}`]) ||
+                  undefined
+                }
+                aria-describedby={
+                  fieldErrors[`socialLinks.${platform.key}`] ||
+                  platform.helperText
+                    ? `${platform.key}-help`
+                    : undefined
+                }
+                className={
+                  fieldErrors[`socialLinks.${platform.key}`]
+                    ? "border-destructive focus-visible:ring-destructive"
+                    : ""
+                }
               />
+              {(fieldErrors[`socialLinks.${platform.key}`] ||
+                platform.helperText) && (
+                <p
+                  id={`${platform.key}-help`}
+                  className={`text-xs ${
+                    fieldErrors[`socialLinks.${platform.key}`]
+                      ? "text-destructive"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {fieldErrors[`socialLinks.${platform.key}`] ||
+                    platform.helperText}
+                </p>
+              )}
             </div>
           ))}
         </CardContent>

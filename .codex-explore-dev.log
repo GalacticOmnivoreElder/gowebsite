@@ -262,3 +262,15 @@ Category "blog" not found. No filtering applied.
  GET /profile 200 in 7939ms
  GET /api/skills?popular=true&limit=20 200 in 103ms
  GET /login 200 in 1837ms
+ ✓ Compiled in 5.3s (2740 modules)
+ GET /login 200 in 2219ms
+ ○ Compiling /manifest.webmanifest ...
+ ✓ Compiled /manifest.webmanifest in 2.4s (2758 modules)
+ GET /manifest.webmanifest 200 in 4278ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 615ms (2748 modules)
+ GET /login 404 in 3345ms
+ GET /login 200 in 1306ms
+ ✓ Compiled in 839ms (1308 modules)
+ GET /login 200 in 97ms
+ GET /manifest.webmanifest 200 in 118ms

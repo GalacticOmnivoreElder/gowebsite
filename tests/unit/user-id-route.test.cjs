@@ -84,6 +84,58 @@ test("profile updates trim usernames before writing them", async () => {
   assert.ok(response.body.profileEditedAt);
 });
 
+test("profile updates accept Discord usernames and work email addresses", async () => {
+  const { PUT } = loadRoute({
+    decodedToken: { uid: "user-1" },
+    seed: { users: { "user-1": { username: "Kikerkov" } } },
+  });
+
+  const response = await PUT(
+    createRequest({
+      headers: { Authorization: "Bearer owner-token" },
+      jsonBody: {
+        socialLinks: {
+          discord: "ikikerkov",
+          email: "mugi@mugi.mk",
+        },
+      },
+    }),
+    { params: { id: "user-1" } }
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(plain(response.body.socialLinks), {
+    discord: "ikikerkov",
+    email: "mugi@mugi.mk",
+  });
+});
+
+test("profile updates reject malformed Discord and email values", async () => {
+  const { PUT } = loadRoute({
+    decodedToken: { uid: "user-1" },
+    seed: { users: { "user-1": { username: "Kikerkov" } } },
+  });
+
+  const response = await PUT(
+    createRequest({
+      headers: { Authorization: "Bearer owner-token" },
+      jsonBody: {
+        socialLinks: {
+          discord: "not a discord username",
+          email: "not-an-email",
+        },
+      },
+    }),
+    { params: { id: "user-1" } }
+  );
+
+  assert.equal(response.status, 400);
+  assert.equal(
+    response.body.validationErrors["socialLinks.discord"],
+    "Discord must be a valid username, such as username or username#1234"
+  );
+});
+
 function cv(overrides = {}) {
   return {
     created_at: new Date("2026-07-14T10:00:00.000Z"),
