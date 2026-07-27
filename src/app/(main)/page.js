@@ -419,7 +419,7 @@ const HomePage = () => {
               buttonLink="/resources"
             />
             <EduBoxLarge
-              title="PORTFOLIO SUPPORT"
+              title="PORTFOLIO"
               img={edu2Img}
               noImg={!isMobile}
               jsx={
@@ -443,7 +443,7 @@ const HomePage = () => {
               buttonLink="/projects"
             />
             <EduBoxLarge
-              title="OUTSOURCING & JOBS"
+              title="BUSINESS"
               img={edu3Img}
               noImg={!isMobile}
               jsx={
