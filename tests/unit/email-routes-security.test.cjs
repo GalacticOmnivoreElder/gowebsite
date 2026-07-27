@@ -256,7 +256,7 @@ test("GitHub schedules the protected email worker without a Vercel Hobby cron", 
   assert.match(workflow, /ACTIONS_ID_TOKEN_REQUEST_URL/);
   assert.match(workflow, /ACTIONS_ID_TOKEN_REQUEST_TOKEN/);
   assert.match(workflow, /Authorization: Bearer \$GITHUB_OIDC_TOKEN/);
-  assert.match(workflow, /test_email:/);
+  assert.match(workflow, /secrets\.EMAIL_TEST_RECIPIENT/);
   assert.match(workflow, /X-Email-Test-Recipient: \$TEST_EMAIL_RECIPIENT/);
   assert.doesNotMatch(workflow, /secrets\.CRON_SECRET/);
 

@@ -4,11 +4,6 @@ on:
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
-    inputs:
-      test_email:
-        description: Optional recipient for a production delivery test
-        required: false
-        type: string
 
 permissions:
   id-token: write
@@ -27,7 +22,7 @@ jobs:
         env:
           CRON_ENDPOINT: https://www.galacticomnivore.com/api/cron/email-outbox
           OIDC_AUDIENCE: https://www.galacticomnivore.com/api/cron/email-outbox
-          TEST_EMAIL_RECIPIENT: ${{ inputs.test_email || '' }}
+          TEST_EMAIL_RECIPIENT: ${{ secrets.EMAIL_TEST_RECIPIENT || '' }}
         shell: bash
         run: |
           set -euo pipefail

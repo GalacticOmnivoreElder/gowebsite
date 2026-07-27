@@ -188,6 +188,12 @@ delayed during periods of high load. The durable outbox safely catches up on
 the next run. GitHub may disable scheduled workflows on inactive public
 repositories, so monitor the Actions page and re-enable the workflow if needed.
 
+For an operator-requested production delivery test, temporarily set the
+repository Actions secret `EMAIL_TEST_RECIPIENT`, manually run the workflow,
+verify the returned provider email ID and mailbox delivery, and then remove the
+secret. Never pass a recipient address as a workflow input because inputs can
+appear in public Actions metadata.
+
 The worker:
 
 1. requeues expired processing leases;
