@@ -42,7 +42,7 @@ export default function ContactPage() {
             <p className="text-muted-foreground mb-4">
               Interested in partnerships or collaboration?
             </p>
-            <p className="font-medium">galacticomnivore@galacticomnivore.com</p>
+            <p className="font-medium">business@galacticomnivore.com</p>
           </CardContent>
         </Card>
       </div>

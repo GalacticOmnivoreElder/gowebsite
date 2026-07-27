@@ -415,8 +415,8 @@ const HomePage = () => {
                   </div>
                 </div>
               }
-              buttonText="See Resources"
-              buttonLink="/resources"
+              buttonText="See Education"
+              buttonLink="/education"
             />
             <EduBoxLarge
               title="PORTFOLIO"
