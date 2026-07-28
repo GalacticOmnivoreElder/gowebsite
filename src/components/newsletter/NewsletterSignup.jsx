@@ -44,7 +44,7 @@ export function NewsletterSignup({
       {!compact && (
         <>
           <h2 className="text-3xl md:text-4xl font-bold">Join the newsletter</h2>
-          <p className="mt-3 text-white/80 max-w-2xl">
+          <p className="mx-auto mt-3 max-w-2xl text-white/80">
             Get Galactic Omnivore community news, new opportunities, and
             selected resources in your inbox.
           </p>
@@ -70,7 +70,11 @@ export function NewsletterSignup({
           shortly. Check your inbox and spam folder.
         </div>
       ) : (
-        <form onSubmit={submit} className="mt-4 max-w-2xl" noValidate>
+        <form
+          onSubmit={submit}
+          className="mx-auto mt-4 max-w-2xl"
+          noValidate
+        >
           <label htmlFor={`newsletter-email-${source}`} className="sr-only">
             Email address
           </label>
@@ -114,7 +118,7 @@ export function NewsletterSignup({
 
           <label
             htmlFor={`newsletter-consent-${source}`}
-            className={`mt-3 flex items-start gap-2 ${
+            className={`mt-3 flex items-start gap-2 text-left ${
               compact ? "text-xs" : "text-sm"
             }`}
           >

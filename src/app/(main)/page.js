@@ -7,6 +7,7 @@ import { SkillBanner } from "@/components/landing/SkillBanner";
 import { StatsPreview } from "@/components/landing/StatsPreview";
 import { PartnerBanner } from "@/components/landing/PartnerBanner";
 import { FullCTA } from "@/components/landing/FullCTA";
+import { PixelSectionDivider } from "@/components/landing/PixelSectionDivider";
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
 import { LandingOpenHours } from "@/components/landing/LandingOpenHours";
 import { LandingDiscordJoin } from "@/components/landing/LandingDiscordJoin";
@@ -30,7 +31,6 @@ import edu1Img from "../../assets/EDUCATION.png";
 import edu2Img from "../../assets/PORTFOLIO.png";
 import edu3Img from "../../assets/OUTSOURCING.png";
 
-import pixelDownImg from "../../assets/pixeldown.png";
 import pixelUpImg from "../../assets/pixelup.png";
 
 import driveTruImg from "../../assets/logosImg.png";
@@ -466,11 +466,19 @@ const HomePage = () => {
         <LandingOpenHours />
       </section>
 
-      <section id="newsletter" className="bg-primary text-white px-4 py-16">
-        <div className="container mx-auto">
-          <NewsletterSignup source="homepage" />
+      <section
+        id="newsletter"
+        className="bg-primary px-4 py-16 text-white sm:px-6 md:py-20"
+      >
+        <div className="mx-auto w-full max-w-7xl">
+          <NewsletterSignup
+            source="homepage"
+            className="mx-auto w-full max-w-2xl text-center"
+          />
         </div>
       </section>
+
+      <PixelSectionDivider className="-my-px" />
 
       <FullCTA />
     </div>

@@ -2,15 +2,10 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import pixelDownImg from "@/assets/pixeldown.png"; // Reusing pixel divider
-import Image from "next/image";
 
 export const FullCTA = () => {
   return (
     <section className="bg-[#CA2380] text-white text-center py-16 md:py-24">
-      {/* Optional top divider */}
-      {/* <Image src={pixelUpImg} alt="Divider" width={1920} height={100} className="w-full h-auto mb-0" /> */}
-
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
           Ready to level up your gaming career?
