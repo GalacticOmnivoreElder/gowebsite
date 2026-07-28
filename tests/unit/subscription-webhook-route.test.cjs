@@ -284,7 +284,6 @@ test("subscription.active and order.paid produce one activation email when activ
 
   await route.captured.onSubscriptionActive({
     data: {
-      checkout_id: "checkout_1",
       customer: { external_id: "user-1", id: "cus_123" },
       current_period_end: "2026-08-14T12:00:00.000Z",
       id: "sub_1",
@@ -297,7 +296,7 @@ test("subscription.active and order.paid produce one activation email when activ
   await route.captured.onOrderPaid({
     data: {
       billing_reason: "subscription_create",
-      checkout_id: "checkout_1",
+      checkout_id: "checkout_only_exposed_by_order",
       customer: { email: "member@example.com", id: "cus_123" },
       id: "order_1",
       metadata: { uid: "user-1" },
@@ -315,7 +314,7 @@ test("subscription.active and order.paid produce one activation email when activ
     (event) => event.type === "billing.membership_activated"
   );
   assert.equal(activationEvents.length, 1);
-  assert.equal(activationEvents[0].eventId, "checkout:checkout_1");
+  assert.equal(activationEvents[0].eventId, "subscription:sub_1");
 });
 
 test("processed webhook events are skipped", async () => {

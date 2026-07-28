@@ -213,6 +213,24 @@ function getMembershipActivationKey(data) {
   return null;
 }
 
+function getCanonicalMembershipActivationKey(data, previousUserData = {}) {
+  const activationKey = getMembershipActivationKey(data);
+  const previousActivationKey =
+    previousUserData?.membershipActivationPurchaseKey || null;
+  if (!previousActivationKey) return activationKey;
+  if (previousActivationKey === activationKey) return previousActivationKey;
+
+  const subscriptionId = getSubscriptionId(data);
+  if (
+    subscriptionId &&
+    previousUserData?.subscriptionId === subscriptionId
+  ) {
+    return previousActivationKey;
+  }
+
+  return activationKey;
+}
+
 function getOrderEmailType(orderData, previousUserData, activationKey) {
   const billingReason = String(
     orderData?.billing_reason || orderData?.billingReason || ""
@@ -261,9 +279,11 @@ async function enqueueMembershipActivationEmail({
   userData,
   amount,
   amountLabel,
+  activationKey: activationKeyOverride,
 }) {
   const recipient = userData?.email;
-  const activationKey = getMembershipActivationKey(sourceData);
+  const activationKey =
+    activationKeyOverride || getMembershipActivationKey(sourceData);
   if (!recipient || !activationKey) return null;
 
   const tier = getMetadataTier(sourceData) || userData.membershipTier || null;
@@ -351,7 +371,10 @@ async function handleOrderPaid(orderData, payload) {
   const tier = getMetadataTier(orderData);
   const interval = getRecurringInterval(orderData);
   const previousUserData = userDoc.data();
-  const activationKey = getMembershipActivationKey(orderData);
+  const activationKey = getCanonicalMembershipActivationKey(
+    orderData,
+    previousUserData
+  );
   const emailType = getOrderEmailType(
     orderData,
     previousUserData,
@@ -417,6 +440,7 @@ async function handleOrderPaid(orderData, payload) {
         userData: previousUserData,
         amount,
         amountLabel: "Amount paid",
+        activationKey,
       });
     } else {
       await enqueueEmailEvent({
@@ -499,6 +523,10 @@ async function handleSubscriptionActive(subscriptionData, payload) {
     lastPaymentFailed: false,
   });
   const previous = result?.previousData;
+  const activationKey = getCanonicalMembershipActivationKey(
+    subscriptionData,
+    previous
+  );
   const previousStatus = previous?.subscriptionStatus;
   const paymentRecovery =
     previousStatus === "past_due" || previous?.lastPaymentFailed === true;
@@ -508,7 +536,7 @@ async function handleSubscriptionActive(subscriptionData, payload) {
     (!previous.activeMember ||
       !previous.lastOrderId ||
       previous.membershipActivationPurchaseKey ===
-        getMembershipActivationKey(subscriptionData));
+        activationKey);
 
   if (shouldAttemptActivation) {
     const queued = await enqueueMembershipActivationEmail({
@@ -518,6 +546,7 @@ async function handleSubscriptionActive(subscriptionData, payload) {
       userData: previous,
       amount: subscriptionData.amount ?? null,
       amountLabel: "Plan amount",
+      activationKey,
     });
     if (queued?.activationKey && result.userRef) {
       await result.userRef.update({
