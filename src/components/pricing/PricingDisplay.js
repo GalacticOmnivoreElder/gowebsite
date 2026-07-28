@@ -103,14 +103,16 @@ export const PricingDisplay = observer(() => {
         throw new Error(result.error || "Failed to start checkout.");
       }
 
-      beginSubscriptionConfirmationAttempt({
-        baselineConfirmationId: user?.membershipConfirmationId || null,
-        baselineMembershipTier: currentTier,
-        interval: selection.interval,
-        mode: result.upgraded ? "upgrade" : "purchase",
-        tier: selection.tier,
-        userId: user.uid,
-      });
+      if (result.flow !== "portal") {
+        beginSubscriptionConfirmationAttempt({
+          baselineConfirmationId: user?.membershipConfirmationId || null,
+          baselineMembershipTier: currentTier,
+          interval: selection.interval,
+          mode: "purchase",
+          tier: selection.tier,
+          userId: user.uid,
+        });
+      }
       window.location.assign(result.url);
     };
 

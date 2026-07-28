@@ -34,10 +34,12 @@ function loadRoute({
   user,
   productId = "prod_member_monthly",
   polarCreate,
-  polarGet,
-  polarUpdate,
+  portalSession = {
+    customerPortalUrl: "https://sandbox.polar.sh/go/portal",
+  },
 } = {}) {
   const polarCalls = [];
+  const portalCalls = [];
   class Polar {
     constructor(config) {
       this.config = config;
@@ -51,9 +53,7 @@ function loadRoute({
       this.subscriptions = {
         get: async (input) => {
           polarCalls.push({ config, input, operation: "subscription.get" });
-          return polarGet
-            ? polarGet(input)
-            : { recurringInterval: "month" };
+          return { recurringInterval: "month" };
         },
         update: async (input) => {
           polarCalls.push({
@@ -61,7 +61,7 @@ function loadRoute({
             input,
             operation: "subscription.update",
           });
-          return polarUpdate ? polarUpdate(input) : { status: "active" };
+          return { status: "active" };
         },
       };
     }
@@ -75,6 +75,12 @@ function loadRoute({
       sandbox: {
         NextResponse,
         Polar,
+        createPolarCustomerSession: async (customerId) => {
+          portalCalls.push(customerId);
+          return portalSession;
+        },
+        getPolarPortalBase: () =>
+          "https://sandbox.polar.sh/go/portal/overview",
         getPolarServer: () => "sandbox",
         getRequestUser: async () => user || null,
         resolvePolarProductId: () => productId,
@@ -82,7 +88,7 @@ function loadRoute({
     }
   );
 
-  return { ...route, polarCalls };
+  return { ...route, polarCalls, portalCalls };
 }
 
 test("checkout route requires authentication", async () => {
@@ -94,9 +100,9 @@ test("checkout route requires authentication", async () => {
   assert.deepEqual(plain(response.body), { error: "Authentication required" });
 });
 
-test("Community upgrade changes the active Polar subscription instead of opening checkout", async () => {
+test("Community upgrade opens Polar's customer-confirmed plan change without mutating the subscription", async () => {
   await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
-    const { POST, polarCalls } = loadRoute({
+    const { POST, polarCalls, portalCalls } = loadRoute({
       productId: "configured-business-product",
       user: {
         activeMember: true,
@@ -106,6 +112,7 @@ test("Community upgrade changes the active Polar subscription instead of opening
         userData: {
           activeMember: true,
           membershipTier: "member",
+          polarCustomerId: "customer-1",
           subscriptionId: "subscription-1",
           subscriptionStatus: "active",
           willRenew: true,
@@ -122,30 +129,18 @@ test("Community upgrade changes the active Polar subscription instead of opening
 
     assert.equal(response.status, 200);
     assert.deepEqual(plain(response.body), {
-      upgraded: true,
-      url: "https://go.test/subscription/success",
+      flow: "portal",
+      url: "https://sandbox.polar.sh/go/portal",
     });
-    const updateCall = polarCalls.find(
-      (call) => call.operation === "subscription.update"
-    );
-    assert.deepEqual(plain(updateCall.input), {
-      id: "subscription-1",
-      subscriptionUpdate: {
-        productId: "configured-business-product",
-        prorationBehavior: "prorate",
-      },
-    });
-    assert.equal(
-      polarCalls.some((call) => !call.operation && call.input.products),
-      false
-    );
+    assert.deepEqual(portalCalls, ["customer-1"]);
+    assert.deepEqual(polarCalls, []);
   });
 });
 
-test("Community upgrade refuses an interval change without explicit billing confirmation", async () => {
+test("Community upgrade falls back to an encoded authenticated portal URL", async () => {
   await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
     const { POST, polarCalls } = loadRoute({
-      polarGet: async () => ({ recurringInterval: "month" }),
+      portalSession: { token: "short lived token" },
       productId: "configured-business-annual",
       user: {
         activeMember: true,
@@ -154,6 +149,7 @@ test("Community upgrade refuses an interval change without explicit billing conf
         userData: {
           activeMember: true,
           membershipTier: "member",
+          polarCustomerId: "customer/1",
           subscriptionId: "subscription-1",
           subscriptionStatus: "active",
           willRenew: true,
@@ -167,15 +163,47 @@ test("Community upgrade refuses an interval change without explicit billing conf
       })
     );
 
-    assert.equal(response.status, 409);
-    assert.equal(
-      response.body.code,
-      "interval_change_requires_confirmation"
-    );
+    assert.equal(response.status, 200);
+    assert.deepEqual(plain(response.body), {
+      flow: "portal",
+      url:
+        "https://sandbox.polar.sh/go/portal/overview" +
+        "?customer_session_token=short%20lived%20token&id=customer%2F1",
+    });
     assert.equal(
       polarCalls.some((call) => call.operation === "subscription.update"),
       false
     );
+  });
+});
+
+test("Community upgrade requires a linked Polar customer", async () => {
+  await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
+    const { POST, polarCalls, portalCalls } = loadRoute({
+      productId: "configured-business-product",
+      user: {
+        activeMember: true,
+        membershipTier: "member",
+        uid: "user-1",
+        userData: {
+          activeMember: true,
+          membershipTier: "member",
+          subscriptionStatus: "active",
+          willRenew: true,
+        },
+      },
+    });
+
+    const response = await POST(
+      createRequest({
+        jsonBody: { interval: "monthly", tier: "company" },
+      })
+    );
+
+    assert.equal(response.status, 409);
+    assert.equal(response.body.code, "missing_customer");
+    assert.deepEqual(portalCalls, []);
+    assert.deepEqual(polarCalls, []);
   });
 });
 
@@ -235,6 +263,7 @@ test("checkout route creates Polar checkout with authenticated identity and buye
 
       assert.equal(response.status, 200);
       assert.deepEqual(plain(response.body), {
+        flow: "checkout",
         url: "https://checkout.polar.test/session",
       });
       assert.deepEqual(plain(polarCalls[0].config), {

@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { Polar } from "@polar-sh/sdk";
 import { getRequestUser } from "@/lib/auth-utils";
-import { getPolarServer, resolvePolarProductId } from "@/lib/polar";
+import {
+  createPolarCustomerSession,
+  getPolarPortalBase,
+  getPolarServer,
+  resolvePolarProductId,
+} from "@/lib/polar";
 
 /**
  * Create a Polar checkout session on the server.
@@ -23,6 +28,21 @@ function getClientIp(request) {
     request.headers.get("cf-connecting-ip") ||
     undefined
   );
+}
+
+function getCustomerPortalUrl(customerSession, customerId) {
+  const directPortalUrl =
+    customerSession?.customerPortalUrl ||
+    customerSession?.customer_portal_url;
+
+  if (directPortalUrl) return directPortalUrl;
+  if (!customerSession?.token) {
+    throw new Error("Polar did not return a customer portal session.");
+  }
+
+  return `${getPolarPortalBase()}?customer_session_token=${encodeURIComponent(
+    customerSession.token
+  )}&id=${encodeURIComponent(customerId)}`;
 }
 
 export async function POST(request) {
@@ -58,11 +78,6 @@ export async function POST(request) {
     );
   }
 
-  const polar = new Polar({
-    accessToken: process.env.POLAR_ACCESS_TOKEN,
-    server: getPolarServer(),
-  });
-
   const origin = new URL(request.url).origin;
   const successUrl =
     process.env.POLAR_SUCCESS_URL || `${origin}/subscription/success`;
@@ -95,66 +110,51 @@ export async function POST(request) {
       );
     }
 
-    if (!userData.subscriptionId) {
+    if (!userData.polarCustomerId) {
       return NextResponse.json(
         {
           error:
-            "We could not identify the active Polar subscription. Please contact support before upgrading.",
-          code: "missing_subscription",
+            "We could not identify the Polar billing account for this membership. Please contact support before upgrading.",
+          code: "missing_customer",
         },
         { status: 409 }
       );
     }
 
     try {
-      const activeSubscription = await polar.subscriptions.get({
-        id: userData.subscriptionId,
-      });
-      const targetRecurringInterval =
-        interval === "annual" ? "year" : "month";
-      if (
-        activeSubscription?.recurringInterval &&
-        activeSubscription.recurringInterval !== targetRecurringInterval
-      ) {
-        return NextResponse.json(
-          {
-            error:
-              "Changing both tier and billing interval can trigger an immediate prorated invoice. Select the current billing interval or manage the change in Billing.",
-            code: "interval_change_requires_confirmation",
-          },
-          { status: 409 }
-        );
-      }
-
-      await polar.subscriptions.update({
-        id: userData.subscriptionId,
-        subscriptionUpdate: {
-          productId,
-          // For a same-interval change, Polar applies the product now while
-          // carrying the prorated difference to the next renewal invoice.
-          prorationBehavior: "prorate",
-        },
-      });
+      // Paid customers can only have one active subscription per Polar
+      // organization by default. Their upgrade must therefore be confirmed as
+      // a plan change in Polar's Customer Portal, not performed silently by
+      // our server and not started as a second checkout.
+      const customerSession = await createPolarCustomerSession(
+        userData.polarCustomerId
+      );
 
       return NextResponse.json({
-        upgraded: true,
-        url: successUrl,
+        flow: "portal",
+        url: getCustomerPortalUrl(
+          customerSession,
+          userData.polarCustomerId
+        ),
       });
     } catch (error) {
-      console.error("Polar subscription upgrade failed:", error);
+      console.error("Polar upgrade portal creation failed:", error);
       const status = error?.statusCode || error?.status;
       return NextResponse.json(
         {
           error:
-            status === 409 || status === 422
-              ? "Polar could not change this active subscription. Please manage billing or contact support."
-              : "Failed to upgrade the active subscription.",
-          code: "upgrade_failed",
+            "Failed to open the secure Polar upgrade page. Please try again or manage the plan from Billing.",
+          code: "upgrade_portal_failed",
         },
-        { status: status === 409 || status === 422 ? 409 : 500 }
+        { status: status === 401 ? 401 : 500 }
       );
     }
   }
+
+  const polar = new Polar({
+    accessToken: process.env.POLAR_ACCESS_TOKEN,
+    server: getPolarServer(),
+  });
 
   const checkoutInput = {
     products: [productId],
@@ -180,7 +180,7 @@ export async function POST(request) {
 
   try {
     const checkout = await polar.checkouts.create(checkoutInput);
-    return NextResponse.json({ url: checkout.url });
+    return NextResponse.json({ flow: "checkout", url: checkout.url });
   } catch (error) {
     console.error("Polar checkout create failed:", error);
 

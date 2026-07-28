@@ -245,6 +245,8 @@ test("subscription success dialog is accessible, responsive, and links to every 
   assert.doesNotMatch(successPage, /useSearchParams/);
   assert.match(subscribeButton, /beginSubscriptionConfirmationAttempt/);
   assert.match(pricingDisplay, /beginSubscriptionConfirmationAttempt/);
+  assert.match(subscribeButton, /if \(data\.flow !== "portal"\)/);
+  assert.match(pricingDisplay, /if \(result\.flow !== "portal"\)/);
   assert.match(dialogPrimitive, /DialogPrimitive\.Content/);
   assert.match(dialogPrimitive, /DialogPrimitive\.Title/);
   assert.match(dialogPrimitive, /DialogPrimitive\.Description/);

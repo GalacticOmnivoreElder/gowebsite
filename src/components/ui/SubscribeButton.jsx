@@ -148,19 +148,23 @@ const SubscribeButton = observer(
           throw new Error(data.error || "Failed to create checkout session");
         }
 
-        // Redirect to the Polar-hosted (or embedded) checkout.
-        beginSubscriptionConfirmationAttempt({
-          baselineConfirmationId:
-            MobxStore.user?.membershipConfirmationId || null,
-          baselineMembershipTier:
-            MobxStore.permissions?.permissions?.membershipTier ||
-            MobxStore.user?.membershipTier ||
-            null,
-          interval,
-          mode: data.upgraded ? "upgrade" : "purchase",
-          tier,
-          userId: currentUser.uid,
-        });
+        // A new purchase returns from checkout to our success page. Existing
+        // paid members manage upgrades in Polar's portal, so no purchase
+        // confirmation marker should exist until Polar records a real change.
+        if (data.flow !== "portal") {
+          beginSubscriptionConfirmationAttempt({
+            baselineConfirmationId:
+              MobxStore.user?.membershipConfirmationId || null,
+            baselineMembershipTier:
+              MobxStore.permissions?.permissions?.membershipTier ||
+              MobxStore.user?.membershipTier ||
+              null,
+            interval,
+            mode: "purchase",
+            tier,
+            userId: currentUser.uid,
+          });
+        }
         window.location.href = data.url;
       } catch (error) {
         console.error("Failed to create checkout session:", error);
