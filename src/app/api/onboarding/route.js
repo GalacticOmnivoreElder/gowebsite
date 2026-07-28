@@ -151,10 +151,11 @@ export async function PUT(request) {
   const ref = adminDb.collection("onboarding_sessions").doc(user.uid);
   const cvRef = adminDb.collection("go_cvs").doc(user.uid);
   const userRef = adminDb.collection("users").doc(user.uid);
-  const [snap, existingCvSnap, existingUserSnap] = await Promise.all([
+  const [snap, existingCvSnap, existingUserSnap, existingProfileSnap] = await Promise.all([
     ref.get(),
     cvRef.get(),
     userRef.get(),
+    adminDb.collection("user_profiles").doc(user.uid).get(),
   ]);
   if (!snap.exists) {
     return NextResponse.json({ error: "No onboarding session found" }, { status: 400 });
@@ -179,40 +180,96 @@ export async function PUT(request) {
       { status: 400 }
     );
   }
-  if (!identity.full_name || !identity.display_name || !roleSkills.primary_role) {
+  if (
+    !String(identity.full_name || "").trim() ||
+    !String(identity.display_name || "").trim() ||
+    !String(roleSkills.primary_role || "").trim()
+  ) {
     return NextResponse.json(
       { error: "Full name, display name, and primary role are required." },
+      { status: 400 }
+    );
+  }
+  if (String(identity.bio || "").length > 150) {
+    return NextResponse.json(
+      { error: "Short bio must be 150 characters or less." },
+      { status: 400 }
+    );
+  }
+  const aboutWordCount = String(identity.about_me || "")
+    .trim()
+    .split(/\s+/u)
+    .filter(Boolean).length;
+  if (aboutWordCount > 10000) {
+    return NextResponse.json(
+      { error: "About Me must be 10,000 words or less." },
       { status: 400 }
     );
   }
 
   const now = new Date();
   const existingCv = existingCvSnap.exists ? existingCvSnap.data() : null;
+  const existingProfile = existingProfileSnap.exists
+    ? existingProfileSnap.data()
+    : {};
+  const normalizeTags = (values, max = 20) =>
+    sanitizeSkills(values, { max });
+  const primaryRole = String(roleSkills.primary_role || "")
+    .trim()
+    .replace(/\s+/gu, " ");
+  const secondaryRoles = normalizeTags(roleSkills.secondary_roles, 8);
+  const tools = normalizeTags(roleSkills.tools, 20);
   const skills = sanitizeSkills(
     Array.isArray(roleSkills.skills)
       ? roleSkills.skills
       : [
           roleSkills.primary_role,
-          ...(roleSkills.secondary_roles || []),
-          ...(roleSkills.tools || []),
+          ...secondaryRoles,
+          ...tools,
         ]
   );
+  const profileTags = sanitizeSkills([
+    primaryRole,
+    ...secondaryRoles,
+    ...skills,
+    ...tools,
+  ]);
+  const portfolioLinks = Array.isArray(portfolio.links)
+    ? portfolio.links.filter((link) => link?.url)
+    : [
+        portfolio.portfolio
+          ? { type: "portfolio", url: portfolio.portfolio }
+          : null,
+        portfolio.github ? { type: "github", url: portfolio.github } : null,
+        portfolio.other_link
+          ? { type: "other", url: portfolio.other_link }
+          : null,
+      ].filter(Boolean);
+  const discord = draft.discord || {};
   const profile = {
     user_id: user.uid,
     display_name: identity.display_name,
     full_name: identity.full_name,
+    bio:
+      identity.bio !== undefined ? identity.bio : existingProfile.bio || null,
+    about_me:
+      identity.about_me !== undefined
+        ? identity.about_me
+        : existingProfile.about_me || null,
     email: identity.email || user.email || null,
     location: identity.location || null,
     timezone: identity.timezone || null,
     preferred_language: identity.preferred_language || null,
-    discord_username: (draft.discord || {}).discord_username || null,
-    primary_role: roleSkills.primary_role,
-    secondary_roles: roleSkills.secondary_roles || [],
+    discord_username: discord.discord_username || null,
+    discord_joined: !!discord.already_joined,
+    discord_invitation_eligible: !discord.already_joined,
+    primary_role: primaryRole,
+    secondary_roles: secondaryRoles,
     skills,
     skill_level: roleSkills.skill_level || "beginner",
-    tools: roleSkills.tools || [],
+    tools,
     experience_level: roleSkills.experience_level || null,
-    portfolio_links: portfolio.links || [],
+    portfolio_links: portfolioLinks,
     past_projects: portfolio.past_projects || [],
     current_goal: goals.current_goal || null,
     looking_for_projects: !!goals.looking_for_projects,
@@ -279,9 +336,13 @@ export async function PUT(request) {
     {
       onboardingCompleted: true,
       hasCv: true,
+      username: profile.display_name,
+      bio: profile.bio || "",
+      aboutMe: profile.about_me || "",
       profilePrivacy: profile.visibility_public ? "public" : "private",
       profileEditedAt: now,
       skills,
+      profileTags,
       updatedAt: now,
     },
     { merge: true }
@@ -289,9 +350,11 @@ export async function PUT(request) {
   await batch.commit();
   await syncUserSkillUsage({
     previousSkills: existingUserSnap.exists
-      ? existingUserSnap.data().skills || []
+      ? existingUserSnap.data().profileTags ||
+        existingUserSnap.data().skills ||
+        []
       : [],
-    nextSkills: skills,
+    nextSkills: profileTags,
     userId: user.uid,
   });
   await cancelPendingEmailEvents({
@@ -301,17 +364,6 @@ export async function PUT(request) {
   }).catch((emailError) => {
     console.error("Could not cancel onboarding reminder emails:", emailError);
   });
-  if (user.email) {
-    await enqueueEmailEvent({
-      type: "onboarding.completed",
-      eventId: user.uid,
-      userId: user.uid,
-      recipient: user.email,
-      data: { displayName: profile.display_name },
-    }).catch((emailError) => {
-      console.error("Could not queue onboarding completion email:", emailError);
-    });
-  }
 
   return NextResponse.json({
     ok: true,

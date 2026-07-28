@@ -260,7 +260,7 @@ export default function PackageForm({ initialData, onSubmit, onCancel }) {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Describe this monthly package..."
+              placeholder="Describe this community resource drop..."
               rows={4}
               required
             />

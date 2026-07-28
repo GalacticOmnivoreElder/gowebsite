@@ -37,6 +37,10 @@ function getCvDisplayData(cv) {
   };
 }
 
+function serializeDate(value) {
+  return value?.toDate?.()?.toISOString() || value || null;
+}
+
 async function getUserFromToken(request) {
   try {
     const authHeader = request.headers.get("authorization");
@@ -95,6 +99,12 @@ export async function GET(request, { params }) {
     const hasEditedBio =
       hasExplicitProfileEdits &&
       Object.prototype.hasOwnProperty.call(userData, "bio");
+    const storedBio = String(userData.bio || "");
+    const legacyAboutMe =
+      !userData.aboutMe && storedBio.length > 150 ? storedBio : "";
+    const memberSince =
+      serializeDate(userData.membershipActivatedAt) ||
+      serializeDate(userData.createdAt);
 
     const publicProfile = {
       id: userId,
@@ -111,10 +121,14 @@ export async function GET(request, { params }) {
           ? [...new Set(cvDisplayData.skills)]
           : userData.skills || [],
       bio: hasEditedBio
-        ? userData.bio
-        : (canViewCv && cvData?.summary) || userData.bio || "",
+        ? storedBio.slice(0, 150)
+        : storedBio.length <= 150
+        ? storedBio
+        : "",
+      aboutMe: userData.aboutMe || legacyAboutMe,
       joinedAt:
-        userData.createdAt?.toDate?.()?.toISOString() || userData.createdAt,
+        serializeDate(userData.createdAt),
+      memberSince,
       profilePrivacy: "public",
       isPrivate: false,
       cv: canViewCv ? serializeCv(cvData) : null,
@@ -176,6 +190,7 @@ export async function PUT(request, { params }) {
     const allowedFields = [
       "username",
       "bio",
+      "aboutMe",
       "skills",
       "socialLinks",
       "socialVisibility",
@@ -226,6 +241,32 @@ export async function PUT(request, { params }) {
 
     await userReference.update(filteredUpdateData);
 
+    const structuredProfileUpdate = {};
+    if (filteredUpdateData.username !== undefined) {
+      structuredProfileUpdate.display_name = filteredUpdateData.username;
+    }
+    if (filteredUpdateData.bio !== undefined) {
+      structuredProfileUpdate.bio = filteredUpdateData.bio;
+    }
+    if (filteredUpdateData.aboutMe !== undefined) {
+      structuredProfileUpdate.about_me = filteredUpdateData.aboutMe;
+    }
+    if (filteredUpdateData.skills !== undefined) {
+      structuredProfileUpdate.skills = filteredUpdateData.skills;
+    }
+    if (Object.keys(structuredProfileUpdate).length > 0) {
+      const profileReference = adminDb
+        .collection("user_profiles")
+        .doc(userId);
+      const profileDoc = await profileReference.get();
+      if (profileDoc.exists) {
+        await profileReference.set(
+          { ...structuredProfileUpdate, updated_at: now },
+          { merge: true }
+        );
+      }
+    }
+
     if (filteredUpdateData.skills !== undefined) {
       await syncUserSkillUsage({
         previousSkills,
@@ -270,6 +311,7 @@ export async function PUT(request, { params }) {
       id: userId,
       username: updatedData.username,
       bio: updatedData.bio,
+      aboutMe: updatedData.aboutMe,
       skills: updatedData.skills,
       socialLinks: updatedData.socialLinks,
       socialVisibility: updatedData.socialVisibility,

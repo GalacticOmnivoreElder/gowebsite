@@ -66,6 +66,95 @@ export async function POST(request) {
   const origin = new URL(request.url).origin;
   const successUrl =
     process.env.POLAR_SUCCESS_URL || `${origin}/subscription/success`;
+  const userData = user.userData || {};
+  const currentTier = user.membershipTier || userData.membershipTier || null;
+  const subscriptionEnding =
+    userData.subscriptionStatus === "canceled" ||
+    userData.willRenew === false;
+
+  if (user.activeMember) {
+    if (currentTier !== "member" || tier !== "company") {
+      return NextResponse.json(
+        {
+          error:
+            "This account already has an active membership. Manage the current plan from Billing.",
+          code: "active_membership",
+        },
+        { status: 409 }
+      );
+    }
+
+    if (subscriptionEnding) {
+      return NextResponse.json(
+        {
+          error:
+            "This membership is scheduled to end. Manage or reactivate it from Billing before changing plans.",
+          code: "subscription_ending",
+        },
+        { status: 409 }
+      );
+    }
+
+    if (!userData.subscriptionId) {
+      return NextResponse.json(
+        {
+          error:
+            "We could not identify the active Polar subscription. Please contact support before upgrading.",
+          code: "missing_subscription",
+        },
+        { status: 409 }
+      );
+    }
+
+    try {
+      const activeSubscription = await polar.subscriptions.get({
+        id: userData.subscriptionId,
+      });
+      const targetRecurringInterval =
+        interval === "annual" ? "year" : "month";
+      if (
+        activeSubscription?.recurringInterval &&
+        activeSubscription.recurringInterval !== targetRecurringInterval
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Changing both tier and billing interval can trigger an immediate prorated invoice. Select the current billing interval or manage the change in Billing.",
+            code: "interval_change_requires_confirmation",
+          },
+          { status: 409 }
+        );
+      }
+
+      await polar.subscriptions.update({
+        id: userData.subscriptionId,
+        subscriptionUpdate: {
+          productId,
+          // For a same-interval change, Polar applies the product now while
+          // carrying the prorated difference to the next renewal invoice.
+          prorationBehavior: "prorate",
+        },
+      });
+
+      return NextResponse.json({
+        upgraded: true,
+        url: successUrl,
+      });
+    } catch (error) {
+      console.error("Polar subscription upgrade failed:", error);
+      const status = error?.statusCode || error?.status;
+      return NextResponse.json(
+        {
+          error:
+            status === 409 || status === 422
+              ? "Polar could not change this active subscription. Please manage billing or contact support."
+              : "Failed to upgrade the active subscription.",
+          code: "upgrade_failed",
+        },
+        { status: status === 409 || status === 422 ? 409 : 500 }
+      );
+    }
+  }
 
   const checkoutInput = {
     products: [productId],

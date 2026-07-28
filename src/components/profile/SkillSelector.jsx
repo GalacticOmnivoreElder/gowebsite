@@ -20,13 +20,25 @@ export function SkillSelector({
   value = [],
   onChange,
   submissionLabel = "save your profile",
+  suggestions = LANDING_FALLBACK_SKILLS,
+  loadCatalog = true,
+  suggestionsLabel = "Popular community skills",
+  suggestionsHelp = "Choose from the skills used most often across community profiles.",
+  customLabel = "Can't find your skill?",
+  customPlaceholder = "Create a skill tag",
+  addLabel = "Add skill",
+  emptyText = "Add skills to help collaborators discover your expertise.",
+  maxItems = MAX_PROFILE_SKILLS,
 }) {
-  const [popularSkills, setPopularSkills] = useState(LANDING_FALLBACK_SKILLS);
+  const [popularSkills, setPopularSkills] = useState(suggestions);
   const [customSkill, setCustomSkill] = useState("");
   const customSkillId = useId();
   const selectedSkills = Array.isArray(value) ? value : [];
 
   useEffect(() => {
+    setPopularSkills(suggestions);
+    if (!loadCatalog) return undefined;
+
     const controller = new AbortController();
 
     const loadPopularSkills = async () => {
@@ -49,7 +61,7 @@ export function SkillSelector({
     loadPopularSkills();
 
     return () => controller.abort();
-  }, []);
+  }, [loadCatalog, suggestions]);
 
   const addSkill = (skill) => {
     const normalizedSkill = normalizeSkillName(skill);
@@ -64,10 +76,10 @@ export function SkillSelector({
       return;
     }
 
-    if (selectedSkills.length >= MAX_PROFILE_SKILLS) {
+    if (selectedSkills.length >= maxItems) {
       toast({
         title: "Skill limit reached",
-        description: `Profiles can include up to ${MAX_PROFILE_SKILLS} skills.`,
+        description: `You can include up to ${maxItems} tags here.`,
         variant: "destructive",
       });
       return;
@@ -99,9 +111,9 @@ export function SkillSelector({
     <div className="space-y-4">
       <div className="space-y-3">
         <div>
-          <p className="text-sm font-medium">Popular community skills</p>
+          <p className="text-sm font-medium">{suggestionsLabel}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Choose from the skills used most often across community profiles.
+            {suggestionsHelp}
           </p>
         </div>
         <div
@@ -115,7 +127,7 @@ export function SkillSelector({
                 getSkillKey(selectedSkill) === getSkillKey(skill)
             );
             const limitReached =
-              selectedSkills.length >= MAX_PROFILE_SKILLS && !selected;
+              selectedSkills.length >= maxItems && !selected;
 
             return (
               <button
@@ -142,7 +154,7 @@ export function SkillSelector({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={customSkillId}>Can&apos;t find your skill?</Label>
+        <Label htmlFor={customSkillId}>{customLabel}</Label>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             id={customSkillId}
@@ -154,7 +166,7 @@ export function SkillSelector({
                 addSkill(customSkill);
               }
             }}
-            placeholder="Create a skill tag"
+            placeholder={customPlaceholder}
             maxLength={MAX_SKILL_NAME_LENGTH}
           />
           <Button
@@ -164,7 +176,7 @@ export function SkillSelector({
             disabled={!normalizeSkillName(customSkill)}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add skill
+            {addLabel}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
@@ -176,7 +188,7 @@ export function SkillSelector({
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>Your selected skills</span>
         <span>
-          {selectedSkills.length}/{MAX_PROFILE_SKILLS}
+          {selectedSkills.length}/{maxItems}
         </span>
       </div>
 
@@ -200,10 +212,63 @@ export function SkillSelector({
         ))}
         {selectedSkills.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            Add skills to help collaborators discover your expertise.
+            {emptyText}
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+export function SkillTagInput({
+  value = "",
+  onChange,
+  label = "Primary role",
+  placeholder = "Start typing a role or skill",
+}) {
+  const [suggestions, setSuggestions] = useState(LANDING_FALLBACK_SKILLS);
+  const inputId = useId();
+  const listId = useId();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/skills?popular=true&limit=50", { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (Array.isArray(data?.skills) && data.skills.length > 0) {
+          setSuggestions(data.skills.map((skill) => skill.name));
+        }
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          console.error("Error loading role suggestions:", error);
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={inputId}>{label}</Label>
+      <Input
+        id={inputId}
+        list={listId}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onBlur={(event) => onChange(normalizeSkillName(event.target.value))}
+        placeholder={placeholder}
+        maxLength={MAX_SKILL_NAME_LENGTH}
+        autoComplete="off"
+      />
+      <datalist id={listId}>
+        {suggestions.map((suggestion) => (
+          <option key={suggestion} value={suggestion} />
+        ))}
+      </datalist>
+      <p className="text-xs text-muted-foreground">
+        Choose a suggestion or enter your own role tag.
+      </p>
     </div>
   );
 }

@@ -21,10 +21,12 @@ function plain(value) {
 function createDb(seed = {}) {
   const docs = {
     go_cvs: { ...(seed.go_cvs || {}) },
+    user_profiles: { ...(seed.user_profiles || {}) },
     users: { ...(seed.users || {}) },
   };
 
   return {
+    docs,
     collection(name) {
       return {
         doc(id) {
@@ -39,6 +41,11 @@ function createDb(seed = {}) {
             async update(update) {
               docs[name][id] = { ...(docs[name][id] || {}), ...update };
             },
+            async set(update, options = {}) {
+              docs[name][id] = options.merge
+                ? { ...(docs[name][id] || {}), ...update }
+                : update;
+            },
           };
         },
       };
@@ -48,7 +55,7 @@ function createDb(seed = {}) {
 
 function loadRoute({ decodedToken = null, seed = {} } = {}) {
   const adminDb = createDb(seed);
-  return loadSourceModule("src/app/api/user/[id]/route.js", ["GET", "PUT"], {
+  const route = loadSourceModule("src/app/api/user/[id]/route.js", ["GET", "PUT"], {
     stripImports: true,
     sandbox: {
       NextResponse,
@@ -63,6 +70,7 @@ function loadRoute({ decodedToken = null, seed = {} } = {}) {
       validateProfileData,
     },
   });
+  return { ...route, adminDb };
 }
 
 test("profile updates trim usernames before writing them", async () => {
@@ -108,6 +116,47 @@ test("profile updates accept Discord usernames and work email addresses", async 
     discord: "ikikerkov",
     email: "mugi@mugi.mk",
   });
+});
+
+test("profile updates save short Bio and detailed About Me atomically", async () => {
+  const route = loadRoute({
+    decodedToken: { uid: "user-1" },
+    seed: {
+      user_profiles: {
+        "user-1": { display_name: "Old Name" },
+      },
+      users: {
+        "user-1": { bio: "Old biography", username: "Old Name" },
+      },
+    },
+  });
+
+  const response = await route.PUT(
+    createRequest({
+      headers: { Authorization: "Bearer owner-token" },
+      jsonBody: {
+        aboutMe: "A detailed biography with spaces, punctuation, and commas.",
+        bio: "Short creator bio.",
+        username: "New Name",
+      },
+    }),
+    { params: { id: "user-1" } }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.bio, "Short creator bio.");
+  assert.equal(
+    response.body.aboutMe,
+    "A detailed biography with spaces, punctuation, and commas."
+  );
+  assert.equal(
+    route.adminDb.docs.user_profiles["user-1"].about_me,
+    "A detailed biography with spaces, punctuation, and commas."
+  );
+  assert.equal(
+    route.adminDb.docs.user_profiles["user-1"].display_name,
+    "New Name"
+  );
 });
 
 test("profile updates reject malformed Discord and email values", async () => {
@@ -188,10 +237,33 @@ test("published public GO CV supplies the public profile data", async () => {
   assert.equal(response.status, 200);
   assert.equal(body.isPrivate, false);
   assert.equal(body.username, "go");
-  assert.equal(body.bio, "Public GO profile summary.");
+  assert.equal(body.bio, "Legacy bio");
   assert.deepEqual(body.skills, ["Game Designer", "Programmer", "Unity"]);
   assert.equal(body.joinedAt, "2025-07-10T12:27:56.098Z");
+  assert.equal(body.memberSince, "2025-07-10T12:27:56.098Z");
   assert.equal(body.cv.published_at, "2026-07-14T11:00:00.000Z");
+});
+
+test("legacy long biographies remain available as About Me", async () => {
+  const legacyBiography = "Long biography ".repeat(20).trim();
+  const { GET } = loadRoute({
+    seed: {
+      users: {
+        "user-1": {
+          bio: legacyBiography,
+          createdAt: "2025-07-10T12:27:56.098Z",
+          membershipActivatedAt: "2026-01-02T09:30:00.000Z",
+          profilePrivacy: "public",
+          username: "Legacy Name",
+        },
+      },
+    },
+  });
+
+  const response = await GET(createRequest(), { params: { id: "user-1" } });
+  assert.equal(response.body.bio, "");
+  assert.equal(response.body.aboutMe, legacyBiography);
+  assert.equal(response.body.memberSince, "2026-01-02T09:30:00.000Z");
 });
 
 test("explicit profile edits override generated CV display fields", async () => {

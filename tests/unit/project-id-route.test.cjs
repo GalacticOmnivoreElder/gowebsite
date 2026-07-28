@@ -125,7 +125,7 @@ function loadRoute({ seed = {}, user = null } = {}) {
   const emailEvents = [];
   const route = loadSourceModule(
     "src/app/api/projects/[id]/route.js",
-    ["PUT", "DELETE"],
+    ["GET", "PUT", "DELETE"],
     {
       stripImports: true,
       sandbox: {
@@ -141,7 +141,13 @@ function loadRoute({ seed = {}, user = null } = {}) {
             },
           },
         },
-        adminAuth: {},
+        adminAuth: {
+          getUser: async (uid) => ({
+            displayName: uid,
+            email: `${uid}@private.example`,
+            photoURL: null,
+          }),
+        },
         adminDb,
         enqueueAdminEmailEvent: async (event) => {
           emailEvents.push(event);
@@ -175,6 +181,42 @@ function loadRoute({ seed = {}, user = null } = {}) {
 
   return { ...route, adminDb, emailEvents };
 }
+
+test("public project team responses do not expose member email addresses", async () => {
+  const route = loadRoute({
+    seed: {
+      projects: {
+        "project-1": existingProject({
+          sourceProject: null,
+          status: "hiring",
+          teamMembers: ["member-1"],
+          visibility: "Public",
+        }),
+      },
+      users: {
+        "member-1": {
+          avatar: "avatar.png",
+          email: "member@private.example",
+          username: "Member One",
+        },
+        "owner-1": {
+          email: "owner@private.example",
+          username: "Owner One",
+        },
+      },
+    },
+  });
+
+  const response = await route.GET(createRequest(), {
+    params: { id: "project-1" },
+  });
+  const body = plain(response.body);
+
+  assert.equal(response.status, 200);
+  assert.equal(body.ownerDetails.email, undefined);
+  assert.equal(body.teamMemberDetails[0].email, undefined);
+  assert.doesNotMatch(JSON.stringify(body), /private\.example/);
+});
 
 function existingProject(overrides = {}) {
   return {

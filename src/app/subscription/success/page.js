@@ -46,6 +46,7 @@ const SubscriptionSuccessPage = observer(() => {
   const [verifying, setVerifying] = useState(true);
   const [membershipConfirmed, setMembershipConfirmed] = useState(false);
   const [confirmationId, setConfirmationId] = useState(null);
+  const [confirmationMode, setConfirmationMode] = useState("purchase");
   const [confirmationOpen, setConfirmationOpen] = useState(false);
 
   useEffect(() => {
@@ -89,8 +90,18 @@ const SubscriptionSuccessPage = observer(() => {
                   getPendingSubscriptionConfirmationAttempt({ userId });
                 const nextConfirmationId =
                   verification.membershipConfirmationId || null;
+                const nextConfirmationMode =
+                  pendingAttempt?.mode === "upgrade"
+                    ? "upgrade"
+                    : "purchase";
+                const confirmationReceiptId =
+                  nextConfirmationMode === "upgrade"
+                    ? `upgrade:${pendingAttempt?.attemptId || ""}`
+                    : nextConfirmationId;
                 const confirmationAcknowledged =
-                  isMembershipConfirmationAcknowledged(nextConfirmationId);
+                  isMembershipConfirmationAcknowledged(
+                    confirmationReceiptId
+                  );
 
                 if (
                   shouldShowSubscriptionConfirmation({
@@ -100,7 +111,8 @@ const SubscriptionSuccessPage = observer(() => {
                   }) &&
                   !confirmationAcknowledged
                 ) {
-                  setConfirmationId(nextConfirmationId);
+                  setConfirmationId(confirmationReceiptId);
+                  setConfirmationMode(nextConfirmationMode);
                   setConfirmationOpen(true);
                   await MobxStore.checkAuth?.();
                   return;
@@ -298,11 +310,14 @@ const SubscriptionSuccessPage = observer(() => {
 
             <DialogHeader className="text-center sm:text-center">
               <DialogTitle className="font-heading text-2xl leading-tight sm:text-3xl">
-                You’re officially a Galactic Omnivore member!
+                {confirmationMode === "upgrade"
+                  ? "Your GO Business upgrade is confirmed!"
+                  : "You’re officially a Galactic Omnivore member!"}
               </DialogTitle>
               <DialogDescription className="text-base leading-relaxed text-white/75">
-                Your membership is active. You can start setting up your
-                profile now or continue exploring Galactic Omnivore.
+                {confirmationMode === "upgrade"
+                  ? "Your membership now includes GO Business project creation and team-building access."
+                  : "Your membership is active. You can start setting up your profile now or continue exploring Galactic Omnivore."}
               </DialogDescription>
             </DialogHeader>
 

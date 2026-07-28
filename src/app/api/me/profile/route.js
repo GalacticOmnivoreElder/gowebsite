@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic";
 const EDITABLE_FIELDS = [
   "display_name",
   "full_name",
+  "bio",
+  "about_me",
   "location",
   "timezone",
   "preferred_language",
@@ -62,6 +64,21 @@ export async function PATCH(request) {
   }
 
   const body = await request.json().catch(() => ({}));
+  if (body.bio !== undefined && String(body.bio).length > 150) {
+    return NextResponse.json(
+      { error: "Short bio must be 150 characters or less." },
+      { status: 400 }
+    );
+  }
+  if (
+    body.about_me !== undefined &&
+    String(body.about_me).trim().split(/\s+/u).filter(Boolean).length > 10000
+  ) {
+    return NextResponse.json(
+      { error: "About Me must be 10,000 words or less." },
+      { status: 400 }
+    );
+  }
   const update = {};
   for (const field of EDITABLE_FIELDS) {
     if (body[field] !== undefined) update[field] = body[field];

@@ -15,6 +15,14 @@ const selectorSource = fs.readFileSync(
   path.resolve(__dirname, "../../src/components/profile/SkillSelector.jsx"),
   "utf8"
 );
+const downloadsSource = fs.readFileSync(
+  path.resolve(__dirname, "../../src/components/profile/Downloads.jsx"),
+  "utf8"
+);
+const pricingSource = fs.readFileSync(
+  path.resolve(__dirname, "../../src/components/pricing/PricingDisplay.js"),
+  "utf8"
+);
 
 test("profile and onboarding share the accessible community skill selector", () => {
   assert.match(profileSource, /<SkillSelector/);
@@ -25,4 +33,34 @@ test("profile and onboarding share the accessible community skill selector", () 
   assert.match(selectorSource, /aria-pressed=\{selected\}/);
   assert.match(selectorSource, /MAX_PROFILE_SKILLS/);
   assert.doesNotMatch(selectorSource, /Choose from the skill directory/);
+});
+
+test("onboarding accepts directory-backed roles, custom tools, and optional Discord", () => {
+  assert.match(onboardingSource, /<SkillTagInput/);
+  assert.match(onboardingSource, /Secondary roles \(optional\)/);
+  assert.match(onboardingSource, /Common tools and engines/);
+  assert.match(onboardingSource, /Discord username \(optional\)/);
+  assert.match(onboardingSource, /Join the GO Discord/);
+  assert.match(
+    selectorSource,
+    /onChange=\{\(event\) => onChange\(event\.target\.value\)\}/
+  );
+  assert.match(
+    selectorSource,
+    /onBlur=\{\(event\) => onChange\(normalizeSkillName/
+  );
+});
+
+test("downloads use authenticated server entitlements instead of legacy client flags", () => {
+  assert.match(downloadsSource, /\/api\/user\/packages/);
+  assert.match(downloadsSource, /Authorization: `Bearer \$\{token\}`/);
+  assert.match(downloadsSource, /unlockedPackageIds\.has\(pkg\.id\)/);
+  assert.doesNotMatch(downloadsSource, /unlockedPackages\.includes/);
+});
+
+test("membership UI identifies the current plan and highlights Business upgrades", () => {
+  assert.match(pricingSource, /Current membership/);
+  assert.match(pricingSource, /isUpgradeTarget/);
+  assert.match(pricingSource, /plan\.popular \|\| isUpgradeTarget/);
+  assert.match(pricingSource, /useServerCheckout/);
 });

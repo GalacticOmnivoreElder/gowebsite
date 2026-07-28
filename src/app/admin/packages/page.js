@@ -491,7 +491,7 @@ export default function AdminPackagesPage() {
             <DialogDescription>
               {editingPackage
                 ? "Update the details of this package and its assets."
-                : "Fill in the details to create a new monthly package."}
+                : "Fill in the details to create a new community resource drop."}
             </DialogDescription>
           </DialogHeader>
 

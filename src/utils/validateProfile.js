@@ -2,7 +2,13 @@ const USERNAME_PATTERN = /^[\p{L}\p{N}_ -]+$/u;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u;
 const MODERN_DISCORD_USERNAME_PATTERN = /^[a-z0-9_.]{2,32}$/;
 const LEGACY_DISCORD_USERNAME_PATTERN = /^[^\s#]{2,32}#\d{4}$/u;
-export const MAX_PROFILE_BIO_LENGTH = 10000;
+export const MAX_PROFILE_BIO_LENGTH = 150;
+export const MAX_PROFILE_ABOUT_WORDS = 10000;
+
+export function countWords(value) {
+  const normalized = String(value || "").trim();
+  return normalized ? normalized.split(/\s+/u).length : 0;
+}
 
 export function isValidEmail(value) {
   return EMAIL_PATTERN.test(String(value).trim());
@@ -55,6 +61,13 @@ export function validateProfileData(data) {
     String(data.bio).length > MAX_PROFILE_BIO_LENGTH
   ) {
     errors.bio = `Bio must be ${MAX_PROFILE_BIO_LENGTH.toLocaleString()} characters or less`;
+  }
+
+  if (
+    data.aboutMe !== undefined &&
+    countWords(data.aboutMe) > MAX_PROFILE_ABOUT_WORDS
+  ) {
+    errors.aboutMe = `About Me must be ${MAX_PROFILE_ABOUT_WORDS.toLocaleString()} words or less`;
   }
 
   if (data.skills !== undefined) {

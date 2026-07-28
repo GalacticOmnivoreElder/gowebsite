@@ -32,6 +32,7 @@ function createMemoryStorage() {
 test("subscription confirmation requires a fresh checkout attempt and a new verified activation", () => {
   const attempt = confirmation.createSubscriptionConfirmationAttempt({
     baselineConfirmationId: "previous-activation",
+    baselineMembershipTier: null,
     interval: "annual",
     now: fixedNow,
     tier: "company",
@@ -39,6 +40,7 @@ test("subscription confirmation requires a fresh checkout attempt and a new veri
   });
 
   assert.equal(attempt.interval, "annual");
+  assert.equal(attempt.mode, "purchase");
   assert.equal(attempt.tier, "company");
   assert.equal(
     confirmation.shouldShowSubscriptionConfirmation({
@@ -48,6 +50,44 @@ test("subscription confirmation requires a fresh checkout attempt and a new veri
       verification: {
         hasPaidSubscription: true,
         membershipConfirmationId: "new-activation",
+      },
+    }),
+    true
+  );
+});
+
+test("Business upgrade confirmation waits for the server-verified target tier", () => {
+  const attempt = confirmation.createSubscriptionConfirmationAttempt({
+    baselineConfirmationId: "existing-activation",
+    baselineMembershipTier: "member",
+    mode: "upgrade",
+    now: fixedNow,
+    tier: "company",
+    userId: "user-1",
+  });
+
+  assert.equal(
+    confirmation.shouldShowSubscriptionConfirmation({
+      attempt,
+      now: fixedNow + 60_000,
+      userId: "user-1",
+      verification: {
+        hasPaidSubscription: true,
+        membershipConfirmationId: "existing-activation",
+        membershipTier: "member",
+      },
+    }),
+    false
+  );
+  assert.equal(
+    confirmation.shouldShowSubscriptionConfirmation({
+      attempt,
+      now: fixedNow + 60_000,
+      userId: "user-1",
+      verification: {
+        hasPaidSubscription: true,
+        membershipConfirmationId: "existing-activation",
+        membershipTier: "company",
       },
     }),
     true

@@ -35,6 +35,8 @@ import {
 
 import { SOCIAL_PLATFORMS } from "@/constants/skills";
 import {
+  countWords,
+  MAX_PROFILE_ABOUT_WORDS,
   MAX_PROFILE_BIO_LENGTH,
   validateProfileData,
 } from "@/utils/validateProfile";
@@ -44,6 +46,7 @@ const ProfileEditor = observer(({ onSave }) => {
   const [formData, setFormData] = useState({
     username: "",
     bio: "",
+    aboutMe: "",
     skills: [],
     socialLinks: {},
     socialVisibility: {},
@@ -71,9 +74,15 @@ const ProfileEditor = observer(({ onSave }) => {
 
         if (response.ok) {
           const profileData = await response.json();
+          const legacyLongBio =
+            !profileData.aboutMe &&
+            String(profileData.bio || "").length > MAX_PROFILE_BIO_LENGTH
+              ? String(profileData.bio)
+              : "";
           setFormData({
             username: profileData.username || "",
-            bio: profileData.bio || "",
+            bio: legacyLongBio ? "" : profileData.bio || "",
+            aboutMe: profileData.aboutMe || legacyLongBio,
             skills: profileData.skills || [],
             socialLinks: profileData.socialLinks || {},
             socialVisibility: profileData.socialVisibility || {},
@@ -172,15 +181,10 @@ const ProfileEditor = observer(({ onSave }) => {
 
       const updatedProfile = await response.json();
 
-      // Update MobxStore user data
-      await MobxStore.updateUser({
-        username: updatedProfile.username,
-        bio: updatedProfile.bio,
-        skills: updatedProfile.skills,
-        socialLinks: updatedProfile.socialLinks,
-        socialVisibility: updatedProfile.socialVisibility,
-        profilePrivacy: updatedProfile.profilePrivacy,
-      });
+      // The server write above is authoritative. Refresh the local store instead
+      // of issuing a second client-side Firestore write, which can fail under
+      // stricter production security rules and produce a misleading partial save.
+      await MobxStore.checkAuth();
 
       toast({
         title: "Success",
@@ -250,13 +254,13 @@ const ProfileEditor = observer(({ onSave }) => {
           </div>
 
           <div>
-            <Label htmlFor="bio">Bio</Label>
+            <Label htmlFor="bio">Short bio</Label>
             <Textarea
               id="bio"
               value={formData.bio}
               onChange={(e) => handleInputChange("bio", e.target.value)}
-              placeholder="Tell others about yourself..."
-              rows={4}
+              placeholder="A short introduction shown near your name"
+              rows={3}
               maxLength={MAX_PROFILE_BIO_LENGTH}
               className={fieldErrors.bio ? "border-red-500" : ""}
             />
@@ -269,6 +273,30 @@ const ProfileEditor = observer(({ onSave }) => {
               <p className="text-xs text-muted-foreground">
                 {formData.bio.length.toLocaleString()}/
                 {MAX_PROFILE_BIO_LENGTH.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="aboutMe">About Me</Label>
+            <Textarea
+              id="aboutMe"
+              value={formData.aboutMe}
+              onChange={(e) => handleInputChange("aboutMe", e.target.value)}
+              placeholder="Share your background, interests, goals, and the work you want to do."
+              rows={10}
+              aria-invalid={Boolean(fieldErrors.aboutMe) || undefined}
+              className={fieldErrors.aboutMe ? "border-red-500" : ""}
+            />
+            <div className="flex justify-between mt-1">
+              {fieldErrors.aboutMe ? (
+                <p className="text-sm text-red-500">{fieldErrors.aboutMe}</p>
+              ) : (
+                <span />
+              )}
+              <p className="text-xs text-muted-foreground">
+                {countWords(formData.aboutMe).toLocaleString()}/
+                {MAX_PROFILE_ABOUT_WORDS.toLocaleString()} words
               </p>
             </div>
           </div>

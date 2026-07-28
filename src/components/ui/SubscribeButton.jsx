@@ -22,6 +22,7 @@ const SubscribeButton = observer(
     interval = "monthly",
     productId,
     checkoutUrl,
+    useServerCheckout = false,
     ...props
   }) => {
     const [loading, setLoading] = useState(false);
@@ -56,7 +57,7 @@ const SubscribeButton = observer(
     }, []);
 
     const redirectToAuthentication = () => {
-      if (checkoutUrl) {
+      if (checkoutUrl || useServerCheckout) {
         router.push(
           buildCheckoutAuthUrl({
             tier,
@@ -76,7 +77,7 @@ const SubscribeButton = observer(
     const handleSubscribe = async () => {
       if (!mounted) return;
 
-      if (!checkoutUrl && !productId) {
+      if (!useServerCheckout && !checkoutUrl && !productId) {
         if (
           requireAuth &&
           (!MobxStore.user || MobxStore.isUserAnonymous)
@@ -106,12 +107,17 @@ const SubscribeButton = observer(
         return;
       }
 
-      if (checkoutUrl) {
+      if (checkoutUrl && !useServerCheckout) {
         setLoading(true);
         beginSubscriptionConfirmationAttempt({
           baselineConfirmationId:
             MobxStore.user?.membershipConfirmationId || null,
+          baselineMembershipTier:
+            MobxStore.permissions?.permissions?.membershipTier ||
+            MobxStore.user?.membershipTier ||
+            null,
           interval,
+          mode: "purchase",
           tier,
           userId: MobxStore.user?.uid,
         });
@@ -146,7 +152,12 @@ const SubscribeButton = observer(
         beginSubscriptionConfirmationAttempt({
           baselineConfirmationId:
             MobxStore.user?.membershipConfirmationId || null,
+          baselineMembershipTier:
+            MobxStore.permissions?.permissions?.membershipTier ||
+            MobxStore.user?.membershipTier ||
+            null,
           interval,
+          mode: data.upgraded ? "upgrade" : "purchase",
           tier,
           userId: currentUser.uid,
         });

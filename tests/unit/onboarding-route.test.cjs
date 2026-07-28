@@ -68,6 +68,7 @@ function createDb(seed = {}) {
 function loadRoute(seed) {
   const adminDb = createDb(seed);
   const skillSyncCalls = [];
+  const emailEvents = [];
   const route = loadSourceModule(
     "src/app/api/onboarding/route.js",
     ["GET", "PUT"],
@@ -92,7 +93,10 @@ function loadRoute(seed) {
         ],
         adminDb,
         cancelPendingEmailEvents: async () => 0,
-        enqueueEmailEvent: async () => ({ created: true, id: "email-job" }),
+        enqueueEmailEvent: async (event) => {
+          emailEvents.push(event);
+          return { created: true, id: "email-job" };
+        },
         buildCvFromProfile: (profile) => ({
           missing_information: [],
           sections: [
@@ -131,7 +135,7 @@ function loadRoute(seed) {
     }
   );
 
-  return { ...route, adminDb, skillSyncCalls };
+  return { ...route, adminDb, emailEvents, skillSyncCalls };
 }
 
 test("editing onboarding preserves skills already selected in the profile", async () => {
@@ -183,12 +187,29 @@ test("updating onboarding regenerates the CV and preserves its published state",
             visibility_public: true,
           },
           identity: {
+            about_me: "I build accessible puzzle games.",
+            bio: "Game developer and mentor.",
             display_name: "Ada",
             full_name: "Ada Lovelace",
           },
           "role-skills": {
             primary_role: "Programmer",
+            secondary_roles: ["Game Designer", " game designer "],
             skills: ["Unity", " unity ", "Custom Tool"],
+            tools: ["Visual Studio Code", "Unity"],
+          },
+          discord: {
+            already_joined: true,
+            discord_username: "",
+          },
+          portfolio: {
+            links: [{ type: "portfolio", url: "https://ada.example" }],
+            past_projects: [
+              {
+                title: "Puzzle",
+                tools: ["Unity"],
+              },
+            ],
           },
         },
         status: "completed",
@@ -212,6 +233,19 @@ test("updating onboarding regenerates the CV and preserves its published state",
     "Updated summary"
   );
   assert.equal(route.adminDb.docs.user_profiles["user-1"].display_name, "Ada");
+  assert.equal(
+    route.adminDb.docs.user_profiles["user-1"].about_me,
+    "I build accessible puzzle games."
+  );
+  assert.equal(route.adminDb.docs.user_profiles["user-1"].discord_joined, true);
+  assert.equal(
+    route.adminDb.docs.user_profiles["user-1"].portfolio_links[0].url,
+    "https://ada.example"
+  );
+  assert.equal(
+    route.adminDb.docs.user_profiles["user-1"].past_projects[0].title,
+    "Puzzle"
+  );
   assert.deepEqual(
     route.adminDb.docs.user_profiles["user-1"].skills,
     ["Unity", "Custom Tool"]
@@ -221,9 +255,16 @@ test("updating onboarding regenerates the CV and preserves its published state",
     "Custom Tool",
   ]);
   assert.equal(route.skillSyncCalls.length, 1);
-  assert.deepEqual(route.skillSyncCalls[0].nextSkills, [
+  assert.deepEqual(JSON.parse(JSON.stringify(route.skillSyncCalls[0].nextSkills)), [
+    "Programmer",
+    "Game Designer",
     "Unity",
     "Custom Tool",
+    "Visual Studio Code",
   ]);
   assert.equal(route.skillSyncCalls[0].userId, "user-1");
+  assert.deepEqual(
+    route.emailEvents.filter((event) => event.type === "onboarding.completed"),
+    []
+  );
 });

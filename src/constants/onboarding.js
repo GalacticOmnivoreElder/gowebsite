@@ -13,7 +13,6 @@ export const ONBOARDING_STEPS = [
 export const TOTAL_ONBOARDING_STEPS = ONBOARDING_STEPS.length;
 
 export const PRIMARY_ROLES = [
-  "Beginner",
   "Game Designer",
   "Programmer",
   "2D Artist",
@@ -24,15 +23,34 @@ export const PRIMARY_ROLES = [
   "Producer / Project Manager",
   "QA Tester",
   "Marketing / Community",
-  "Other",
 ];
 
 export const SKILL_LEVELS = [
-  "beginner",
-  "junior",
-  "intermediate",
-  "advanced",
-  "professional",
+  {
+    id: "beginner",
+    label: "Learning",
+    description: "Learning the fundamentals and building first projects.",
+  },
+  {
+    id: "junior",
+    label: "Developing",
+    description: "Can contribute to a project with guidance.",
+  },
+  {
+    id: "intermediate",
+    label: "Independent",
+    description: "Can complete typical work independently.",
+  },
+  {
+    id: "advanced",
+    label: "Advanced",
+    description: "Handles complex work and can guide others.",
+  },
+  {
+    id: "professional",
+    label: "Production-proven",
+    description: "Has substantial professional production experience.",
+  },
 ];
 
 export const COMMON_TOOLS = [
@@ -82,6 +100,8 @@ export const HELP_TOPICS = [
 ];
 
 export const PAST_PROJECT_STATUSES = ["prototype", "released", "jam", "portfolio"];
+
+export const DISCORD_INVITE_URL = "https://discord.gg/ZbSShxu6K4";
 
 // GO CV section types the builder/editor understands.
 export const CV_SECTION_TYPES = [

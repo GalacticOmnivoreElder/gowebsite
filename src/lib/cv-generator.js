@@ -36,6 +36,7 @@ export function buildCvFromProfile(profile = {}) {
     primaryRole,
     skillLevel,
     tools,
+    aboutMe: profile.about_me || profile.bio,
     currentGoal: profile.current_goal,
     lookingFor,
   });
@@ -119,7 +120,18 @@ export function buildCvFromProfile(profile = {}) {
   };
 }
 
-function buildBaselineSummary({ primaryRole, skillLevel, tools, currentGoal, lookingFor }) {
+function buildBaselineSummary({
+  primaryRole,
+  skillLevel,
+  tools,
+  aboutMe,
+  currentGoal,
+  lookingFor,
+}) {
+  if (aboutMe && String(aboutMe).trim()) {
+    return String(aboutMe).trim();
+  }
+
   const parts = [];
   parts.push(`${capitalize(skillLevel)} ${primaryRole.toLowerCase()}`);
   if (tools.length) {
@@ -166,6 +178,7 @@ export async function improveSummaryWithAI(profile, baselineSummary) {
   if (!apiKey) return baselineSummary;
 
   const input = {
+    about_me: profile.about_me || profile.bio || null,
     primary_role: profile.primary_role,
     skill_level: profile.skill_level,
     tools: arr(profile.tools),

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import SubscribeButton from "@/components/ui/SubscribeButton";
 import MobxStore from "@/mobx";
+import { auth } from "@/firebase";
 import { parseCheckoutPlanKey } from "@/lib/checkout-navigation";
 import { canChooseMembershipPlan } from "@/lib/membership-ui";
 import { beginSubscriptionConfirmationAttempt } from "@/lib/subscription-confirmation";
@@ -37,6 +38,10 @@ export const PricingDisplay = observer(() => {
   const authLoading = MobxStore.loading || MobxStore.permissionsLoading;
   const isAnonymous = MobxStore.isUserAnonymous;
   const hasActiveSubscription = MobxStore.hasActiveSubscription;
+  const currentTier =
+    MobxStore.permissions?.permissions?.membershipTier ||
+    user?.membershipTier ||
+    null;
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -77,20 +82,43 @@ export const PricingDisplay = observer(() => {
       return;
     }
 
-    const selectedPlan = MEMBERSHIP_PLANS.find(
-      (plan) => plan.tier === selection.tier
-    );
-    const checkoutUrl = selectedPlan?.pricing?.[selection.interval]?.checkoutUrl;
-    if (checkoutUrl) {
+    const resumeCheckout = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      const token = await currentUser.getIdToken();
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          interval: selection.interval,
+          tier: selection.tier,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.url) {
+        throw new Error(result.error || "Failed to start checkout.");
+      }
+
       beginSubscriptionConfirmationAttempt({
         baselineConfirmationId: user?.membershipConfirmationId || null,
+        baselineMembershipTier: currentTier,
         interval: selection.interval,
+        mode: result.upgraded ? "upgrade" : "purchase",
         tier: selection.tier,
         userId: user.uid,
       });
-      window.location.assign(checkoutUrl);
-    }
-  }, [authLoading, hasActiveSubscription, isAnonymous, user]);
+      window.location.assign(result.url);
+    };
+
+    resumeCheckout().catch((error) => {
+      console.error("Could not resume membership checkout:", error);
+      window.alert(error.message);
+    });
+  }, [authLoading, currentTier, hasActiveSubscription, isAnonymous, user]);
 
   return (
     <div className="min-w-0 max-w-full space-y-8">
@@ -133,6 +161,12 @@ export const PricingDisplay = observer(() => {
         {MEMBERSHIP_PLANS.map((plan) => {
           const Icon = planIcons[plan.id];
           const price = plan.pricing[interval];
+          const isCurrentPlan =
+            hasActiveSubscription && currentTier === plan.tier;
+          const isUpgradeTarget =
+            hasActiveSubscription &&
+            currentTier === "member" &&
+            plan.tier === "company";
 
           return (
             <Card
@@ -149,7 +183,13 @@ export const PricingDisplay = observer(() => {
                       {plan.audience}
                     </span>
                   </div>
-                  {plan.popular && <Badge className="shrink-0">Most popular</Badge>}
+                  {isCurrentPlan ? (
+                    <Badge className="shrink-0">Current membership</Badge>
+                  ) : (
+                    plan.popular && (
+                      <Badge className="shrink-0">Most popular</Badge>
+                    )
+                  )}
                 </div>
 
                 <div>
@@ -192,9 +232,11 @@ export const PricingDisplay = observer(() => {
                 <SubscribeButton
                   tier={plan.tier}
                   interval={interval}
-                  checkoutUrl={price.checkoutUrl}
+                  useServerCheckout
                   className="w-full"
-                  variant={plan.popular ? "default" : "outline"}
+                  variant={
+                    plan.popular || isUpgradeTarget ? "default" : "outline"
+                  }
                   size="lg"
                 >
                   Choose {plan.name}

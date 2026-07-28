@@ -13,14 +13,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
-import { SkillSelector } from "@/components/profile/SkillSelector";
+import {
+  SkillSelector,
+  SkillTagInput,
+} from "@/components/profile/SkillSelector";
 import {
   ONBOARDING_STEPS,
-  PRIMARY_ROLES,
   SKILL_LEVELS,
   COMMON_TOOLS,
   HELP_TOPICS,
+  PORTFOLIO_LINK_TYPES,
+  PAST_PROJECT_STATUSES,
+  DISCORD_INVITE_URL,
 } from "@/constants/onboarding";
+import {
+  countWords,
+  MAX_PROFILE_ABOUT_WORDS,
+  MAX_PROFILE_BIO_LENGTH,
+} from "@/utils/validateProfile";
 
 const STEP_TITLES = {
   identity: "Identity",
@@ -126,6 +136,17 @@ const OnboardingContent = observer(() => {
   );
 
   const saveStep = async (nextStep) => {
+    if (
+      step === "identity" &&
+      countWords(stepData.about_me) > MAX_PROFILE_ABOUT_WORDS
+    ) {
+      const validationError = new Error(
+        `About Me must be ${MAX_PROFILE_ABOUT_WORDS.toLocaleString()} words or less.`
+      );
+      setError(validationError.message);
+      throw validationError;
+    }
+
     setSaving(true);
     setError("");
     try {
@@ -200,6 +221,25 @@ const OnboardingContent = observer(() => {
                 <Field label="Display name / gamertag *">
                   <Input value={stepData.display_name || ""} onChange={(e) => setField("display_name", e.target.value)} />
                 </Field>
+                <Field label={`Short bio (optional, ${MAX_PROFILE_BIO_LENGTH} characters)`}>
+                  <Textarea
+                    rows={2}
+                    maxLength={MAX_PROFILE_BIO_LENGTH}
+                    value={stepData.bio || ""}
+                    onChange={(e) => setField("bio", e.target.value)}
+                  />
+                </Field>
+                <Field label="About Me (optional)">
+                  <Textarea
+                    rows={6}
+                    value={stepData.about_me || ""}
+                    onChange={(e) => setField("about_me", e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {countWords(stepData.about_me).toLocaleString()}/
+                    {MAX_PROFILE_ABOUT_WORDS.toLocaleString()} words
+                  </p>
+                </Field>
                 <Field label="Email *">
                   <Input type="email" value={stepData.email ?? MobxStore.user?.email ?? ""} onChange={(e) => setField("email", e.target.value)} />
                 </Field>
@@ -214,7 +254,7 @@ const OnboardingContent = observer(() => {
 
             {step === "discord" && (
               <>
-                <Field label="Discord username *">
+                <Field label="Discord username (optional)">
                   <Input value={stepData.discord_username || ""} onChange={(e) => setField("discord_username", e.target.value)} />
                 </Field>
                 <CheckRow
@@ -222,29 +262,43 @@ const OnboardingContent = observer(() => {
                   onChange={(v) => setField("already_joined", v)}
                   label="I have already joined the GO Discord"
                 />
-                <p className="text-sm text-muted-foreground">
-                  Not joined yet? You&apos;ll get an invite and your role will be
-                  assigned by an admin after onboarding.
-                </p>
+                {!stepData.already_joined && (
+                  <p className="text-sm text-muted-foreground">
+                    Not joined yet?{" "}
+                    <a
+                      className="font-medium text-primary underline underline-offset-4"
+                      href={DISCORD_INVITE_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Join the GO Discord
+                    </a>
+                    . Your joined status is saved separately from your username.
+                  </p>
+                )}
               </>
             )}
 
             {step === "role-skills" && (
               <>
-                <Field label="Primary role *">
-                  <select
-                    className="w-full border border-border rounded-md h-10 px-3 bg-background"
-                    value={stepData.primary_role || ""}
-                    onChange={(e) => setField("primary_role", e.target.value)}
-                  >
-                    <option value="">Select…</option>
-                    {PRIMARY_ROLES.map((r) => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
-                  </select>
-                </Field>
+                <SkillTagInput
+                  label="Primary role *"
+                  value={stepData.primary_role || ""}
+                  onChange={(value) => setField("primary_role", value)}
+                />
                 <Field label="Secondary roles (optional)">
-                  <Chips options={PRIMARY_ROLES} value={stepData.secondary_roles || []} onChange={(v) => setField("secondary_roles", v)} />
+                  <SkillSelector
+                    value={stepData.secondary_roles || []}
+                    onChange={(value) => setField("secondary_roles", value)}
+                    suggestionsLabel="Suggested roles"
+                    suggestionsHelp="Suggestions come from the community skill directory."
+                    customLabel="Add another role"
+                    customPlaceholder="e.g. Technical Artist"
+                    addLabel="Add role"
+                    emptyText="No secondary roles selected."
+                    maxItems={8}
+                    submissionLabel="complete onboarding"
+                  />
                 </Field>
                 <Field label="Skills & expertise (optional)">
                   <SkillSelector
@@ -263,34 +317,47 @@ const OnboardingContent = observer(() => {
                 </Field>
                 <Field label="Skill level *">
                   <div className="flex flex-wrap gap-2">
-                    {SKILL_LEVELS.map((l) => (
-                      <button key={l} type="button" onClick={() => setField("skill_level", l)}
-                        className={`px-3 py-1 rounded-full border text-sm capitalize ${stepData.skill_level === l ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"}`}>
-                        {l}
+                    {SKILL_LEVELS.map((level) => (
+                      <button key={level.id} type="button" onClick={() => setField("skill_level", level.id)}
+                        title={level.description}
+                        className={`px-3 py-1 rounded-full border text-sm ${stepData.skill_level === level.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"}`}>
+                        {level.label}
                       </button>
                     ))}
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    {SKILL_LEVELS.find((level) => level.id === stepData.skill_level)?.description ||
+                      "Choose the description that best matches how you work today."}
+                  </p>
                 </Field>
                 <Field label="Tools used (optional)">
-                  <Chips options={COMMON_TOOLS} value={stepData.tools || []} onChange={(v) => setField("tools", v)} />
+                  <SkillSelector
+                    value={stepData.tools || []}
+                    onChange={(value) => setField("tools", value)}
+                    suggestions={COMMON_TOOLS}
+                    loadCatalog={false}
+                    suggestionsLabel="Common tools and engines"
+                    suggestionsHelp="Choose a suggestion or add the exact tool name you use."
+                    customLabel="Add another tool or engine"
+                    customPlaceholder="e.g. Visual Studio Code, RPG Maker MZ"
+                    addLabel="Add tool"
+                    emptyText="No tools or engines selected."
+                    submissionLabel="complete onboarding"
+                  />
                 </Field>
               </>
             )}
 
             {step === "portfolio" && (
               <>
-                <Field label="Portfolio link (optional)">
-                  <Input placeholder="https://…" value={stepData.portfolio || ""} onChange={(e) => setField("portfolio", e.target.value)} />
-                </Field>
-                <Field label="GitHub (optional)">
-                  <Input placeholder="https://github.com/…" value={stepData.github || ""} onChange={(e) => setField("github", e.target.value)} />
-                </Field>
-                <Field label="Itch.io / Steam / ArtStation (optional)">
-                  <Input placeholder="https://…" value={stepData.other_link || ""} onChange={(e) => setField("other_link", e.target.value)} />
-                </Field>
-                <p className="text-xs text-muted-foreground">
-                  These are compiled into the &quot;links&quot; on your GO CV.
-                </p>
+                <PortfolioLinksEditor
+                  value={stepData.links || legacyPortfolioLinks(stepData)}
+                  onChange={(value) => setField("links", value)}
+                />
+                <PastProjectsEditor
+                  value={stepData.past_projects || []}
+                  onChange={(value) => setField("past_projects", value)}
+                />
               </>
             )}
 
@@ -358,6 +425,210 @@ const OnboardingContent = observer(() => {
     </div>
   );
 });
+
+function legacyPortfolioLinks(data = {}) {
+  return [
+    data.portfolio ? { type: "portfolio", url: data.portfolio } : null,
+    data.github ? { type: "github", url: data.github } : null,
+    data.other_link ? { type: "other", url: data.other_link } : null,
+  ].filter(Boolean);
+}
+
+function PortfolioLinksEditor({ value = [], onChange }) {
+  const links = Array.isArray(value) ? value : [];
+  const updateLink = (index, patch) =>
+    onChange(
+      links.map((link, linkIndex) =>
+        linkIndex === index ? { ...link, ...patch } : link
+      )
+    );
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <Label>Portfolio links (optional)</Label>
+        <p className="text-xs text-muted-foreground">
+          Add the public links you want included in your profile and GO CV.
+        </p>
+      </div>
+      {links.map((link, index) => (
+        <div
+          key={`${link.type || "link"}-${index}`}
+          className="grid gap-2 rounded-md border p-3 sm:grid-cols-[9rem_1fr_auto]"
+        >
+          <Label className="sr-only" htmlFor={`portfolio-type-${index}`}>
+            Link type
+          </Label>
+          <select
+            id={`portfolio-type-${index}`}
+            className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+            value={link.type || "portfolio"}
+            onChange={(event) =>
+              updateLink(index, { type: event.target.value })
+            }
+          >
+            {PORTFOLIO_LINK_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </option>
+            ))}
+          </select>
+          <Label className="sr-only" htmlFor={`portfolio-url-${index}`}>
+            Portfolio URL
+          </Label>
+          <Input
+            id={`portfolio-url-${index}`}
+            type="url"
+            placeholder="https://…"
+            value={link.url || ""}
+            onChange={(event) => updateLink(index, { url: event.target.value })}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              onChange(links.filter((_, linkIndex) => linkIndex !== index))
+            }
+            aria-label={`Remove portfolio link ${index + 1}`}
+          >
+            Remove
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => onChange([...links, { type: "portfolio", url: "" }])}
+      >
+        Add portfolio link
+      </Button>
+    </div>
+  );
+}
+
+function PastProjectsEditor({ value = [], onChange }) {
+  const projects = Array.isArray(value) ? value : [];
+  const updateProject = (index, patch) =>
+    onChange(
+      projects.map((project, projectIndex) =>
+        projectIndex === index ? { ...project, ...patch } : project
+      )
+    );
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <Label>Projects (optional)</Label>
+        <p className="text-xs text-muted-foreground">
+          Add prototypes, jam games, releases, or portfolio projects once here.
+        </p>
+      </div>
+      {projects.map((project, index) => (
+        <div key={index} className="space-y-3 rounded-md border p-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Project title">
+              <Input
+                value={project.title || ""}
+                onChange={(event) =>
+                  updateProject(index, { title: event.target.value })
+                }
+              />
+            </Field>
+            <Field label="Your role">
+              <Input
+                value={project.role || ""}
+                onChange={(event) =>
+                  updateProject(index, { role: event.target.value })
+                }
+              />
+            </Field>
+            <Field label="Status">
+              <select
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                value={project.status || ""}
+                onChange={(event) =>
+                  updateProject(index, { status: event.target.value })
+                }
+              >
+                <option value="">Select status</option>
+                {PAST_PROJECT_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Project link">
+              <Input
+                type="url"
+                placeholder="https://…"
+                value={project.link || ""}
+                onChange={(event) =>
+                  updateProject(index, { link: event.target.value })
+                }
+              />
+            </Field>
+          </div>
+          <Field label="Description">
+            <Textarea
+              rows={3}
+              value={project.description || ""}
+              onChange={(event) =>
+                updateProject(index, { description: event.target.value })
+              }
+            />
+          </Field>
+          <Field label="Tools used">
+            <SkillSelector
+              value={project.tools || []}
+              onChange={(tools) => updateProject(index, { tools })}
+              suggestions={COMMON_TOOLS}
+              loadCatalog={false}
+              suggestionsLabel="Common project tools"
+              suggestionsHelp="Select or add the exact tools used on this project."
+              customLabel="Add a project tool"
+              customPlaceholder="e.g. Unity 6, GitHub Actions"
+              addLabel="Add tool"
+              emptyText="No tools selected for this project."
+              maxItems={12}
+              submissionLabel="complete onboarding"
+            />
+          </Field>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              onChange(
+                projects.filter((_, projectIndex) => projectIndex !== index)
+              )
+            }
+          >
+            Remove project
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() =>
+          onChange([
+            ...projects,
+            {
+              title: "",
+              role: "",
+              status: "",
+              link: "",
+              description: "",
+              tools: [],
+            },
+          ])
+        }
+      >
+        Add project
+      </Button>
+    </div>
+  );
+}
 
 function Field({ label, children }) {
   return (

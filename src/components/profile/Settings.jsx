@@ -99,7 +99,7 @@ export default function Settings({ user }) {
             <div className="space-y-0.5">
               <Label htmlFor="new-package-alerts">New Package Alerts</Label>
               <p className="text-sm text-muted-foreground">
-                Get notified when new monthly packages are available.
+                Get notified when new community resource drops are available.
               </p>
             </div>
             <Switch

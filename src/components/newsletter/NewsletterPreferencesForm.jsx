@@ -105,7 +105,7 @@ export function NewsletterPreferencesForm({ token, showUnsubscribePrompt = false
         )}
         {[
           ["newsletter", "Galactic Omnivore newsletter"],
-          ["newPackages", "New monthly packages"],
+          ["newPackages", "New community resource drops"],
           ["promotions", "Promotions and special offers"],
         ].map(([key, label]) => (
           <label key={key} className="flex items-center gap-3">

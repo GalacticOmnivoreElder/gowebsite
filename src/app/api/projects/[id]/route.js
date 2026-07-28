@@ -41,32 +41,20 @@ async function getUserDetails(userIds) {
           return {
             uid,
             username: userData.username || "Unknown User",
-            email: userData.email || "",
             avatar: userData.avatar || null,
           };
         } else {
-          // Try to get user info from Firebase Auth and create a basic user document
+          // Fall back to Firebase Auth without creating a user document during
+          // a read. Public project responses never need a member email address.
           try {
             const authUser = await adminAuth.getUser(uid);
 
-            const basicUserData = {
+            return {
               uid,
               username:
                 authUser.displayName ||
                 authUser.email?.split("@")[0] ||
                 "Unknown User",
-              email: authUser.email || "",
-              createdAt: new Date(),
-              provider: authUser.providerData[0]?.providerId || "unknown",
-            };
-
-            // Create the user document
-            await adminDb.collection("users").doc(uid).set(basicUserData);
-
-            return {
-              uid,
-              username: basicUserData.username,
-              email: basicUserData.email,
               avatar: authUser.photoURL || null,
             };
           } catch (authError) {
@@ -74,7 +62,6 @@ async function getUserDetails(userIds) {
             return {
               uid,
               username: "Unknown User",
-              email: "",
               avatar: null,
             };
           }
@@ -84,7 +71,6 @@ async function getUserDetails(userIds) {
         return {
           uid,
           username: "Unknown User",
-          email: "",
           avatar: null,
         };
       }

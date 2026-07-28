@@ -8,7 +8,9 @@ function storageAvailable(storage) {
 
 export function createSubscriptionConfirmationAttempt({
   baselineConfirmationId = null,
+  baselineMembershipTier = null,
   interval = "monthly",
+  mode = "purchase",
   now = Date.now(),
   tier = "member",
   userId,
@@ -23,7 +25,14 @@ export function createSubscriptionConfirmationAttempt({
       typeof baselineConfirmationId === "string"
         ? baselineConfirmationId
         : null,
+    baselineMembershipTier:
+      baselineMembershipTier === "company"
+        ? "company"
+        : baselineMembershipTier === "member"
+        ? "member"
+        : null,
     interval: interval === "annual" ? "annual" : "monthly",
+    mode: mode === "upgrade" ? "upgrade" : "purchase",
     startedAt: now,
     tier: tier === "company" ? "company" : "member",
     userId,
@@ -58,6 +67,14 @@ export function shouldShowSubscriptionConfirmation({
   }
 
   const confirmationId = verification?.membershipConfirmationId;
+  if (attempt.mode === "upgrade") {
+    return Boolean(
+      attempt.baselineMembershipTier === "member" &&
+        attempt.tier === "company" &&
+        verification?.membershipTier === "company"
+    );
+  }
+
   return Boolean(
     typeof confirmationId === "string" &&
       confirmationId &&

@@ -14,7 +14,7 @@ export const MEMBERSHIP_PLANS = [
     popular: true,
     benefits: [
       "Apply to open community projects",
-      "Monthly asset, music, and code packages",
+      "Periodic asset, music, and code resource drops",
       "Tutorials and learning resources",
       "Community events and member-only Discord access",
       "Premium community newsletter",

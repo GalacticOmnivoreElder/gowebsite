@@ -93,7 +93,7 @@ export default function SubscriptionStatus({ user }) {
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-green-500" />
-          <span className="text-sm">Access to monthly packages</span>
+          <span className="text-sm">Access to community resource drops</span>
         </div>
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-green-500" />

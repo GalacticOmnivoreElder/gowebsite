@@ -84,6 +84,7 @@ class Store {
   applications = [];
   applicationsLoading = false;
   applicationsFetched = false;
+  applicationsError = null;
 
   lists = [];
   // App States
@@ -508,6 +509,7 @@ class Store {
 
     runInAction(() => {
       this.applicationsLoading = true;
+      this.applicationsError = null;
     });
 
     try {
@@ -524,7 +526,12 @@ class Store {
         headers,
       });
 
-      if (!response.ok) throw new Error("Failed to fetch applications");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || "Failed to fetch your applications"
+        );
+      }
 
       const data = await response.json();
 
@@ -534,6 +541,10 @@ class Store {
       });
     } catch (error) {
       console.error("Error fetching applications:", error);
+      runInAction(() => {
+        this.applicationsError =
+          error.message || "Failed to fetch your applications";
+      });
     } finally {
       runInAction(() => {
         this.applicationsLoading = false;
@@ -741,6 +752,9 @@ class Store {
         this.user = null;
         this.permissions = null;
         this.lastPermissionCheck = null;
+        this.applications = [];
+        this.applicationsFetched = false;
+        this.applicationsError = null;
       });
     } catch (error) {
       console.error("Error during logout:", error);

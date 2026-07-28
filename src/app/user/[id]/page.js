@@ -510,7 +510,12 @@ const UserProfilePage = observer(() => {
                   <div className="flex items-center gap-2 mt-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">
-                      Joined {formatJoinedDate(profile.joinedAt || profile.createdAt)}
+                      Member since{" "}
+                      {formatJoinedDate(
+                        profile.memberSince ||
+                          profile.joinedAt ||
+                          profile.createdAt
+                      )}
                     </span>
                   </div>
                 </div>
@@ -528,6 +533,14 @@ const UserProfilePage = observer(() => {
             {profile.bio && (
               <div className="mt-6">
                 <p className="text-muted-foreground">{profile.bio}</p>
+              </div>
+            )}
+            {profile.aboutMe && (
+              <div className="mt-6 border-t pt-5">
+                <h2 className="mb-2 font-semibold">About Me</h2>
+                <p className="whitespace-pre-wrap text-muted-foreground">
+                  {profile.aboutMe}
+                </p>
               </div>
             )}
           </CardContent>

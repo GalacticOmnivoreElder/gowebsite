@@ -65,11 +65,6 @@ const UserCard = ({ user, role, onRemove }) => {
           className="block truncate font-medium"
         />
         <p className="text-sm text-muted-foreground">{role}</p>
-        {user.email && (
-          <p className="truncate text-xs text-muted-foreground">
-            {user.email}
-          </p>
-        )}
       </div>
       {onRemove && (
         <Button
@@ -655,7 +650,6 @@ const ProjectDetailsPage = observer(() => {
         const newTeamMember = {
           uid: updatedApplication.userId,
           username: updatedApplication.username,
-          email: updatedApplication.userEmail,
           avatar: updatedApplication.avatar,
         };
 

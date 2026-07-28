@@ -277,7 +277,10 @@ export async function GET(request) {
       query = query.where("userId", "==", user.uid);
     }
 
-    const snapshot = await query.orderBy("createdAt", "desc").get();
+    // A single equality filter does not need a composite Firestore index.
+    // Sort after reading so application history works in every environment,
+    // including projects deployed before an applications index existed.
+    const snapshot = await query.get();
     const applications = [];
 
     // First, collect all applications with basic data
@@ -290,6 +293,11 @@ export async function GET(request) {
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       });
     });
+    applications.sort(
+      (left, right) =>
+        new Date(right.createdAt || 0).getTime() -
+        new Date(left.createdAt || 0).getTime()
+    );
 
     // Then enrich each application with user details
     const enrichedApplications = await Promise.all(

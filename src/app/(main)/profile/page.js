@@ -690,9 +690,10 @@ const ProfileContent = observer(() => {
                         <div className="flex items-center gap-2 mt-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">
-                            Joined{" "}
+                            Member since{" "}
                             {formatFirebaseDate(
-                              profile?.joinedAt ||
+                              profile?.memberSince ||
+                                profile?.joinedAt ||
                                 profile?.createdAt ||
                                 MobxStore.user?.createdAt ||
                                 MobxStore.user?.joined
@@ -718,6 +719,14 @@ const ProfileContent = observer(() => {
                   {profile?.bio && (
                     <div className="mt-4">
                       <p className="text-muted-foreground">{profile.bio}</p>
+                    </div>
+                  )}
+                  {profile?.aboutMe && (
+                    <div className="mt-5 border-t pt-4">
+                      <h3 className="mb-2 font-semibold">About Me</h3>
+                      <p className="whitespace-pre-wrap text-muted-foreground">
+                        {profile.aboutMe}
+                      </p>
                     </div>
                   )}
                 </CardContent>
@@ -906,6 +915,21 @@ const ProfileContent = observer(() => {
                 <Skeleton key={i} className="h-24 w-full" />
               ))}
             </div>
+          ) : MobxStore.applicationsError ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">
+                  Applications could not be loaded
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  {MobxStore.applicationsError}
+                </p>
+                <Button onClick={() => MobxStore.fetchApplications()}>
+                  Try again
+                </Button>
+              </CardContent>
+            </Card>
           ) : MobxStore.applications.length > 0 ? (
             <div className="space-y-4">
               {MobxStore.applications.map((application) => (
@@ -924,6 +948,9 @@ const ProfileContent = observer(() => {
                             {application.projectTitle}
                           </h3>
                           <p className="text-sm text-muted-foreground">
+                            {application.roleAppliedFor
+                              ? `Role: ${application.roleAppliedFor} · `
+                              : ""}
                             Applied on{" "}
                             {new Date(
                               application.createdAt
@@ -1004,10 +1031,7 @@ const ProfileContent = observer(() => {
         </TabsContent>
 
         <TabsContent value="downloads">
-          <Downloads
-            userId={MobxStore.user.uid}
-            unlockedPackages={MobxStore.user.unlockedPackages || []}
-          />
+          <Downloads />
         </TabsContent>
 
         <TabsContent value="settings">

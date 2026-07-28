@@ -110,7 +110,7 @@ function eventCopy(type, data) {
           data.tier === "company"
             ? "With GO Business, you have every Community benefit plus tools to create and publish projects, review applicants, and build project teams."
             : data.tier === "member"
-              ? "With GO Community, you can apply to open community projects, access monthly packages, and use member learning resources."
+              ? "With GO Community, you can apply to open community projects, access periodic resource drops, and use member learning resources."
               : "Your account is ready. You can browse public projects now and choose a membership whenever you are ready to apply or create a project.";
         const steps = [
           "Finish onboarding to create your GO profile and a draft GO CV.",
@@ -519,9 +519,9 @@ function eventCopy(type, data) {
         preheader: `${data.packageTitle || "A new package"} is ready to download.`,
         body: paragraph(
           data.description ||
-            `${data.packageTitle || "A new monthly package"} is now available to active Galactic Omnivore members.`
+            `${data.packageTitle || "A new community resource drop"} is now available to active Galactic Omnivore members.`
         ),
-        text: `${data.packageTitle || "A new monthly package"} is now available.`,
+        text: `${data.packageTitle || "A new community resource drop"} is now available.`,
         ctaLabel: "View package",
         ctaUrl: absoluteSiteUrl(
           data.slug

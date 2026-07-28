@@ -30,7 +30,13 @@ async function withEnv(values, fn) {
   }
 }
 
-function loadRoute({ user, productId = "prod_member_monthly", polarCreate } = {}) {
+function loadRoute({
+  user,
+  productId = "prod_member_monthly",
+  polarCreate,
+  polarGet,
+  polarUpdate,
+} = {}) {
   const polarCalls = [];
   class Polar {
     constructor(config) {
@@ -40,6 +46,22 @@ function loadRoute({ user, productId = "prod_member_monthly", polarCreate } = {}
           polarCalls.push({ config, input });
           if (polarCreate) return polarCreate(input);
           return { url: "https://checkout.polar.test/session" };
+        },
+      };
+      this.subscriptions = {
+        get: async (input) => {
+          polarCalls.push({ config, input, operation: "subscription.get" });
+          return polarGet
+            ? polarGet(input)
+            : { recurringInterval: "month" };
+        },
+        update: async (input) => {
+          polarCalls.push({
+            config,
+            input,
+            operation: "subscription.update",
+          });
+          return polarUpdate ? polarUpdate(input) : { status: "active" };
         },
       };
     }
@@ -70,6 +92,91 @@ test("checkout route requires authentication", async () => {
 
   assert.equal(response.status, 401);
   assert.deepEqual(plain(response.body), { error: "Authentication required" });
+});
+
+test("Community upgrade changes the active Polar subscription instead of opening checkout", async () => {
+  await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
+    const { POST, polarCalls } = loadRoute({
+      productId: "configured-business-product",
+      user: {
+        activeMember: true,
+        email: "member@example.com",
+        membershipTier: "member",
+        uid: "user-1",
+        userData: {
+          activeMember: true,
+          membershipTier: "member",
+          subscriptionId: "subscription-1",
+          subscriptionStatus: "active",
+          willRenew: true,
+        },
+      },
+    });
+
+    const response = await POST(
+      createRequest({
+        jsonBody: { interval: "monthly", tier: "company" },
+        url: "https://go.test/api/checkout",
+      })
+    );
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(plain(response.body), {
+      upgraded: true,
+      url: "https://go.test/subscription/success",
+    });
+    const updateCall = polarCalls.find(
+      (call) => call.operation === "subscription.update"
+    );
+    assert.deepEqual(plain(updateCall.input), {
+      id: "subscription-1",
+      subscriptionUpdate: {
+        productId: "configured-business-product",
+        prorationBehavior: "prorate",
+      },
+    });
+    assert.equal(
+      polarCalls.some((call) => !call.operation && call.input.products),
+      false
+    );
+  });
+});
+
+test("Community upgrade refuses an interval change without explicit billing confirmation", async () => {
+  await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
+    const { POST, polarCalls } = loadRoute({
+      polarGet: async () => ({ recurringInterval: "month" }),
+      productId: "configured-business-annual",
+      user: {
+        activeMember: true,
+        membershipTier: "member",
+        uid: "user-1",
+        userData: {
+          activeMember: true,
+          membershipTier: "member",
+          subscriptionId: "subscription-1",
+          subscriptionStatus: "active",
+          willRenew: true,
+        },
+      },
+    });
+
+    const response = await POST(
+      createRequest({
+        jsonBody: { interval: "annual", tier: "company" },
+      })
+    );
+
+    assert.equal(response.status, 409);
+    assert.equal(
+      response.body.code,
+      "interval_change_requires_confirmation"
+    );
+    assert.equal(
+      polarCalls.some((call) => call.operation === "subscription.update"),
+      false
+    );
+  });
 });
 
 test("checkout route requires a configured product id", async () => {

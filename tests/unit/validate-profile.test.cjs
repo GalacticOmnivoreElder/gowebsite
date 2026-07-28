@@ -3,13 +3,17 @@ const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
 const {
+  MAX_PROFILE_ABOUT_WORDS,
   MAX_PROFILE_BIO_LENGTH,
+  countWords,
   isValidDiscordUsername,
   isValidEmail,
   isValidProfileUrl,
   validateProfileData,
 } = loadSourceModule("src/utils/validateProfile.js", [
+  "MAX_PROFILE_ABOUT_WORDS",
   "MAX_PROFILE_BIO_LENGTH",
+  "countWords",
   "isValidDiscordUsername",
   "isValidEmail",
   "isValidProfileUrl",
@@ -58,11 +62,17 @@ test("validateProfileData rejects invalid usernames", () => {
   );
 });
 
-test("validateProfileData accepts a bio at the 10,000 character boundary", () => {
+test("validateProfileData accepts the short bio and About Me boundaries", () => {
   assert.deepEqual(
     Object.keys(validateProfileData({ bio: "x".repeat(MAX_PROFILE_BIO_LENGTH) })),
     []
   );
+  const aboutMe = Array.from(
+    { length: MAX_PROFILE_ABOUT_WORDS },
+    () => "word"
+  ).join(" ");
+  assert.equal(countWords(aboutMe), MAX_PROFILE_ABOUT_WORDS);
+  assert.deepEqual(Object.keys(validateProfileData({ aboutMe })), []);
 });
 
 test("validateProfileData rejects oversized and malformed profile fields", () => {
@@ -75,7 +85,7 @@ test("validateProfileData rejects oversized and malformed profile fields", () =>
     },
   });
 
-  assert.equal(errors.bio, "Bio must be 10,000 characters or less");
+  assert.equal(errors.bio, "Bio must be 150 characters or less");
   assert.equal(errors.profilePrivacy, "Profile privacy must be public or private");
   assert.equal(errors.skills, "You can select at most 20 skills");
   assert.equal(errors["socialLinks.portfolio"], "portfolio must be a valid URL");
@@ -83,6 +93,18 @@ test("validateProfileData rejects oversized and malformed profile fields", () =>
 
 test("validateProfileData requires skills to be an array", () => {
   assert.equal(validateProfileData({ skills: "Unity" }).skills, "Skills must be an array");
+});
+
+test("validateProfileData rejects About Me over 10,000 words", () => {
+  const aboutMe = Array.from(
+    { length: MAX_PROFILE_ABOUT_WORDS + 1 },
+    () => "word"
+  ).join(" ");
+
+  assert.equal(
+    validateProfileData({ aboutMe }).aboutMe,
+    "About Me must be 10,000 words or less"
+  );
 });
 
 test("profile validation accepts email addresses and Discord usernames", () => {

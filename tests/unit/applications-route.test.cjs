@@ -62,8 +62,16 @@ function createDb(seed = {}) {
                     return actual === filter.value;
                   })
                 );
+                const snapshotDocs = matches.map((application) => ({
+                  id: application.id,
+                  data: () => application.data,
+                }));
                 return {
                   empty: matches.length === 0,
+                  docs: snapshotDocs,
+                  forEach(callback) {
+                    snapshotDocs.forEach(callback);
+                  },
                 };
               },
             };
@@ -94,7 +102,7 @@ function loadRoute({ seed = {}, user = null } = {}) {
   const emailEvents = [];
   const route = loadSourceModule(
     "src/app/api/applications/route.js",
-    ["POST"],
+    ["POST", "GET"],
     {
       stripImports: true,
       sandbox: {
@@ -257,5 +265,66 @@ test("application creation snapshots the active GO CV and enriches user details"
   assert.deepEqual(
     route.emailEvents.map((event) => event.type),
     ["application.submitted", "application.received"]
+  );
+});
+
+test("application history returns only the applicant's records newest first", async () => {
+  const route = loadRoute({
+    seed: {
+      applications: [
+        {
+          id: "application-old",
+          data: {
+            createdAt: new Date("2026-07-01T12:00:00.000Z"),
+            projectId: "project-1",
+            projectTitle: "Older Project",
+            status: "pending",
+            userId: "member-1",
+          },
+        },
+        {
+          id: "application-other",
+          data: {
+            createdAt: new Date("2026-07-12T12:00:00.000Z"),
+            projectId: "project-2",
+            projectTitle: "Private Other User Project",
+            status: "pending",
+            userId: "member-2",
+          },
+        },
+        {
+          id: "application-new",
+          data: {
+            createdAt: new Date("2026-07-14T11:00:00.000Z"),
+            projectId: "project-3",
+            projectTitle: "Newest Project",
+            roleAppliedFor: "Programmer",
+            status: "approved",
+            userId: "member-1",
+          },
+        },
+      ],
+      users: {
+        "member-1": {
+          email: "member@example.com",
+          username: "Ada",
+        },
+      },
+    },
+    user: { activeMember: true, uid: "member-1" },
+  });
+
+  const response = await route.GET(
+    createRequest({ url: "https://go.test/api/applications" })
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    plain(response.body.applications.map((application) => application.id)),
+    ["application-new", "application-old"]
+  );
+  assert.equal(
+    response.body.applications[0].roleAppliedFor,
+    "Programmer"
   );
 });
