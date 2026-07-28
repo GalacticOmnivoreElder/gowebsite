@@ -286,6 +286,7 @@ test("email, delivery, and newsletter Firestore collections are server-only", ()
   const rules = fs.readFileSync("firestore.rules", "utf8");
   [
     "email_outbox",
+    "email_deduplication",
     "email_delivery_events",
     "email_suppressions",
     "processed_email_webhooks",

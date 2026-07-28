@@ -1,4 +1,5 @@
 import { EMAIL_CATEGORIES, getEmailEventDefinition } from "../events";
+import { MEMBERSHIP_PLANS } from "@/constants/membership";
 import { absoluteSiteUrl, escapeHtml, firestoreDateToDate } from "../utils";
 import { renderEmailLayout } from "./base";
 
@@ -17,16 +18,70 @@ function formatDate(value) {
 
 function formatMoney(amount, currency) {
   const numeric = Number(amount);
-  if (!Number.isFinite(numeric)) return null;
+  const normalizedCurrency =
+    typeof currency === "string" ? currency.trim().toUpperCase() : "";
+  if (!Number.isFinite(numeric) || !normalizedCurrency) return null;
   const normalizedAmount = Number.isInteger(numeric) ? numeric / 100 : numeric;
   try {
     return new Intl.NumberFormat("en", {
       style: "currency",
-      currency: String(currency || "EUR").toUpperCase(),
+      currency: normalizedCurrency,
     }).format(normalizedAmount);
   } catch {
-    return `${normalizedAmount} ${String(currency || "").toUpperCase()}`.trim();
+    return `${normalizedAmount} ${normalizedCurrency}`.trim();
   }
+}
+
+function membershipPlan(tier) {
+  return MEMBERSHIP_PLANS.find((plan) => plan.tier === tier) || null;
+}
+
+function formatBillingInterval(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["month", "monthly"].includes(normalized)) return "Monthly";
+  if (["year", "annual", "annually", "yearly"].includes(normalized)) {
+    return "Annual";
+  }
+  return null;
+}
+
+function greeting(data) {
+  const firstName =
+    typeof data.firstName === "string" ? data.firstName.trim() : "";
+  return paragraph(firstName ? `Hi ${firstName},` : "Hello,");
+}
+
+function bulletList(values) {
+  const items = (Array.isArray(values) ? values : []).filter(Boolean);
+  if (!items.length) return "";
+  return `<ul style="margin:0 0 18px;padding-left:22px;">${items
+    .map(
+      (value) =>
+        `<li style="margin:0 0 8px;">${escapeHtml(value)}</li>`
+    )
+    .join("")}</ul>`;
+}
+
+function detailTable(rows) {
+  const available = rows.filter((row) => row?.value);
+  if (!available.length) return "";
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border:1px solid #343434;">${available
+    .map(
+      ({ label, value }) =>
+        `<tr><td style="padding:9px 12px;border-bottom:1px solid #343434;color:#8f8f8f;width:42%;">${escapeHtml(
+          label
+        )}</td><td style="padding:9px 12px;border-bottom:1px solid #343434;color:#f5f5f5;font-weight:700;">${escapeHtml(
+          value
+        )}</td></tr>`
+    )
+    .join("")}</table>`;
+}
+
+function plainDetails(rows) {
+  return rows
+    .filter((row) => row?.value)
+    .map((row) => `${row.label}: ${row.value}`)
+    .join("\n");
 }
 
 function eventCopy(type, data) {
@@ -36,7 +91,12 @@ function eventCopy(type, data) {
     data.projectId ? `/project/${encodeURIComponent(data.projectId)}` : "/projects"
   );
   const billingUrl = absoluteSiteUrl("/billing");
-  const profileUrl = absoluteSiteUrl("/onboarding");
+  const dashboardUrl = absoluteSiteUrl("/dashboard");
+  const profileUrl = absoluteSiteUrl("/profile");
+  const onboardingUrl = absoluteSiteUrl("/onboarding");
+  const cvUrl = absoluteSiteUrl("/cv");
+  const projectsUrl = absoluteSiteUrl("/projects");
+  const resourcesUrl = absoluteSiteUrl("/resources");
   const endsAt = formatDate(data.endsAt || data.subscriptionEndsAt);
   const amount = formatMoney(data.amount, data.currency);
   const effectiveAt = formatDate(data.effectiveAt);
@@ -44,33 +104,84 @@ function eventCopy(type, data) {
 
   switch (type) {
     case "account.welcome":
-      return {
-        subject: "Welcome to Galactic Omnivore",
-        heading: `Welcome, ${displayName}`,
-        preheader: "Your Galactic Omnivore account is ready.",
-        body:
-          paragraph(
-            "Your account is ready. Complete your profile so project creators and collaborators can discover your work, skills, and experience."
-          ) +
-          paragraph(
-            "You can browse public projects now and choose a membership whenever you are ready to apply or create a project."
-          ),
-        text: `Welcome to Galactic Omnivore, ${displayName}.\n\nYour account is ready. Complete your profile to share your work, skills, and experience.`,
-        ctaLabel: "Complete your profile",
-        ctaUrl: profileUrl,
-      };
+      {
+        const plan = membershipPlan(data.tier);
+        const planParagraph =
+          data.tier === "company"
+            ? "With GO Business, you have every Community benefit plus tools to create and publish projects, review applicants, and build project teams."
+            : data.tier === "member"
+              ? "With GO Community, you can apply to open community projects, access monthly packages, and use member learning resources."
+              : "Your account is ready. You can browse public projects now and choose a membership whenever you are ready to apply or create a project.";
+        const steps = [
+          "Finish onboarding to create your GO profile and a draft GO CV.",
+          "Complete or update your profile so collaborators can understand your skills and experience.",
+          "Review and update your GO CV before publishing it.",
+          "Explore projects and opportunities across the community.",
+          "Browse member resources and packages.",
+        ];
+        return {
+          subject: "Welcome to Galactic Omnivore",
+          heading: "Welcome to Galactic Omnivore",
+          preheader:
+            "Start with your profile, GO CV, projects, and member resources.",
+          body:
+            greeting(data) +
+            paragraph(
+              "Welcome to Galactic Omnivore—a community where creators can share their skills, find collaborators, and build projects together."
+            ) +
+            paragraph(planParagraph) +
+            `<p style="margin:0 0 12px;color:#f5f5f5;font-weight:700;">Your best first steps</p>` +
+            bulletList(steps),
+          text: `${data.firstName ? `Hi ${data.firstName},` : "Hello,"}\n\nWelcome to Galactic Omnivore—a community where creators can share their skills, find collaborators, and build projects together.\n\n${planParagraph}\n\nYour best first steps\n${steps
+            .map((step, index) => `${index + 1}. ${step}`)
+            .join("\n")}${plan ? `\n\nMembership: ${plan.name}` : ""}`,
+          ctaLabel: "Finish onboarding",
+          ctaUrl: onboardingUrl,
+          secondaryCtas: [
+            { label: "Complete your profile", url: profileUrl },
+            { label: "Build or update your GO CV", url: cvUrl },
+            { label: "Explore projects", url: projectsUrl },
+            { label: "Browse member resources", url: resourcesUrl },
+          ],
+        };
+      }
     case "onboarding.incomplete_reminder":
-      return {
-        subject: "Finish your Galactic Omnivore profile",
-        heading: "Your profile is waiting",
-        preheader: "Continue your Galactic Omnivore onboarding.",
-        body: paragraph(
-          "You started building your Galactic Omnivore profile but have not finished it yet. Continue where you left off."
-        ),
-        text: "Continue your Galactic Omnivore onboarding and finish your profile.",
-        ctaLabel: "Continue onboarding",
-        ctaUrl: profileUrl,
-      };
+      {
+        const plan = membershipPlan(data.tier);
+        const membershipName = plan?.name || "Galactic Omnivore";
+        const progressCopy = data.onboardingStarted
+          ? "You have already made a start. Continue where you left off to finish your GO profile and generate your draft GO CV."
+          : "Start onboarding to create your GO profile and generate a draft GO CV that you can review before publishing.";
+        const tierEnding =
+          data.tier === "company"
+            ? "Once your profile is ready, you can create projects, review applicants, build teams, and use member resources."
+            : data.tier === "member"
+              ? "Once your profile is ready, you can explore and apply to open projects and make better use of member resources."
+              : "Once your profile is ready, you can explore projects and member resources.";
+        const actionLabel = data.onboardingStarted
+          ? "Finish onboarding"
+          : "Start onboarding";
+        return {
+          subject: "Finish setting up your Galactic Omnivore membership",
+          heading: "Your GO profile is waiting",
+          preheader:
+            "Complete onboarding to create your GO profile and draft GO CV.",
+          body:
+            greeting(data) +
+            paragraph(
+              `Your ${membershipName} membership is active, but onboarding is not complete yet.`
+            ) +
+            paragraph(progressCopy) +
+            paragraph(tierEnding),
+          text: `${data.firstName ? `Hi ${data.firstName},` : "Hello,"}\n\nYour ${membershipName} membership is active, but onboarding is not complete yet.\n\n${progressCopy}\n\n${tierEnding}`,
+          ctaLabel: actionLabel,
+          ctaUrl: onboardingUrl,
+          secondaryCtas: [
+            { label: "Explore projects", url: projectsUrl },
+            { label: "Browse member resources", url: resourcesUrl },
+          ],
+        };
+      }
     case "onboarding.completed":
       return {
         subject: "Your GO profile is complete",
@@ -84,23 +195,63 @@ function eventCopy(type, data) {
         ctaUrl: absoluteSiteUrl("/cv"),
       };
     case "billing.membership_activated":
-      return {
-        subject: "Your Galactic Omnivore membership is active",
-        heading: "Membership activated",
-        preheader: "Your membership benefits are ready.",
-        body:
-          paragraph(
-            `Your ${data.tier === "company" ? "GO Business" : "GO Community"} membership${data.interval ? ` (${data.interval})` : ""} is active${amount ? ` following a payment of ${amount}` : ""}.`
-          ) +
-          paragraph(
-            data.tier === "company"
-              ? "You can create projects, review applicants, access member resources, and build project teams."
-              : "You can apply to open projects and access member resources and monthly packages."
-          ),
-        text: `Your ${data.tier || "GO"} membership is active${amount ? ` following a payment of ${amount}` : ""}.`,
-        ctaLabel: "Complete your GO profile",
-        ctaUrl: profileUrl,
-      };
+      {
+        const plan = membershipPlan(data.tier);
+        const membershipName = plan?.name || "Galactic Omnivore";
+        const interval = formatBillingInterval(data.interval);
+        const activatedAt = formatDate(
+          data.activationDate || data.activatedAt
+        );
+        const nextRenewal = formatDate(
+          data.nextRenewalDate || data.endsAt || data.subscriptionEndsAt
+        );
+        const amountLabel =
+          data.amountLabel === "Plan amount" ? "Plan amount" : "Amount paid";
+        const details = [
+          { label: "Membership", value: plan?.name || null },
+          { label: "Billing", value: interval },
+          { label: amountLabel, value: amount },
+          { label: "Activated", value: activatedAt },
+          {
+            label: "Next renewal",
+            value: data.willRenew === false ? null : nextRenewal,
+          },
+        ];
+        const benefits =
+          data.tier === "member"
+            ? plan?.benefits?.slice(0, 4) || []
+            : plan?.benefits || [];
+        const accessCopy =
+          data.tier === "company"
+            ? "You can use your member and project tools right away."
+            : "You can use your member access right away.";
+        return {
+          subject: `Your ${membershipName} membership is active`,
+          heading: "Your membership is active",
+          preheader:
+            "Your membership is active. Review your plan details and next steps.",
+          body:
+            greeting(data) +
+            paragraph(
+              `Your ${membershipName} membership is now active. ${accessCopy}`
+            ) +
+            `<p style="margin:0 0 12px;color:#f5f5f5;font-weight:700;">Membership details</p>` +
+            detailTable(details) +
+            (benefits.length
+              ? `<p style="margin:0 0 12px;color:#f5f5f5;font-weight:700;">Your membership includes</p>${bulletList(
+                  benefits
+                )}`
+              : ""),
+          text: `${data.firstName ? `Hi ${data.firstName},` : "Hello,"}\n\nYour ${membershipName} membership is now active. ${accessCopy}\n\nMembership details\n${plainDetails(
+            details
+          )}${benefits.length ? `\n\nYour membership includes\n${benefits.map((benefit) => `- ${benefit}`).join("\n")}` : ""}`,
+          ctaLabel: "Go to your dashboard",
+          ctaUrl: dashboardUrl,
+          secondaryCtas: [
+            { label: "Manage billing", url: billingUrl },
+          ],
+        };
+      }
     case "billing.renewal_paid":
       return {
         subject: "Your GO membership has renewed",
@@ -453,9 +604,17 @@ export function renderEmailEventTemplate(type, data = {}) {
 
   return {
     subject: copy.subject,
-    text: `${copy.text}\n\n${copy.ctaLabel && copy.ctaUrl ? `${copy.ctaLabel}: ${copy.ctaUrl}\n\n` : ""}Galactic Omnivore\n${absoluteSiteUrl("/contact")}`,
+    text: `${copy.text}\n\n${[
+      ...(copy.ctaLabel && copy.ctaUrl
+        ? [{ label: copy.ctaLabel, url: copy.ctaUrl }]
+        : []),
+      ...(Array.isArray(copy.secondaryCtas) ? copy.secondaryCtas : []),
+    ]
+      .map((cta) => `${cta.label}: ${cta.url}`)
+      .join("\n")}${copy.ctaLabel || copy.secondaryCtas?.length ? "\n\n" : ""}Galactic Omnivore\nContact Galactic Omnivore: ${absoluteSiteUrl("/contact")}`,
     html: renderEmailLayout({
       ...copy,
+      bodyHtml: copy.body,
       marketing,
       preferencesUrl: copy.preferencesUrl,
       unsubscribeUrl: copy.unsubscribeUrl,

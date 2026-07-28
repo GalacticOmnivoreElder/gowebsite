@@ -29,6 +29,7 @@ require("./cv-editor-ui.test.cjs");
 require("./date.test.cjs");
 require("./email-admin-routes.test.cjs");
 require("./email-core.test.cjs");
+require("./email-membership-templates.test.cjs");
 require("./email-routes-security.test.cjs");
 require("./format-budget.test.cjs");
 require("./legacy-membership-routes.test.cjs");

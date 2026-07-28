@@ -112,6 +112,7 @@ function loadRoute({ processed = new Set(), seed = {}, webhookThrows } = {}) {
   const adminDb = createAdminDb(seed);
   const marks = [];
   const emailEvents = [];
+  const queuedEmailKeys = new Set();
 
   const route = loadSourceModule(
     "src/app/api/subscription/webhook/route.js",
@@ -135,6 +136,11 @@ function loadRoute({ processed = new Set(), seed = {}, webhookThrows } = {}) {
           return [];
         },
         enqueueEmailEvent: async (event) => {
+          const key = `${event.type}:${event.eventId}:${event.userId || event.recipient}`;
+          if (queuedEmailKeys.has(key)) {
+            return { created: false, id: "email-job" };
+          }
+          queuedEmailKeys.add(key);
           emailEvents.push(event);
           return { created: true, id: "email-job" };
         },
@@ -265,6 +271,51 @@ test("order.paid and subscription.active produce one activation email", async ()
     ).length,
     1
   );
+});
+
+test("subscription.active and order.paid produce one activation email when active arrives first", async () => {
+  const route = loadRoute({
+    seed: {
+      users: {
+        "user-1": { activeMember: false, email: "member@example.com" },
+      },
+    },
+  });
+
+  await route.captured.onSubscriptionActive({
+    data: {
+      checkout_id: "checkout_1",
+      customer: { external_id: "user-1", id: "cus_123" },
+      current_period_end: "2026-08-14T12:00:00.000Z",
+      id: "sub_1",
+      status: "active",
+    },
+    id: "evt_active_first",
+    timestamp: "2026-07-14T12:00:00.000Z",
+    type: "subscription.active",
+  });
+  await route.captured.onOrderPaid({
+    data: {
+      billing_reason: "subscription_create",
+      checkout_id: "checkout_1",
+      customer: { email: "member@example.com", id: "cus_123" },
+      id: "order_1",
+      metadata: { uid: "user-1" },
+      status: "paid",
+      subscription_id: "sub_1",
+      total_amount: 1500,
+      currency: "eur",
+    },
+    id: "evt_paid_after_active",
+    timestamp: "2026-07-14T12:00:01.000Z",
+    type: "order.paid",
+  });
+
+  const activationEvents = route.emailEvents.filter(
+    (event) => event.type === "billing.membership_activated"
+  );
+  assert.equal(activationEvents.length, 1);
+  assert.equal(activationEvents[0].eventId, "checkout:checkout_1");
 });
 
 test("processed webhook events are skipped", async () => {

@@ -97,10 +97,11 @@ export default function PrivacyPage() {
         Email delivery and outbox records are scheduled for deletion after
         approximately 90 days, webhook deduplication records after 30 days, and
         newsletter consent audit events after approximately three years.
-        Active consent and minimal unsubscribe, bounce, complaint, or
-        suppression records may be retained while needed to honor your choices
-        and legal obligations. Support or legal requirements may require a
-        different period.
+        Hash-only email event deduplication records may be retained to prevent
+        duplicate transactional messages. Active consent and minimal
+        unsubscribe, bounce, complaint, or suppression records may be retained
+        while needed to honor your choices and legal obligations. Support or
+        legal requirements may require a different period.
       </p>
 
       <h2>9. Contact and Review</h2>

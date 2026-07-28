@@ -12,6 +12,12 @@ import { validateEmailEvent } from "./events";
 const MAX_ATTEMPTS = 5;
 const LEASE_MS = 5 * 60 * 1000;
 const INDEX_FALLBACK_SCAN_LIMIT = 500;
+const EMAIL_DEDUPLICATION_COLLECTION = "email_deduplication";
+const CURRENT_STATE_EVENTS = new Set([
+  "account.welcome",
+  "billing.membership_activated",
+  "onboarding.incomplete_reminder",
+]);
 
 function backoffMs(attempt) {
   return Math.min(6 * 60 * 60 * 1000, 30_000 * 2 ** Math.max(0, attempt - 1));
@@ -138,12 +144,30 @@ export function createEmailOutboxJob(event, now = new Date()) {
   };
 }
 
+function createEmailDeduplicationMarker(job, now = new Date()) {
+  return {
+    jobId: job.id,
+    eventType: job.eventType,
+    createdAt: now,
+  };
+}
+
 export async function enqueueEmailEvent(event) {
   const job = createEmailOutboxJob(event);
   const ref = adminDb.collection("email_outbox").doc(job.id);
+  const deduplicationRef = adminDb
+    .collection(EMAIL_DEDUPLICATION_COLLECTION)
+    .doc(job.id);
 
   const created = await adminDb.runTransaction(async (transaction) => {
+    const deduplication = await transaction.get(deduplicationRef);
+    if (deduplication.exists) return false;
+
     const existing = await transaction.get(ref);
+    transaction.create(
+      deduplicationRef,
+      createEmailDeduplicationMarker(job, job.createdAt)
+    );
     if (existing.exists) return false;
     transaction.create(ref, job);
     return true;
@@ -155,6 +179,13 @@ export async function enqueueEmailEvent(event) {
 export function addEmailEventToBatch(batch, event, now = new Date()) {
   const job = createEmailOutboxJob(event, now);
   const ref = adminDb.collection("email_outbox").doc(job.id);
+  const deduplicationRef = adminDb
+    .collection(EMAIL_DEDUPLICATION_COLLECTION)
+    .doc(job.id);
+  batch.create(
+    deduplicationRef,
+    createEmailDeduplicationMarker(job, now)
+  );
   batch.create(ref, job);
   return { id: job.id, created: true };
 }
@@ -192,12 +223,25 @@ export async function cancelPendingEmailEvents({ userId, eventType, reason }) {
 
 async function loadPreferenceContext(job) {
   let userData = {};
+  let userProfileData = {};
+  let onboardingSessionData = {};
   let newsletterSubscriber = null;
   let emailSuppression = null;
 
   if (job.userId) {
     const userDoc = await adminDb.collection("users").doc(job.userId).get();
     if (userDoc.exists) userData = userDoc.data();
+
+    if (CURRENT_STATE_EVENTS.has(job.eventType)) {
+      const [profileDoc, onboardingSessionDoc] = await Promise.all([
+        adminDb.collection("user_profiles").doc(job.userId).get(),
+        adminDb.collection("onboarding_sessions").doc(job.userId).get(),
+      ]);
+      if (profileDoc.exists) userProfileData = profileDoc.data();
+      if (onboardingSessionDoc.exists) {
+        onboardingSessionData = onboardingSessionDoc.data();
+      }
+    }
   }
 
   if (job.category === "marketing") {
@@ -219,7 +263,53 @@ async function loadPreferenceContext(job) {
     if (suppression.exists) emailSuppression = suppression.data();
   }
 
-  return { userData, newsletterSubscriber, emailSuppression };
+  return {
+    userData,
+    userProfileData,
+    onboardingSessionData,
+    newsletterSubscriber,
+    emailSuppression,
+  };
+}
+
+function firstNameFromContext(context) {
+  const candidates = [
+    context.userProfileData?.full_name,
+    context.userData?.name,
+    context.userData?.displayName,
+    context.userData?.username,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string") continue;
+    const normalized = candidate.trim().replace(/\s+/g, " ");
+    if (!normalized) continue;
+    return normalized.split(" ")[0].slice(0, 80);
+  }
+  return null;
+}
+
+function enrichJobFromCurrentState(job, context) {
+  if (!CURRENT_STATE_EVENTS.has(job.eventType)) return job;
+  const firstName = job.templateData?.firstName || firstNameFromContext(context);
+  const tier =
+    job.templateData?.tier || context.userData?.membershipTier || null;
+  const displayName =
+    job.templateData?.displayName ||
+    context.userProfileData?.display_name ||
+    context.userData?.username ||
+    null;
+
+  return {
+    ...job,
+    templateData: {
+      ...(job.templateData || {}),
+      ...(firstName ? { firstName } : {}),
+      ...(displayName ? { displayName } : {}),
+      ...(tier ? { tier } : {}),
+      onboardingStarted:
+        context.onboardingSessionData?.status === "in_progress",
+    },
+  };
 }
 
 async function claimJob(ref) {
@@ -287,11 +377,37 @@ export async function processEmailOutbox({ limit = 25 } = {}) {
       });
       if (
         job.eventType === "onboarding.incomplete_reminder" &&
-        context.userData?.onboardingCompleted === true
+        (context.userData?.onboardingCompleted === true ||
+          context.userProfileData?.onboarding_completed === true ||
+          context.onboardingSessionData?.status === "completed")
       ) {
         await finishJob(candidate.ref, {
           status: "suppressed",
           suppressionReason: "onboarding_completed",
+        });
+        summary.suppressed += 1;
+        continue;
+      }
+      if (
+        job.eventType === "onboarding.incomplete_reminder" &&
+        context.userData?.activeMember !== true
+      ) {
+        await finishJob(candidate.ref, {
+          status: "suppressed",
+          suppressionReason: "membership_not_active",
+        });
+        summary.suppressed += 1;
+        continue;
+      }
+      const currentEmail = normalizeEmail(context.userData?.email);
+      if (
+        job.eventType === "onboarding.incomplete_reminder" &&
+        currentEmail &&
+        currentEmail !== job.recipient
+      ) {
+        await finishJob(candidate.ref, {
+          status: "suppressed",
+          suppressionReason: "recipient_changed",
         });
         summary.suppressed += 1;
         continue;
@@ -327,7 +443,9 @@ export async function processEmailOutbox({ limit = 25 } = {}) {
         continue;
       }
 
-      const result = await sendEmailJob(job);
+      const result = await sendEmailJob(
+        enrichJobFromCurrentState(job, context)
+      );
       await finishJob(candidate.ref, {
         status: result.status,
         providerEmailId: result.providerEmailId || null,

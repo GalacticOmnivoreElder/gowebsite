@@ -27,9 +27,11 @@ The important modules are:
 - `src/app/api/cron/email-outbox/route.js`: protected worker.
 
 Firestore job IDs are hashes of event type, stable event ID, and recipient
-identity. A retried route or webhook therefore cannot enqueue the same email
-twice. Resend receives a readable deterministic idempotency key as an
-additional short-window safeguard.
+identity. The same hash is written transactionally to the permanent,
+PII-free `email_deduplication` collection. A retried route or webhook therefore
+cannot enqueue the same email again even after the 90-day outbox job expires.
+Resend receives a readable deterministic idempotency key as an additional
+short-window safeguard.
 
 Newsletter confirmation tokens are unpredictable HMAC values. Only their hash,
 expiry, and a non-secret random version are stored. The outbox reconstructs the
@@ -40,9 +42,9 @@ persisted in job data or logs.
 
 | Category | Events | Preference |
 | --- | --- | --- |
-| Essential | `account.welcome`, `newsletter.confirm`, `billing.membership_activated`, `billing.renewal_paid`, `billing.plan_changed`, `billing.payment_failed`, `billing.cancellation_scheduled`, `billing.reactivated`, `billing.access_revoked`, `billing.refund_processed` | Always allowed; not affected by marketing opt-out |
+| Essential | `account.welcome`, `onboarding.incomplete_reminder`, `newsletter.confirm`, `billing.membership_activated`, `billing.renewal_paid`, `billing.plan_changed`, `billing.payment_failed`, `billing.cancellation_scheduled`, `billing.reactivated`, `billing.access_revoked`, `billing.refund_processed` | Always allowed; not affected by marketing opt-out |
 | Firebase security | email verification and password reset | Firebase Authentication templates and throttling |
-| Product/project | `onboarding.incomplete_reminder`, `onboarding.completed`, all `project.*`, all `application.*` | `settings.emailNotifications !== false` |
+| Product/project | `onboarding.completed`, all `project.*`, all `application.*` | `settings.emailNotifications !== false` |
 | Subscription reminders | `billing.renewal_reminder`, `billing.access_expiring` | `settings.subscriptionReminders !== false`; worker also rechecks renewal/cancellation state |
 | Package | `package.published` | Active member and `settings.newPackageAlerts !== false` |
 | Marketing | `newsletter.campaign` | Confirmed newsletter consent or `settings.marketingEmails === true`, with no bounce/complaint/suppression |
@@ -144,6 +146,8 @@ not disclose whether an account exists.
 The implementation adds:
 
 - `email_outbox`: queued/sent/failed/suppressed application emails.
+- `email_deduplication`: permanent hash-only semantic-event tombstones without
+  recipient addresses or template data.
 - `email_delivery_events`: minimal verified provider delivery events.
 - `processed_email_webhooks`: 30-day provider-event deduplication.
 - `email_suppressions`: one-way hashed bounce/complaint suppression.
@@ -202,7 +206,8 @@ The worker:
 2. queues at most one daily failed-email digest;
 3. queries due pending jobs;
 4. transactionally claims each job for five minutes;
-5. rechecks current consent, user preferences, renewal state, and suppression;
+5. rechecks current consent, user preferences, renewal state, onboarding state,
+   membership access, and suppression;
 6. sends or suppresses;
 7. retries transient failures with exponential backoff, up to five attempts.
 

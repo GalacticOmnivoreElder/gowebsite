@@ -85,6 +85,7 @@ service cloud.firestore {
     match /subscription_events/{doc} { allow read, write: if false; }
     match /processed_webhooks/{doc}  { allow read, write: if false; }
     match /email_outbox/{doc}        { allow read, write: if false; }
+    match /email_deduplication/{doc} { allow read, write: if false; }
     match /email_delivery_events/{doc} { allow read, write: if false; }
     match /email_suppressions/{doc}   { allow read, write: if false; }
     match /processed_email_webhooks/{doc} { allow read, write: if false; }

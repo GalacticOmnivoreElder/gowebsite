@@ -115,7 +115,12 @@ test("email normalization and signed newsletter tokens are deterministic, expiri
   }
 });
 
-function loadOutbox({ sendError } = {}) {
+function loadOutbox({
+  jobOverrides = {},
+  sendError,
+  seed = {},
+} = {}) {
+  let sendCalls = 0;
   let job = {
     eventType: "account.welcome",
     eventId: "user-1",
@@ -126,6 +131,7 @@ function loadOutbox({ sendError } = {}) {
     nextAttemptAt: new Date(Date.now() - 1000),
     templateData: {},
     idempotencyKey: "welcome/user-1/member",
+    ...jobOverrides,
   };
   const ref = {
     async update(update) {
@@ -149,8 +155,23 @@ function loadOutbox({ sendError } = {}) {
   };
   const adminDb = {
     collection(name) {
-      assert.equal(name, "email_outbox");
-      return query;
+      if (name === "email_outbox") return query;
+      if (["users", "user_profiles", "onboarding_sessions"].includes(name)) {
+        return {
+          doc(id) {
+            return {
+              async get() {
+                const data = seed[name]?.[id];
+                return {
+                  exists: !!data,
+                  data: () => data || {},
+                };
+              },
+            };
+          },
+        };
+      }
+      throw new Error(`Unexpected collection: ${name}`);
     },
     async runTransaction(callback) {
       return callback({
@@ -181,6 +202,7 @@ function loadOutbox({ sendError } = {}) {
           .update(String(value))
           .digest("hex"),
         sendEmailJob: async () => {
+          sendCalls += 1;
           if (sendError) throw sendError;
           return { status: "sent", providerEmailId: "email-1" };
         },
@@ -188,7 +210,69 @@ function loadOutbox({ sendError } = {}) {
       },
     }
   );
-  return { ...module, getJob: () => job };
+  return {
+    ...module,
+    getJob: () => job,
+    getSendCalls: () => sendCalls,
+  };
+}
+
+function loadPermanentDedupOutbox() {
+  const docs = {
+    email_deduplication: {},
+    email_outbox: {},
+  };
+  const adminDb = {
+    collection(name) {
+      return {
+        doc(id) {
+          return { collectionName: name, id };
+        },
+      };
+    },
+    async runTransaction(callback) {
+      return callback({
+        async get(ref) {
+          const value = docs[ref.collectionName]?.[ref.id];
+          return {
+            exists: !!value,
+            data: () => value || {},
+          };
+        },
+        create(ref, value) {
+          if (docs[ref.collectionName][ref.id]) {
+            throw new Error("already exists");
+          }
+          docs[ref.collectionName][ref.id] = value;
+        },
+      });
+    },
+  };
+  const module = loadSourceModule(
+    "src/lib/email/outbox.js",
+    ["enqueueEmailEvent"],
+    {
+      stripImports: true,
+      sandbox: {
+        adminDb,
+        getEmailPreferenceDecision: () => ({ allowed: true }),
+        makeEmailJobId: utils.makeEmailJobId,
+        makeIdempotencyKey: utils.makeIdempotencyKey,
+        normalizeEmail: utils.normalizeEmail,
+        hashValue: (value) =>
+          require("node:crypto")
+            .createHash("sha256")
+            .update(String(value))
+            .digest("hex"),
+        sendEmailJob: async () => ({
+          status: "sent",
+          providerEmailId: "email-1",
+        }),
+        validateEmailEvent: events.validateEmailEvent,
+      },
+    }
+  );
+  return { ...module, docs };
 }
 
 test("outbox IDs permanently deduplicate the same semantic event", () => {
@@ -216,6 +300,26 @@ test("outbox IDs permanently deduplicate the same semantic event", () => {
       }),
     /Sensitive email template field/
   );
+});
+
+test("permanent deduplication survives outbox TTL deletion", async () => {
+  const outbox = loadPermanentDedupOutbox();
+  const event = {
+    type: "billing.membership_activated",
+    eventId: "checkout:checkout-1",
+    userId: "user-1",
+    recipient: "member@example.com",
+    data: { tier: "member" },
+  };
+
+  assert.equal((await outbox.enqueueEmailEvent(event)).created, true);
+  assert.equal((await outbox.enqueueEmailEvent(event)).created, false);
+
+  const jobId = Object.keys(outbox.docs.email_outbox)[0];
+  delete outbox.docs.email_outbox[jobId];
+
+  assert.equal((await outbox.enqueueEmailEvent(event)).created, false);
+  assert.ok(outbox.docs.email_deduplication[jobId]);
 });
 
 test("outbox retries transient errors and finalizes permanent failures", async () => {
@@ -261,4 +365,36 @@ test("outbox recognizes only Firestore missing-index failures", () => {
     }),
     false
   );
+});
+
+test("onboarding reminders are suppressed from authoritative completed state", async () => {
+  const outbox = loadOutbox({
+    jobOverrides: {
+      category: "essential",
+      eventType: "onboarding.incomplete_reminder",
+      eventId: "user-1-membership-onboarding",
+      userId: "user-1",
+    },
+    seed: {
+      onboarding_sessions: {
+        "user-1": { status: "in_progress" },
+      },
+      user_profiles: {
+        "user-1": { onboarding_completed: true },
+      },
+      users: {
+        "user-1": {
+          activeMember: true,
+          email: "member@example.com",
+          onboardingCompleted: false,
+        },
+      },
+    },
+  });
+
+  await outbox.processEmailOutbox();
+
+  assert.equal(outbox.getJob().status, "suppressed");
+  assert.equal(outbox.getJob().suppressionReason, "onboarding_completed");
+  assert.equal(outbox.getSendCalls(), 0);
 });

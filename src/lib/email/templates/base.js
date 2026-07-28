@@ -15,6 +15,7 @@ export function renderEmailLayout({
   bodyHtml,
   ctaLabel,
   ctaUrl,
+  secondaryCtas = [],
   footerHtml,
   marketing = false,
   preferencesUrl,
@@ -24,6 +25,15 @@ export function renderEmailLayout({
   const safeHeading = escapeHtml(heading);
   const safeCtaLabel = escapeHtml(ctaLabel);
   const safeCtaUrl = escapeHtml(ctaUrl);
+  const safeSecondaryCtas = (Array.isArray(secondaryCtas)
+    ? secondaryCtas
+    : []
+  )
+    .filter((cta) => cta?.label && cta?.url)
+    .map((cta) => ({
+      label: escapeHtml(cta.label),
+      url: escapeHtml(cta.url),
+    }));
   const supportUrl = escapeHtml(absoluteSiteUrl("/contact"));
   const legalLinks = marketing
     ? `<p style="margin:12px 0 0;">
@@ -54,6 +64,16 @@ export function renderEmailLayout({
                 ${
                   ctaLabel && ctaUrl
                     ? `<p style="margin:26px 0 0;"><a href="${safeCtaUrl}" style="display:inline-block;background:${BRAND.accent};color:#ffffff;padding:12px 20px;text-decoration:none;font-weight:700;">${safeCtaLabel}</a></p>`
+                    : ""
+                }
+                ${
+                  safeSecondaryCtas.length
+                    ? `<p style="margin:14px 0 0;">${safeSecondaryCtas
+                        .map(
+                          (cta) =>
+                            `<a href="${cta.url}" style="display:inline-block;margin:0 10px 10px 0;border:1px solid ${BRAND.border};color:#ffffff;padding:10px 16px;text-decoration:none;font-weight:700;">${cta.label}</a>`
+                        )
+                        .join("")}</p>`
                     : ""
                 }
               </td>

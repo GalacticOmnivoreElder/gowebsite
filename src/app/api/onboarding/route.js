@@ -11,12 +11,12 @@ import { buildCvFromProfile, improveSummaryWithAI } from "@/lib/cv-generator";
 import { sanitizeSkills } from "@/lib/skills";
 import { syncUserSkillUsage } from "@/lib/skill-catalog";
 import {
-  addEmailEventToBatch,
   cancelPendingEmailEvents,
   enqueueEmailEvent,
 } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
+const ONBOARDING_REMINDER_DELAY_MS = 48 * 60 * 60 * 1000;
 
 async function requireUser(request) {
   const user = await getRequestUser(request);
@@ -92,25 +92,25 @@ export async function POST(request) {
   };
   const batch = adminDb.batch();
   batch.set(ref, session, { merge: true });
-  if (user.email) {
-    const baseEvent = {
+  await batch.commit();
+  const userData = userSnap.exists ? userSnap.data() : {};
+  if (user.email && userData.activeMember === true) {
+    await enqueueEmailEvent({
       type: "onboarding.incomplete_reminder",
+      eventId: `${user.uid}-membership-onboarding`,
       userId: user.uid,
       recipient: user.email,
-      data: { displayName: user.userData?.username || null },
-    };
-    addEmailEventToBatch(batch, {
-      ...baseEvent,
-      eventId: `${user.uid}-24h`,
-      scheduledFor: new Date(now.getTime() + 24 * 60 * 60 * 1000),
-    }, now);
-    addEmailEventToBatch(batch, {
-      ...baseEvent,
-      eventId: `${user.uid}-72h`,
-      scheduledFor: new Date(now.getTime() + 72 * 60 * 60 * 1000),
-    }, now);
+      scheduledFor: new Date(
+        now.getTime() + ONBOARDING_REMINDER_DELAY_MS
+      ),
+      data: {
+        displayName: userData.username || null,
+        tier: userData.membershipTier || null,
+      },
+    }).catch((emailError) => {
+      console.error("Could not queue onboarding reminder email:", emailError);
+    });
   }
-  await batch.commit();
   return NextResponse.json({ id: user.uid, ...serializeSession(session) });
 }
 

@@ -10,7 +10,7 @@ export const EMAIL_CATEGORIES = Object.freeze({
 export const EMAIL_EVENTS = Object.freeze({
   "account.welcome": { category: EMAIL_CATEGORIES.ESSENTIAL },
   "onboarding.incomplete_reminder": {
-    category: EMAIL_CATEGORIES.PRODUCT,
+    category: EMAIL_CATEGORIES.ESSENTIAL,
   },
   "onboarding.completed": { category: EMAIL_CATEGORIES.PRODUCT },
 

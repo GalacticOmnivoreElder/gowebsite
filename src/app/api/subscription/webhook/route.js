@@ -12,6 +12,8 @@ import {
   enqueueEmailEvent,
 } from "@/lib/email";
 
+const ONBOARDING_REMINDER_DELAY_MS = 48 * 60 * 60 * 1000;
+
 const polarWebhookHandler = Webhooks({
   webhookSecret: process.env.POLAR_WEBHOOK_SECRET,
   onOrderPaid: (payload) => processWebhook(payload, handleOrderPaid),
@@ -90,6 +92,32 @@ function getSubscriptionId(data) {
   return data?.subscription_id || data?.subscriptionId || data?.subscription?.id || data?.id || null;
 }
 
+function getCheckoutId(data) {
+  return (
+    data?.checkout_id ||
+    data?.checkoutId ||
+    data?.checkout?.id ||
+    data?.subscription?.checkout_id ||
+    data?.subscription?.checkoutId ||
+    null
+  );
+}
+
+function getProductId(data) {
+  return (
+    data?.product_id ||
+    data?.productId ||
+    data?.product?.id ||
+    data?.subscription?.product_id ||
+    data?.subscription?.productId ||
+    data?.subscription?.product?.id ||
+    data?.checkout?.product_id ||
+    data?.checkout?.productId ||
+    data?.checkout?.product?.id ||
+    null
+  );
+}
+
 function getMetadataUid(data) {
   return (
     data?.metadata?.uid ||
@@ -101,17 +129,7 @@ function getMetadataUid(data) {
 }
 
 function getMetadataTier(data) {
-  const productId =
-    data?.product_id ||
-    data?.productId ||
-    data?.product?.id ||
-    data?.subscription?.product_id ||
-    data?.subscription?.productId ||
-    data?.subscription?.product?.id ||
-    data?.checkout?.product_id ||
-    data?.checkout?.productId ||
-    data?.checkout?.product?.id ||
-    null;
+  const productId = getProductId(data);
   const productTier = resolvePolarProductTier(productId);
   if (productTier) return productTier;
 
@@ -145,6 +163,142 @@ function getCurrentPeriodEnd(data) {
       data?.subscription?.current_period_end ||
       data?.subscription?.currentPeriodEnd
   );
+}
+
+function getRecurringInterval(data) {
+  return (
+    data?.recurring_interval ||
+    data?.recurringInterval ||
+    data?.product?.recurring_interval ||
+    data?.product?.recurringInterval ||
+    data?.subscription?.recurring_interval ||
+    data?.subscription?.recurringInterval ||
+    null
+  );
+}
+
+function getOrderAmount(data) {
+  return (
+    data?.total_amount ??
+    data?.totalAmount ??
+    data?.amount ??
+    data?.subtotal_amount ??
+    data?.subtotalAmount ??
+    null
+  );
+}
+
+function getActivationDate(data, payload) {
+  return (
+    parsePolarDate(
+      data?.started_at ||
+        data?.startedAt ||
+        data?.current_period_start ||
+        data?.currentPeriodStart ||
+        data?.subscription?.started_at ||
+        data?.subscription?.startedAt ||
+        data?.subscription?.current_period_start ||
+        data?.subscription?.currentPeriodStart ||
+        data?.created_at ||
+        data?.createdAt
+    ) || parsePolarDate(payload?.timestamp)
+  );
+}
+
+function getMembershipActivationKey(data) {
+  const checkoutId = getCheckoutId(data);
+  if (checkoutId) return `checkout:${checkoutId}`;
+  const subscriptionId = getSubscriptionId(data);
+  if (subscriptionId) return `subscription:${subscriptionId}`;
+  return null;
+}
+
+function getOrderEmailType(orderData, previousUserData, activationKey) {
+  const billingReason = String(
+    orderData?.billing_reason || orderData?.billingReason || ""
+  ).toLowerCase();
+  if (billingReason === "subscription_cycle") return "billing.renewal_paid";
+  if (billingReason === "subscription_update") return null;
+  if (billingReason === "subscription_create") {
+    return "billing.membership_activated";
+  }
+  if (
+    activationKey &&
+    previousUserData?.membershipActivationPurchaseKey === activationKey
+  ) {
+    return "billing.membership_activated";
+  }
+  return !previousUserData?.activeMember || !previousUserData?.lastOrderId
+    ? "billing.membership_activated"
+    : "billing.renewal_paid";
+}
+
+async function enqueueOnboardingReminder({
+  userId,
+  recipient,
+  tier,
+  userData,
+}) {
+  if (!recipient || userData?.onboardingCompleted === true) return null;
+  const now = new Date();
+  return enqueueEmailEvent({
+    type: "onboarding.incomplete_reminder",
+    eventId: `${userId}-membership-onboarding`,
+    userId,
+    recipient,
+    scheduledFor: new Date(now.getTime() + ONBOARDING_REMINDER_DELAY_MS),
+    data: {
+      displayName: userData?.username || userData?.name || null,
+      tier: tier || userData?.membershipTier || null,
+    },
+  });
+}
+
+async function enqueueMembershipActivationEmail({
+  sourceData,
+  payload,
+  userDoc,
+  userData,
+  amount,
+  amountLabel,
+}) {
+  const recipient = userData?.email;
+  const activationKey = getMembershipActivationKey(sourceData);
+  if (!recipient || !activationKey) return null;
+
+  const tier = getMetadataTier(sourceData) || userData.membershipTier || null;
+  const result = await enqueueEmailEvent({
+    type: "billing.membership_activated",
+    eventId: activationKey,
+    userId: userDoc.id,
+    recipient,
+    data: {
+      displayName: userData.username || userData.name || null,
+      tier,
+      interval: getRecurringInterval(sourceData),
+      amount,
+      amountLabel,
+      currency:
+        sourceData?.currency ||
+        sourceData?.subscription?.currency ||
+        null,
+      activationDate: getActivationDate(sourceData, payload),
+      nextRenewalDate: getCurrentPeriodEnd(sourceData),
+      willRenew:
+        sourceData?.cancel_at_period_end === true ||
+        sourceData?.cancelAtPeriodEnd === true
+          ? false
+          : true,
+    },
+  });
+
+  await enqueueOnboardingReminder({
+    userId: userDoc.id,
+    recipient,
+    tier,
+    userData,
+  });
+  return { ...result, activationKey };
 }
 
 async function findUserForPolarData(data) {
@@ -183,7 +337,7 @@ async function findUserForPolarData(data) {
   return null;
 }
 
-async function handleOrderPaid(orderData) {
+async function handleOrderPaid(orderData, payload) {
   const userDoc = await findUserForPolarData(orderData);
   if (!userDoc) {
     throw new Error(`No user found for paid Polar order ${orderData?.id}`);
@@ -192,16 +346,17 @@ async function handleOrderPaid(orderData) {
   const subscriptionId = getSubscriptionId(orderData);
   const customerId = getCustomerId(orderData);
   const currentPeriodEnd = getCurrentPeriodEnd(orderData);
-  const amount = orderData.amount || orderData.total_amount || orderData.subtotal_amount || null;
+  const amount = getOrderAmount(orderData);
 
   const tier = getMetadataTier(orderData);
-  const interval =
-    orderData.recurring_interval ||
-    orderData.recurringInterval ||
-    orderData.product?.recurring_interval ||
-    orderData.product?.recurringInterval ||
-    null;
+  const interval = getRecurringInterval(orderData);
   const previousUserData = userDoc.data();
+  const activationKey = getMembershipActivationKey(orderData);
+  const emailType = getOrderEmailType(
+    orderData,
+    previousUserData,
+    activationKey
+  );
   const userUpdate = {
     activeMember: true,
     polarCustomerId: customerId,
@@ -213,6 +368,13 @@ async function handleOrderPaid(orderData) {
     lastPaymentFailed: false,
     updatedAt: new Date(),
     webhookProcessedAt: new Date(),
+    ...(emailType === "billing.membership_activated" && activationKey
+      ? {
+          membershipActivationPurchaseKey: activationKey,
+          membershipActivatedAt:
+            getActivationDate(orderData, payload) || new Date(),
+        }
+      : {}),
   };
 
   if (subscriptionId) {
@@ -236,7 +398,7 @@ async function handleOrderPaid(orderData) {
         status: orderData.status || "paid",
         amount,
         currency: orderData.currency,
-        productId: orderData.product_id || orderData.productId || orderData.product?.id || null,
+        productId: getProductId(orderData),
         subscriptionId,
         createdAt: parsePolarDate(orderData.created_at || orderData.createdAt) || new Date(),
         paidAt: new Date(),
@@ -246,26 +408,32 @@ async function handleOrderPaid(orderData) {
       { merge: true }
     );
 
-  if (previousUserData.email) {
-    const firstActivation =
-      !previousUserData.activeMember || !previousUserData.lastOrderId;
-    await enqueueEmailEvent({
-      type: firstActivation
-        ? "billing.membership_activated"
-        : "billing.renewal_paid",
-      eventId: orderData.id,
-      userId: userDoc.id,
-      recipient: previousUserData.email,
-      data: {
-        displayName: previousUserData.username || previousUserData.name,
-        tier: tier || previousUserData.membershipTier || "member",
-        interval,
+  if (previousUserData.email && emailType) {
+    if (emailType === "billing.membership_activated") {
+      await enqueueMembershipActivationEmail({
+        sourceData: orderData,
+        payload,
+        userDoc,
+        userData: previousUserData,
         amount,
-        currency: orderData.currency,
-        subscriptionId,
-        endsAt: currentPeriodEnd,
-      },
-    });
+        amountLabel: "Amount paid",
+      });
+    } else {
+      await enqueueEmailEvent({
+        type: emailType,
+        eventId: orderData.id,
+        userId: userDoc.id,
+        recipient: previousUserData.email,
+        data: {
+          displayName: previousUserData.username || previousUserData.name,
+          tier: tier || previousUserData.membershipTier || null,
+          interval,
+          amount,
+          currency: orderData.currency,
+          endsAt: currentPeriodEnd,
+        },
+      });
+    }
 
     if (currentPeriodEnd) {
       const reminderDays = interval === "year" ? 7 : 3;
@@ -280,7 +448,7 @@ async function handleOrderPaid(orderData) {
           recipient: previousUserData.email,
           scheduledFor,
           data: {
-            tier: tier || previousUserData.membershipTier || "member",
+            tier: tier || previousUserData.membershipTier || null,
             endsAt: currentPeriodEnd,
           },
         });
@@ -322,14 +490,44 @@ async function handleSubscriptionCreated(subscriptionData) {
   );
 }
 
-async function handleSubscriptionActive(subscriptionData) {
-  await updateSubscriptionUser(subscriptionData, {
+async function handleSubscriptionActive(subscriptionData, payload) {
+  const result = await updateSubscriptionUser(subscriptionData, {
     activeMember: true,
     subscriptionStatus: "active",
     willRenew: true,
     canceledAt: null,
     lastPaymentFailed: false,
   });
+  const previous = result?.previousData;
+  const previousStatus = previous?.subscriptionStatus;
+  const paymentRecovery =
+    previousStatus === "past_due" || previous?.lastPaymentFailed === true;
+  const shouldAttemptActivation =
+    previous?.email &&
+    !paymentRecovery &&
+    (!previous.activeMember ||
+      !previous.lastOrderId ||
+      previous.membershipActivationPurchaseKey ===
+        getMembershipActivationKey(subscriptionData));
+
+  if (shouldAttemptActivation) {
+    const queued = await enqueueMembershipActivationEmail({
+      sourceData: subscriptionData,
+      payload,
+      userDoc: { id: result.userId },
+      userData: previous,
+      amount: subscriptionData.amount ?? null,
+      amountLabel: "Plan amount",
+    });
+    if (queued?.activationKey && result.userRef) {
+      await result.userRef.update({
+        membershipActivationPurchaseKey: queued.activationKey,
+        membershipActivatedAt:
+          getActivationDate(subscriptionData, payload) || new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  }
 }
 
 async function handleSubscriptionUpdated(subscriptionData) {
@@ -629,5 +827,10 @@ async function updateSubscriptionUser(subscriptionData, state, options = {}) {
     processedAt: new Date(),
     accessEndsAt: updateData.subscriptionEndsAt || null,
   });
-  return { userId: userDoc.id, previousData, updateData };
+  return {
+    userId: userDoc.id,
+    userRef: userDoc.ref,
+    previousData,
+    updateData,
+  };
 }

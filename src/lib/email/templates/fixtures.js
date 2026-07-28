@@ -2,6 +2,7 @@ import { EMAIL_EVENTS } from "../events";
 
 const base = Object.freeze({
   displayName: "Ada Creator",
+  firstName: "Ada",
   projectId: "demo-project",
   projectTitle: "Nebula Garden",
   status: "hiring",
@@ -12,6 +13,8 @@ const base = Object.freeze({
   interval: "year",
   amount: 4900,
   currency: "eur",
+  activationDate: new Date("2030-07-15T12:00:00.000Z"),
+  nextRenewalDate: new Date("2030-08-15T12:00:00.000Z"),
   endsAt: new Date("2030-08-15T12:00:00.000Z"),
   packageId: "demo-package",
   packageTitle: "Pixel Worlds",
