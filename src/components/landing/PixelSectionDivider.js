@@ -4,7 +4,7 @@ import pixelUpImg from "@/assets/pixelup.png";
 
 export function PixelSectionDivider({ className = "" }) {
   const imageClasses =
-    "block h-16 w-full object-fill sm:h-20 md:h-24 lg:h-28 [image-rendering:pixelated]";
+    "block h-[14.6vw] min-h-[3rem] w-full object-fill [image-rendering:pixelated]";
 
   return (
     <div

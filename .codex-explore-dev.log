@@ -574,3 +574,8 @@ Category "blog" not found. No filtering applied.
  ✓ Compiled in 604ms (1357 modules)
  ✓ Compiled in 79.2s (2771 modules)
  ✓ Compiled in 3.6s (2771 modules)
+ ✓ Compiled in 36s (2771 modules)
+ GET / 500 in 1056ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 6.7s (2800 modules)
+ ✓ Compiled in 3.3s (2814 modules)

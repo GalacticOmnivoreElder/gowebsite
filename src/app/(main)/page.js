@@ -466,6 +466,10 @@ const HomePage = () => {
         <LandingOpenHours />
       </section>
 
+      <FullCTA />
+
+      <PixelSectionDivider className="-my-px" />
+
       <section
         id="newsletter"
         className="bg-primary px-4 py-16 text-white sm:px-6 md:py-20"
@@ -477,10 +481,6 @@ const HomePage = () => {
           />
         </div>
       </section>
-
-      <PixelSectionDivider className="-my-px" />
-
-      <FullCTA />
     </div>
   );
 };
