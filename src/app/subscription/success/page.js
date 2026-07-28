@@ -3,89 +3,134 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { observer } from "mobx-react-lite";
-import MobxStore from "@/mobx";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  CheckCircle,
-  Gift,
-  Users,
-  Zap,
   ArrowRight,
-  User,
-  Crown,
-  Star,
+  CheckCircle2,
+  Clock3,
+  Compass,
+  LayoutDashboard,
   RefreshCw,
+  User,
 } from "lucide-react";
+import MobxStore from "@/mobx";
+import { auth } from "@/firebase";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
+import {
+  acknowledgeMembershipConfirmation,
+  getPendingSubscriptionConfirmationAttempt,
+  isMembershipConfirmationAcknowledged,
+  shouldShowSubscriptionConfirmation,
+} from "@/lib/subscription-confirmation";
 
-const membershipPerks = [
-  {
-    icon: <Gift className="w-5 h-5" />,
-    title: "Premium Resources",
-    description: "Access to exclusive templates, tools, and downloads",
-  },
-  {
-    icon: <Users className="w-5 h-5" />,
-    title: "Community Access",
-    description: "Join our private Discord community of creators",
-  },
-  {
-    icon: <Zap className="w-5 h-5" />,
-    title: "Priority Support",
-    description: "Get faster responses and dedicated help",
-  },
-  {
-    icon: <Star className="w-5 h-5" />,
-    title: "Early Access",
-    description: "Be first to try new features and content",
-  },
-];
+const MAX_VERIFICATION_ATTEMPTS = 10;
+const VERIFICATION_DELAY_MS = 3000;
+const ONBOARDING_ESTIMATE = "about 10 minutes";
 
 const SubscriptionSuccessPage = observer(() => {
   const router = useRouter();
+  const [verificationRun, setVerificationRun] = useState(0);
   const [verifying, setVerifying] = useState(true);
   const [membershipConfirmed, setMembershipConfirmed] = useState(false);
+  const [confirmationId, setConfirmationId] = useState(null);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
 
   useEffect(() => {
     router.replace("/subscription/success", { scroll: false });
-
     let cancelled = false;
 
     const verifyMembership = async () => {
-      const maxAttempts = 10;
+      setVerifying(true);
 
       try {
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        for (
+          let attemptNumber = 0;
+          attemptNumber < MAX_VERIFICATION_ATTEMPTS;
+          attemptNumber += 1
+        ) {
           if (cancelled) return;
 
-          // checkAuth swallows its own errors, but guard here too so a single
-          // failed poll can never leave the page stuck on an infinite spinner.
-          try {
-            await MobxStore.checkAuth();
-          } catch (err) {
-            console.error("Membership verification poll failed:", err);
+          const currentUser = auth.currentUser;
+          const userId = currentUser?.uid || MobxStore.user?.uid;
+
+          if (currentUser && userId) {
+            try {
+              const token = await currentUser.getIdToken();
+              const response = await fetch("/api/billing/subscription", {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                cache: "no-store",
+              });
+              const verification = await response.json().catch(() => ({}));
+
+              if (
+                response.ok &&
+                verification.hasPaidSubscription === true
+              ) {
+                if (cancelled) return;
+
+                setMembershipConfirmed(true);
+                const pendingAttempt =
+                  getPendingSubscriptionConfirmationAttempt({ userId });
+                const nextConfirmationId =
+                  verification.membershipConfirmationId || null;
+                const confirmationAcknowledged =
+                  isMembershipConfirmationAcknowledged(nextConfirmationId);
+
+                if (
+                  shouldShowSubscriptionConfirmation({
+                    attempt: pendingAttempt,
+                    verification,
+                    userId,
+                  }) &&
+                  !confirmationAcknowledged
+                ) {
+                  setConfirmationId(nextConfirmationId);
+                  setConfirmationOpen(true);
+                  await MobxStore.checkAuth?.();
+                  return;
+                }
+
+                // A direct visit has no checkout marker and should never open
+                // the dialog. With a marker, keep polling until the webhook
+                // stores a new canonical activation receipt; subscription.active
+                // can make membership active a moment before that write lands.
+                if (!pendingAttempt || confirmationAcknowledged) {
+                  await MobxStore.checkAuth?.();
+                  return;
+                }
+              }
+            } catch (error) {
+              console.error(
+                "Membership verification poll failed:",
+                error
+              );
+            }
           }
 
-          if (cancelled) return;
-
-          if (MobxStore.hasActiveSubscription) {
-            setMembershipConfirmed(true);
-            return;
-          }
-
-          if (attempt < maxAttempts - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 3000));
+          if (attemptNumber < MAX_VERIFICATION_ATTEMPTS - 1) {
+            await new Promise((resolve) =>
+              setTimeout(resolve, VERIFICATION_DELAY_MS)
+            );
           }
         }
       } finally {
-        // Always leave the loading state, whether we confirmed, timed out,
-        // or hit an unexpected error. The page then shows the "processing"
-        // fallback instead of spinning forever.
-        if (!cancelled) {
-          setVerifying(false);
-        }
+        if (!cancelled) setVerifying(false);
       }
     };
 
@@ -94,145 +139,220 @@ const SubscriptionSuccessPage = observer(() => {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, verificationRun]);
+
+  const acknowledgeConfirmation = () => {
+    acknowledgeMembershipConfirmation(confirmationId);
+    setConfirmationOpen(false);
+  };
+
+  const navigateAfterConfirmation = (path) => {
+    acknowledgeConfirmation();
+    router.push(path);
+  };
+
+  const handleDialogOpenChange = (open) => {
+    if (open) {
+      setConfirmationOpen(true);
+      return;
+    }
+    acknowledgeConfirmation();
+  };
 
   if (verifying) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
         <LoadingSpinner />
-        <p className="text-muted-foreground text-center max-w-md">
-          Confirming your recurring subscription. This usually takes a few
-          seconds.
+        <p className="max-w-md text-center text-muted-foreground">
+          Confirming your Galactic Omnivore membership. This usually takes a
+          few seconds.
         </p>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/20 rounded-full mb-4 border-2 border-primary/30">
-            <CheckCircle className="w-10 h-10 text-primary" />
-          </div>
-          <h1 className="text-4xl font-bold text-foreground mb-2 font-heading">
-            Welcome to the Community!
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            {membershipConfirmed
-              ? "Your recurring subscription is now active."
-              : "Payment received. Your membership may take a minute to activate."}
-          </p>
-        </div>
-
-        <Card className="mb-8 border-border bg-card">
-          <CardHeader className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-2 flex-wrap">
-              <Badge
-                variant="default"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <Crown className="w-3 h-3 mr-1" />
-                {membershipConfirmed ? "Active Member" : "Processing"}
-              </Badge>
-              <Badge variant="outline" className="border-primary/30 text-primary">
-                Recurring Monthly Plan
-              </Badge>
+    <main className="min-h-screen bg-background px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-3xl">
+        <Card className="overflow-hidden border-primary/25 bg-card">
+          <div className="h-2 bg-primary" aria-hidden="true" />
+          <CardHeader className="items-center px-5 pb-4 pt-8 text-center sm:px-8">
+            <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full border border-primary/40 bg-primary/15">
+              {membershipConfirmed ? (
+                <CheckCircle2
+                  className="h-9 w-9 text-primary"
+                  aria-hidden="true"
+                />
+              ) : (
+                <RefreshCw
+                  className="h-8 w-8 text-primary"
+                  aria-hidden="true"
+                />
+              )}
             </div>
-            <CardTitle className="text-2xl text-primary font-heading">
-              Thank you for subscribing!
+            <CardTitle className="font-heading text-3xl sm:text-4xl">
+              {membershipConfirmed
+                ? "Your membership is active"
+                : "We’re finalizing your membership"}
             </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-muted-foreground">
-              This is a <strong>recurring monthly subscription</strong>, not a
-              one-time payment. You will be charged automatically each billing
-              period until you cancel from your billing page.
+            <p className="max-w-xl text-muted-foreground">
+              {membershipConfirmed
+                ? "Your paid Galactic Omnivore membership has been verified. Choose what you’d like to do next."
+                : "We haven’t received the final Polar confirmation yet. You have not been shown a subscription confirmation."}
             </p>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <RefreshCw className="w-4 h-4" />
-              <span>Auto-renews each month</span>
-              <Badge variant="secondary" className="text-xs">
-                Recurring
-              </Badge>
-            </div>
-            {!membershipConfirmed && (
-              <p className="text-sm text-amber-600 dark:text-amber-400">
-                If premium access is not available yet, wait a moment and refresh
-                your profile page.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="mb-8 bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center text-foreground font-heading">
-              Your Membership Perks
-            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
-              {membershipPerks.map((perk, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-4 p-4 rounded-lg bg-accent/50 border border-border hover:bg-accent/70 transition-colors"
-                >
-                  <div className="flex-shrink-0 w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary border border-primary/30">
-                    {perk.icon}
+
+          <CardContent className="space-y-6 px-5 pb-8 sm:px-8">
+            {membershipConfirmed ? (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-md border border-border bg-background/60 p-4">
+                    <Clock3
+                      className="mb-3 h-6 w-6 text-primary"
+                      aria-hidden="true"
+                    />
+                    <h2 className="font-semibold">Quick onboarding</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Onboarding takes {ONBOARDING_ESTIMATE} and helps create
+                      your profile and draft GO CV.
+                    </p>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-1">
-                      {perk.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm">
-                      {perk.description}
+                  <div className="rounded-md border border-border bg-background/60 p-4">
+                    <Compass
+                      className="mb-3 h-6 w-6 text-primary"
+                      aria-hidden="true"
+                    />
+                    <h2 className="font-semibold">Explore at your own pace</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      You can visit your dashboard or browse projects before
+                      completing onboarding.
                     </p>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                  <Button onClick={() => router.push("/onboarding")}>
+                    <User className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Start onboarding
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/dashboard")}
+                  >
+                    <LayoutDashboard
+                      className="mr-2 h-4 w-4"
+                      aria-hidden="true"
+                    />
+                    Explore your dashboard
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => router.push("/projects")}
+                  >
+                    Browse projects
+                    <ArrowRight
+                      className="ml-2 h-4 w-4"
+                      aria-hidden="true"
+                    />
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-3 text-center">
+                <p className="max-w-lg text-sm text-muted-foreground">
+                  Polar webhooks can occasionally take a little longer. You
+                  can retry safely—this does not create another payment.
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button
+                    onClick={() => setVerificationRun((run) => run + 1)}
+                  >
+                    Check membership again
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/membership")}
+                  >
+                    Return to membership
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-          <Button
-            onClick={() => router.push("/onboarding")}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 text-lg font-semibold"
-          >
-            <User className="w-5 h-5 mr-2" />
-            Complete your GO profile
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => router.push("/projects")}
-            className="border-primary/30 text-primary hover:bg-primary/10 px-8 py-3 text-lg font-semibold"
-          >
-            Browse Projects
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        </div>
-
-        <div className="text-center text-sm text-muted-foreground">
-          <p>
-            Need help? Contact us at{" "}
-            <a
-              href="mailto:galacticomnivore@galacticomnivore.com"
-              className="text-primary hover:underline"
-            >
-              galacticomnivore@galacticomnivore.com
-            </a>{" "}
-            or visit our{" "}
-            <button
-              onClick={() => router.push("/faq")}
-              className="text-primary hover:underline"
-            >
-              FAQ page
-            </button>
-          </p>
-        </div>
       </div>
-    </div>
+
+      <Dialog
+        open={confirmationOpen}
+        onOpenChange={handleDialogOpenChange}
+      >
+        <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-y-auto border-primary/40 bg-[#111111] p-0 text-white shadow-2xl shadow-primary/20 sm:rounded-md">
+          <div className="h-2 bg-primary" aria-hidden="true" />
+          <div className="space-y-6 px-5 pb-6 pt-4 sm:px-8 sm:pb-8">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-primary/50 bg-primary/20">
+              <CheckCircle2
+                className="h-9 w-9 text-primary"
+                aria-hidden="true"
+              />
+            </div>
+
+            <DialogHeader className="text-center sm:text-center">
+              <DialogTitle className="font-heading text-2xl leading-tight sm:text-3xl">
+                You’re officially a Galactic Omnivore member!
+              </DialogTitle>
+              <DialogDescription className="text-base leading-relaxed text-white/75">
+                Your membership is active. You can start setting up your
+                profile now or continue exploring Galactic Omnivore.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="flex gap-3 rounded-md border border-primary/30 bg-primary/10 p-4">
+              <Clock3
+                className="mt-0.5 h-5 w-5 shrink-0 text-primary"
+                aria-hidden="true"
+              />
+              <p className="text-sm leading-relaxed text-white/85">
+                Onboarding takes {ONBOARDING_ESTIMATE} and helps us create your
+                profile and draft GO CV.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Button
+                size="lg"
+                onClick={() => navigateAfterConfirmation("/onboarding")}
+              >
+                <User className="mr-2 h-5 w-5" aria-hidden="true" />
+                Start onboarding
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                onClick={() => navigateAfterConfirmation("/dashboard")}
+              >
+                <LayoutDashboard
+                  className="mr-2 h-5 w-5"
+                  aria-hidden="true"
+                />
+                Explore your dashboard
+              </Button>
+              <Button
+                variant="ghost"
+                className="text-white/80 hover:bg-white/10 hover:text-white"
+                onClick={() => navigateAfterConfirmation("/projects")}
+              >
+                Browse projects
+                <ArrowRight
+                  className="ml-2 h-4 w-4"
+                  aria-hidden="true"
+                />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </main>
   );
 });
 

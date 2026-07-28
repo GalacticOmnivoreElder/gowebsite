@@ -1,4 +1,5 @@
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { createHash } from "node:crypto";
 
 export function getTokenFromRequest(request) {
   const authHeader = request.headers.get("Authorization") || request.headers.get("authorization");
@@ -31,6 +32,18 @@ export function hasActiveSubscription(userData = {}, now = new Date()) {
   }
 
   return true;
+}
+
+export function getMembershipConfirmationId(userData = {}) {
+  const activationKey = String(
+    userData?.membershipActivationPurchaseKey || ""
+  ).trim();
+  if (!activationKey || !hasActiveSubscription(userData)) return null;
+
+  return createHash("sha256")
+    .update(`go-membership-confirmation:v1:${activationKey}`)
+    .digest("hex")
+    .slice(0, 32);
 }
 
 export function getEffectiveMembership(userData = {}, { admin = false, now = new Date() } = {}) {

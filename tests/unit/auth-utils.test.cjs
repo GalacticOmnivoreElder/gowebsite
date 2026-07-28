@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { createHash } = require("node:crypto");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
@@ -65,6 +66,7 @@ function loadAuthModule({ decodedTokens = {}, userDocs = {} } = {}) {
     "src/lib/auth-utils.js",
     [
       "getEffectiveMembership",
+      "getMembershipConfirmationId",
       "getTokenFromRequest",
       "getRequestUser",
       "hasActiveSubscription",
@@ -72,10 +74,41 @@ function loadAuthModule({ decodedTokens = {}, userDocs = {} } = {}) {
     ],
     {
       stripImports: true,
-      sandbox: { adminAuth, adminDb, Date: FixedDate },
+      sandbox: { adminAuth, adminDb, createHash, Date: FixedDate },
     }
   );
 }
+
+test("membership confirmation ids are stable, opaque, and limited to active purchases", () => {
+  const { getMembershipConfirmationId } = loadAuthModule();
+  const activationKey = "checkout:polar_checkout_secret_identifier";
+
+  assert.equal(
+    getMembershipConfirmationId({
+      activeMember: false,
+      membershipActivationPurchaseKey: activationKey,
+    }),
+    null
+  );
+  assert.equal(
+    getMembershipConfirmationId({ activeMember: true }),
+    null
+  );
+
+  const confirmationId = getMembershipConfirmationId({
+    activeMember: true,
+    membershipActivationPurchaseKey: activationKey,
+  });
+  assert.equal(confirmationId.length, 32);
+  assert.doesNotMatch(confirmationId, /polar|checkout|secret/i);
+  assert.equal(
+    confirmationId,
+    getMembershipConfirmationId({
+      activeMember: true,
+      membershipActivationPurchaseKey: activationKey,
+    })
+  );
+});
 
 test("getTokenFromRequest reads bearer tokens case-insensitively", () => {
   const { getTokenFromRequest } = loadAuthModule();

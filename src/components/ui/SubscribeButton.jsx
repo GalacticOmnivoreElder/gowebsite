@@ -8,6 +8,7 @@ import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
 import { buildCheckoutAuthUrl } from "@/lib/checkout-navigation";
 import { canChooseMembershipPlan } from "@/lib/membership-ui";
+import { beginSubscriptionConfirmationAttempt } from "@/lib/subscription-confirmation";
 
 const SubscribeButton = observer(
   ({
@@ -107,6 +108,13 @@ const SubscribeButton = observer(
 
       if (checkoutUrl) {
         setLoading(true);
+        beginSubscriptionConfirmationAttempt({
+          baselineConfirmationId:
+            MobxStore.user?.membershipConfirmationId || null,
+          interval,
+          tier,
+          userId: MobxStore.user?.uid,
+        });
         window.location.assign(checkoutUrl);
         return;
       }
@@ -135,6 +143,13 @@ const SubscribeButton = observer(
         }
 
         // Redirect to the Polar-hosted (or embedded) checkout.
+        beginSubscriptionConfirmationAttempt({
+          baselineConfirmationId:
+            MobxStore.user?.membershipConfirmationId || null,
+          interval,
+          tier,
+          userId: currentUser.uid,
+        });
         window.location.href = data.url;
       } catch (error) {
         console.error("Failed to create checkout session:", error);

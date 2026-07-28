@@ -5,7 +5,11 @@ import {
   adminDb,
   isFirebaseAdminSetupError,
 } from "@/lib/firebase-admin";
-import { getEffectiveMembership, hasActiveSubscription } from "@/lib/auth-utils";
+import {
+  getEffectiveMembership,
+  getMembershipConfirmationId,
+  hasActiveSubscription,
+} from "@/lib/auth-utils";
 
 export async function GET(request) {
   try {
@@ -107,6 +111,8 @@ export async function GET(request) {
     const isMember = membership.activeMember;
     const membershipTier = membership.membershipTier;
     const canCreateProjects = membership.canCreateProjects;
+    const membershipConfirmationId =
+      getMembershipConfirmationId(userData);
 
     const permissions = {
       isAdmin,
@@ -130,6 +136,7 @@ export async function GET(request) {
         willRenew: userData?.willRenew ?? null,
         subscriptionEndsAt: userData?.subscriptionEndsAt || null,
         polarCustomerId: userData?.polarCustomerId || null,
+        ...(membershipConfirmationId ? { membershipConfirmationId } : {}),
       },
       subscription: subscriptionData,
       permissions,

@@ -42,6 +42,10 @@ function loadRoute({ users = {}, tokenUid = "user-1", fetchImpl } = {}) {
         fetch: fetchImpl || (async () => ({ ok: false })),
         getPolarApiBase: () => "https://polar.test/v1",
         getEffectiveMembership,
+        getMembershipConfirmationId: (userData) =>
+          userData.membershipActivationPurchaseKey
+            ? "opaque-confirmation-id"
+            : null,
         getTokenFromRequest: (request) => request.headers.get("authorization")?.replace("Bearer ", "") || null,
         hasActiveSubscription,
         verifyToken: async () => ({ uid: tokenUid }),
@@ -102,6 +106,31 @@ test("billing subscription route reports admin membership benefits without a sub
     hasSubscription: false,
     membershipTier: "company",
   });
+});
+
+test("billing subscription route exposes an opaque activation receipt without Polar identifiers", async () => {
+  const { GET } = loadRoute({
+    users: {
+      "user-1": {
+        activeMember: true,
+        membershipActivationPurchaseKey: "checkout:private-polar-id",
+      },
+    },
+  });
+
+  const response = await GET(
+    createRequest({ headers: { authorization: "Bearer token" } })
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(
+    response.body.membershipConfirmationId,
+    "opaque-confirmation-id"
+  );
+  assert.equal(
+    Object.hasOwn(response.body, "membershipActivationPurchaseKey"),
+    false
+  );
 });
 
 test("billing subscription route returns Polar subscription details when available", async () => {

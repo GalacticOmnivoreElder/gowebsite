@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getEffectiveMembership,
+  getMembershipConfirmationId,
   getTokenFromRequest,
   hasActiveSubscription,
   verifyToken,
@@ -34,6 +35,11 @@ export async function GET(request) {
     const isAdmin = decodedToken.admin === true || userData.admin === true;
     const membership = getEffectiveMembership(userData, { admin: isAdmin });
     const hasPaidSubscription = hasActiveSubscription(userData);
+    const membershipConfirmationId =
+      getMembershipConfirmationId(userData);
+    const confirmationData = membershipConfirmationId
+      ? { membershipConfirmationId }
+      : {};
 
     // If no subscription, return basic info
     if (!userData.subscriptionId) {
@@ -42,6 +48,7 @@ export async function GET(request) {
         activeMember: membership.activeMember,
         membershipTier: membership.membershipTier,
         hasPaidSubscription,
+        ...confirmationData,
       });
     }
 
@@ -65,6 +72,7 @@ export async function GET(request) {
           activeMember: membership.activeMember,
           membershipTier: membership.membershipTier,
           hasPaidSubscription,
+          ...confirmationData,
           subscriptionStatus: userData.subscriptionStatus || "active",
           subscription: {
             id: subscription.id,
@@ -90,6 +98,7 @@ export async function GET(request) {
       activeMember: membership.activeMember,
       membershipTier: membership.membershipTier,
       hasPaidSubscription,
+      ...confirmationData,
       subscriptionStatus: userData.subscriptionStatus || "active",
       canceledAt: userData.canceledAt,
       subscriptionEndsAt: userData.subscriptionEndsAt,

@@ -16,6 +16,7 @@ import SubscribeButton from "@/components/ui/SubscribeButton";
 import MobxStore from "@/mobx";
 import { parseCheckoutPlanKey } from "@/lib/checkout-navigation";
 import { canChooseMembershipPlan } from "@/lib/membership-ui";
+import { beginSubscriptionConfirmationAttempt } from "@/lib/subscription-confirmation";
 import {
   BILLING_INTERVALS,
   MEMBERSHIP_PLANS,
@@ -81,6 +82,12 @@ export const PricingDisplay = observer(() => {
     );
     const checkoutUrl = selectedPlan?.pricing?.[selection.interval]?.checkoutUrl;
     if (checkoutUrl) {
+      beginSubscriptionConfirmationAttempt({
+        baselineConfirmationId: user?.membershipConfirmationId || null,
+        interval: selection.interval,
+        tier: selection.tier,
+        userId: user.uid,
+      });
       window.location.assign(checkoutUrl);
     }
   }, [authLoading, hasActiveSubscription, isAnonymous, user]);
