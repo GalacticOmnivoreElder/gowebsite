@@ -517,3 +517,58 @@ Category "blog" not found. No filtering applied.
  ✓ Compiled in 1359ms (2769 modules)
  ✓ Compiled in 1141ms (1357 modules)
  ✓ Compiled in 634ms (1357 modules)
+ GET / 200 in 1296ms
+ ○ Compiling /education ...
+ ✓ Compiled /education in 13.3s (1430 modules)
+ ✓ Compiled /games in 2ms (1575 modules)
+ ✓ Compiled in 0ms (1581 modules)
+ ✓ Compiled in 0ms (1581 modules)
+ GET /manifest.webmanifest 200 in 71309ms
+ ✓ Compiled in 1ms (1581 modules)
+Category ID for "blog": null
+Category "blog" not found. No filtering applied.
+ GET /api/wordpress?category=blog 200 in 80696ms
+ GET /api/skills?popular=true&limit=14 200 in 80700ms
+ ○ Compiling /_error ...
+ ✓ Compiled /blog in 38.6s (2986 modules)
+ GET /resources 500 in 121247ms
+ GET /resources 500 in 498ms
+ GET /projects 500 in 121259ms
+ GET /projects 500 in 495ms
+ GET /education 500 in 121215ms
+ GET /education 500 in 491ms
+ GET /games 500 in 101801ms
+ GET /games 500 in 488ms
+ GET /blog 500 in 40595ms
+ GET /blog 500 in 336ms
+ ○ Compiling /signup ...
+ ✓ Compiled /signup in 1942ms (1643 modules)
+ ✓ Compiled (1653 modules)
+ GET /about 500 in 5130ms
+ GET /about 500 in 353ms
+ GET /membership 500 in 5161ms
+ GET /membership 500 in 348ms
+ GET /signup 500 in 5156ms
+ GET /signup 500 in 346ms
+ GET /login 500 in 5169ms
+ GET /login 500 in 342ms
+ ✓ Compiled in 5.3s (1358 modules)
+ GET /games 500 in 583ms
+ GET /games 500 in 260ms
+ ✓ Compiled in 2.4s (1357 modules)
+ ✓ Compiled in 621ms (1357 modules)
+ ✓ Compiled in 446ms (1357 modules)
+ ✓ Compiled in 571ms (1357 modules)
+   Reload env: .env.local
+ ✓ Compiled in 2s (2769 modules)
+ ✓ Compiled in 5.1s (1357 modules)
+ ✓ Compiled in 883ms (1357 modules)
+ ✓ Compiled in 1059ms (1357 modules)
+ ✓ Compiled in 1476ms (1357 modules)
+ ✓ Compiled in 1063ms (1357 modules)
+ ✓ Compiled in 521ms (1357 modules)
+ ✓ Compiled in 2.3s (1357 modules)
+ ✓ Compiled in 2.1s (1357 modules)
+ ✓ Compiled in 1129ms (1357 modules)
+ ✓ Compiled in 620ms (1357 modules)
+ ✓ Compiled in 604ms (1357 modules)
