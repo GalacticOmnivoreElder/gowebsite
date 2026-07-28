@@ -102,8 +102,10 @@ preferences links. Rotate it only with an intentional migration.
 2. Publish the exact SPF and DKIM DNS records Resend provides.
 3. Publish DMARC, begin with reporting, review reports, and strengthen the
    policy when legitimate sources are known.
-4. Prefer separate sending subdomains, for example `mail.` for transactional
-   and `news.` for marketing, to isolate reputation.
+4. The Resend free plan allows one custom domain. Use
+   `mail.galacticomnivore.com` for both transactional and marketing senders
+   (`account@…` and `newsletter@…`). If the account is upgraded, separate
+   transactional and marketing subdomains to isolate reputation.
 5. Create transactional and marketing sender identities matching
    `EMAIL_FROM_*`. Do not use unverified hardcoded senders.
 6. Create the three Topics and one confirmed-subscriber Segment, then copy
