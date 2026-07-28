@@ -5,6 +5,7 @@ import { validateProfileData } from "@/utils/validateProfile";
 import { normalizeUsername } from "@/lib/auth-profile";
 import { sanitizeSkills } from "@/lib/skills";
 import { syncUserSkillUsage } from "@/lib/skill-catalog";
+import { redactCvContact } from "@/lib/profile-mission";
 
 function serializeCv(cv) {
   if (!cv) return null;
@@ -92,7 +93,13 @@ export async function GET(request, { params }) {
       });
     }
 
-    const cvDisplayData = canViewCv ? getCvDisplayData(cvData) : null;
+    const viewerSafeCv =
+      canViewCv && cvData
+        ? isOwnProfile
+          ? cvData
+          : redactCvContact(cvData, userData.socialVisibility || {})
+        : null;
+    const cvDisplayData = canViewCv ? getCvDisplayData(viewerSafeCv) : null;
     const hasExplicitProfileEdits = !!userData.profileEditedAt;
     const hasEditedSkills =
       hasExplicitProfileEdits && Array.isArray(userData.skills);
@@ -131,7 +138,7 @@ export async function GET(request, { params }) {
       memberSince,
       profilePrivacy: "public",
       isPrivate: false,
-      cv: canViewCv ? serializeCv(cvData) : null,
+      cv: canViewCv ? serializeCv(viewerSafeCv) : null,
     };
 
     // Add social links based on visibility settings

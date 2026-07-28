@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { observer } from "mobx-react-lite";
 import {
@@ -28,7 +29,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
 import {
   acknowledgeMembershipConfirmation,
   getPendingSubscriptionConfirmationAttempt,
@@ -174,11 +174,26 @@ const SubscriptionSuccessPage = observer(() => {
   if (verifying) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
-        <LoadingSpinner />
-        <p className="max-w-md text-center text-muted-foreground">
-          Confirming your Galactic Omnivore membership. This usually takes a
-          few seconds.
-        </p>
+        <div
+          className="flex flex-col items-center gap-4"
+          role="status"
+          aria-live="polite"
+        >
+          <Image
+            src="/galactic-omnivore-skull-v1-192.png"
+            alt=""
+            width={80}
+            height={80}
+            sizes="80px"
+            priority
+            aria-hidden="true"
+            className="select-none animate-spin drop-shadow-[0_0_18px_hsl(var(--primary)/0.35)] [animation-duration:2.4s] motion-reduce:animate-none"
+          />
+          <p className="max-w-md text-center text-muted-foreground">
+            Confirming your Galactic Omnivore membership. This usually takes a
+            few seconds.
+          </p>
+        </div>
       </main>
     );
   }

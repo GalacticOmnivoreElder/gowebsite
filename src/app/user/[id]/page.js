@@ -1,456 +1,146 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { Lock, Orbit } from "lucide-react";
 import { auth } from "@/firebase";
 import MobxStore from "@/mobx";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import MissionHub from "@/components/profile/MissionHub";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import {
-  Settings,
-  Lock,
-  Calendar,
-  Mail,
-  ExternalLink,
-  Briefcase,
-  Users,
-  Crown,
-  UserCheck,
-  Clock,
-  MapPin,
-  MessageCircle,
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
-import Link from "next/link";
+function getInitials(name) {
+  return String(name || "GO")
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
 
-const ProjectCard = ({ project, role }) => (
-  <Card className="hover:shadow-md transition-shadow">
-    <Link href={`/project/${project.id}`}>
-      <CardContent className="p-4">
-        <div className="flex items-start space-x-3">
-          {project.thumbnail && (
-            <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0">
-              <img
-                src={project.thumbnail}
-                alt={project.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium truncate group-hover:text-primary">
-              {project.title}
-            </h3>
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-              {project.description}
-            </p>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant="outline" className="text-xs">
-                {project.status}
-              </Badge>
-              <Badge variant="secondary" className="text-xs">
-                {project.type}
-              </Badge>
-              {role && (
-                <Badge variant="default" className="text-xs">
-                  {role}
-                </Badge>
-              )}
-            </div>
-          </div>
-          <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-        </div>
-      </CardContent>
-    </Link>
-  </Card>
-);
-
-const SocialLink = ({ platform, value, label }) => {
-  if (!value) return null;
-
-  const getIcon = (platform) => {
-    switch (platform) {
-      case "email":
-        return <Mail className="h-4 w-4" />;
-      case "discord":
-      case "github":
-      case "linkedin":
-      case "twitter":
-      case "portfolio":
-      case "artstation":
-      case "behance":
-      case "youtube":
-      case "twitch":
-        return <ExternalLink className="h-4 w-4" />;
-      default:
-        return <ExternalLink className="h-4 w-4" />;
-    }
-  };
-
-  const getHref = (platform, value) => {
-    switch (platform) {
-      case "email":
-        return `mailto:${value}`;
-      case "discord":
-        return `https://discord.com/users/${value}`;
-      case "github":
-        return value.startsWith("http") ? value : `https://github.com/${value}`;
-      case "linkedin":
-        return value.startsWith("http")
-          ? value
-          : `https://linkedin.com/in/${value}`;
-      case "twitter":
-        return value.startsWith("http")
-          ? value
-          : `https://twitter.com/${value.replace("@", "")}`;
-      case "portfolio":
-        return value.startsWith("http") ? value : `https://${value}`;
-      case "artstation":
-        return value.startsWith("http")
-          ? value
-          : `https://artstation.com/${value}`;
-      case "behance":
-        return value.startsWith("http")
-          ? value
-          : `https://behance.net/${value}`;
-      case "youtube":
-        return value.startsWith("http")
-          ? value
-          : `https://youtube.com/@${value}`;
-      case "twitch":
-        return value.startsWith("http") ? value : `https://twitch.tv/${value}`;
-      default:
-        return value.startsWith("http") ? value : `https://${value}`;
-    }
-  };
-
-  return (
-    <a
-      href={getHref(platform, value)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-    >
-      {getIcon(platform)}
-      <span>
-        {label}: {value}
-      </span>
-    </a>
-  );
-};
-
-const getCvSection = (cv, sectionType) =>
-  cv?.sections?.find((section) => section.section_type === sectionType)
-    ?.content_json || {};
-
-const getSocialLinkValue = (link) =>
-  typeof link === "string" ? link : link?.value;
-
-const formatJoinedDate = (value) => {
-  if (!value) return "Unknown";
-
-  let date;
-  if (value.seconds) {
-    date = new Date(value.seconds * 1000);
-  } else if (value._seconds) {
-    date = new Date(value._seconds * 1000);
-  } else {
-    date = new Date(value);
+async function authenticatedHeaders() {
+  const headers = { "Content-Type": "application/json" };
+  if (auth.currentUser) {
+    headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
   }
+  return headers;
+}
 
-  return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleDateString();
-};
-
-const TagList = ({ items }) => (
-  <div className="flex flex-wrap gap-2">
-    {items.map((item) => (
-      <Badge key={item} variant="secondary">
-        {item}
-      </Badge>
-    ))}
-  </div>
-);
-
-const PublicCvDetails = ({ cv }) => {
-  if (!cv) return null;
-
-  const contact = getCvSection(cv, "contact");
-  const availability = getCvSection(cv, "availability");
-  const interests = getCvSection(cv, "interests");
-  const portfolio = getCvSection(cv, "portfolio");
-  const experience = getCvSection(cv, "projects");
-  const lookingFor = interests.looking_for || [];
-  const canHelpWith = interests.can_help_with || [];
-  const needsHelpWith = interests.needs_help_with || [];
-  const portfolioLinks = portfolio.links || [];
-  const projects = experience.projects || [];
-  const hasDetails =
-    contact.location ||
-    contact.timezone ||
-    contact.discord_username ||
-    availability.available_for_projects ||
-    availability.available_for_paid_work;
-
+function PublicProfileSkeleton() {
   return (
-    <>
-      {(hasDetails ||
-        lookingFor.length > 0 ||
-        canHelpWith.length > 0 ||
-        needsHelpWith.length > 0) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Professional Profile</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {hasDetails && (
-              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                {contact.location && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{contact.location}</span>
-                  </div>
-                )}
-                {contact.timezone && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>{contact.timezone}</span>
-                  </div>
-                )}
-                {contact.discord_username && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MessageCircle className="h-4 w-4" />
-                    <span>Discord: {contact.discord_username}</span>
-                  </div>
-                )}
-                {(availability.available_for_projects ||
-                  availability.available_for_paid_work) && (
-                  <div className="flex flex-wrap gap-2">
-                    {availability.available_for_projects && (
-                      <Badge variant="outline">Available for projects</Badge>
-                    )}
-                    {availability.available_for_paid_work && (
-                      <Badge variant="outline">Open to paid work</Badge>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {hasDetails &&
-              (lookingFor.length > 0 ||
-                canHelpWith.length > 0 ||
-                needsHelpWith.length > 0) && <Separator />}
-
-            {lookingFor.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-medium">Looking for</h3>
-                <TagList items={lookingFor} />
-              </div>
-            )}
-            {canHelpWith.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-medium">Can help with</h3>
-                <TagList items={canHelpWith} />
-              </div>
-            )}
-            {needsHelpWith.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-medium">Needs help with</h3>
-                <TagList items={needsHelpWith} />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {projects.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Experience</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {projects.map((project, index) => (
-              <div key={`${project.title || "project"}-${index}`}>
-                <div className="font-medium">{project.title}</div>
-                {project.role && (
-                  <div className="text-sm text-muted-foreground">
-                    {project.role}
-                  </div>
-                )}
-                {project.description && (
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {project.description}
-                  </p>
-                )}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {portfolioLinks.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Portfolio</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {portfolioLinks.map((link, index) => {
-              const url = typeof link === "string" ? link : link.url;
-              if (!url) return null;
-
-              return (
-                <a
-                  key={`${url}-${index}`}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-primary hover:underline"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  <span>{typeof link === "string" ? link : link.label || url}</span>
-                </a>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
-    </>
+    <div className="container max-w-[1500px] px-4 py-8 sm:py-10">
+      <div className="rounded-2xl border border-white/10 bg-card/50 p-5 sm:p-8">
+        <div className="flex flex-col gap-5 sm:flex-row">
+          <Skeleton className="h-24 w-24 shrink-0 rounded-full bg-muted" />
+          <div className="flex-1 space-y-3">
+            <Skeleton className="h-8 w-64 max-w-full bg-muted" />
+            <Skeleton className="h-5 w-48 max-w-full bg-muted" />
+            <Skeleton className="h-20 w-full bg-muted" />
+          </div>
+        </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((item) => (
+            <Skeleton key={item} className="h-28 rounded-xl bg-muted" />
+          ))}
+        </div>
+      </div>
+    </div>
   );
-};
+}
 
 const UserProfilePage = observer(() => {
   const params = useParams();
+  const router = useRouter();
   const userId = params.id;
+  const viewerId = MobxStore.user?.uid;
+  const isOwnProfile = viewerId === userId;
 
   const [profile, setProfile] = useState(null);
   const [projects, setProjects] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [projectsLoading, setProjectsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const isOwnProfile = MobxStore.user?.uid === userId;
-
   useEffect(() => {
+    let cancelled = false;
+
     const fetchProfile = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        const headers = {
-          "Content-Type": "application/json",
-        };
-
-        if (auth.currentUser) {
-          const token = await auth.currentUser.getIdToken();
-          headers.Authorization = `Bearer ${token}`;
-        }
-
-        const response = await fetch(`/api/user/${userId}`, { headers });
-
+        const response = await fetch(`/api/user/${userId}`, {
+          headers: await authenticatedHeaders(),
+        });
+        const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to fetch profile");
+          throw new Error(data.error || "Failed to load this profile.");
         }
-
-        const profileData = await response.json();
-        setProfile(profileData);
-      } catch (err) {
-        setError(err.message);
+        if (!cancelled) setProfile(data);
+      } catch (requestError) {
+        if (!cancelled) setError(requestError.message);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    if (userId) {
-      fetchProfile();
-    }
-  }, [userId]);
+    if (userId) fetchProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, viewerId]);
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      if (!userId) return;
+    let cancelled = false;
 
+    const fetchProjects = async () => {
       try {
         setProjectsLoading(true);
-        const headers = {
-          "Content-Type": "application/json",
-        };
-
-        if (auth.currentUser) {
-          const token = await auth.currentUser.getIdToken();
-          headers.Authorization = `Bearer ${token}`;
-        }
-
         const response = await fetch(`/api/user/${userId}/projects`, {
-          headers,
+          headers: await authenticatedHeaders(),
         });
-
-        if (response.ok) {
-          const projectsData = await response.json();
-          setProjects(projectsData);
+        if (response.ok && !cancelled) {
+          setProjects(await response.json());
+        } else if (!cancelled) {
+          setProjects({});
         }
-      } catch (err) {
-        console.error("Error fetching projects:", err);
+      } catch (requestError) {
+        console.error("Error fetching public projects:", requestError);
+        if (!cancelled) setProjects({});
       } finally {
-        setProjectsLoading(false);
+        if (!cancelled) setProjectsLoading(false);
       }
     };
 
-    fetchProjects();
-  }, [userId]);
+    if (userId && profile && !profile.isPrivate) fetchProjects();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, viewerId, profile]);
 
-  const getInitials = (name) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-48 w-full" />
-          <Skeleton className="h-64 w-full" />
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <PublicProfileSkeleton />;
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        </div>
-      </div>
+      <main className="container max-w-4xl px-4 py-12">
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </main>
     );
   }
 
   if (!profile) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-4">User Not Found</h2>
-          <p className="text-muted-foreground">
-            The user you&apos;re looking for doesn&apos;t exist or their profile
-            is private.
-          </p>
-        </div>
-      </div>
+      <main className="container max-w-4xl px-4 py-16 text-center">
+        <Orbit className="mx-auto h-10 w-10 text-muted-foreground" />
+        <h1 className="mt-5 text-2xl font-bold">Profile not found</h1>
+        <p className="mt-2 text-muted-foreground">
+          This mission profile does not exist or is unavailable.
+        </p>
+      </main>
     );
   }
 
@@ -459,265 +149,48 @@ const UserProfilePage = observer(() => {
     !isOwnProfile
   ) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Private Profile</h2>
-              <p className="text-muted-foreground mb-4">
-                This user has set their profile to private.
-              </p>
-              <div className="flex items-center justify-center space-x-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={profile.avatar} />
-                  <AvatarFallback className="text-lg">
-                    {getInitials(profile.username)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="text-lg font-medium">{profile.username}</h3>
+      <main className="container max-w-4xl px-4 py-12">
+        <Card className="mission-hub-shell overflow-hidden border-white/10">
+          <CardContent className="relative p-8 text-center sm:p-12">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
+              <Lock className="h-6 w-6 text-primary" />
+            </div>
+            <h1 className="mt-5 text-2xl font-bold">Private Mission Profile</h1>
+            <p className="mx-auto mt-2 max-w-md text-muted-foreground">
+              This member has chosen not to broadcast their professional profile.
+            </p>
+            <div className="mt-7 flex items-center justify-center gap-3">
+              <Avatar className="h-14 w-14 border border-white/10">
+                <AvatarImage src={profile.avatar} alt="" />
+                <AvatarFallback>{getInitials(profile.username)}</AvatarFallback>
+              </Avatar>
+              <div className="text-left">
+                <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Signal identified
                 </div>
+                <div className="mt-1 font-semibold">{profile.username}</div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Profile Header */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={profile.avatar} />
-                  <AvatarFallback className="text-lg">
-                    {getInitials(profile.username)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h1 className="text-3xl font-bold">{profile.username}</h1>
-                  {profile.cv?.title && (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {profile.cv.title}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 mt-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Member since{" "}
-                      {formatJoinedDate(
-                        profile.memberSince ||
-                          profile.joinedAt ||
-                          profile.createdAt
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              {isOwnProfile && (
-                <Button asChild>
-                  <Link href="/profile">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Edit Profile
-                  </Link>
-                </Button>
-              )}
-            </div>
-
-            {profile.bio && (
-              <div className="mt-6">
-                <p className="text-muted-foreground">{profile.bio}</p>
-              </div>
-            )}
-            {profile.aboutMe && (
-              <div className="mt-6 border-t pt-5">
-                <h2 className="mb-2 font-semibold">About Me</h2>
-                <p className="whitespace-pre-wrap text-muted-foreground">
-                  {profile.aboutMe}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Skills */}
-        {profile.skills && profile.skills.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Skills</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill, index) => (
-                  <Badge key={index} variant="secondary">
-                    {skill}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <PublicCvDetails cv={profile.cv} />
-
-        {/* Social Links */}
-        {profile.socialLinks &&
-          Object.values(profile.socialLinks).some(getSocialLinkValue) && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Connect</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {Object.entries(profile.socialLinks).map(([platform, link]) => (
-                    <SocialLink
-                      key={platform}
-                      platform={platform}
-                      value={getSocialLinkValue(link)}
-                      label={link?.label || platform}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-        {/* Projects Section */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Projects</h2>
-            {projects && (
-              <span className="text-sm text-muted-foreground">
-                {projects.totalProjects} total projects
-              </span>
-            )}
-          </div>
-
-          {projectsLoading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full" />
-              ))}
-            </div>
-          ) : projects ? (
-            <div className="space-y-6">
-              {/* Owner Projects */}
-              {projects.ownerProjects && projects.ownerProjects.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Crown className="h-5 w-5 text-yellow-500" />
-                      Owner ({projects.ownerProjects.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {projects.ownerProjects.map((project) => (
-                        <ProjectCard
-                          key={project.id}
-                          project={project}
-                          role="Owner"
-                        />
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Admin Projects */}
-              {projects.adminProjects && projects.adminProjects.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <UserCheck className="h-5 w-5 text-blue-500" />
-                      Admin ({projects.adminProjects.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {projects.adminProjects.map((project) => (
-                        <ProjectCard
-                          key={project.id}
-                          project={project}
-                          role="Admin"
-                        />
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Team Member Projects */}
-              {projects.teamMemberProjects &&
-                projects.teamMemberProjects.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Users className="h-5 w-5 text-green-500" />
-                        Team Member ({projects.teamMemberProjects.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {projects.teamMemberProjects.map((project) => (
-                          <ProjectCard
-                            key={project.id}
-                            project={project}
-                            role="Team Member"
-                          />
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-              {/* No Projects */}
-              {(!projects.ownerProjects ||
-                projects.ownerProjects.length === 0) &&
-                (!projects.adminProjects ||
-                  projects.adminProjects.length === 0) &&
-                (!projects.teamMemberProjects ||
-                  projects.teamMemberProjects.length === 0) && (
-                  <Card>
-                    <CardContent className="p-8 text-center">
-                      <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">
-                        No Projects Yet
-                      </h3>
-                      <p className="text-muted-foreground">
-                        {isOwnProfile
-                          ? "You haven't created or joined any projects yet."
-                          : "This user hasn't created or joined any public projects yet."}
-                      </p>
-                      {isOwnProfile && (
-                        <Button asChild className="mt-4">
-                          <Link href="/project/create">
-                            Create Your First Project
-                          </Link>
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <p className="text-muted-foreground">
-                  Failed to load projects.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-    </div>
+    <main className="container max-w-[1500px] px-4 py-6 sm:py-8 lg:py-10">
+      <MissionHub
+        profile={profile}
+        currentUser={isOwnProfile ? MobxStore.user || {} : {}}
+        projects={projects || {}}
+        projectsLoading={projectsLoading}
+        isOwner={isOwnProfile}
+        hasActiveSubscription={
+          isOwnProfile ? MobxStore.hasActiveSubscription : false
+        }
+        onEdit={() => router.push("/profile")}
+      />
+    </main>
   );
 });
 

@@ -13,6 +13,10 @@ const { validateProfileData } = loadSourceModule(
 const { sanitizeSkills } = loadSourceModule("src/lib/skills.js", [
   "sanitizeSkills",
 ]);
+const { redactCvContact } = loadSourceModule(
+  "src/lib/profile-mission.js",
+  ["redactCvContact"]
+);
 
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
@@ -68,6 +72,7 @@ function loadRoute({ decodedToken = null, seed = {} } = {}) {
       sanitizeSkills,
       syncUserSkillUsage: async () => {},
       validateProfileData,
+      redactCvContact,
     },
   });
   return { ...route, adminDb };
@@ -242,6 +247,87 @@ test("published public GO CV supplies the public profile data", async () => {
   assert.equal(body.joinedAt, "2025-07-10T12:27:56.098Z");
   assert.equal(body.memberSince, "2025-07-10T12:27:56.098Z");
   assert.equal(body.cv.published_at, "2026-07-14T11:00:00.000Z");
+});
+
+test("public GO CV redacts private email and Discord contact fields", async () => {
+  const { GET } = loadRoute({
+    seed: {
+      users: {
+        "user-1": {
+          profilePrivacy: "public",
+          socialLinks: {
+            discord: "private-discord",
+            email: "public@example.com",
+          },
+          socialVisibility: { discord: false, email: true },
+          username: "GO Member",
+        },
+      },
+      go_cvs: {
+        "user-1": cv({
+          sections: [
+            {
+              section_type: "contact",
+              content_json: {
+                discord_username: "private-discord",
+                display_name: "GO Member",
+                email_preference: "public@example.com",
+                location: "Skopje",
+              },
+            },
+          ],
+        }),
+      },
+    },
+  });
+
+  const response = await GET(createRequest(), { params: { id: "user-1" } });
+  const contact = response.body.cv.sections[0].content_json;
+
+  assert.equal(contact.email_preference, "public@example.com");
+  assert.equal(contact.discord_username, undefined);
+  assert.deepEqual(plain(response.body.socialLinks), {
+    email: "public@example.com",
+  });
+});
+
+test("profile owner retains private GO CV contact fields", async () => {
+  const { GET } = loadRoute({
+    decodedToken: { uid: "user-1" },
+    seed: {
+      users: {
+        "user-1": {
+          profilePrivacy: "private",
+          socialVisibility: { discord: false, email: false },
+          username: "GO Member",
+        },
+      },
+      go_cvs: {
+        "user-1": cv({
+          sections: [
+            {
+              section_type: "contact",
+              content_json: {
+                discord_username: "private-discord",
+                display_name: "GO Member",
+                email_preference: "private@example.com",
+              },
+            },
+          ],
+          visibility_public: false,
+        }),
+      },
+    },
+  });
+
+  const response = await GET(
+    createRequest({ headers: { Authorization: "Bearer owner-token" } }),
+    { params: { id: "user-1" } }
+  );
+  const contact = response.body.cv.sections[0].content_json;
+
+  assert.equal(contact.email_preference, "private@example.com");
+  assert.equal(contact.discord_username, "private-discord");
 });
 
 test("legacy long biographies remain available as About Me", async () => {

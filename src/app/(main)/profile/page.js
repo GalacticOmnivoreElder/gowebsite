@@ -8,10 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import ProfileEditor from "@/components/profile/ProfileEditor";
+import MissionHub from "@/components/profile/MissionHub";
 
 import Downloads from "@/components/profile/Downloads";
 import Settings from "@/components/profile/Settings";
@@ -19,16 +19,11 @@ import { observer } from "mobx-react-lite";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
 import { formatBudget, hasProjectBudget } from "@/utils/formatBudget";
-import { formatFirebaseDate } from "@/utils/date";
 import {
   User,
-  Edit,
   Download,
   Settings as SettingsIcon,
   Briefcase,
-  Calendar,
-  Mail,
-  ExternalLink,
   Crown,
   UserCheck,
   Users,
@@ -313,80 +308,6 @@ const ProjectCard = ({ project, role }) => {
   );
 };
 
-const SocialLink = ({ platform, value, label }) => {
-  if (!value) return null;
-
-  const getIcon = (platform) => {
-    switch (platform) {
-      case "email":
-        return <Mail className="h-4 w-4" />;
-      case "discord":
-      case "github":
-      case "linkedin":
-      case "twitter":
-      case "portfolio":
-      case "artstation":
-      case "behance":
-      case "youtube":
-      case "twitch":
-        return <ExternalLink className="h-4 w-4" />;
-      default:
-        return <ExternalLink className="h-4 w-4" />;
-    }
-  };
-
-  const getHref = (platform, value) => {
-    switch (platform) {
-      case "email":
-        return `mailto:${value}`;
-      case "discord":
-        return `https://discord.com/users/${value}`;
-      case "github":
-        return value.startsWith("http") ? value : `https://github.com/${value}`;
-      case "linkedin":
-        return value.startsWith("http")
-          ? value
-          : `https://linkedin.com/in/${value}`;
-      case "twitter":
-        return value.startsWith("http")
-          ? value
-          : `https://twitter.com/${value.replace("@", "")}`;
-      case "portfolio":
-        return value.startsWith("http") ? value : `https://${value}`;
-      case "artstation":
-        return value.startsWith("http")
-          ? value
-          : `https://artstation.com/${value}`;
-      case "behance":
-        return value.startsWith("http")
-          ? value
-          : `https://behance.net/${value}`;
-      case "youtube":
-        return value.startsWith("http")
-          ? value
-          : `https://youtube.com/@${value}`;
-      case "twitch":
-        return value.startsWith("http") ? value : `https://twitch.tv/${value}`;
-      default:
-        return value.startsWith("http") ? value : `https://${value}`;
-    }
-  };
-
-  return (
-    <a
-      href={getHref(platform, value)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-    >
-      {getIcon(platform)}
-      <span>
-        {label}: {value}
-      </span>
-    </a>
-  );
-};
-
 const ProfileContent = observer(() => {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("profile");
@@ -466,10 +387,12 @@ const ProfileContent = observer(() => {
     }
   }, [currentUserId]);
 
-  // Fetch projects when projects tab is active
+  // The mission overview and projects tab both use this grouped response.
   useEffect(() => {
     const fetchProjects = async () => {
-      if (!currentUserId || activeTab !== "projects") return;
+      if (!currentUserId || !["profile", "projects"].includes(activeTab)) {
+        return;
+      }
 
       try {
         setProjectsLoading(true);
@@ -542,16 +465,6 @@ const ProfileContent = observer(() => {
     setIsEditMode(!isEditMode);
   };
 
-  const getInitials = (name) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
   const handleCancelApplication = async (applicationId) => {
     try {
       await MobxStore.updateApplicationStatus(applicationId, "cancelled");
@@ -585,8 +498,15 @@ const ProfileContent = observer(() => {
   };
 
   return (
-    <div className="container py-10">
-      <h1 className="text-3xl font-bold mb-8">Profile</h1>
+    <div className="container max-w-[1500px] py-6 sm:py-8 lg:py-10">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          Member command center
+        </div>
+        <Badge variant="outline" className="border-white/10 bg-card/60">
+          Private account navigation
+        </Badge>
+      </div>
 
       <Tabs
         value={activeTab}
@@ -662,134 +582,18 @@ const ProfileContent = observer(() => {
               />
             </div>
           ) : (
-            <div className="space-y-6">
-              {/* Profile Header */}
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Avatar className="h-20 w-20">
-                        <AvatarImage
-                          src={profile?.avatar || MobxStore.user?.avatar}
-                        />
-                        <AvatarFallback className="text-lg">
-                          {getInitials(
-                            profile?.username || MobxStore.user?.username
-                          )}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h2 className="text-2xl font-bold">
-                          {profile?.username ||
-                            MobxStore.user?.username ||
-                            "Unknown User"}
-                        </h2>
-                        <p className="text-muted-foreground">
-                          {MobxStore.user?.email}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">
-                            Member since{" "}
-                            {formatFirebaseDate(
-                              profile?.memberSince ||
-                                profile?.joinedAt ||
-                                profile?.createdAt ||
-                                MobxStore.user?.createdAt ||
-                                MobxStore.user?.joined
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" asChild>
-                        <Link href="/onboarding?edit=1">
-                          <FileText className="h-4 w-4 mr-2" />
-                          Update Onboarding
-                        </Link>
-                      </Button>
-                      <Button onClick={toggleEditMode}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Profile
-                      </Button>
-                    </div>
-                  </div>
-
-                  {profile?.bio && (
-                    <div className="mt-4">
-                      <p className="text-muted-foreground">{profile.bio}</p>
-                    </div>
-                  )}
-                  {profile?.aboutMe && (
-                    <div className="mt-5 border-t pt-4">
-                      <h3 className="mb-2 font-semibold">About Me</h3>
-                      <p className="whitespace-pre-wrap text-muted-foreground">
-                        {profile.aboutMe}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Subscription Status - Only show for own profile */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Crown className="h-5 w-5 text-yellow-500" />
-                    Subscription Status
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <SubscriptionStatusOverview user={MobxStore.user} />
-                </CardContent>
-              </Card>
-
-              {/* Skills */}
-              {profile?.skills && profile.skills.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Skills</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {profile.skills.map((skill, index) => (
-                        <Badge key={index} variant="secondary">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Social Links */}
-              {profile?.socialLinks &&
-                Object.values(profile.socialLinks).some(
-                  (link) => link?.value && link?.visible
-                ) && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Connect</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {Object.entries(profile.socialLinks).map(
-                          ([platform, link]) =>
-                            link?.visible && (
-                              <SocialLink
-                                key={platform}
-                                platform={platform}
-                                value={link.value}
-                                label={link.label}
-                              />
-                            )
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-            </div>
+            <MissionHub
+              profile={profile || {}}
+              currentUser={MobxStore.user || {}}
+              projects={projects || {}}
+              projectsLoading={projectsLoading}
+              isOwner
+              hasActiveSubscription={MobxStore.hasActiveSubscription}
+              onEdit={toggleEditMode}
+              membershipContent={
+                <SubscriptionStatusOverview user={MobxStore.user} />
+              }
+            />
           )}
         </TabsContent>
 
