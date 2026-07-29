@@ -1,9 +1,6 @@
-// Builds a structured GO CV from a member's onboarding profile.
-//
-// Design per spec: the CV is a STRUCTURED profile first (export later), and AI
-// may only improve WORDING — it must never invent projects, tools, or
-// experience. When ANTHROPIC_API_KEY is absent the generator is fully
-// deterministic, so onboarding still produces a usable CV without any AI.
+// Builds a structured GameDev Passport from stored member profile facts.
+// Generation is deterministic and never invents projects, tools, roles, or
+// experience.
 
 import {
   buildAvailabilityContent,
@@ -11,18 +8,14 @@ import {
   reconcileAvailabilityMissingInformation,
 } from "@/lib/availability";
 
-function arr(v) {
-  return Array.isArray(v) ? v.filter(Boolean) : [];
+function arr(value) {
+  return Array.isArray(value) ? value.filter(Boolean) : [];
 }
 
 function joinList(list) {
   return arr(list).join(", ");
 }
 
-/**
- * Deterministic mapping of profile data → CV sections + a plain summary.
- * Returns { title, summary, sections: [{ section_type, title, content_json }] }.
- */
 export function buildCvFromProfile(profile = {}) {
   const displayName = profile.display_name || profile.full_name || "GO Member";
   const primaryRole = profile.primary_role || "Game Developer";
@@ -30,7 +23,9 @@ export function buildCvFromProfile(profile = {}) {
   const tools = arr(profile.tools);
   const secondaryRoles = arr(profile.secondary_roles);
   const pastProjects = arr(profile.past_projects);
-  const portfolioLinks = arr(profile.user_portfolio_links || profile.portfolio_links);
+  const portfolioLinks = arr(
+    profile.user_portfolio_links || profile.portfolio_links
+  );
   const availability = normalizeAvailability({ profile });
   const lookingFor = [];
   if (availability.availableForProjects) lookingFor.push("projects");
@@ -72,13 +67,13 @@ export function buildCvFromProfile(profile = {}) {
       section_type: "projects",
       title: "Projects",
       content_json: {
-        projects: pastProjects.map((p) => ({
-          title: p.title || "",
-          role: p.role || "",
-          description: p.description || "",
-          tools: arr(p.tools),
-          link: p.link || "",
-          status: p.status || "",
+        projects: pastProjects.map((project) => ({
+          title: project.title || "",
+          role: project.role || "",
+          description: project.description || "",
+          tools: arr(project.tools),
+          link: project.link || "",
+          status: project.status || "",
         })),
       },
     },
@@ -140,12 +135,11 @@ function buildBaselineSummary({
     return String(aboutMe).trim();
   }
 
-  const parts = [];
-  parts.push(`${capitalize(skillLevel)} ${primaryRole.toLowerCase()}`);
+  let summary = `${capitalize(skillLevel)} ${primaryRole.toLowerCase()}`;
   if (tools.length) {
-    parts[0] += ` working with ${joinList(tools.slice(0, 4))}`;
+    summary += ` working with ${joinList(tools.slice(0, 4))}`;
   }
-  let summary = parts[0] + ".";
+  summary += ".";
   if (currentGoal) {
     summary += ` Currently ${currentGoal.trim().replace(/\.$/, "")}.`;
   }
@@ -161,82 +155,24 @@ function buildSuggestions({
   pastProjects,
   lookingFor,
 }) {
-  const s = [];
-  if (!portfolioLinks.length) s.push("Add at least one portfolio link");
-  if (!pastProjects.length)
-    s.push("Describe one past prototype or game jam project");
-  if (!lookingFor.length && availability?.status !== "unavailable") {
-    s.push("Define what type of project you want to join");
+  const suggestions = [];
+  if (!portfolioLinks.length) suggestions.push("Add at least one portfolio link");
+  if (!pastProjects.length) {
+    suggestions.push("Describe one past prototype or game jam project");
   }
-  return s;
+  if (!lookingFor.length && availability?.status !== "unavailable") {
+    suggestions.push("Define what type of project you want to join");
+  }
+  return suggestions;
 }
 
 function buildMissing({ availability, portfolioLinks }) {
-  const m = [];
-  if (!portfolioLinks.length) m.push("portfolio link");
-  return reconcileAvailabilityMissingInformation(m, availability);
+  const missing = [];
+  if (!portfolioLinks.length) missing.push("portfolio link");
+  return reconcileAvailabilityMissingInformation(missing, availability);
 }
 
-function capitalize(s) {
-  if (!s) return s;
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-/**
- * Optionally rewrite ONLY the summary wording with Claude. Never invents facts:
- * the model is given the deterministic summary + raw data and asked to polish.
- * Falls back to the baseline summary on any error or missing API key.
- */
-export async function improveSummaryWithAI(profile, baselineSummary) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return baselineSummary;
-
-  const input = {
-    about_me: profile.about_me || profile.bio || null,
-    primary_role: profile.primary_role,
-    skill_level: profile.skill_level,
-    tools: arr(profile.tools),
-    current_goal: profile.current_goal,
-    past_projects: arr(profile.past_projects).map((p) => p.title).filter(Boolean),
-  };
-
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 300,
-        system:
-          "You write concise professional summaries for game-developer CVs. " +
-          "Rephrase ONLY using the facts provided. Never invent projects, tools, " +
-          "roles, or experience. Output 2-3 sentences of plain text, no preamble.",
-        messages: [
-          {
-            role: "user",
-            content:
-              "Improve the wording of this CV summary using only these facts.\n\n" +
-              `Facts: ${JSON.stringify(input)}\n\n` +
-              `Current summary: ${baselineSummary}`,
-          },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("Claude CV summary failed:", await response.text());
-      return baselineSummary;
-    }
-
-    const data = await response.json();
-    const text = data?.content?.[0]?.text?.trim();
-    return text || baselineSummary;
-  } catch (error) {
-    console.error("Claude CV summary error:", error);
-    return baselineSummary;
-  }
+function capitalize(value) {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }

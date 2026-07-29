@@ -463,17 +463,6 @@ const OnboardingContent = observer(() => {
             {step === "consent" && (
               <>
                 <CheckRow checked={!!stepData.consent_store_data} onChange={(v) => setField("consent_store_data", v)} label="I consent to GO storing my profile data *" />
-                <div className="space-y-1">
-                  <CheckRow
-                    checked={!!stepData.consent_ai_generation}
-                    onChange={(v) => setField("consent_ai_generation", v)}
-                    label="Use AI assistance to polish my generated profile/GameDev Passport (optional)"
-                  />
-                  <p className="pl-7 text-xs text-muted-foreground">
-                    If unchecked, GO uses deterministic templates and you can
-                    still complete onboarding normally.
-                  </p>
-                </div>
                 <CheckRow checked={!!stepData.consent_share_with_admins} onChange={(v) => setField("consent_share_with_admins", v)} label="I consent to sharing my profile with GO admins *" />
                 <div className="h-px bg-border my-2" />
                 <CheckRow checked={stepData.visibility_project_creators ?? true} onChange={(v) => setField("visibility_project_creators", v)} label="Show my profile to project creators" />

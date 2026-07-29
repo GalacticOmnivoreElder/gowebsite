@@ -82,14 +82,21 @@ const BillingPage = observer(() => {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    // Redirect if not logged in
+    if (!MobxStore.isReady || MobxStore.loading) return;
+
+    // Redirect only after Firebase has finished hydrating the auth state.
     if (!MobxStore.user) {
-      router.push("/login?redirect=/billing");
+      router.replace("/login?redirect=/billing");
       return;
     }
 
     fetchBillingData();
-  }, [MobxStore.user]);
+  }, [
+    MobxStore.isReady,
+    MobxStore.loading,
+    MobxStore.user?.uid,
+    router,
+  ]);
 
   const fetchBillingData = async () => {
     if (!auth.currentUser) return;
@@ -342,7 +349,7 @@ const BillingPage = observer(() => {
   };
 
   // Show loading while checking auth
-  if (!MobxStore.user) {
+  if (!MobxStore.isReady || MobxStore.loading || !MobxStore.user) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>

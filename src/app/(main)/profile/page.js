@@ -442,7 +442,7 @@ const ProfileContent = observer(() => {
         }
 
         const response = await fetch(
-          `/api/user/${currentUserId}/projects`,
+          `/api/user/${currentUserId}/projects?scope=management`,
           { headers }
         );
 

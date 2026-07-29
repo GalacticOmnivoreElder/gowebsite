@@ -7,7 +7,7 @@ import {
   DEFAULT_PROFILE_VISIBILITY,
   isValidOnboardingStep,
 } from "@/constants/onboarding";
-import { buildCvFromProfile, improveSummaryWithAI } from "@/lib/cv-generator";
+import { buildCvFromProfile } from "@/lib/cv-generator";
 import { sanitizeSkills } from "@/lib/skills";
 import { syncUserSkillUsage } from "@/lib/skill-catalog";
 import {
@@ -170,7 +170,6 @@ export async function PUT(request) {
   const portfolio = draft.portfolio || {};
 
   // Data storage and admin sharing are required to operate the member profile.
-  // AI assistance is an explicit opt-in and never blocks onboarding.
   if (
     !consent.consent_store_data ||
     !consent.consent_share_with_admins
@@ -315,7 +314,6 @@ export async function PUT(request) {
     visibility_job_matching:
       consent.visibility_job_matching ??
       DEFAULT_PROFILE_VISIBILITY.visibility_job_matching,
-    consent_ai_generation: consent.consent_ai_generation === true,
     consent_store_data: consent.consent_store_data === true,
     consent_share_with_admins: consent.consent_share_with_admins === true,
     onboarding_completed: true,
@@ -323,12 +321,9 @@ export async function PUT(request) {
     updated_at: now,
   };
 
-  // Always generate a deterministic CV. AI wording is used only after an
-  // explicit opt-in and is never required to complete onboarding.
+  // GameDev Passport generation is deterministic and uses only member-provided
+  // profile facts.
   const cvDraft = buildCvFromProfile(profile);
-  if (profile.consent_ai_generation) {
-    cvDraft.summary = await improveSummaryWithAI(profile, cvDraft.summary);
-  }
   cvDraft.sections = cvDraft.sections.map((s) =>
     s.section_type === "summary"
       ? { ...s, content_json: { text: cvDraft.summary } }

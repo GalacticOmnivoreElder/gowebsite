@@ -340,6 +340,9 @@ const EditProjectPage = observer(() => {
         budget: validatedData.budget ?? null,
         updatedAt: new Date().toISOString(),
       };
+      if (!MobxStore.isAdmin) {
+        delete requestBody.status;
+      }
 
       // Update project
       const response = await fetch(`/api/projects/${projectId}`, {
@@ -567,66 +570,57 @@ const EditProjectPage = observer(() => {
 
               <div>
                 <Label>Project Status *</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => handleInputChange("status", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">
-                      <div className="flex flex-col">
-                        <span>Draft</span>
-                        <span className="text-xs text-muted-foreground">
-                          Not publicly visible, awaiting admin approval
-                        </span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="pending">
-                      <div className="flex flex-col">
-                        <span>Pending</span>
-                        <span className="text-xs text-muted-foreground">
-                          Awaiting admin approval
-                        </span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="hiring">
-                      <div className="flex flex-col">
-                        <span>Hiring</span>
-                        <span className="text-xs text-muted-foreground">
-                          Open for applications
-                        </span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="live">
-                      <div className="flex flex-col">
-                        <span>Live</span>
-                        <span className="text-xs text-muted-foreground">
-                          Project is ongoing, hiring closed
-                        </span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="completed">
-                      <div className="flex flex-col">
-                        <span>Completed</span>
-                        <span className="text-xs text-muted-foreground">
-                          Project finished
-                        </span>
-                      </div>
-                    </SelectItem>
-                    {(MobxStore.isAdmin || formData.status === "rejected") && (
-                      <SelectItem value="rejected">
-                        <div className="flex flex-col">
-                          <span>Rejected</span>
-                          <span className="text-xs text-muted-foreground">
-                            Hidden from public discovery
-                          </span>
-                        </div>
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                {MobxStore.isAdmin ? (
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) =>
+                      handleInputChange("status", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[
+                        "draft",
+                        "pending",
+                        "hiring",
+                        "live",
+                        "completed",
+                        "rejected",
+                      ].map((status) => (
+                        <SelectItem key={status} value={status}>
+                          <span className="capitalize">{status}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="mt-2 rounded-md border border-border bg-muted/35 p-4">
+                    <Badge variant="secondary" className="capitalize">
+                      {formData.status}
+                    </Badge>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Project status is managed by Galactic Omnivore
+                      administrators. Editing project details cannot publish,
+                      reject, or otherwise change this status.
+                    </p>
+                    <Button
+                      asChild
+                      type="button"
+                      variant="link"
+                      className="mt-1 h-auto p-0"
+                    >
+                      <a
+                        href={`mailto:galacticomnivore@galacticomnivore.com?subject=${encodeURIComponent(
+                          `Project status request: ${project?.title || projectId}`
+                        )}`}
+                      >
+                        Contact support about this status
+                      </a>
+                    </Button>
+                  </div>
+                )}
                 <p className="text-sm text-muted-foreground mt-1">
                   {formData.status === "draft" &&
                     "Project is not publicly visible and awaiting admin approval."}

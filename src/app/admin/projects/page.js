@@ -32,6 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import {
@@ -44,6 +45,7 @@ import {
   ExternalLink,
   Archive,
   ArchiveRestore,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { formatFirebaseDate } from "@/utils/date";
@@ -57,6 +59,9 @@ const AdminProjectsPage = observer(() => {
   const [newStatus, setNewStatus] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [deleteProject, setDeleteProject] = useState(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch projects
   const fetchProjects = async () => {
@@ -180,6 +185,50 @@ const AdminProjectsPage = observer(() => {
     }
   };
 
+  const permanentlyDeleteProject = async () => {
+    if (
+      !deleteProject ||
+      deleteConfirmation.trim() !== deleteProject.title
+    ) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(`/api/projects/${deleteProject.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to permanently delete project");
+      }
+
+      toast({
+        title: "Project permanently deleted",
+        description:
+          "The project, project memberships, and applications were removed.",
+      });
+      setDeleteProject(null);
+      setDeleteConfirmation("");
+      await fetchProjects();
+    } catch (error) {
+      console.error("Error permanently deleting project:", error);
+      toast({
+        title: "Permanent deletion failed",
+        description:
+          error.message ||
+          "The project was not deleted. Please refresh and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // Load projects when filter changes
   useEffect(() => {
     fetchProjects();
@@ -293,7 +342,7 @@ const AdminProjectsPage = observer(() => {
               No projects found for the selected filter.
             </div>
           ) : (
-            <div className="rounded-md border">
+            <div className="overflow-x-auto rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -427,6 +476,18 @@ const AdminProjectsPage = observer(() => {
                               Archive
                             </Button>
                           )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              setDeleteProject(project);
+                              setDeleteConfirmation("");
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -491,6 +552,68 @@ const AdminProjectsPage = observer(() => {
               disabled={updating || !newStatus}
             >
               {updating ? "Updating..." : "Update Status"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(deleteProject)}
+        onOpenChange={(open) => {
+          if (!open && !deleting) {
+            setDeleteProject(null);
+            setDeleteConfirmation("");
+          }
+        }}
+      >
+        <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Permanently delete project?</DialogTitle>
+            <DialogDescription>
+              This cannot be undone. It removes the project, its applications,
+              and project references from member profiles. Archive the project
+              instead if it may be needed later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="delete-project-confirmation">
+              Type <strong>{deleteProject?.title}</strong> to confirm
+            </Label>
+            <Input
+              id="delete-project-confirmation"
+              autoComplete="off"
+              value={deleteConfirmation}
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+              aria-describedby="delete-project-warning"
+            />
+            <p
+              id="delete-project-warning"
+              className="text-sm text-destructive"
+            >
+              Permanent deletion is reserved for records that must not be
+              retained.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteProject(null);
+                setDeleteConfirmation("");
+              }}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={permanentlyDeleteProject}
+              disabled={
+                deleting ||
+                deleteConfirmation.trim() !== deleteProject?.title
+              }
+            >
+              {deleting ? "Deleting…" : "Permanently delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

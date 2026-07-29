@@ -63,7 +63,6 @@ function createDb(seed = {}) {
 
 function loadRoute({ user = { uid: "user-1" }, seed = {} } = {}) {
   const adminDb = createDb(seed);
-  const aiImprovementCalls = [];
   const route = loadSourceModule(
     "src/app/api/me/cv/route.js",
     ["GET", "POST", "PATCH", "PUT"],
@@ -89,17 +88,13 @@ function loadRoute({ user = { uid: "user-1" }, seed = {} } = {}) {
           title: `${profile.display_name} CV`,
         }),
         getRequestUser: async () => user,
-        improveSummaryWithAI: async (profile, summary) => {
-          aiImprovementCalls.push({ profile, summary });
-          return "Improved summary";
-        },
         ...availabilityHelpers,
         serializeFirestoreDate: (value) => value?.toISOString?.() || value,
       },
     }
   );
 
-  return { ...route, adminDb, aiImprovementCalls };
+  return { ...route, adminDb };
 }
 
 test("me/cv route requires authentication", async () => {
@@ -166,13 +161,12 @@ test("POST /api/me/cv requires onboarding and then generates a CV", async () => 
 
   assert.equal(response.status, 200);
   assert.equal(response.body.cv.title, "Ada CV");
-  assert.equal(response.body.cv.summary, "Improved summary");
-  assert.equal(route.aiImprovementCalls.length, 1);
-  assert.equal(route.adminDb.docs.go_cvs["user-1"].sections[0].content_json.text, "Improved summary");
+  assert.equal(response.body.cv.summary, "Baseline summary");
+  assert.equal(route.adminDb.docs.go_cvs["user-1"].sections[0].content_json.text, "Baseline summary");
   assert.equal(route.adminDb.docs.users["user-1"].hasCv, true);
 });
 
-test("POST /api/me/cv regenerates without AI when the member has not opted in", async () => {
+test("POST /api/me/cv ignores legacy AI consent and remains deterministic", async () => {
   const route = loadRoute({
     seed: {
       user_profiles: {
@@ -190,7 +184,6 @@ test("POST /api/me/cv regenerates without AI when the member has not opted in", 
 
   assert.equal(response.status, 200);
   assert.equal(response.body.cv.summary, "Baseline summary");
-  assert.equal(route.aiImprovementCalls.length, 0);
   assert.equal(
     route.adminDb.docs.go_cvs["user-1"].sections[0].content_json.text,
     "Baseline summary"

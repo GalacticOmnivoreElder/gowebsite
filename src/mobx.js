@@ -29,6 +29,7 @@ import {
   orderBy,
   limit,
 } from "firebase/firestore";
+import { requestPasswordReset } from "@/lib/password-reset";
 
 import Logger from "@/utils/logger";
 import { generateUserAvatar } from "@/utils/avatarGenerator";
@@ -828,15 +829,12 @@ class Store {
   }
 
   async sendPasswordReset(email) {
-    try {
-      await sendPasswordResetEmail(auth, email, {
-        url: `${window.location.origin}/login?reset=1`,
-      });
-    } catch (error) {
-      console.error("Error sending password reset email:", error);
-      if (error?.code === "auth/user-not-found") return;
-      throw new Error("Password reset email could not be sent");
-    }
+    return requestPasswordReset({
+      authInstance: auth,
+      email,
+      origin: window.location.origin,
+      send: sendPasswordResetEmail,
+    });
   }
 
   async sendVerificationEmail() {

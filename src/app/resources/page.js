@@ -142,7 +142,9 @@ export default async function ResourcesPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Learn about game design, production, AI-assisted workflows, Game Engines (Unity, Godot, Unreal), prototyping, community projects, and the practical skills needed to move from idea to playable game.
+              Learn about game design, production workflows, game engines
+              (Unity, Godot, Unreal), prototyping, community projects, and the
+              practical skills needed to move from idea to a playable game.
             </p>
             <Button asChild variant="outline">
               <Link href="/education">

@@ -675,7 +675,10 @@ const CvWorkspace = observer(() => {
         if (data.cv) {
           const [profileResult, projectsResult] = await Promise.allSettled([
             authedFetch(`/api/user/${currentUserId}`, "GET"),
-            authedFetch(`/api/user/${currentUserId}/projects`, "GET"),
+            authedFetch(
+              `/api/user/${currentUserId}/projects?scope=management`,
+              "GET"
+            ),
           ]);
 
           if (cancelled) return;

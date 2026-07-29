@@ -14,16 +14,23 @@ async function getUserFromToken(request) {
 
 async function enrichApplicationWithUserDetails(application) {
   try {
-    // Get user details from users collection
-    const userDoc = await adminDb
-      .collection("users")
-      .doc(application.userId)
-      .get();
+    // Keep the historical application snapshot immutable. This separate flag
+    // only controls access to the applicant's current, explicitly published
+    // public profile.
+    const [userDoc, cvDoc] = await Promise.all([
+      adminDb.collection("users").doc(application.userId).get(),
+      adminDb.collection("go_cvs").doc(application.userId).get(),
+    ]);
+    const userData = userDoc.exists ? userDoc.data() : null;
+    const currentPublicProfileAvailable = cvDoc.exists
+      ? cvDoc.data()?.status === "active" &&
+        cvDoc.data()?.visibility_public === true
+      : userData?.profilePrivacy !== "private";
 
     if (userDoc.exists) {
-      const userData = userDoc.data();
       return {
         ...application,
+        currentPublicProfileAvailable,
         // Inject user details
         username: userData.username || userData.name || "Unknown User",
         userEmail: userData.email || "No email",
@@ -35,6 +42,7 @@ async function enrichApplicationWithUserDetails(application) {
         const authUser = await adminAuth.getUser(application.userId);
         return {
           ...application,
+          currentPublicProfileAvailable: false,
           username:
             authUser.displayName ||
             authUser.email?.split("@")[0] ||
@@ -49,6 +57,7 @@ async function enrichApplicationWithUserDetails(application) {
         );
         return {
           ...application,
+          currentPublicProfileAvailable: false,
           username: "Unknown User",
           userEmail: "No email",
           avatar: null,
@@ -59,6 +68,7 @@ async function enrichApplicationWithUserDetails(application) {
     console.error("Error enriching application with user details:", error);
     return {
       ...application,
+      currentPublicProfileAvailable: false,
       username: "Unknown User",
       userEmail: "No email",
       avatar: null,
@@ -228,7 +238,7 @@ export async function POST(request) {
   } catch (error) {
     console.error("Error creating application:", error);
     return NextResponse.json(
-      { error: "Failed to create application", details: error.message },
+      { error: "The application could not be submitted. Please try again." },
       { status: 500 }
     );
   }
@@ -308,7 +318,7 @@ export async function GET(request) {
   } catch (error) {
     console.error("Error fetching applications:", error);
     return NextResponse.json(
-      { error: "Failed to fetch applications", details: error.message },
+      { error: "Applications could not be loaded. Please try again." },
       { status: 500 }
     );
   }

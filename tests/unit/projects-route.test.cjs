@@ -1,7 +1,34 @@
 const assert = require("node:assert/strict");
+const { createHash } = require("node:crypto");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
-const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs");
+const {
+  NextResponse,
+  createRequest: baseCreateRequest,
+} = require("../helpers/route-test-utils.cjs");
+
+const DEFAULT_IDEMPOTENCY_KEY = "qa-project-attempt-0001";
+
+function createRequest(options = {}) {
+  return baseCreateRequest({
+    ...options,
+    headers: {
+      "Idempotency-Key": DEFAULT_IDEMPOTENCY_KEY,
+      ...(options.headers || {}),
+    },
+  });
+}
+
+function deterministicProjectId(userId, key = DEFAULT_IDEMPOTENCY_KEY) {
+  const digest = createHash("sha256")
+    .update(`${userId}:${key}`)
+    .digest("hex");
+  return `project_${digest}`;
+}
+
+function deterministicSourceId(userId, key = DEFAULT_IDEMPOTENCY_KEY) {
+  return deterministicProjectId(userId, key).replace("project_", "source_");
+}
 
 const projectUtils = loadSourceModule("src/lib/project-utils.js", [
   "canViewProject",
@@ -42,6 +69,7 @@ function createDb(seed = {}) {
   const records = [];
   const projects = seed.projects || {};
   const sourceProjects = seed.sourceProjects || {};
+  const projectCreationRequests = seed.project_creation_requests || {};
   let projectCounter = 0;
   let sourceCounter = 0;
 
@@ -93,6 +121,26 @@ function createDb(seed = {}) {
         },
         async commit() {
           records.push(...ops);
+          for (const operation of ops) {
+            const collection =
+              operation.ref.collectionName === "projects"
+                ? projects
+                : operation.ref.collectionName === "sourceProjects"
+                  ? sourceProjects
+                  : operation.ref.collectionName ===
+                      "project_creation_requests"
+                    ? projectCreationRequests
+                    : null;
+            if (!collection) continue;
+            if (operation.type === "set") {
+              collection[operation.ref.id] = {
+                ...(operation.options?.merge
+                  ? collection[operation.ref.id] || {}
+                  : {}),
+                ...operation.data,
+              };
+            }
+          }
         },
       };
     },
@@ -115,7 +163,9 @@ function createDb(seed = {}) {
                   ? sourceProjects
                   : name === "projects"
                     ? projects
-                    : {};
+                    : name === "project_creation_requests"
+                      ? projectCreationRequests
+                      : {};
               const data = collection[id];
               return {
                 exists: !!data,
@@ -141,6 +191,7 @@ function loadRoute({ user = null, seed = {} } = {}) {
         ...projectUtils,
         Date: FixedDate,
         NextResponse,
+        createHash,
         admin: {
           firestore: {
             FieldValue: {
@@ -149,6 +200,7 @@ function loadRoute({ user = null, seed = {} } = {}) {
           },
         },
         adminDb,
+        enqueueEmailEvent: async () => ({ created: true }),
         getRequestUser: async () => user,
       },
     }
@@ -242,7 +294,10 @@ test("project creation writes a draft project, source project, and user project 
   const response = await route.POST(createRequest({ jsonBody: validProject() }));
 
   assert.equal(response.status, 200);
-  assert.equal(response.body.id, "project-1");
+  assert.equal(
+    response.body.id,
+    deterministicProjectId("company-1")
+  );
   assert.equal(response.body.status, "draft");
   assert.equal(response.body.owner, "company-1");
   assert.equal(response.body.admins[0], "company-1");
@@ -261,12 +316,52 @@ test("project creation writes a draft project, source project, and user project 
 
   assert.equal(sourceSet.data.name, "New Game");
   assert.equal(projectSet.data.title, "Puzzle Prototype");
-  assert.equal(projectSet.data.sourceProject, "source-1");
+  assert.equal(
+    projectSet.data.sourceProject,
+    deterministicSourceId("company-1")
+  );
   assert.equal(userSet.options.merge, true);
   assert.deepEqual(plain(userSet.data.ownerOfProjects), {
     op: "arrayUnion",
-    values: ["project-1"],
+    values: [deterministicProjectId("company-1")],
   });
+});
+
+test("project creation requires a valid idempotency key", async () => {
+  const route = loadRoute({
+    user: { canCreateProjects: true, uid: "company-1" },
+  });
+
+  const response = await route.POST(
+    baseCreateRequest({ jsonBody: validProject() })
+  );
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.code, "invalid_idempotency_key");
+});
+
+test("replaying project creation returns one canonical project", async () => {
+  const route = loadRoute({
+    user: {
+      canCreateProjects: true,
+      email: "creator@example.com",
+      uid: "company-1",
+    },
+  });
+  const request = () => createRequest({ jsonBody: validProject() });
+
+  const first = await route.POST(request());
+  const replay = await route.POST(request());
+  const projectWrites = route.adminDb.records.filter(
+    (record) =>
+      record.type === "set" && record.ref.collectionName === "projects"
+  );
+
+  assert.equal(first.status, 200);
+  assert.equal(replay.status, 200);
+  assert.equal(replay.body.id, first.body.id);
+  assert.equal(replay.body.replayed, true);
+  assert.equal(projectWrites.length, 1);
 });
 
 test("project creation accepts an omitted budget", async () => {

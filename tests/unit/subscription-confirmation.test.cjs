@@ -241,13 +241,13 @@ test("subscription success dialog is accessible, responsive, and links to every 
   assert.match(successPage, /overflow-y-auto/);
   assert.match(successPage, /sm:px-8/);
   assert.match(successPage, /navigateAfterConfirmation\(\"\/onboarding\"\)/);
-  assert.match(successPage, /navigateAfterConfirmation\(\"\/dashboard\"\)/);
+  assert.match(successPage, /navigateAfterConfirmation\(\"\/profile\"\)/);
   assert.match(successPage, /navigateAfterConfirmation\(\"\/projects\"\)/);
   assert.match(successPage, /go-logo-spinner/);
   assert.match(successPage, /go-logo-spinner--running/);
   assert.match(successPage, /galactic-omnivore-skull-v1-512\.png/);
   assert.match(successPage, /window\.history\.replaceState/);
-  assert.match(successPage, /\.decode\(\)/);
+  assert.doesNotMatch(successPage, /\.decode\(\)/);
   assert.doesNotMatch(successPage, /router\.replace/);
   assert.doesNotMatch(successPage, /select-none animate-spin/);
   assert.match(

@@ -77,7 +77,7 @@ for (const tierCase of tierCases) {
       assert.match(rendered.html, new RegExp(tierCase.name));
       assert.match(rendered.html, new RegExp(`>${intervalCase.label}<`));
       assert.match(rendered.html, /€49\.00/);
-      assert.match(rendered.text, /Go to your dashboard: https:\/\/www\.galacticomnivore\.com\/dashboard/);
+      assert.match(rendered.text, /Open your profile: https:\/\/www\.galacticomnivore\.com\/profile/);
       assert.match(rendered.text, /Manage billing: https:\/\/www\.galacticomnivore\.com\/billing/);
       assert.match(rendered.text, /Contact Galactic Omnivore: https:\/\/www\.galacticomnivore\.com\/contact/);
     });

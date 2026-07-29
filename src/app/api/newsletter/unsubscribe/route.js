@@ -4,8 +4,13 @@ import {
   updateNewsletterPreferences,
 } from "@/lib/email/newsletter";
 import { absoluteSiteUrl } from "@/lib/email/utils";
+import {
+  isNewsletterEnabled,
+  newsletterUnavailableResponse,
+} from "@/lib/newsletter-feature";
 
 export async function GET(request) {
+  if (!isNewsletterEnabled()) return newsletterUnavailableResponse();
   const token = new URL(request.url).searchParams.get("token") || "";
   const preferences = await getNewsletterPreferences(token);
   const target = new URL("/newsletter/preferences", absoluteSiteUrl("/"));
@@ -17,6 +22,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  if (!isNewsletterEnabled()) return newsletterUnavailableResponse();
   const contentType = request.headers.get("content-type") || "";
   const token = new URL(request.url).searchParams.get("token");
   const body = contentType.includes("application/json")

@@ -18,9 +18,9 @@ export const LandingDiscordJoin = () => {
       <Image
         src={joinusImg}
         alt="Join the Galactic Omnivore community"
-        layout="fill"
-        objectFit="cover"
-        className="z-0"
+        fill
+        sizes="100vw"
+        className="z-0 object-cover"
       />
       {/* Overlay for contrast */}
       <div className="absolute inset-0 bg-primary/80 z-10"></div>

@@ -2,6 +2,10 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs");
+const subscriptionStateHelpers = loadSourceModule(
+  "src/lib/subscription-state.js",
+  ["normalizeRefundTransition", "normalizeSubscriptionTransition"]
+);
 
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
@@ -116,6 +120,7 @@ function loadRoute({
   const captured = {};
   const adminDb = createAdminDb(seed);
   const marks = [];
+  const claims = new Set();
   const emailEvents = [];
   const queuedEmailKeys = new Set();
 
@@ -125,6 +130,7 @@ function loadRoute({
     {
       stripImports: true,
       sandbox: {
+        ...subscriptionStateHelpers,
         Date: FixedDate,
         NextResponse,
         Webhooks: (callbacks) => {
@@ -149,11 +155,20 @@ function loadRoute({
           emailEvents.push(event);
           return { created: true, id: "email-job" };
         },
-        isWebhookProcessed: async (eventId, eventType) =>
-          processed.has(`${eventType}:${eventId}`),
+        claimWebhookProcessing: async (eventId, eventType) => {
+          const key = `${eventType}:${eventId}`;
+          if (processed.has(key) || claims.has(key)) return false;
+          claims.add(key);
+          return true;
+        },
         markWebhookProcessed: async (eventId, eventType, payload) => {
-          processed.add(`${eventType}:${eventId}`);
+          const key = `${eventType}:${eventId}`;
+          claims.delete(key);
+          processed.add(key);
           marks.push({ eventId, eventType, payload });
+        },
+        releaseWebhookProcessing: async (eventId, eventType) => {
+          claims.delete(`${eventType}:${eventId}`);
         },
         resolvePolarProductTier: (productId) =>
           productId === "company-product"
@@ -363,6 +378,41 @@ test("processed webhook events are skipped", async () => {
   assert.equal(route.marks.length, 0);
 });
 
+test("concurrent replay claims one webhook execution", async () => {
+  const route = loadRoute({
+    seed: {
+      users: {
+        "user-1": { activeMember: false, email: "member@example.com" },
+      },
+    },
+  });
+  const payload = {
+    data: {
+      customer: { email: "member@example.com", id: "cus_123" },
+      id: "order_concurrent",
+      metadata: { uid: "user-1" },
+      status: "paid",
+      subscription_id: "sub_concurrent",
+    },
+    id: "evt_concurrent",
+    type: "order.paid",
+  };
+
+  await Promise.all([
+    route.captured.onOrderPaid(payload),
+    route.captured.onOrderPaid(payload),
+  ]);
+
+  assert.equal(route.marks.length, 1);
+  assert.equal(route.adminDb.docs.orders.order_concurrent.status, "paid");
+  assert.equal(
+    route.emailEvents.filter(
+      (event) => event.type === "billing.membership_activated"
+    ).length,
+    1
+  );
+});
+
 test("subscription update handles past_due without revoking access", async () => {
   const route = loadRoute({
     seed: {
@@ -558,5 +608,9 @@ test("full refunds revoke access while partial refunds only update the order", a
   });
 
   assert.equal(route.adminDb.docs.users["user-1"].activeMember, true);
-  assert.equal(route.adminDb.docs.orders.order_2.status, "refunded");
+  assert.equal(
+    route.adminDb.docs.orders.order_2.status,
+    "partially_refunded"
+  );
+  assert.equal(route.adminDb.docs.orders.order_2.refundedAmount, 250);
 });

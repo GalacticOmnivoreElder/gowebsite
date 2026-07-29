@@ -226,8 +226,10 @@ test("application creation snapshots the active GO CV and enriches user details"
           primary_role: "Programmer",
           sections: [{ title: "Summary" }],
           skill_level: "intermediate",
+          status: "active",
           summary: "Builds prototypes.",
           title: "Ada CV",
+          visibility_public: true,
         },
       },
       projects: { "project-1": project() },
@@ -262,9 +264,54 @@ test("application creation snapshots the active GO CV and enriches user details"
   assert.equal(body.goCvSnapshot.title, "Ada CV");
   assert.equal(body.goCvSnapshot.summary, "Builds prototypes.");
   assert.equal(body.goCvSnapshot.snapshottedAt, "2026-07-14T12:00:00.000Z");
+  assert.equal(body.currentPublicProfileAvailable, true);
   assert.deepEqual(
     route.emailEvents.map((event) => event.type),
     ["application.submitted", "application.received"]
+  );
+});
+
+test("application managers are not linked to a private current profile", async () => {
+  const route = loadRoute({
+    seed: {
+      applications: [
+        {
+          id: "application-private",
+          data: {
+            createdAt: new Date("2026-07-14T11:00:00.000Z"),
+            projectId: "project-1",
+            status: "pending",
+            userId: "member-1",
+          },
+        },
+      ],
+      go_cvs: {
+        "member-1": {
+          status: "draft",
+          visibility_public: false,
+        },
+      },
+      projects: { "project-1": project() },
+      users: {
+        "member-1": {
+          email: "member@example.com",
+          username: "Ada",
+        },
+      },
+    },
+    user: { uid: "owner-1" },
+  });
+
+  const response = await route.GET(
+    createRequest({
+      url: "https://go.test/api/applications?projectId=project-1",
+    })
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(
+    response.body.applications[0].currentPublicProfileAvailable,
+    false
   );
 });
 

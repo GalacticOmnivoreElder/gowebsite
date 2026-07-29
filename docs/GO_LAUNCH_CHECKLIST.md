@@ -9,7 +9,9 @@ Legend: 🟢 = do now for local testing · 🔵 = production only · ⏱️ = ~t
 
 ## A. Fill the `.env` (🟢) ⏱️ 10 min
 
-Open `.env` (already gitignored). Firebase is done. Fill the **Polar** + optional AI block:
+Open `.env` (already gitignored). Firebase is done. Fill the required **Polar**
+and service configuration. GameDev Passport generation is deterministic and
+does not require an AI provider or AI consent:
 
 ```bash
 POLAR_SERVER=sandbox
@@ -23,7 +25,6 @@ NEXT_PUBLIC_POLAR_MEMBER_ANNUAL_PRODUCT_ID=<id>
 NEXT_PUBLIC_POLAR_COMPANY_MONTHLY_PRODUCT_ID=<id>
 NEXT_PUBLIC_POLAR_COMPANY_ANNUAL_PRODUCT_ID=<id>
 ADMIN_BOOTSTRAP_SECRET=<any long random string>    # to make yourself admin (step F)
-ANTHROPIC_API_KEY=<optional — enables AI CV wording; leave blank = deterministic CV>
 ```
 
 > ⚠️ The `.env` still contains a **legacy production** Polar token. Replace it with a
@@ -70,10 +71,11 @@ npm run dev      # http://localhost:3000
 
 ## F. Make yourself admin (🟢) ⏱️ 2 min
 1. Sign up / log in locally.
-2. Go to `/make-admin`, enter your email, and use the bootstrap secret from step A
+2. In local development only, go to `/make-admin`, enter your email, and use the bootstrap secret from step A
    (or POST to `/api/admin/make-admin` with header `x-admin-bootstrap-secret`).
 3. You can now edit/hide/delete any project and see `/admin/*`.
-   🔵 Clear `ADMIN_BOOTSTRAP_SECRET` in production once you're admin.
+   The page and API return 404 outside development. Never configure
+   `ADMIN_BOOTSTRAP_SECRET` in staging or production.
 
 ## G. Test the full member loop (🟢) ⏱️ 15 min
 1. **Subscribe** (Member button) → Polar checkout opens.
@@ -81,7 +83,7 @@ npm run dev      # http://localhost:3000
      recurring wording · ✅ required-membership checkbox · ✅ email is locked/prefilled.
 2. Pay with sandbox card `4242 4242 4242 4242`, any future expiry, any CVC.
 3. Success page → **Complete your GO profile** → finish the **7-step onboarding
-   wizard** → your **GO CV** is generated → **Approve & Publish**.
+   wizard** → your **GameDev Passport** is generated → **Approve & Publish**.
 4. Verify in Firestore: `users/{uid}` has `activeMember`, `membershipTier`,
    `polarCustomerId`, `subscriptionEndsAt`; and `orders`, `subscription_events`,
    `user_profiles`, `go_cvs` collections got docs.
@@ -98,8 +100,8 @@ npm run dev      # http://localhost:3000
       with the same 10 events; production signing secret in env. (Replace the old ngrok one.)
 - [ ] `POLAR_SUCCESS_URL=https://<prod-domain>/subscription/success`.
 - [ ] `firestore.rules` deployed to the production Firebase project.
-- [ ] `ADMIN_BOOTSTRAP_SECRET` cleared.
-- [ ] Remove/lock the dev-only `/test-polar` page.
+- [ ] `ADMIN_BOOTSTRAP_SECRET` is absent.
+- [ ] Confirm dev-only `/test-polar` and `/make-admin` return 404.
 - [ ] Rotate the leaked production Polar token.
 - [ ] One real low-value live payment as a final smoke test.
 
@@ -110,7 +112,7 @@ npm run dev      # http://localhost:3000
   redirecting to polar.sh) — say the word and I'll wire Polar's embed.
 - **Discord OAuth auto-role** (MVP grants Discord role via Polar benefit; full OAuth
   bot assignment is Phase 2 per the GO 2.0 spec).
-- **CV PDF export / public share links / Quest Log** — Phase 2 per the spec.
+- **Public GameDev Passport share links / Quest Log** — Phase 2 per the spec.
 - **Richer project statuses** (submitted_for_review, changes_requested,
   public_recruiting…) — current system uses draft/pending/hiring/live/completed/rejected.
 ```

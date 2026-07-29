@@ -2,9 +2,14 @@ import { Webhooks } from "@polar-sh/nextjs";
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import {
-  isWebhookProcessed,
+  claimWebhookProcessing,
   markWebhookProcessed,
+  releaseWebhookProcessing,
 } from "@/lib/webhook-deduplication";
+import {
+  normalizeRefundTransition,
+  normalizeSubscriptionTransition,
+} from "@/lib/subscription-state";
 import {
   getPolarSubscription,
   resolvePolarProductTier,
@@ -76,12 +81,30 @@ export async function POST(request) {
 
 async function processWebhook(payload, handler) {
   const eventId = payload.id || `${payload.type}_${payload.data?.id}`;
-  if (await isWebhookProcessed(eventId, payload.type)) {
+  const claimed = await claimWebhookProcessing(
+    eventId,
+    payload.type,
+    payload
+  );
+  if (!claimed) {
     return;
   }
 
-  await handler(payload.data, payload);
-  await markWebhookProcessed(eventId, payload.type, payload);
+  try {
+    await handler(payload.data, payload);
+    await markWebhookProcessed(eventId, payload.type, payload);
+  } catch (error) {
+    await releaseWebhookProcessing(eventId, payload.type).catch(
+      (releaseError) => {
+        console.error("webhook_claim_release_failed", {
+          eventId,
+          eventType: payload.type,
+          error: releaseError?.message || "unknown",
+        });
+      }
+    );
+    throw error;
+  }
 }
 
 function getCustomerId(data) {
@@ -520,23 +543,21 @@ async function handleSubscriptionCreated(subscriptionData) {
   const status = subscriptionData.status || "incomplete";
   await updateSubscriptionUser(
     subscriptionData,
-    {
-      subscriptionStatus: status,
-      // Only grant access if Polar already reports it active.
-      activeMember: status === "active",
-      willRenew: status === "active",
-    },
+    normalizeSubscriptionTransition({
+      eventType: "subscription.created",
+      status,
+    }),
     { requireUser: false }
   );
 }
 
 async function handleSubscriptionActive(subscriptionData, payload) {
   const result = await updateSubscriptionUser(subscriptionData, {
-    activeMember: true,
-    subscriptionStatus: "active",
-    willRenew: true,
+    ...normalizeSubscriptionTransition({
+      eventType: "subscription.active",
+      status: subscriptionData.status,
+    }),
     canceledAt: null,
-    lastPaymentFailed: false,
   });
   const previous = result?.previousData;
   const activationKey = getCanonicalMembershipActivationKey(
@@ -602,20 +623,16 @@ async function handleSubscriptionUpdated(subscriptionData) {
     authoritativeData.cancelAtPeriodEnd;
   const currentPeriodEnd = getCurrentPeriodEnd(authoritativeData);
 
-  // past_due = a renewal payment failed and Polar is retrying. Keep the member's
-  // access during the grace window; Polar sends subscription.revoked when it
-  // finally gives up.
+  // past_due keeps access during Polar's retry window. A later revoked event
+  // ends access.
   const isPastDue = status === "past_due";
-  const keepsAccess =
-    status === "active" ||
-    isPastDue ||
-    (status === "canceled" && !!currentPeriodEnd);
-
   const result = await updateSubscriptionUser(authoritativeData, {
-    activeMember: keepsAccess,
-    subscriptionStatus: cancelAtPeriodEnd ? "canceled" : status,
-    willRenew: !cancelAtPeriodEnd && status === "active",
-    lastPaymentFailed: isPastDue,
+    ...normalizeSubscriptionTransition({
+      cancelAtPeriodEnd,
+      currentPeriodEnd,
+      eventType: "subscription.updated",
+      status,
+    }),
     canceledAt: cancelAtPeriodEnd
       ? parsePolarDate(subscriptionData.canceled_at || subscriptionData.canceledAt) ||
         new Date()
@@ -669,9 +686,10 @@ async function handleSubscriptionUpdated(subscriptionData) {
 async function handleSubscriptionUncanceled(subscriptionData) {
   // Member re-enabled auto-renew before the period ended.
   const result = await updateSubscriptionUser(subscriptionData, {
-    activeMember: true,
-    subscriptionStatus: "active",
-    willRenew: true,
+    ...normalizeSubscriptionTransition({
+      eventType: "subscription.uncanceled",
+      status: subscriptionData.status,
+    }),
     canceledAt: null,
   });
   await cancelPendingEmailEvents({
@@ -693,9 +711,11 @@ async function handleSubscriptionUncanceled(subscriptionData) {
 async function handleSubscriptionCanceled(subscriptionData) {
   const currentPeriodEnd = getCurrentPeriodEnd(subscriptionData);
   const result = await updateSubscriptionUser(subscriptionData, {
-    activeMember: !!currentPeriodEnd,
-    subscriptionStatus: "canceled",
-    willRenew: false,
+    ...normalizeSubscriptionTransition({
+      currentPeriodEnd,
+      eventType: "subscription.canceled",
+      status: subscriptionData.status,
+    }),
     canceledAt: parsePolarDate(subscriptionData.canceled_at || subscriptionData.canceledAt) || new Date(),
     subscriptionEndsAt: currentPeriodEnd || new Date(),
   });
@@ -740,9 +760,10 @@ async function handleSubscriptionCanceled(subscriptionData) {
 
 async function handleSubscriptionRevoked(subscriptionData) {
   const result = await updateSubscriptionUser(subscriptionData, {
-    activeMember: false,
-    subscriptionStatus: "revoked",
-    willRenew: false,
+    ...normalizeSubscriptionTransition({
+      eventType: "subscription.revoked",
+      status: subscriptionData.status,
+    }),
     canceledAt: new Date(),
     subscriptionEndsAt: new Date(),
   });
@@ -776,12 +797,23 @@ async function handleOrderUpdated(orderData) {
 }
 
 async function handleOrderRefunded(orderData) {
+  const refundedAmount =
+    orderData.refunded_amount ?? orderData.refundedAmount ?? null;
+  const total =
+    orderData.amount ?? orderData.total_amount ?? orderData.subtotal_amount ?? null;
+  const refundTransition = normalizeRefundTransition({
+    refundedAmount,
+    totalAmount: total,
+  });
+  const { isFullRefund } = refundTransition;
+
   await adminDb
     .collection("orders")
     .doc(orderData.id)
     .set(
       {
-        status: "refunded",
+        status: refundTransition.orderStatus,
+        refundedAmount,
         refundedAt: new Date(),
         webhookProcessedAt: new Date(),
       },
@@ -790,13 +822,6 @@ async function handleOrderRefunded(orderData) {
 
   // Revoke access on a full refund. Partial refunds leave the subscription
   // untouched (Polar will send subscription.* events if it changes state).
-  const refundedAmount =
-    orderData.refunded_amount ?? orderData.refundedAmount ?? null;
-  const total =
-    orderData.amount ?? orderData.total_amount ?? orderData.subtotal_amount ?? null;
-  const isFullRefund =
-    refundedAmount == null || total == null || refundedAmount >= total;
-
   const userDoc = await findUserForPolarData(orderData);
   if (isFullRefund) {
     if (userDoc) {

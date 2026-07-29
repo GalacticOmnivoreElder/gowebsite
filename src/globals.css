@@ -367,13 +367,14 @@
 
 .go-logo-spinner {
   backface-visibility: hidden;
+  contain: layout paint;
   transform: translate3d(0, 0, 0) rotate(0deg);
   transform-origin: 50% 50%;
   will-change: transform;
 }
 
 .go-logo-spinner--running {
-  animation: go-logo-rotation 2.8s linear infinite;
+  animation: go-logo-rotation 2.8s linear infinite both;
 }
 
 @media (prefers-reduced-motion: reduce) {

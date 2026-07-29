@@ -28,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { CgSpinner } from "react-icons/cg";
+import { PASSWORD_RESET_GENERIC_MESSAGE } from "@/lib/password-reset";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -50,16 +51,18 @@ const ResetPasswordForm = observer(() => {
   async function onSubmit(values) {
     setIsLoading(true);
     try {
-      await sendPasswordReset(values.email);
+      const result = await sendPasswordReset(values.email);
       setIsEmailSent(true);
       toast({
-        title: "Reset email sent",
-        description: "Check your inbox for password reset instructions.",
+        title: "Check your email",
+        description: result?.message || PASSWORD_RESET_GENERIC_MESSAGE,
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to send reset email. Please try again.",
+        title: "Password reset unavailable",
+        description:
+          error?.message ||
+          "Password reset email could not be sent. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -73,13 +76,13 @@ const ResetPasswordForm = observer(() => {
         <CardHeader>
           <CardTitle>Check Your Email</CardTitle>
           <CardDescription>
-            We&apos;ve sent password reset instructions to your email address.
+            {PASSWORD_RESET_GENERIC_MESSAGE}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Click the link in the email to reset your password. If you
-            don&apos;t see the email, check your spam folder.
+            If the address is registered, use the link in the email to reset
+            your password. Check your spam folder if it does not arrive.
           </p>
           <Button
             variant="outline"

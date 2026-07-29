@@ -3,6 +3,10 @@ import {
   NEWSLETTER_GENERIC_RESPONSE,
   requestNewsletterConfirmationResend,
 } from "@/lib/email/newsletter";
+import {
+  isNewsletterEnabled,
+  newsletterUnavailableResponse,
+} from "@/lib/newsletter-feature";
 
 function requestIp(request) {
   return (
@@ -13,6 +17,7 @@ function requestIp(request) {
 }
 
 export async function POST(request) {
+  if (!isNewsletterEnabled()) return newsletterUnavailableResponse();
   const body = await request.json().catch(() => ({}));
   await requestNewsletterConfirmationResend({
     email: body.email,

@@ -81,7 +81,7 @@ export async function POST(request) {
   } catch (error) {
     console.error("Error making user admin:", error);
     return NextResponse.json(
-      { error: "Failed to make user admin: " + error.message },
+      { error: "The admin grant could not be completed." },
       { status: 500 }
     );
   }

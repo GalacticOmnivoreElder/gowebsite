@@ -124,6 +124,83 @@ test("owner and admin tokens cannot reveal drafts on a public profile", async ()
   }
 });
 
+test("management scope returns an owner's draft and rejected projects", async () => {
+  const seed = {
+    users: {
+      "user-1": {
+        ownerOfProjects: ["draft-project", "rejected-project"],
+        profilePrivacy: "private",
+      },
+    },
+    projects: {
+      "draft-project": {
+        archived: false,
+        status: "draft",
+        title: "Draft project",
+        visibility: "Private",
+      },
+      "rejected-project": {
+        archived: false,
+        status: "rejected",
+        title: "Rejected project",
+        visibility: "Public",
+      },
+    },
+  };
+  const { GET } = loadRoute({
+    seed,
+    user: { uid: "user-1" },
+  });
+
+  const response = await GET(
+    createRequest({
+      url: "https://go.test/api/user/user-1/projects?scope=management",
+    }),
+    { params: { id: "user-1" } }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.scope, "management");
+  assert.deepEqual(
+    JSON.parse(
+      JSON.stringify(
+        response.body.ownerProjects.map((project) => project.id)
+      )
+    ),
+    ["draft-project", "rejected-project"]
+  );
+});
+
+test("management scope rejects unrelated viewers", async () => {
+  const { GET } = loadRoute({
+    seed: {
+      users: {
+        "user-1": {
+          ownerOfProjects: ["draft-project"],
+          profilePrivacy: "public",
+        },
+      },
+      projects: {
+        "draft-project": {
+          status: "draft",
+          title: "Draft project",
+          visibility: "Private",
+        },
+      },
+    },
+    user: { uid: "stranger" },
+  });
+
+  const response = await GET(
+    createRequest({
+      url: "https://go.test/api/user/user-1/projects?scope=management",
+    }),
+    { params: { id: "user-1" } }
+  );
+
+  assert.equal(response.status, 403);
+});
+
 test("draft GO profile keeps project history private", async () => {
   const { GET } = loadRoute({
     seed: {

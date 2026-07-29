@@ -4,8 +4,6 @@ import React, { useEffect, useState } from "react";
 // New Landing Components
 import { HeroSection } from "@/components/landing/HeroSection";
 import { SkillBanner } from "@/components/landing/SkillBanner";
-import { StatsPreview } from "@/components/landing/StatsPreview";
-import { PartnerBanner } from "@/components/landing/PartnerBanner";
 import { FullCTA } from "@/components/landing/FullCTA";
 import { PixelSectionDivider } from "@/components/landing/PixelSectionDivider";
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
@@ -50,6 +48,32 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { ExploreGo } from "@/components/landing/ExploreGo";
+
+const newsletterEnabled =
+  process.env.NEXT_PUBLIC_NEWSLETTER_ENABLED === "true";
+
+const practicalRoutes = [
+  {
+    title: "Learn",
+    description: "Build practical skills with GO education and resources.",
+    href: "/education",
+  },
+  {
+    title: "Find a Project",
+    description: "Explore approved projects and apply to suitable open roles.",
+    href: "/projects",
+  },
+  {
+    title: "Create a Project",
+    description: "Business members can submit project needs for admin review.",
+    href: "/project/create",
+  },
+  {
+    title: "Join the Community",
+    description: "Compare current membership options and community access.",
+    href: "/membership",
+  },
+];
 
 const magenta = "#CA2280";
 
@@ -313,9 +337,9 @@ const CarouselItem = ({ title, image, text, link }) => {
         <Image
           src={image}
           alt={title}
-          layout="fill"
-          objectFit="contain"
-          className="rounded-sm"
+          fill
+          sizes="(max-width: 768px) 100vw, 33vw"
+          className="rounded-sm object-contain"
         />
       </div>
       <h3 className="text-2xl font-bold text-white mb-4 text-center">
@@ -359,12 +383,39 @@ const HomePage = () => {
     <div className="bg-black" id="home">
       <HeroSection />
       <SkillBanner />
-      <PartnerBanner />
+
+      <section id="routes" className="border-y bg-background px-4 py-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">
+              Four practical routes
+            </p>
+            <h2 className="mt-3 text-3xl font-bold sm:text-4xl">
+              Choose what you want to do next
+            </h2>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {practicalRoutes.map((route) => (
+              <article
+                key={route.title}
+                className="flex flex-col rounded-xl border bg-card p-5"
+              >
+                <h3 className="text-xl font-semibold">{route.title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
+                  {route.description}
+                </p>
+                <Button asChild variant="outline" className="mt-5 w-full">
+                  <Link href={route.href}>Explore {route.title}</Link>
+                </Button>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className="bg-black p-4 flex flex-col justify-center">
         <About />
       </section>
-      <StatsPreview />
 
       <div id="pillars" className="relative">
         <div className="absolute -top-20"></div>
@@ -468,19 +519,22 @@ const HomePage = () => {
 
       <FullCTA />
 
-      <PixelSectionDivider className="-my-px" />
-
-      <section
-        id="newsletter"
-        className="bg-primary px-4 py-16 text-white sm:px-6 md:py-20"
-      >
-        <div className="mx-auto w-full max-w-7xl">
-          <NewsletterSignup
-            source="homepage"
-            className="mx-auto w-full max-w-2xl text-center"
-          />
-        </div>
-      </section>
+      {newsletterEnabled && (
+        <>
+          <PixelSectionDivider className="-my-px" />
+          <section
+            id="newsletter"
+            className="bg-primary px-4 py-16 text-white sm:px-6 md:py-20"
+          >
+            <div className="mx-auto w-full max-w-7xl">
+              <NewsletterSignup
+                source="homepage"
+                className="mx-auto w-full max-w-2xl text-center"
+              />
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 };

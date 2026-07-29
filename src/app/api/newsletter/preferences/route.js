@@ -4,8 +4,13 @@ import {
   updateNewsletterPreferences,
 } from "@/lib/email/newsletter";
 import { maskEmail } from "@/lib/email/utils";
+import {
+  isNewsletterEnabled,
+  newsletterUnavailableResponse,
+} from "@/lib/newsletter-feature";
 
 export async function GET(request) {
+  if (!isNewsletterEnabled()) return newsletterUnavailableResponse();
   const token = new URL(request.url).searchParams.get("token");
   const preferences = await getNewsletterPreferences(token);
   if (!preferences) {
@@ -22,6 +27,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  if (!isNewsletterEnabled()) return newsletterUnavailableResponse();
   const body = await request.json().catch(() => ({}));
   const result = await updateNewsletterPreferences({
     token: body.token,

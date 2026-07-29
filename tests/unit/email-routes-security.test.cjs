@@ -13,6 +13,9 @@ test("public newsletter signup passes signed-out visitors through server-side co
       stripImports: true,
       sandbox: {
         NextResponse,
+        isNewsletterEnabled: () => true,
+        newsletterUnavailableResponse: () =>
+          NextResponse.json({ error: "Unavailable" }, { status: 404 }),
         consumeNewsletterRateLimit: async () => true,
         getRequestUser: async () => null,
         newsletterFingerprint: (ip, email) => `${ip}:${email}`,
@@ -52,6 +55,9 @@ test("newsletter signup logs the server-side cause without logging the address",
       stripImports: true,
       sandbox: {
         NextResponse,
+        isNewsletterEnabled: () => true,
+        newsletterUnavailableResponse: () =>
+          NextResponse.json({ error: "Unavailable" }, { status: 404 }),
         console: {
           log() {},
           error(value) {
@@ -94,6 +100,9 @@ test("newsletter preferences support signed, login-free reads and unsubscribe", 
       stripImports: true,
       sandbox: {
         NextResponse,
+        isNewsletterEnabled: () => true,
+        newsletterUnavailableResponse: () =>
+          NextResponse.json({ error: "Unavailable" }, { status: 404 }),
         getNewsletterPreferences: async (token) =>
           token === "valid-token"
             ? {
@@ -126,6 +135,30 @@ test("newsletter preferences support signed, login-free reads and unsubscribe", 
   );
   assert.equal(response.status, 200);
   assert.equal(updates[0].unsubscribe, true);
+});
+
+test("newsletter endpoints are unavailable while publishing is disabled", async () => {
+  let subscriptionRequests = 0;
+  const route = loadSourceModule(
+    "src/app/api/newsletter/subscribe/route.js",
+    ["POST"],
+    {
+      stripImports: true,
+      sandbox: {
+        NextResponse,
+        isNewsletterEnabled: () => false,
+        newsletterUnavailableResponse: () =>
+          NextResponse.json({ error: "Unavailable" }, { status: 404 }),
+        requestNewsletterSubscription: async () => {
+          subscriptionRequests += 1;
+        },
+      },
+    }
+  );
+
+  const response = await route.POST(createRequest({ jsonBody: {} }));
+  assert.equal(response.status, 404);
+  assert.equal(subscriptionRequests, 0);
 });
 
 test("email cron requires its bearer secret before processing jobs", async () => {

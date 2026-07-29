@@ -6,7 +6,6 @@ import {
   canEditProject,
   canViewProject,
   COMPENSATION_TYPES,
-  OWNER_MANAGED_STATUSES,
   PROJECT_STATUSES,
   PROJECT_TYPES,
   REQUIRED_ROLES,
@@ -175,9 +174,15 @@ export async function GET(request, { params }) {
       }
     }
 
+    const safeProjectData =
+      user?.admin === true
+        ? projectData
+        : Object.fromEntries(
+            Object.entries(projectData).filter(([key]) => key !== "adminNotes")
+          );
     const project = {
       id: projectDoc.id,
-      ...projectData,
+      ...safeProjectData,
       createdAt: serializeFirestoreDate(projectData.createdAt),
       updatedAt: serializeFirestoreDate(projectData.updatedAt),
       ownerDetails,
@@ -191,7 +196,7 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error("Error fetching project:", error);
     return NextResponse.json(
-      { error: "Failed to fetch project", details: error.message },
+      { error: "The project could not be loaded. Please try again." },
       { status: 500 }
     );
   }
@@ -331,13 +336,12 @@ export async function PUT(request, { params }) {
       }
 
       const statusChanged = filteredUpdateData.status !== existingProject.status;
-      if (
-        statusChanged &&
-        !isPlatformAdmin &&
-        !OWNER_MANAGED_STATUSES.includes(filteredUpdateData.status)
-      ) {
+      if (statusChanged && !isPlatformAdmin) {
         return NextResponse.json(
-          { error: "Only platform admins can publish, reject, or complete projects" },
+          {
+            error:
+              "Only platform administrators can change project status. Contact support to request a status update.",
+          },
           { status: 403 }
         );
       }
@@ -481,7 +485,7 @@ export async function PUT(request, { params }) {
   } catch (error) {
     console.error("Error updating project:", error);
     return NextResponse.json(
-      { error: "Failed to update project", details: error.message },
+      { error: "The project could not be updated. Please try again." },
       { status: 500 }
     );
   }
@@ -507,12 +511,13 @@ export async function DELETE(request, { params }) {
 
     const existingProject = projectDoc.data();
 
-    // Project owner or a platform admin (superadmin) can delete.
-    if (existingProject.owner !== user.uid && !user.admin) {
+    // Permanent deletion is intentionally admin-only. Owners can archive a
+    // project through the normal edit flow.
+    if (!user.admin) {
       return NextResponse.json(
         {
           error:
-            "Access denied. Only the project owner or a platform admin can delete this project.",
+            "Only platform administrators can permanently delete a project. Project owners can archive projects instead.",
         },
         { status: 403 }
       );
@@ -562,6 +567,14 @@ export async function DELETE(request, { params }) {
       batch.delete(applicationDoc.ref);
     });
 
+    const auditRef = adminDb.collection("admin_audit_events").doc();
+    batch.set(auditRef, {
+      action: "project.permanently_deleted",
+      actorUid: user.uid,
+      createdAt: new Date(),
+      projectId: id,
+    });
+
     await batch.commit();
 
     await enqueueEmailEventForUsers({
@@ -578,7 +591,7 @@ export async function DELETE(request, { params }) {
   } catch (error) {
     console.error("Error deleting project:", error);
     return NextResponse.json(
-      { error: "Failed to delete project", details: error.message },
+      { error: "The project could not be deleted. Please try again." },
       { status: 500 }
     );
   }

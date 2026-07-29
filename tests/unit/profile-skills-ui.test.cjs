@@ -71,16 +71,8 @@ test("help and contribution uses the full backend skill directory", () => {
   assert.doesNotMatch(onboardingSource, /HELP_TOPICS/);
 });
 
-test("AI assistance is optional during onboarding", () => {
-  assert.match(onboardingSource, /AI assistance.*\(optional\)/);
-  assert.match(
-    onboardingSource,
-    /GO uses deterministic templates and you can\s+still complete onboarding normally/
-  );
-  assert.doesNotMatch(
-    onboardingSource,
-    /AI-assisted profile\/CV generation \*/
-  );
+test("onboarding does not request AI consent or advertise AI generation", () => {
+  assert.doesNotMatch(onboardingSource, /\bAI\b|consent_ai_generation/i);
 });
 
 test("downloads use authenticated server entitlements instead of legacy client flags", () => {

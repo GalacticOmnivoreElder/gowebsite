@@ -59,6 +59,8 @@ export async function GET(request, { params }) {
   try {
     const { id: userId } = await params;
     const requestingUser = await getUserFromToken(request);
+    const { searchParams } = new URL(request.url);
+    const managementScope = searchParams.get("scope") === "management";
 
     const [userDoc, cvDoc] = await Promise.all([
       adminDb.collection("users").doc(userId).get(),
@@ -71,6 +73,13 @@ export async function GET(request, { params }) {
     const userData = userDoc.data();
     const isOwnProfile = requestingUser?.uid === userId;
     const isAdmin = requestingUser?.admin === true;
+
+    if (managementScope && !isOwnProfile && !isAdmin) {
+      return NextResponse.json(
+        { error: "Management project history is only available to its owner." },
+        { status: 403 }
+      );
+    }
 
     const cvData = cvDoc.exists ? cvDoc.data() : null;
     const isPublicProfile = cvDoc.exists
@@ -100,6 +109,7 @@ export async function GET(request, { params }) {
     // For other viewers, only surface projects that are genuinely public:
     // Public visibility AND in a discoverable lifecycle status (no drafts/pending/rejected).
     const filterProjects = (projects) => {
+      if (managementScope) return projects;
       // This endpoint powers the public profile, so its response must not change
       // based on the viewer's owner/admin privileges. Management endpoints are
       // responsible for authorized access to drafts and archived projects.
@@ -123,6 +133,7 @@ export async function GET(request, { params }) {
         visibleOwnerProjects.length +
         visibleAdminProjects.length +
         visibleTeamMemberProjects.length,
+      scope: managementScope ? "management" : "public",
     });
   } catch (error) {
     console.error("Error fetching user projects:", error);

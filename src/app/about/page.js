@@ -1,197 +1,93 @@
-import { FullCTA } from "@/components/landing/FullCTA";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata({
   title: "About Galactic Omnivore",
   description:
-    "Learn about Galactic Omnivore's mission, values, impact, and role in growing Macedonia's game development community.",
+    "Learn about Galactic Omnivore, an independent nonprofit game-development association and platform based in Skopje.",
   path: "/about",
 });
 
-const impactLinkClass =
-  "text-primary font-medium underline underline-offset-4 decoration-primary/60 hover:decoration-primary hover:text-primary/80 transition-colors";
+const routes = [
+  {
+    title: "Learn",
+    description: "Build practical game-development knowledge and skills.",
+    href: "/education",
+  },
+  {
+    title: "Find a Project",
+    description: "Discover approved projects and suitable open roles.",
+    href: "/projects",
+  },
+  {
+    title: "Create a Project",
+    description: "Publish clear project needs for review by the GO team.",
+    href: "/project/create",
+  },
+  {
+    title: "Join the Community",
+    description: "Explore the current membership options and community access.",
+    href: "/membership",
+  },
+];
 
 export default function AboutPage() {
   return (
-    <div className="container max-w-4xl mx-auto py-12">
-      <h1 className="text-4xl font-bold text-center mb-8">
-        About Galactic Omnivore
-      </h1>
-
-      <div className="space-y-8">
-        <Card>
-          <CardContent className="pt-6">
-            <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
-            <p className="text-muted-foreground">
-              At Galactic Omnivore, we’re building a creative ecosystem that
-              empowers individuals and communities through the power of games,
-              technology, and storytelling. We are an open, people-first game
-              development community where everyone can grow, contribute, and
-              thrive.
-              <br />
-              <br />
-              We make games together — driven by equality, shared knowledge, and
-              collective values. Our mission is rooted in innovation, education,
-              and collaboration, creating a space where game development is
-              accessible, transparent, and sustainable for all.
-              <br />
-              <br />
-              We are decentralized. We are cooperative. We are future-focused.
-              Every contribution is valued. Every mistake is a lesson. Every
-              success is shared. We are Galactic Omnivore.
-            </p>
-            <p className="text-muted-foreground mt-6">
-              <strong>Our main objectives are:</strong>
-              <br />
-              <br />
-              1. Build an open multimedia platform to support the development of
-              games in all forms — digital, physical, or hybrid — through
-              accessible, open-source tools and resources.
-              <br />
-              <br />
-              2. Empower creators with practical skills in the game development
-              industry through shared learning, hands-on projects, and
-              collective portfolio building, using both formal and informal
-              education methods.
-              <br />
-              <br />
-              3. Support local initiatives and foster a thriving network for
-              game creation, publishing, and knowledge-sharing — strengthening
-              collaboration and communication within the local creative
-              community.
-              <br />
-              <br />
-              🚀 Ready to dive deeper into our vision?
-              <br />
-              <a
-                href="https://drive.google.com/file/d/1dRk9BEbZEDK1968WUrj6oZv_kYrEq4in/view?usp=sharing"
-                className="text-blue-600 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                👉 Read our full Statute here
-              </a>{" "}
-              and see how you can be part of the movement.
-            </p>
-          </CardContent>
-        </Card>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-xl font-semibold mb-3">Our Values</h3>
-              <ul className="space-y-2">
-                <li>🤝 Honesty</li>
-                <li>🔁 Evolution</li>
-                <li>📚 Knowledge</li>
-                <li>✅ Accountability</li>
-                <li>🔥 Commitment</li>
-                <li>⚖️ Egalitarianism</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-xl font-semibold mb-3">Our Impact</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Highlighted titles below are clickable links to external projects
-                and partners.
-              </p>
-              <ul className="space-y-2">
-                <li>
-                  🎓{" "}
-                  <a
-                    href="https://itch.io/jam/gogamejam2024"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={impactLinkClass}
-                  >
-                    Empowering The Next Generation of Game Developers
-                  </a>{" "}
-                  – Game education & community jam initiative
-                </li>
-                <li>
-                  🏛️{" "}
-                  <a
-                    href="http://mugi.mk/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={impactLinkClass}
-                  >
-                    Macedonian Union of Gaming Industry
-                  </a>{" "}
-                  – National industry support platform
-                </li>
-                <li>
-                  🧭{" "}
-                  <a
-                    href="https://kikerkov.itch.io/navigator"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={impactLinkClass}
-                  >
-                    Navigator
-                  </a>{" "}
-                  – Educational game with 50,000+ plays for Human Rights Day
-                </li>
-                <li>
-                  🕯️{" "}
-                  <a
-                    href="https://www.instagram.com/glagolitic_2.0/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={impactLinkClass}
-                  >
-                    GLAGOLICA – VR
-                  </a>{" "}
-                  – Immersive cultural heritage experience
-                </li>
-                <li>
-                  🤝 Partnerships:
-                  <a
-                    href="https://linktr.ee/PrintNplay"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${impactLinkClass} ml-1`}
-                  >
-                    PRINT N’ PLAY
-                  </a>{" "}
-                  (TTRPGs),
-                  <a
-                    href="https://linktr.ee/zandana"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${impactLinkClass} ml-1`}
-                  >
-                    ZANDANA
-                  </a>{" "}
-                  (D&D community support)
-                </li>
-                <li>
-                  🌌 <span className="font-semibold">Galactic Omnivore</span> –
-                  Internal growth through game dev, education & innovation
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card>
-          <CardContent className="pt-6">
-            <h2 className="text-2xl font-semibold mb-4">Our Story</h2>
-            <p className="text-muted-foreground">
-              Founded in 2023, Galactic Omnivore emerged from a shared belief in
-              creative collaboration and accessibility. From a small grassroots
-              initiative to an expansive platform with global reach, we continue
-              to evolve—bridging knowledge gaps and empowering the next
-              generation of game developers.
-            </p>
-          </CardContent>
-        </Card>
-        <FullCTA />
+    <main className="container mx-auto max-w-5xl px-4 py-12">
+      <div className="mx-auto max-w-3xl text-center">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-primary">
+          Unite. Create. Evolve.
+        </p>
+        <h1 className="text-4xl font-bold sm:text-5xl">
+          About Galactic Omnivore
+        </h1>
+        <p className="mt-6 text-lg leading-8 text-muted-foreground">
+          Galactic Omnivore (GO) is an independent, nonpartisan, nonprofit
+          game-development association and platform based in Skopje and active
+          across North Macedonia.
+        </p>
       </div>
-    </div>
+
+      <Card className="mt-10">
+        <CardContent className="space-y-5 pt-6">
+          <h2 className="text-2xl font-semibold">Our purpose</h2>
+          <p className="leading-7 text-muted-foreground">
+            GO helps creators learn practical skills, find collaborators and
+            suitable project roles, publish clear project needs, build visible
+            experience, take part in community activity, and move work toward
+            the next playable milestone.
+          </p>
+          <p className="leading-7 text-muted-foreground">
+            We value honest communication, shared learning, accountability,
+            commitment, and equal opportunity to contribute. The platform is
+            designed to make each member&apos;s skills, availability, project
+            work, and next steps easier to understand.
+          </p>
+        </CardContent>
+      </Card>
+
+      <section className="mt-10" aria-labelledby="choose-route">
+        <h2 id="choose-route" className="text-2xl font-semibold">
+          Choose your route
+        </h2>
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
+          {routes.map((route) => (
+            <Card key={route.title}>
+              <CardContent className="flex h-full flex-col pt-6">
+                <h3 className="text-xl font-semibold">{route.title}</h3>
+                <p className="mt-2 flex-1 text-muted-foreground">
+                  {route.description}
+                </p>
+                <Button asChild variant="outline" className="mt-5 w-full">
+                  <Link href={route.href}>Explore {route.title}</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+    </main>
   );
 }

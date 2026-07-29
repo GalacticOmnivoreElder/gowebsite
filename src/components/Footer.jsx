@@ -5,6 +5,9 @@ import Image from "next/image";
 import discordImg from "@/assets/discord.png";
 import { NewsletterSignup } from "@/components/newsletter/NewsletterSignup";
 
+const newsletterEnabled =
+  process.env.NEXT_PUBLIC_NEWSLETTER_ENABLED === "true";
+
 // Custom X (Twitter) icon component
 const TwitterIcon = () => (
   <svg
@@ -178,9 +181,11 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t mt-8 pt-8">
-          <NewsletterSignup source="footer" compact />
-        </div>
+        {newsletterEnabled && (
+          <div className="border-t mt-8 pt-8">
+            <NewsletterSignup source="footer" compact />
+          </div>
+        )}
 
         <div className="border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">

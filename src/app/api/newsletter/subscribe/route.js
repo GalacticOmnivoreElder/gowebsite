@@ -5,6 +5,10 @@ import {
   newsletterFingerprint,
   requestNewsletterSubscription,
 } from "@/lib/email/newsletter";
+import {
+  isNewsletterEnabled,
+  newsletterUnavailableResponse,
+} from "@/lib/newsletter-feature";
 
 function requestIp(request) {
   return (
@@ -15,6 +19,7 @@ function requestIp(request) {
 }
 
 export async function POST(request) {
+  if (!isNewsletterEnabled()) return newsletterUnavailableResponse();
   const startedAt = Date.now();
   const requestId = request.headers.get("x-vercel-id") || null;
   try {

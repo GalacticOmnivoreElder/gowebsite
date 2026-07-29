@@ -91,7 +91,6 @@ function eventCopy(type, data) {
     data.projectId ? `/project/${encodeURIComponent(data.projectId)}` : "/projects"
   );
   const billingUrl = absoluteSiteUrl("/billing");
-  const dashboardUrl = absoluteSiteUrl("/dashboard");
   const profileUrl = absoluteSiteUrl("/profile");
   const onboardingUrl = absoluteSiteUrl("/onboarding");
   const cvUrl = absoluteSiteUrl("/profile/cv");
@@ -245,8 +244,8 @@ function eventCopy(type, data) {
           text: `${data.firstName ? `Hi ${data.firstName},` : "Hello,"}\n\nYour ${membershipName} membership is now active. ${accessCopy}\n\nMembership details\n${plainDetails(
             details
           )}${benefits.length ? `\n\nYour membership includes\n${benefits.map((benefit) => `- ${benefit}`).join("\n")}` : ""}`,
-          ctaLabel: "Go to your dashboard",
-          ctaUrl: dashboardUrl,
+          ctaLabel: "Open your profile",
+          ctaUrl: profileUrl,
           secondaryCtas: [
             { label: "Manage billing", url: billingUrl },
           ],

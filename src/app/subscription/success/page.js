@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   Clock3,
   Compass,
-  LayoutDashboard,
   RefreshCw,
   User,
 } from "lucide-react";
@@ -48,7 +47,6 @@ const SubscriptionSuccessPage = observer(() => {
   const [confirmationId, setConfirmationId] = useState(null);
   const [confirmationMode, setConfirmationMode] = useState("purchase");
   const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [logoReady, setLogoReady] = useState(false);
 
   useEffect(() => {
     if (window.location.search || window.location.hash) {
@@ -189,18 +187,9 @@ const SubscriptionSuccessPage = observer(() => {
           role="status"
           aria-live="polite"
         >
-          <div
-            className={`relative h-20 w-20 ${
-              logoReady ? "opacity-100" : "opacity-0"
-            }`}
-            aria-hidden="true"
-          >
+          <div className="relative h-20 w-20" aria-hidden="true">
             <span className="absolute inset-2 rounded-full bg-primary/25 blur-xl" />
-            <span
-              className={`go-logo-spinner relative block h-20 w-20 ${
-                logoReady ? "go-logo-spinner--running" : ""
-              }`}
-            >
+            <span className="go-logo-spinner go-logo-spinner--running relative block h-20 w-20">
               <Image
                 src="/galactic-omnivore-skull-v1-512.png"
                 alt=""
@@ -208,18 +197,6 @@ const SubscriptionSuccessPage = observer(() => {
                 sizes="80px"
                 priority
                 className="select-none object-contain"
-                onLoad={(event) => {
-                  const image = event.currentTarget;
-                  if (typeof image.decode !== "function") {
-                    setLogoReady(true);
-                    return;
-                  }
-
-                  image
-                    .decode()
-                    .catch(() => {})
-                    .finally(() => setLogoReady(true));
-                }}
               />
             </span>
           </div>
@@ -285,7 +262,7 @@ const SubscriptionSuccessPage = observer(() => {
                     />
                     <h2 className="font-semibold">Explore at your own pace</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      You can visit your dashboard or browse projects before
+                      You can visit your profile or browse projects before
                       completing onboarding.
                     </p>
                   </div>
@@ -298,13 +275,10 @@ const SubscriptionSuccessPage = observer(() => {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => router.push("/dashboard")}
+                    onClick={() => router.push("/profile")}
                   >
-                    <LayoutDashboard
-                      className="mr-2 h-4 w-4"
-                      aria-hidden="true"
-                    />
-                    Explore your dashboard
+                    <User className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Explore your profile
                   </Button>
                   <Button
                     variant="ghost"
@@ -393,13 +367,10 @@ const SubscriptionSuccessPage = observer(() => {
                 size="lg"
                 variant="outline"
                 className="border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
-                onClick={() => navigateAfterConfirmation("/dashboard")}
+                onClick={() => navigateAfterConfirmation("/profile")}
               >
-                <LayoutDashboard
-                  className="mr-2 h-5 w-5"
-                  aria-hidden="true"
-                />
-                Explore your dashboard
+                <User className="mr-2 h-5 w-5" aria-hidden="true" />
+                Explore your profile
               </Button>
               <Button
                 variant="ghost"

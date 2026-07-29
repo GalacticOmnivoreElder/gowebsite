@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { observer } from "mobx-react-lite";
 import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
@@ -179,6 +179,7 @@ const CreateProjectContent = observer(() => {
   const [checkingCreatorAccess, setCheckingCreatorAccess] = useState(true);
   const [accessCheckError, setAccessCheckError] = useState("");
   const [accessCheckVersion, setAccessCheckVersion] = useState(0);
+  const creationAttemptKey = useRef(null);
 
   const totalSteps = 4;
 
@@ -366,6 +367,9 @@ const CreateProjectContent = observer(() => {
       }
 
       const token = await auth.currentUser.getIdToken();
+      if (!creationAttemptKey.current) {
+        creationAttemptKey.current = crypto.randomUUID();
+      }
 
       // Create project with default status "draft"
       const projectData = {
@@ -384,6 +388,7 @@ const CreateProjectContent = observer(() => {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "Idempotency-Key": creationAttemptKey.current,
         },
         body: JSON.stringify(projectData),
       });

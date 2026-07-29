@@ -31,6 +31,10 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import MobxStore from "@/mobx";
 import { observer } from "mobx-react";
+import {
+  redirectWithPlan,
+  safeInternalRedirect,
+} from "@/lib/safe-redirect";
 
 const formSchema = z.object({
   username: z.string().min(4, {
@@ -58,14 +62,14 @@ export const SignupForm = observer(() => {
     const plan = searchParams.get("plan");
 
     if (redirect) {
-      if (plan) {
-        setRedirectTo(`${redirect}?plan=${plan}`);
-      } else {
-        setRedirectTo(redirect);
-      }
+      const safeRedirect = redirectWithPlan(redirect, plan);
+      setRedirectTo(safeRedirect);
 
       // Store in localStorage as fallback
-      localStorage.setItem("authRedirect", redirect);
+      localStorage.setItem(
+        "authRedirect",
+        safeInternalRedirect(redirect)
+      );
       if (plan) localStorage.setItem("selectedPlan", plan);
     }
   }, [searchParams]);
@@ -193,13 +197,7 @@ const SignupCard = observer(() => {
     const redirect = searchParams.get("redirect");
     const plan = searchParams.get("plan");
 
-    if (redirect) {
-      if (plan) {
-        setRedirectTo(`${redirect}?plan=${plan}`);
-      } else {
-        setRedirectTo(redirect);
-      }
-    }
+    if (redirect) setRedirectTo(redirectWithPlan(redirect, plan));
   }, [searchParams]);
 
   const handleGoogleSignIn = async () => {

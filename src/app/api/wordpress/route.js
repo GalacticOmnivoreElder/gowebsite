@@ -8,6 +8,10 @@ export async function GET(request) {
   const category = searchParams.get("category");
   const tag = searchParams.get("tag");
 
+  if (!process.env.WORDPRESS_API_URL) {
+    return NextResponse.json(slug ? null : []);
+  }
+
   try {
     let url;
     if (slug) {
@@ -169,6 +173,10 @@ async function getTagId(tagName) {
 }
 
 export async function POST(request) {
+  if (!process.env.WORDPRESS_API_URL) {
+    return NextResponse.json([]);
+  }
+
   try {
     const { category, tag } = await request.json();
     let url = `${process.env.WORDPRESS_API_URL}/posts?_embed&per_page=10`;

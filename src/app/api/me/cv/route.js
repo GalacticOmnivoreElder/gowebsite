@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
 import { serializeFirestoreDate } from "@/lib/project-utils";
-import { buildCvFromProfile, improveSummaryWithAI } from "@/lib/cv-generator";
+import { buildCvFromProfile } from "@/lib/cv-generator";
 import {
   normalizeAvailability,
   reconcileAvailabilityMissingInformation,
@@ -49,9 +49,6 @@ export async function POST(request) {
 
   const profile = profileSnap.data();
   const draft = buildCvFromProfile(profile);
-  if (profile.consent_ai_generation === true) {
-    draft.summary = await improveSummaryWithAI(profile, draft.summary);
-  }
   draft.sections = draft.sections.map((s) =>
     s.section_type === "summary" ? { ...s, content_json: { text: draft.summary } } : s
   );

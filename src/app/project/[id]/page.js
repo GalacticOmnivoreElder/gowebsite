@@ -117,6 +117,34 @@ const LinkedProjectCard = ({ project }) => (
   </Card>
 );
 
+const applicationSnapshotText = (section) => {
+  const content = section?.content_json;
+  if (!content) return "";
+  if (typeof content === "string") return content;
+  if (typeof content.text === "string") return content.text;
+
+  return Object.entries(content)
+    .flatMap(([label, value]) => {
+      if (value === null || value === undefined || value === "") return [];
+      const readable = Array.isArray(value)
+        ? value
+            .map((item) =>
+              typeof item === "string"
+                ? item
+                : item?.title || item?.name || ""
+            )
+            .filter(Boolean)
+            .join(", ")
+        : typeof value === "object"
+          ? Object.values(value).filter(Boolean).join(", ")
+          : String(value);
+      return readable
+        ? [`${label.replaceAll("_", " ")}: ${readable}`]
+        : [];
+    })
+    .join(" · ");
+};
+
 const ProjectDetailsPage = observer(() => {
   const router = useRouter();
   const params = useParams();
@@ -1429,11 +1457,11 @@ const ProjectDetailsPage = observer(() => {
               ) : applications.length > 0 ? (
                 <div className="space-y-4">
                   {applications.map((application) => (
-                    <div
+                    <article
                       key={application.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                      className="flex flex-col gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50"
                     >
-                      <div className="flex items-center space-x-4">
+                      <div className="flex min-w-0 items-center space-x-4">
                         <Avatar className="h-12 w-12">
                           <AvatarImage
                             src={application.avatar}
@@ -1467,16 +1495,65 @@ const ProjectDetailsPage = observer(() => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link
-                            href={`/user/${application.userId}`}
-                            target="_blank"
-                          >
-                            View Profile
-                          </Link>
-                        </Button>
+                      {application.goCvSnapshot ? (
+                        <details className="rounded-md border bg-background/60 p-3">
+                          <summary className="cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                            Profile/GameDev Passport at time of application
+                          </summary>
+                          <div className="mt-3 space-y-3 text-sm">
+                            <div>
+                              <p className="font-medium">
+                                {application.goCvSnapshot.title ||
+                                  application.goCvSnapshot.primary_role ||
+                                  "GameDev Passport snapshot"}
+                              </p>
+                              {application.goCvSnapshot.summary && (
+                                <p className="mt-1 text-muted-foreground">
+                                  {application.goCvSnapshot.summary}
+                                </p>
+                              )}
+                            </div>
+                            {(application.goCvSnapshot.sections || []).map(
+                              (section, index) => {
+                                const sectionText =
+                                  applicationSnapshotText(section);
+                                if (!sectionText) return null;
+                                return (
+                                  <div key={`${section.title || "section"}-${index}`}>
+                                    <p className="font-medium">
+                                      {section.title || "CV section"}
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                      {sectionText}
+                                    </p>
+                                  </div>
+                                );
+                              }
+                            )}
+                          </div>
+                        </details>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          No GameDev Passport was available when this
+                          application was submitted.
+                        </p>
+                      )}
 
+                      <div className="flex flex-wrap items-center gap-2">
+                        {application.currentPublicProfileAvailable ? (
+                          <Button variant="outline" size="sm" asChild>
+                            <Link
+                              href={`/user/${application.userId}`}
+                              target="_blank"
+                            >
+                              Current public profile
+                            </Link>
+                          </Button>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            Current public profile is unavailable.
+                          </span>
+                        )}
                         {application.status === "pending" && (
                           <>
                             <Button
@@ -1516,7 +1593,7 @@ const ProjectDetailsPage = observer(() => {
                           </a>
                         </Button>
                       </div>
-                    </div>
+                    </article>
                   ))}
                 </div>
               ) : (

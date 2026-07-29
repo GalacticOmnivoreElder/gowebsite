@@ -7,9 +7,9 @@ const availabilityHelpers = loadSourceModule("src/lib/availability.js", [
   "normalizeAvailability",
   "reconcileAvailabilityMissingInformation",
 ]);
-const { buildCvFromProfile, improveSummaryWithAI } = loadSourceModule(
+const { buildCvFromProfile } = loadSourceModule(
   "src/lib/cv-generator.js",
-  ["buildCvFromProfile", "improveSummaryWithAI"],
+  ["buildCvFromProfile"],
   {
     stripImports: true,
     sandbox: availabilityHelpers,
@@ -124,20 +124,4 @@ test("buildCvFromProfile does not infer availability from profile prose", () => 
     "portfolio link",
     "availability",
   ]);
-});
-
-test("improveSummaryWithAI falls back to the baseline summary when AI is not configured", async () => {
-  const originalApiKey = process.env.ANTHROPIC_API_KEY;
-  delete process.env.ANTHROPIC_API_KEY;
-
-  try {
-    const baseline = "Beginner game developer.";
-    assert.equal(await improveSummaryWithAI({}, baseline), baseline);
-  } finally {
-    if (originalApiKey === undefined) {
-      delete process.env.ANTHROPIC_API_KEY;
-    } else {
-      process.env.ANTHROPIC_API_KEY = originalApiKey;
-    }
-  }
 });

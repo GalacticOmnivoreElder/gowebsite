@@ -152,7 +152,6 @@ const CheckoutContent = observer(() => {
     "Free game (thematic for the month)",
     "Community events",
     "Member only Discord access",
-    "Premium newsletter",
   ];
 
   return (

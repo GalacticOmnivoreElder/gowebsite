@@ -272,8 +272,26 @@ test("project owners cannot move projects into admin-only statuses", async () =>
 
   assert.equal(response.status, 403);
   assert.deepEqual(plain(response.body), {
-    error: "Only platform admins can publish, reject, or complete projects",
+    error:
+      "Only platform administrators can change project status. Contact support to request a status update.",
   });
+});
+
+test("project owners cannot submit or revert project status", async () => {
+  const route = loadRoute({
+    seed: { projects: { "project-1": existingProject() } },
+    user: { uid: "owner-1" },
+  });
+
+  for (const status of ["pending", "draft"]) {
+    route.adminDb.docs.projects["project-1"].status =
+      status === "pending" ? "draft" : "pending";
+    const response = await route.PUT(
+      createRequest({ jsonBody: { status } }),
+      { params: { id: "project-1" } }
+    );
+    assert.equal(response.status, 403);
+  }
 });
 
 test("platform admins can update status and numeric project fields", async () => {
@@ -324,7 +342,7 @@ test("project owners can remove an existing budget", async () => {
   );
 });
 
-test("project delete requires owner or platform admin", async () => {
+test("project permanent delete requires a platform admin", async () => {
   let route = loadRoute({
     seed: { projects: { "project-1": existingProject() } },
     user: { uid: "stranger" },
@@ -333,12 +351,21 @@ test("project delete requires owner or platform admin", async () => {
   assert.equal(response.status, 403);
 
   route = loadRoute({
+    seed: { projects: { "project-1": existingProject() } },
+    user: { uid: "owner-1" },
+  });
+  response = await route.DELETE(createRequest(), {
+    params: { id: "project-1" },
+  });
+  assert.equal(response.status, 403);
+
+  route = loadRoute({
     seed: {
       applications: [{ id: "application-1", projectId: "project-1" }],
       projects: { "project-1": existingProject() },
       sourceProjects: { "source-1": { projectIds: ["project-1"] } },
     },
-    user: { uid: "owner-1" },
+    user: { admin: true, uid: "admin-1" },
   });
   response = await route.DELETE(createRequest(), { params: { id: "project-1" } });
 
@@ -374,7 +401,7 @@ test("project delete requires owner or platform admin", async () => {
 test("project delete tolerates a missing source project", async () => {
   const route = loadRoute({
     seed: { projects: { "project-1": existingProject() } },
-    user: { uid: "owner-1" },
+    user: { admin: true, uid: "admin-1" },
   });
   const response = await route.DELETE(createRequest(), {
     params: { id: "project-1" },
@@ -389,4 +416,28 @@ test("project delete tolerates a missing source project", async () => {
     ),
     false
   );
+});
+
+test("platform-admin permanent deletion records a minimal audit event", async () => {
+  const route = loadRoute({
+    seed: { projects: { "project-1": existingProject() } },
+    user: { admin: true, uid: "admin-1" },
+  });
+
+  const response = await route.DELETE(createRequest(), {
+    params: { id: "project-1" },
+  });
+
+  assert.equal(response.status, 200);
+  const auditWrite = route.adminDb.records.find(
+    (record) =>
+      record.type === "set" &&
+      record.ref.collectionName === "admin_audit_events"
+  );
+  assert.deepEqual(plain(auditWrite.data), {
+    action: "project.permanently_deleted",
+    actorUid: "admin-1",
+    createdAt: "2026-07-14T12:00:00.000Z",
+    projectId: "project-1",
+  });
 });

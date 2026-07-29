@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { adminDb } from "@/lib/firebase-admin";
 import * as admin from "firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
@@ -13,10 +14,24 @@ import {
   validateArrayValues,
   VISIBILITY_OPTIONS,
 } from "@/lib/project-utils";
-import { addEmailEventToBatch } from "@/lib/email";
+import { enqueueEmailEvent } from "@/lib/email";
 
 async function getUserFromToken(request) {
   return getRequestUser(request);
+}
+
+const IDEMPOTENCY_KEY_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
+
+function creationDocumentIds(userId, idempotencyKey) {
+  const digest = createHash("sha256")
+    .update(`${userId}:${idempotencyKey}`)
+    .digest("hex");
+
+  return {
+    projectId: `project_${digest}`,
+    requestId: digest,
+    sourceProjectId: `source_${digest}`,
+  };
 }
 
 export async function GET(request) {
@@ -149,7 +164,7 @@ export async function GET(request) {
   } catch (error) {
     console.error("Error fetching projects:", error);
     return NextResponse.json(
-      { error: "Failed to fetch projects", details: error.message },
+      { error: "Projects could not be loaded. Please try again." },
       { status: 500 }
     );
   }
@@ -165,15 +180,27 @@ export async function POST(request) {
       );
     }
 
-    // Only Company/Partner members (or platform admins) may create projects.
+    // Only Business members (or platform admins) may create projects.
     if (!user.canCreateProjects) {
       return NextResponse.json(
         {
           error:
-            "A Company / Partner membership is required to create and manage projects.",
+            "An active GO Business membership is required to create and manage projects.",
           code: "company_membership_required",
         },
         { status: 403 }
+      );
+    }
+
+    const idempotencyKey = request.headers.get("Idempotency-Key");
+    if (!IDEMPOTENCY_KEY_PATTERN.test(idempotencyKey || "")) {
+      return NextResponse.json(
+        {
+          error:
+            "A valid Idempotency-Key header is required to create a project.",
+          code: "invalid_idempotency_key",
+        },
+        { status: 400 }
       );
     }
 
@@ -266,13 +293,44 @@ export async function POST(request) {
       );
     }
 
+    const { projectId, requestId, sourceProjectId: deterministicSourceId } =
+      creationDocumentIds(user.uid, idempotencyKey);
+    const creationRequestRef = adminDb
+      .collection("project_creation_requests")
+      .doc(requestId);
+    const existingCreationRequest = await creationRequestRef.get();
+
+    if (existingCreationRequest.exists) {
+      const existingRequestData = existingCreationRequest.data();
+      if (existingRequestData.userId !== user.uid) {
+        return NextResponse.json(
+          { error: "Idempotency key is already in use." },
+          { status: 409 }
+        );
+      }
+
+      const existingProjectDoc = await adminDb
+        .collection("projects")
+        .doc(existingRequestData.projectId)
+        .get();
+      if (existingProjectDoc.exists) {
+        const existingProject = existingProjectDoc.data();
+        return NextResponse.json({
+          id: existingProjectDoc.id,
+          ...existingProject,
+          createdAt: serializeFirestoreDate(existingProject.createdAt),
+          updatedAt: serializeFirestoreDate(existingProject.updatedAt),
+          replayed: true,
+        });
+      }
+    }
+
     // Handle sourceProject logic
     let sourceProjectId = null;
 
     let sourceProjectRef = null;
     const batch = adminDb.batch();
-    const projectRef = adminDb.collection("projects").doc();
-    const projectId = projectRef.id;
+    const projectRef = adminDb.collection("projects").doc(projectId);
 
     if (projectData.sourceProjectOption === "new") {
       // Create new sourceProject
@@ -295,7 +353,9 @@ export async function POST(request) {
         updatedAt: new Date(),
       };
 
-      sourceProjectRef = adminDb.collection("sourceProjects").doc();
+      sourceProjectRef = adminDb
+        .collection("sourceProjects")
+        .doc(deterministicSourceId);
       sourceProjectId = sourceProjectRef.id;
       batch.set(sourceProjectRef, sourceProjectData);
     } else if (
@@ -359,6 +419,14 @@ export async function POST(request) {
 
     batch.set(projectRef, newProject);
 
+    batch.set(creationRequestRef, {
+      createdAt: new Date(),
+      projectId,
+      sourceProjectId,
+      status: "completed",
+      userId: user.uid,
+    });
+
     if (projectData.sourceProjectOption === "existing") {
       batch.update(sourceProjectRef, {
         projectIds: admin.firestore.FieldValue.arrayUnion(projectId),
@@ -378,8 +446,10 @@ export async function POST(request) {
       { merge: true }
     );
 
+    await batch.commit();
+
     if (user.email) {
-      addEmailEventToBatch(batch, {
+      await enqueueEmailEvent({
         type: "project.created",
         eventId: projectId,
         userId: user.uid,
@@ -391,7 +461,13 @@ export async function POST(request) {
         },
       });
     }
-    await batch.commit();
+
+    console.info("project_creation_completed", {
+      projectId,
+      replayed: false,
+      requestId: requestId.slice(0, 12),
+      userId: user.uid,
+    });
 
     return NextResponse.json({
       id: projectId,
@@ -402,7 +478,7 @@ export async function POST(request) {
   } catch (error) {
     console.error("Error creating project:", error);
     return NextResponse.json(
-      { error: "Failed to create project", details: error.message },
+      { error: "The project could not be created. Please try again." },
       { status: 500 }
     );
   }

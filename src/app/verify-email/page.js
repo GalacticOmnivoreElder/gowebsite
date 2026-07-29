@@ -7,10 +7,11 @@ import { MailCheck } from "lucide-react";
 import MobxStore from "@/mobx";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { safeInternalRedirect } from "@/lib/safe-redirect";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/profile";
+  const redirect = safeInternalRedirect(searchParams.get("redirect"));
   const [state, setState] = useState("idle");
   const [message, setMessage] = useState("");
   const cooldownTimer = useRef(null);

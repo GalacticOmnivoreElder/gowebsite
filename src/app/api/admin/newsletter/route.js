@@ -7,6 +7,10 @@ import {
 } from "@/lib/email/newsletter";
 import { asIsoString } from "@/lib/email/utils";
 import { adminDb } from "@/lib/firebase-admin";
+import {
+  isNewsletterEnabled,
+  newsletterUnavailableResponse,
+} from "@/lib/newsletter-feature";
 
 async function requireAdmin(request) {
   const user = await getRequestUser(request);
@@ -35,6 +39,7 @@ function csvEscape(value) {
 }
 
 export async function GET(request) {
+  if (!isNewsletterEnabled()) return newsletterUnavailableResponse();
   const gate = await requireAdmin(request);
   if (gate.response) return gate.response;
 
@@ -172,6 +177,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  if (!isNewsletterEnabled()) return newsletterUnavailableResponse();
   const gate = await requireAdmin(request);
   if (gate.response) return gate.response;
   const body = await request.json().catch(() => ({}));

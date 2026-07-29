@@ -12,9 +12,9 @@ export const LandingOpenHours = () => {
       <Image
         src={hqImg}
         alt="Galactic Omnivore HQ"
-        layout="fill"
-        objectFit="cover"
-        className="z-0"
+        fill
+        sizes="100vw"
+        className="z-0 object-cover"
       />
       <div className="absolute inset-0 bg-black/60 z-10"></div>
 

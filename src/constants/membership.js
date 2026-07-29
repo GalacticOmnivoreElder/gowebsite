@@ -17,7 +17,6 @@ export const MEMBERSHIP_PLANS = [
       "Periodic asset, music, and code resource drops",
       "Tutorials and learning resources",
       "Community events and member-only Discord access",
-      "Premium community newsletter",
     ],
     pricing: {
       monthly: {
