@@ -48,9 +48,13 @@ const Header = observer(() => {
   };
 
   const isMyCvActive =
-    pathname?.startsWith("/cv") || pathname?.startsWith("/onboarding")
+    pathname?.startsWith("/profile/cv") ||
+    pathname?.startsWith("/cv") ||
+    pathname?.startsWith("/onboarding")
       ? "default"
       : "ghost";
+  const isProfileActive =
+    pathname === "/profile" ? "default" : "ghost";
 
   // Function to handle navigation and close menu
   const handleNavigation = () => {
@@ -72,13 +76,13 @@ const Header = observer(() => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1 ml-6">
             {user && (
-              <Button asChild variant={isActive("/profile")} size="sm">
+              <Button asChild variant={isProfileActive} size="sm">
                 <Link href="/profile">Profile</Link>
               </Button>
             )}
             {user && (
               <Button asChild variant={isMyCvActive} size="sm">
-                <Link href="/cv">My CV</Link>
+                <Link href="/profile/cv">My CV</Link>
               </Button>
             )}
             <Button asChild variant={isActive("/projects")} size="sm">
@@ -162,7 +166,7 @@ const Header = observer(() => {
             {user && (
               <Button
                 asChild
-                variant={isActive("/profile")}
+                variant={isProfileActive}
                 className="justify-start"
               >
                 <Link href="/profile" onClick={handleNavigation}>
@@ -177,7 +181,7 @@ const Header = observer(() => {
                 variant={isMyCvActive}
                 className="justify-start"
               >
-                <Link href="/cv" onClick={handleNavigation}>
+                <Link href="/profile/cv" onClick={handleNavigation}>
                   My CV
                 </Link>
               </Button>

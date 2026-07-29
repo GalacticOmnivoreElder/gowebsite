@@ -94,7 +94,7 @@ function eventCopy(type, data) {
   const dashboardUrl = absoluteSiteUrl("/dashboard");
   const profileUrl = absoluteSiteUrl("/profile");
   const onboardingUrl = absoluteSiteUrl("/onboarding");
-  const cvUrl = absoluteSiteUrl("/cv");
+  const cvUrl = absoluteSiteUrl("/profile/cv");
   const projectsUrl = absoluteSiteUrl("/projects");
   const resourcesUrl = absoluteSiteUrl("/resources");
   const endsAt = formatDate(data.endsAt || data.subscriptionEndsAt);
@@ -192,7 +192,7 @@ function eventCopy(type, data) {
         ),
         text: "Your onboarding details are saved. Review and publish your GO CV.",
         ctaLabel: "Review your CV",
-        ctaUrl: absoluteSiteUrl("/cv"),
+        ctaUrl: absoluteSiteUrl("/profile/cv"),
       };
     case "billing.membership_activated":
       {

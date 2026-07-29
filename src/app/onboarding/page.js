@@ -104,7 +104,7 @@ const OnboardingContent = observer(() => {
       try {
         const data = await authedFetch("/api/onboarding", "GET");
         if (data.onboardingCompleted && !editCompletedOnboarding) {
-          router.replace("/cv");
+          router.replace("/profile/cv");
           return;
         }
 
@@ -179,7 +179,7 @@ const OnboardingContent = observer(() => {
       await saveStep(step);
       await authedFetch("/api/onboarding", "PUT");
       await MobxStore.checkAuth?.();
-      router.push("/cv?welcome=1");
+      router.push("/profile/cv?welcome=1");
     } catch (e) {
       setError(e.message);
     } finally {

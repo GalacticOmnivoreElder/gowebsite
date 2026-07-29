@@ -26,6 +26,7 @@ require("./profile-skills-ui.test.cjs");
 require("./resend-webhook.test.cjs");
 require("./cv-generator.test.cjs");
 require("./cv-editor-ui.test.cjs");
+require("./cv-route-consolidation.test.cjs");
 require("./profile-mission.test.cjs");
 require("./cv-pdf.test.cjs");
 require("./date.test.cjs");

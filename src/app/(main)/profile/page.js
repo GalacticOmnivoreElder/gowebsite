@@ -3,7 +3,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import ProfileEditor from "@/components/profile/ProfileEditor";
 import MissionHub from "@/components/profile/MissionHub";
+import { ProfileSectionTabs } from "@/components/profile/ProfileSectionTabs";
 
 import Downloads from "@/components/profile/Downloads";
 import Settings from "@/components/profile/Settings";
@@ -20,9 +21,6 @@ import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
 import { formatBudget, hasProjectBudget } from "@/utils/formatBudget";
 import {
-  User,
-  Download,
-  Settings as SettingsIcon,
   Briefcase,
   Crown,
   UserCheck,
@@ -447,6 +445,11 @@ const ProfileContent = observer(() => {
 
   // Update URL when tab changes
   const handleTabChange = (value) => {
+    if (value === "cv") {
+      router.push("/profile/cv");
+      return;
+    }
+
     // If billing tab is clicked, navigate to billing page
     if (value === "billing") {
       router.push("/billing");
@@ -513,34 +516,7 @@ const ProfileContent = observer(() => {
         onValueChange={handleTabChange}
         className="space-y-6"
       >
-        <div className="overflow-x-auto -mx-1 px-1">
-          <TabsList className="inline-flex w-max min-w-full sm:min-w-0">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Profile
-          </TabsTrigger>
-          <TabsTrigger value="projects" className="flex items-center gap-2">
-            <Briefcase className="h-4 w-4" />
-            My Projects
-          </TabsTrigger>
-          <TabsTrigger value="applications" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Applications
-          </TabsTrigger>
-          <TabsTrigger value="downloads" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Downloads
-          </TabsTrigger>
-          <TabsTrigger value="billing" className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Billing
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <SettingsIcon className="h-4 w-4" />
-            Settings
-          </TabsTrigger>
-        </TabsList>
-        </div>
+        <ProfileSectionTabs />
 
         <TabsContent value="profile">
           {profileLoading ? (

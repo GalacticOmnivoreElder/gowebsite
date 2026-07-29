@@ -635,7 +635,7 @@ export default function MissionHub({
                     variant="outline"
                   />
                   <Button variant="outline" asChild>
-                    <Link href="/cv">
+                    <Link href="/profile/cv">
                       <FileText className="mr-2 h-4 w-4" />
                       Manage GO CV
                     </Link>
