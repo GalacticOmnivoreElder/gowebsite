@@ -3,6 +3,10 @@ import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
 import { serializeFirestoreDate } from "@/lib/project-utils";
 import { buildCvFromProfile, improveSummaryWithAI } from "@/lib/cv-generator";
+import {
+  normalizeAvailability,
+  reconcileAvailabilityMissingInformation,
+} from "@/lib/availability";
 
 export const dynamic = "force-dynamic";
 
@@ -98,12 +102,73 @@ export async function PATCH(request) {
     if (body[field] !== undefined) update[field] = body[field];
   }
 
+  const cvReference = adminDb.collection("go_cvs").doc(user.uid);
+  let availabilityState = null;
+  if (Array.isArray(body.sections)) {
+    const availabilitySection = body.sections.find(
+      (section) => section?.section_type === "availability"
+    );
+    if (availabilitySection) {
+      availabilityState = normalizeAvailability({
+        availability: availabilitySection.content_json,
+      });
+      update.sections = body.sections.map((section) =>
+        section?.section_type === "availability"
+          ? {
+              ...section,
+              content_json: {
+                ...(section.content_json || {}),
+                availability_answered:
+                  availabilityState.hasExplicitSelection,
+                availability_status: availabilityState.status,
+                available_for_projects:
+                  availabilityState.availableForProjects,
+                available_for_paid_work:
+                  availabilityState.availableForPaidWork,
+                preferred_time_commitment:
+                  availabilityState.preferredTimeCommitment,
+              },
+            }
+          : section
+      );
+
+      const existingCv = await cvReference.get();
+      update.missing_information =
+        reconcileAvailabilityMissingInformation(
+          existingCv.exists
+            ? existingCv.data().missing_information
+            : [],
+          availabilityState
+        );
+    }
+  }
+
   const writes = [
-    adminDb
-      .collection("go_cvs")
-      .doc(user.uid)
-      .set({ user_id: user.uid, ...update }, { merge: true }),
+    cvReference.set({ user_id: user.uid, ...update }, { merge: true }),
   ];
+
+  if (availabilityState) {
+    writes.push(
+      adminDb
+        .collection("user_profiles")
+        .doc(user.uid)
+        .set(
+          {
+            availability_answered:
+              availabilityState.hasExplicitSelection,
+            availability_status: availabilityState.status,
+            looking_for_projects:
+              availabilityState.availableForProjects,
+            looking_for_paid_work:
+              availabilityState.availableForPaidWork,
+            preferred_time_commitment:
+              availabilityState.preferredTimeCommitment,
+            updated_at: update.updated_at,
+          },
+          { merge: true }
+        )
+    );
+  }
 
   if (body.visibility_public !== undefined) {
     const visibilityPublic = body.visibility_public === true;

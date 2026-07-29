@@ -5,6 +5,12 @@
 // experience. When ANTHROPIC_API_KEY is absent the generator is fully
 // deterministic, so onboarding still produces a usable CV without any AI.
 
+import {
+  buildAvailabilityContent,
+  normalizeAvailability,
+  reconcileAvailabilityMissingInformation,
+} from "@/lib/availability";
+
 function arr(v) {
   return Array.isArray(v) ? v.filter(Boolean) : [];
 }
@@ -25,9 +31,10 @@ export function buildCvFromProfile(profile = {}) {
   const secondaryRoles = arr(profile.secondary_roles);
   const pastProjects = arr(profile.past_projects);
   const portfolioLinks = arr(profile.user_portfolio_links || profile.portfolio_links);
+  const availability = normalizeAvailability({ profile });
   const lookingFor = [];
-  if (profile.looking_for_projects) lookingFor.push("projects");
-  if (profile.looking_for_paid_work) lookingFor.push("paid work");
+  if (availability.availableForProjects) lookingFor.push("projects");
+  if (availability.availableForPaidWork) lookingFor.push("paid work");
   if (profile.looking_for_team) lookingFor.push("team members");
   if (profile.looking_for_mentorship) lookingFor.push("mentorship");
   if (profile.looking_for_jobs) lookingFor.push("jobs/internships");
@@ -83,11 +90,7 @@ export function buildCvFromProfile(profile = {}) {
     {
       section_type: "availability",
       title: "Availability",
-      content_json: {
-        available_for_projects: !!profile.looking_for_projects,
-        available_for_paid_work: !!profile.looking_for_paid_work,
-        preferred_time_commitment: profile.preferred_time_commitment || null,
-      },
+      content_json: buildAvailabilityContent(profile),
     },
     {
       section_type: "interests",
@@ -115,8 +118,13 @@ export function buildCvFromProfile(profile = {}) {
     title: `${displayName} — ${primaryRole}`,
     summary,
     sections,
-    suggested_improvements: buildSuggestions({ portfolioLinks, pastProjects, lookingFor }),
-    missing_information: buildMissing({ portfolioLinks, profile }),
+    suggested_improvements: buildSuggestions({
+      availability,
+      portfolioLinks,
+      pastProjects,
+      lookingFor,
+    }),
+    missing_information: buildMissing({ availability, portfolioLinks }),
   };
 }
 
@@ -147,20 +155,26 @@ function buildBaselineSummary({
   return summary;
 }
 
-function buildSuggestions({ portfolioLinks, pastProjects, lookingFor }) {
+function buildSuggestions({
+  availability,
+  portfolioLinks,
+  pastProjects,
+  lookingFor,
+}) {
   const s = [];
   if (!portfolioLinks.length) s.push("Add at least one portfolio link");
   if (!pastProjects.length)
     s.push("Describe one past prototype or game jam project");
-  if (!lookingFor.length) s.push("Define what type of project you want to join");
+  if (!lookingFor.length && availability?.status !== "unavailable") {
+    s.push("Define what type of project you want to join");
+  }
   return s;
 }
 
-function buildMissing({ portfolioLinks, profile }) {
+function buildMissing({ availability, portfolioLinks }) {
   const m = [];
   if (!portfolioLinks.length) m.push("portfolio link");
-  if (!profile.preferred_time_commitment) m.push("availability");
-  return m;
+  return reconcileAvailabilityMissingInformation(m, availability);
 }
 
 function capitalize(s) {

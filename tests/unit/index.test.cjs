@@ -24,6 +24,7 @@ require("./skills.test.cjs");
 require("./skill-banner.test.cjs");
 require("./profile-skills-ui.test.cjs");
 require("./resend-webhook.test.cjs");
+require("./availability.test.cjs");
 require("./cv-generator.test.cjs");
 require("./cv-editor-ui.test.cjs");
 require("./cv-route-consolidation.test.cjs");

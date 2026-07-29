@@ -2,10 +2,19 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
-const { buildCvFromProfile, improveSummaryWithAI } = loadSourceModule("src/lib/cv-generator.js", [
-  "buildCvFromProfile",
-  "improveSummaryWithAI",
+const availabilityHelpers = loadSourceModule("src/lib/availability.js", [
+  "buildAvailabilityContent",
+  "normalizeAvailability",
+  "reconcileAvailabilityMissingInformation",
 ]);
+const { buildCvFromProfile, improveSummaryWithAI } = loadSourceModule(
+  "src/lib/cv-generator.js",
+  ["buildCvFromProfile", "improveSummaryWithAI"],
+  {
+    stripImports: true,
+    sandbox: availabilityHelpers,
+  }
+);
 
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
@@ -73,6 +82,48 @@ test("buildCvFromProfile records useful gaps for incomplete profiles", () => {
     "Define what type of project you want to join",
   ]);
   assert.deepEqual(plain(cv.missing_information), ["portfolio link", "availability"]);
+});
+
+test("buildCvFromProfile treats explicit unavailable as complete availability", () => {
+  const cv = buildCvFromProfile({
+    availability_answered: true,
+    availability_status: "unavailable",
+    bio: "I might be open to opportunities later.",
+    display_name: "Resting Member",
+    primary_role: "Producer",
+  });
+  const availabilitySection = cv.sections.find(
+    (section) => section.section_type === "availability"
+  );
+
+  assert.equal(
+    availabilitySection.content_json.availability_status,
+    "unavailable"
+  );
+  assert.equal(
+    availabilitySection.content_json.availability_answered,
+    true
+  );
+  assert.doesNotMatch(cv.summary, /Looking for/u);
+  assert.doesNotMatch(
+    cv.suggested_improvements.join(" "),
+    /type of project you want to join/iu
+  );
+  assert.deepEqual(plain(cv.missing_information), ["portfolio link"]);
+});
+
+test("buildCvFromProfile does not infer availability from profile prose", () => {
+  const cv = buildCvFromProfile({
+    about_me: "Open to paid work and available for projects.",
+    bio: "Looking for a new team.",
+    display_name: "New Member",
+    primary_role: "2D Artist",
+  });
+
+  assert.deepEqual(plain(cv.missing_information), [
+    "portfolio link",
+    "availability",
+  ]);
 });
 
 test("improveSummaryWithAI falls back to the baseline summary when AI is not configured", async () => {

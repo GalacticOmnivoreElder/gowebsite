@@ -24,7 +24,7 @@ export function ProfileSectionTabs() {
         </TabsTrigger>
         <TabsTrigger value="cv" className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
-          My CV
+          GameDev Passport
         </TabsTrigger>
         <TabsTrigger value="projects" className="flex items-center gap-2">
           <Briefcase className="h-4 w-4" />

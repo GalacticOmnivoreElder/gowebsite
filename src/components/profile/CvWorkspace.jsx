@@ -13,11 +13,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/ui/radio-group";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
 import { CvDownloadButton } from "@/components/profile/CvDownloadButton";
 import { ProfileSectionTabs } from "@/components/profile/ProfileSectionTabs";
 import { toast } from "@/components/ui/use-toast";
+import {
+  normalizeAvailability,
+  reconcileAvailabilityMissingInformation,
+} from "@/lib/availability";
 import {
   AlertCircle,
   CheckCircle,
@@ -30,7 +38,7 @@ import {
 
 const CV_DESTINATION = "/profile/cv";
 const UNSAVED_CHANGES_MESSAGE =
-  "You have unsaved CV changes. Leave this section and discard them?";
+  "You have unsaved GameDev Passport changes. Leave this section and discard them?";
 
 async function authedFetch(url, method, body) {
   const token = await auth.currentUser.getIdToken();
@@ -158,18 +166,16 @@ function sectionBody(section) {
       ) : (
         <span className="text-sm text-muted-foreground">No links</span>
       );
-    case "availability":
+    case "availability": {
+      const availability = normalizeAvailability({ availability: c });
       return (
         <p className="text-sm text-muted-foreground">
-          {[
-            c.available_for_projects ? "Available for projects" : "Not seeking projects",
-            c.available_for_paid_work ? "Open to paid work" : null,
-            c.preferred_time_commitment,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
+          {availability.hasExplicitSelection
+            ? availability.labels.join(" · ")
+            : "Availability has not been specified."}
         </p>
       );
+    }
     case "interests": {
       const rows = [
         ["Looking for", c.looking_for],
@@ -436,27 +442,72 @@ function CvSectionEditor({ section, onChange }) {
         </div>
       );
       break;
-    case "availability":
+    case "availability": {
+      const availability = normalizeAvailability({ availability: content });
+      const setAvailabilityStatus = (availability_status) =>
+        setContent({
+          availability_answered: true,
+          availability_status,
+          ...(availability_status === "unavailable"
+            ? {
+                available_for_projects: false,
+                available_for_paid_work: false,
+                preferred_time_commitment: null,
+              }
+            : {}),
+        });
       fields = (
         <div className="space-y-4">
-          <CheckRow
-            checked={!!content.available_for_projects}
-            onChange={(available_for_projects) => setContent({ available_for_projects })}
-            label="Available for projects"
-          />
-          <CheckRow
-            checked={!!content.available_for_paid_work}
-            onChange={(available_for_paid_work) => setContent({ available_for_paid_work })}
-            label="Open to paid work"
-          />
-          <Field
-            label="Preferred time commitment"
-            value={content.preferred_time_commitment}
-            onChange={(preferred_time_commitment) => setContent({ preferred_time_commitment })}
-          />
+          <div className="space-y-2">
+            <Label>Current availability</Label>
+            <RadioGroup
+              value={
+                availability.hasExplicitSelection ? availability.status : ""
+              }
+              onValueChange={setAvailabilityStatus}
+              className="gap-3"
+              aria-label="Current availability"
+            >
+              <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3">
+                <RadioGroupItem value="available" />
+                <span className="text-sm">Available for opportunities</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3">
+                <RadioGroupItem value="unavailable" />
+                <span className="text-sm">Not currently available</span>
+              </label>
+            </RadioGroup>
+          </div>
+          {availability.status === "available" ? (
+            <>
+              <CheckRow
+                checked={!!content.available_for_projects}
+                onChange={(available_for_projects) =>
+                  setContent({ available_for_projects })
+                }
+                label="Available for projects"
+              />
+              <CheckRow
+                checked={!!content.available_for_paid_work}
+                onChange={(available_for_paid_work) =>
+                  setContent({ available_for_paid_work })
+                }
+                label="Open to paid work"
+              />
+              <Field
+                label="Preferred time commitment"
+                value={content.preferred_time_commitment}
+                onChange={(preferred_time_commitment) =>
+                  setContent({ preferred_time_commitment })
+                }
+                placeholder="e.g. 5–10 hours per week"
+              />
+            </>
+          ) : null}
         </div>
       );
       break;
+    }
     case "interests":
       fields = (
         <div className="space-y-4">
@@ -588,6 +639,19 @@ const CvWorkspace = observer(() => {
       ),
     [cv, draftCv, editing]
   );
+  const activePassport = editing ? draftCv : cv;
+  const activeAvailabilitySection = activePassport?.sections?.find(
+    (section) => section.section_type === "availability"
+  );
+  const activeAvailability = normalizeAvailability({
+    availability: activeAvailabilitySection?.content_json,
+    profile: ownerProfile,
+  });
+  const passportMissingInformation =
+    reconcileAvailabilityMissingInformation(
+      cv?.missing_information,
+      activeAvailability
+    );
 
   useEffect(() => {
     if (!authReady) return;
@@ -738,7 +802,7 @@ const CvWorkspace = observer(() => {
     if (saved) {
       setEditing(false);
       toast({
-        title: "CV saved",
+        title: "GameDev Passport saved",
         description: "Your latest changes and visibility settings are secure.",
       });
     }
@@ -750,8 +814,9 @@ const CvWorkspace = observer(() => {
     );
     if (published) {
       toast({
-        title: "CV published",
-        description: "Your GO CV is ready to use for project applications.",
+        title: "GameDev Passport published",
+        description:
+          "Your GameDev Passport is ready to use for project applications.",
       });
     }
   };
@@ -760,7 +825,7 @@ const CvWorkspace = observer(() => {
     if (
       cv &&
       !window.confirm(
-        "Refresh your CV from your onboarding answers? This replaces the current CV content."
+        "Refresh your GameDev Passport from your onboarding answers? This replaces the current Passport content."
       )
     ) {
       return;
@@ -772,7 +837,9 @@ const CvWorkspace = observer(() => {
     if (generated) {
       setEditing(false);
       toast({
-        title: cv ? "CV refreshed" : "CV generated",
+        title: cv
+          ? "GameDev Passport refreshed"
+          : "GameDev Passport generated",
         description: "Review the generated details before publishing.",
       });
     }
@@ -822,7 +889,7 @@ const CvWorkspace = observer(() => {
           >
             <LoadingSpinner />
             <p className="text-sm text-muted-foreground">
-              Loading your GO CV…
+              Loading your GameDev Passport…
             </p>
           </CardContent>
         </Card>
@@ -836,7 +903,7 @@ const CvWorkspace = observer(() => {
           <CardContent className="flex min-h-[300px] flex-col items-center justify-center px-6 text-center">
             <AlertCircle className="mb-4 h-10 w-10 text-destructive" />
             <h1 className="font-heading text-2xl font-bold">
-              Your CV could not be loaded
+              Your GameDev Passport could not be loaded
             </h1>
             <p className="mt-2 max-w-lg text-muted-foreground">{error}</p>
             <Button
@@ -858,16 +925,19 @@ const CvWorkspace = observer(() => {
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
             <Sparkles className="mb-4 h-10 w-10 text-primary" />
             <h1 className="font-heading text-3xl font-bold">
-              Build your GO CV
+              Build your GameDev Passport
             </h1>
             <p className="mt-3 max-w-xl text-muted-foreground">
-              Generate a professional CV from your Galactic Omnivore
-              onboarding answers, then review, publish, and download it.
+              Your GameDev Passport is a reusable game-development resume/CV
+              that you can publish, download, and use when applying to
+              projects.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
               <Button onClick={generateCv} disabled={!!busy}>
                 <Sparkles className="mr-2 h-4 w-4" />
-                {busy === "generate" ? "Generating…" : "Generate my CV"}
+                {busy === "generate"
+                  ? "Generating…"
+                  : "Generate my GameDev Passport"}
               </Button>
               <Button asChild variant="outline">
                 <Link href="/onboarding">Complete onboarding</Link>
@@ -900,11 +970,12 @@ const CvWorkspace = observer(() => {
                 id="cv-page-title"
                 className="mt-2 font-heading text-3xl font-bold sm:text-4xl"
               >
-                Your GO CV
+                GameDev Passport
               </h1>
               <p className="mt-2 text-muted-foreground">
-                Shape your professional story, control who can discover it,
-                and export a polished copy for your next mission.
+                Your GameDev Passport is a reusable game-development resume/CV
+                that you can publish, download, and use when applying to
+                projects.
               </p>
             <div className="mt-4 flex flex-wrap items-center gap-2" aria-live="polite">
               <Badge variant={cv.status === "active" ? "default" : "secondary"}>
@@ -964,17 +1035,18 @@ const CvWorkspace = observer(() => {
           </div>
         </section>
 
-        {cv.suggested_improvements?.length || cv.missing_information?.length ? (
+        {cv.suggested_improvements?.length ||
+        passportMissingInformation.length ? (
           <Card className="border-amber-500/30">
             <CardContent className="pt-6">
               <h2 className="mb-2 font-medium">
-                Suggestions to strengthen your CV
+                Suggestions to strengthen your GameDev Passport
               </h2>
               <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                 {cv.suggested_improvements?.map((suggestion, index) => (
                   <li key={`suggestion-${index}`}>{suggestion}</li>
                 ))}
-                {cv.missing_information?.map((item, index) => (
+                {passportMissingInformation.map((item, index) => (
                   <li key={`missing-${index}`}>{item}</li>
                 ))}
               </ul>
@@ -987,7 +1059,7 @@ const CvWorkspace = observer(() => {
             <CardTitle className="min-w-0 flex-1 font-heading">
               {editing ? (
                 <Field
-                  label="CV title"
+                  label="Passport title"
                   value={draftCv.title}
                   onChange={(title) => setDraftCv({ ...draftCv, title })}
                 />
@@ -1073,7 +1145,7 @@ const CvWorkspace = observer(() => {
 
         <div className="text-center">
           <Button variant="outline" onClick={() => navigateTo("/projects")}>
-            Use this CV to apply to projects
+            Use this GameDev Passport to apply to projects
           </Button>
         </div>
     </ProfileCvFrame>

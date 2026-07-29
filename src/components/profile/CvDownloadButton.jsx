@@ -26,13 +26,13 @@ export function CvDownloadButton({
       const model = buildCvExportModel({ profile, currentUser, projects });
       const result = await downloadCvPdf(model);
       toast({
-        title: "CV ready",
+        title: "GameDev Passport ready",
         description: `${result.filename} has been downloaded.`,
       });
     } catch (error) {
-      console.error("CV download failed:", error);
+      console.error("GameDev Passport download failed:", error);
       toast({
-        title: "Could not download CV",
+        title: "Could not download GameDev Passport",
         description:
           error?.message ||
           "Please try again. Your profile data has not been changed.",
@@ -57,7 +57,7 @@ export function CvDownloadButton({
       ) : (
         <Download className="mr-2 h-4 w-4" />
       )}
-      {isGenerating ? "Preparing PDF…" : "Download CV"}
+      {isGenerating ? "Preparing PDF…" : "Download Passport PDF"}
     </Button>
   );
 }

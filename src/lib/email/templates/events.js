@@ -113,9 +113,9 @@ function eventCopy(type, data) {
               ? "With GO Community, you can apply to open community projects, access periodic resource drops, and use member learning resources."
               : "Your account is ready. You can browse public projects now and choose a membership whenever you are ready to apply or create a project.";
         const steps = [
-          "Finish onboarding to create your GO profile and a draft GO CV.",
+          "Finish onboarding to create your GO profile and a draft GameDev Passport.",
           "Complete or update your profile so collaborators can understand your skills and experience.",
-          "Review and update your GO CV before publishing it.",
+          "Review and update your GameDev Passport before publishing it.",
           "Explore projects and opportunities across the community.",
           "Browse member resources and packages.",
         ];
@@ -123,7 +123,7 @@ function eventCopy(type, data) {
           subject: "Welcome to Galactic Omnivore",
           heading: "Welcome to Galactic Omnivore",
           preheader:
-            "Start with your profile, GO CV, projects, and member resources.",
+            "Start with your profile, GameDev Passport, projects, and member resources.",
           body:
             greeting(data) +
             paragraph(
@@ -139,7 +139,7 @@ function eventCopy(type, data) {
           ctaUrl: onboardingUrl,
           secondaryCtas: [
             { label: "Complete your profile", url: profileUrl },
-            { label: "Build or update your GO CV", url: cvUrl },
+            { label: "Build or update your GameDev Passport", url: cvUrl },
             { label: "Explore projects", url: projectsUrl },
             { label: "Browse member resources", url: resourcesUrl },
           ],
@@ -150,8 +150,8 @@ function eventCopy(type, data) {
         const plan = membershipPlan(data.tier);
         const membershipName = plan?.name || "Galactic Omnivore";
         const progressCopy = data.onboardingStarted
-          ? "You have already made a start. Continue where you left off to finish your GO profile and generate your draft GO CV."
-          : "Start onboarding to create your GO profile and generate a draft GO CV that you can review before publishing.";
+          ? "You have already made a start. Continue where you left off to finish your GO profile and generate your draft GameDev Passport."
+          : "Start onboarding to create your GO profile and generate a draft GameDev Passport that you can review before publishing.";
         const tierEnding =
           data.tier === "company"
             ? "Once your profile is ready, you can create projects, review applicants, build teams, and use member resources."
@@ -165,7 +165,7 @@ function eventCopy(type, data) {
           subject: "Finish setting up your Galactic Omnivore membership",
           heading: "Your GO profile is waiting",
           preheader:
-            "Complete onboarding to create your GO profile and draft GO CV.",
+            "Complete onboarding to create your GO profile and draft GameDev Passport.",
           body:
             greeting(data) +
             paragraph(
@@ -188,10 +188,10 @@ function eventCopy(type, data) {
         heading: "Profile complete",
         preheader: "Your profile details have been saved.",
         body: paragraph(
-          "Your onboarding details are saved. You can now review, generate, and publish your GO CV."
+          "Your onboarding details are saved. You can now review, generate, and publish your GameDev Passport."
         ),
-        text: "Your onboarding details are saved. Review and publish your GO CV.",
-        ctaLabel: "Review your CV",
+        text: "Your onboarding details are saved. Review and publish your GameDev Passport.",
+        ctaLabel: "Review your GameDev Passport",
         ctaUrl: absoluteSiteUrl("/profile/cv"),
       };
     case "billing.membership_activated":

@@ -3,6 +3,11 @@ const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs");
 
+const availabilityHelpers = loadSourceModule("src/lib/availability.js", [
+  "normalizeAvailability",
+  "reconcileAvailabilityMissingInformation",
+]);
+
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -88,6 +93,7 @@ function loadRoute({ user = { uid: "user-1" }, seed = {} } = {}) {
           aiImprovementCalls.push({ profile, summary });
           return "Improved summary";
         },
+        ...availabilityHelpers,
         serializeFirestoreDate: (value) => value?.toISOString?.() || value,
       },
     }
@@ -245,6 +251,57 @@ test("PATCH /api/me/cv only stores allowed editable fields", async () => {
     true
   );
   assert.equal(route.adminDb.docs.users["user-1"].profilePrivacy, "public");
+});
+
+test("PATCH /api/me/cv normalizes and synchronizes explicit availability", async () => {
+  const route = loadRoute({
+    seed: {
+      go_cvs: {
+        "user-1": {
+          missing_information: ["portfolio link", "availability"],
+          status: "draft",
+          user_id: "user-1",
+        },
+      },
+    },
+  });
+
+  const response = await route.PATCH(
+    createRequest({
+      jsonBody: {
+        sections: [
+          {
+            content_json: {
+              availability_answered: true,
+              availability_status: "unavailable",
+              available_for_paid_work: true,
+              available_for_projects: true,
+            },
+            section_type: "availability",
+            title: "Availability",
+          },
+        ],
+      },
+    })
+  );
+
+  const storedAvailability =
+    response.body.cv.sections[0].content_json;
+  assert.equal(storedAvailability.availability_answered, true);
+  assert.equal(storedAvailability.availability_status, "unavailable");
+  assert.equal(storedAvailability.available_for_projects, false);
+  assert.equal(storedAvailability.available_for_paid_work, false);
+  assert.deepEqual(plain(response.body.cv.missing_information), [
+    "portfolio link",
+  ]);
+  assert.equal(
+    route.adminDb.docs.user_profiles["user-1"].availability_status,
+    "unavailable"
+  );
+  assert.equal(
+    route.adminDb.docs.user_profiles["user-1"].availability_answered,
+    true
+  );
 });
 
 test("PUT /api/me/cv publishes the current user's CV", async () => {

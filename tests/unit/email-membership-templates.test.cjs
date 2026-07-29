@@ -101,7 +101,7 @@ for (const tierCase of tierCases) {
 
     assert.match(welcome.html, new RegExp(tierCase.name.replace("GO ", "")));
     assert.match(welcome.text, /Finish onboarding:/);
-    assert.match(welcome.text, /Build or update your GO CV:/);
+    assert.match(welcome.text, /Build or update your GameDev Passport:/);
     assert.match(welcome.text, /Explore projects:/);
     assert.match(welcome.text, /Browse member resources:/);
     assert.match(reminder.html, new RegExp(tierCase.name));

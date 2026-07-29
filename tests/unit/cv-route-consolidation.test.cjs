@@ -20,6 +20,12 @@ test("the canonical profile CV route renders the shared CV workspace", () => {
   assert.match(workspace, /visibility_job_matching/);
   assert.match(workspace, /CvDownloadButton/);
   assert.match(workspace, /UNSAVED_CHANGES_MESSAGE/);
+  assert.match(route, /GameDev Passport \| Galactic Omnivore/);
+  assert.match(
+    workspace,
+    /Your GameDev Passport is a reusable game-development resume\/CV/
+  );
+  assert.match(workspace, /use when applying to\s+projects/);
 });
 
 test("legacy /cv preserves query parameters and redirects to /profile/cv", () => {
@@ -30,20 +36,24 @@ test("legacy /cv preserves query parameters and redirects to /profile/cv", () =>
   assert.match(legacyRoute, /redirect\(`\/profile\/cv/);
 });
 
-test("authenticated navigation uses the canonical profile CV destination", () => {
+test("headers omit Passport navigation while Profile keeps the canonical destination", () => {
   const header = read("src/components/Header.jsx");
   const missionHub = read("src/components/profile/MissionHub.jsx");
   const onboarding = read("src/app/onboarding/page.js");
   const emailEvents = read("src/lib/email/templates/events.js");
   const profilePage = read("src/app/(main)/profile/page.js");
+  const profileTabs = read("src/components/profile/ProfileSectionTabs.jsx");
 
-  for (const source of [header, missionHub, onboarding, emailEvents]) {
+  for (const source of [missionHub, onboarding, emailEvents]) {
     assert.match(source, /\/profile\/cv/);
   }
+  assert.doesNotMatch(header, /\/profile\/cv/);
+  assert.doesNotMatch(header, /My CV|GameDev Passport/);
   assert.doesNotMatch(header, /href="\/cv"/);
   assert.doesNotMatch(missionHub, /href="\/cv"/);
   assert.match(profilePage, /<ProfileSectionTabs \/>/);
   assert.match(profilePage, /router\.push\("\/profile\/cv"\)/);
+  assert.match(profileTabs, /GameDev Passport/);
 });
 
 test("the CV workspace preserves the intended destination through authentication", () => {
@@ -54,4 +64,28 @@ test("the CV workspace preserves the intended destination through authentication
     workspace,
     /router\.replace\(`\/login\?redirect=\$\{encodeURIComponent\(CV_DESTINATION\)\}`\)/
   );
+});
+
+test("user-facing Passport surfaces no longer use My CV or GO CV headings", () => {
+  const sources = [
+    read("src/components/profile/CvWorkspace.jsx"),
+    read("src/components/profile/MissionHub.jsx"),
+    read("src/components/profile/ProfileSectionTabs.jsx"),
+    read("src/app/onboarding/page.js"),
+  ];
+
+  for (const source of sources) {
+    assert.doesNotMatch(source, /My CV|GO CV/);
+  }
+});
+
+test("onboarding and Passport editing expose explicit availability controls", () => {
+  const onboarding = read("src/app/onboarding/page.js");
+  const workspace = read("src/components/profile/CvWorkspace.jsx");
+
+  for (const source of [onboarding, workspace]) {
+    assert.match(source, /Available for opportunities/);
+    assert.match(source, /Not currently available/);
+    assert.match(source, /RadioGroup/);
+  }
 });

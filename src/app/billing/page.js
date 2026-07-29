@@ -572,28 +572,6 @@ const BillingPage = observer(() => {
           </CardContent>
         </Card>
 
-        {/* Quick Actions for non-members */}
-        {!user?.activeMember && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Get Started</CardTitle>
-              <CardDescription>
-                Subscribe to access premium content
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Join our community and get access to exclusive features and
-                content.
-              </p>
-            </CardContent>
-            <CardFooter>
-              <SubscribeButton>
-                Subscribe Now - ${actualPrice}/month
-              </SubscribeButton>
-            </CardFooter>
-          </Card>
-        )}
       </div>
     </div>
   );

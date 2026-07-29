@@ -47,14 +47,10 @@ const Header = observer(() => {
     return pathname?.startsWith(path) ? "default" : "ghost";
   };
 
-  const isMyCvActive =
-    pathname?.startsWith("/profile/cv") ||
-    pathname?.startsWith("/cv") ||
-    pathname?.startsWith("/onboarding")
+  const isProfileActive =
+    pathname?.startsWith("/profile") || pathname?.startsWith("/onboarding")
       ? "default"
       : "ghost";
-  const isProfileActive =
-    pathname === "/profile" ? "default" : "ghost";
 
   // Function to handle navigation and close menu
   const handleNavigation = () => {
@@ -78,11 +74,6 @@ const Header = observer(() => {
             {user && (
               <Button asChild variant={isProfileActive} size="sm">
                 <Link href="/profile">Profile</Link>
-              </Button>
-            )}
-            {user && (
-              <Button asChild variant={isMyCvActive} size="sm">
-                <Link href="/profile/cv">My CV</Link>
               </Button>
             )}
             <Button asChild variant={isActive("/projects")} size="sm">
@@ -171,18 +162,6 @@ const Header = observer(() => {
               >
                 <Link href="/profile" onClick={handleNavigation}>
                   Profile
-                </Link>
-              </Button>
-            )}
-
-            {user && (
-              <Button
-                asChild
-                variant={isMyCvActive}
-                className="justify-start"
-              >
-                <Link href="/profile/cv" onClick={handleNavigation}>
-                  My CV
                 </Link>
               </Button>
             )}

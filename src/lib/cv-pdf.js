@@ -258,9 +258,9 @@ export function buildCvPdfDefinition(model = {}) {
     pageSize: "A4",
     pageMargins: [40, 48, 40, 36],
     info: {
-      title: `${text(model.name) || "GO Member"} - Galactic Omnivore CV`,
+      title: `${text(model.name) || "GO Member"} - GameDev Passport`,
       author: text(model.name) || "GO Member",
-      subject: "Professional game development CV",
+      subject: "Game development resume/CV",
       creator: "Galactic Omnivore",
     },
     defaultStyle: {
@@ -408,7 +408,7 @@ export async function downloadCvPdf(model) {
   const objectUrl = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = objectUrl;
-  anchor.download = model.filename || "go-member-go-cv.pdf";
+  anchor.download = model.filename || "go-member-gamedev-passport.pdf";
   anchor.rel = "noopener";
   document.body.appendChild(anchor);
   anchor.click();

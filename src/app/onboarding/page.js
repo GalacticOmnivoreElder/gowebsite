@@ -12,6 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/ui/radio-group";
 import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
 import {
   SkillSelector,
@@ -105,6 +109,28 @@ const OnboardingContent = observer(() => {
   const stepData = draft[step] || {};
   const setField = (key, val) =>
     setDraft((d) => ({ ...d, [step]: { ...(d[step] || {}), [key]: val } }));
+  const legacyAvailabilitySelected =
+    stepData.looking_for_projects ||
+    stepData.looking_for_paid_work ||
+    String(stepData.preferred_time_commitment || "").trim();
+  const availabilityStatus =
+    stepData.availability_status ||
+    (legacyAvailabilitySelected ? "available" : "");
+  const setAvailabilityStatus = (status) =>
+    setDraft((currentDraft) => ({
+      ...currentDraft,
+      [step]: {
+        ...(currentDraft[step] || {}),
+        availability_status: status,
+        ...(status === "unavailable"
+          ? {
+              looking_for_projects: false,
+              looking_for_paid_work: false,
+              preferred_time_commitment: "",
+            }
+          : {}),
+      },
+    }));
 
   const progress = useMemo(
     () => Math.round(((stepIndex + 1) / ONBOARDING_STEPS.length) * 100),
@@ -342,8 +368,57 @@ const OnboardingContent = observer(() => {
                 <Field label="Current goal *">
                   <Textarea rows={3} placeholder="e.g. I want to build my first playable prototype" value={stepData.current_goal || ""} onChange={(e) => setField("current_goal", e.target.value)} />
                 </Field>
-                <CheckRow checked={!!stepData.looking_for_projects} onChange={(v) => setField("looking_for_projects", v)} label="Looking for projects" />
-                <CheckRow checked={!!stepData.looking_for_paid_work} onChange={(v) => setField("looking_for_paid_work", v)} label="Looking for paid work" />
+                <Field label="Availability">
+                  <RadioGroup
+                    value={availabilityStatus}
+                    onValueChange={setAvailabilityStatus}
+                    className="gap-3"
+                    aria-label="Current availability"
+                  >
+                    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3">
+                      <RadioGroupItem value="available" className="mt-0.5" />
+                      <span>
+                        <span className="block text-sm font-medium">
+                          Available for opportunities
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          Choose the types of work you are open to below.
+                        </span>
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3">
+                      <RadioGroupItem value="unavailable" className="mt-0.5" />
+                      <span>
+                        <span className="block text-sm font-medium">
+                          Not currently available
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          Your profile will clearly show that you are not open
+                          to opportunities right now.
+                        </span>
+                      </span>
+                    </label>
+                  </RadioGroup>
+                  <p className="text-xs text-muted-foreground">
+                    Leave this unanswered if you are not ready to share your
+                    availability yet.
+                  </p>
+                </Field>
+                {availabilityStatus === "available" ? (
+                  <div className="space-y-3 rounded-lg border border-border p-4">
+                    <CheckRow checked={!!stepData.looking_for_projects} onChange={(v) => setField("looking_for_projects", v)} label="Available for projects" />
+                    <CheckRow checked={!!stepData.looking_for_paid_work} onChange={(v) => setField("looking_for_paid_work", v)} label="Open to paid work" />
+                    <Field label="Preferred time commitment (optional)">
+                      <Input
+                        placeholder="e.g. 5–10 hours per week"
+                        value={stepData.preferred_time_commitment || ""}
+                        onChange={(e) =>
+                          setField("preferred_time_commitment", e.target.value)
+                        }
+                      />
+                    </Field>
+                  </div>
+                ) : null}
                 <CheckRow checked={!!stepData.looking_for_team} onChange={(v) => setField("looking_for_team", v)} label="Looking for team members" />
                 <CheckRow checked={!!stepData.looking_for_mentorship} onChange={(v) => setField("looking_for_mentorship", v)} label="Interested in mentorship" />
                 <CheckRow checked={!!stepData.looking_for_jobs} onChange={(v) => setField("looking_for_jobs", v)} label="Interested in jobs/internships" />
@@ -392,7 +467,7 @@ const OnboardingContent = observer(() => {
                   <CheckRow
                     checked={!!stepData.consent_ai_generation}
                     onChange={(v) => setField("consent_ai_generation", v)}
-                    label="Use AI assistance to polish my generated profile/CV (optional)"
+                    label="Use AI assistance to polish my generated profile/GameDev Passport (optional)"
                   />
                   <p className="pl-7 text-xs text-muted-foreground">
                     If unchecked, GO uses deterministic templates and you can
@@ -419,7 +494,7 @@ const OnboardingContent = observer(() => {
                 </Button>
               ) : (
                 <Button onClick={complete} disabled={saving}>
-                  {saving ? "Finishing…" : "Finish & generate my GO CV"}
+                  {saving ? "Finishing…" : "Finish & generate my GameDev Passport"}
                 </Button>
               )}
             </div>
@@ -452,7 +527,8 @@ function PortfolioLinksEditor({ value = [], onChange }) {
       <div>
         <Label>Portfolio links (optional)</Label>
         <p className="text-xs text-muted-foreground">
-          Add the public links you want included in your profile and GO CV.
+          Add the public links you want included in your profile and GameDev
+          Passport.
         </p>
       </div>
       {links.map((link, index) => (

@@ -1,3 +1,8 @@
+import {
+  normalizeAvailability,
+  reconcileAvailabilityMissingInformation,
+} from "@/lib/availability";
+
 const SOCIAL_LABELS = {
   artstation: "ArtStation",
   behance: "Behance",
@@ -138,14 +143,6 @@ function formatJoinedAt(value) {
   }).format(date);
 }
 
-function buildAvailability(availability = {}) {
-  return unique([
-    availability.available_for_projects ? "Available for projects" : null,
-    availability.available_for_paid_work ? "Open to paid work" : null,
-    availability.preferred_time_commitment,
-  ]);
-}
-
 export function buildMissionProfile({
   profile = {},
   currentUser = {},
@@ -191,7 +188,11 @@ export function buildMissionProfile({
     ...compact(skillsSection.secondary_roles),
   ]);
   const tools = unique(toolsSection.tools);
-  const availability = buildAvailability(availabilitySection);
+  const availabilityState = normalizeAvailability({
+    availability: availabilitySection,
+    profile,
+  });
+  const availability = availabilityState.labels;
   const socialLinks = getVisibleSocialLinks(profile, isOwner);
   const socialVisibility = profile.socialVisibility || {};
   const canUseCvEmail =
@@ -227,7 +228,10 @@ export function buildMissionProfile({
     .filter(Boolean)
     .map((value) => ({ value, href: safeHttpUrl(value) }))
     .filter((link) => link.href);
-  const missingInformation = unique(cv?.missing_information);
+  const missingInformation = reconcileAvailabilityMissingInformation(
+    unique(cv?.missing_information),
+    availabilityState
+  );
 
   const completionChecks = [
     Boolean(name && name !== "GO Member"),
@@ -238,6 +242,7 @@ export function buildMissionProfile({
     tools.length > 0,
     cvProjects.length > 0 || platformProjects.length > 0,
     portfolioLinks.length > 0 || socialLinks.length > 0,
+    availabilityState.hasExplicitSelection,
   ];
   const completion = Math.round(
     (completionChecks.filter(Boolean).length / completionChecks.length) * 100
@@ -245,6 +250,7 @@ export function buildMissionProfile({
 
   return {
     availability,
+    availabilityStatus: availabilityState.status,
     avatar: profile.avatar || currentUser.avatar || null,
     canHelpWith: unique(interestsSection.can_help_with),
     contact: {
@@ -261,6 +267,7 @@ export function buildMissionProfile({
       educationSection.entries || educationSection.education
     ),
     headline,
+    hasExplicitAvailability: availabilityState.hasExplicitSelection,
     intro: profile.bio || "",
     joinedAt: formatJoinedAt(
       profile.memberSince ||
@@ -292,7 +299,7 @@ export function sanitizeCvFilename(name) {
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
 
-  return `${slug || "go-member"}-go-cv.pdf`;
+  return `${slug || "go-member"}-gamedev-passport.pdf`;
 }
 
 function socialValue(model, platform) {

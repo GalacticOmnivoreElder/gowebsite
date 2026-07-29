@@ -143,7 +143,7 @@ export async function PATCH(request) {
   return NextResponse.json({ ok: true, current_step: update.current_step });
 }
 
-// PUT /api/onboarding — complete: validate consent, build GO Profile + GO CV.
+// PUT /api/onboarding — complete: validate consent and build profile data.
 export async function PUT(request) {
   const { user, error } = await requireUser(request);
   if (error) return error;
@@ -251,6 +251,21 @@ export async function PUT(request) {
           : null,
       ].filter(Boolean);
   const discord = draft.discord || {};
+  const requestedAvailabilityStatus = ["available", "unavailable"].includes(
+    goals.availability_status
+  )
+    ? goals.availability_status
+    : null;
+  const hasLegacyAvailabilitySelection = Boolean(
+    goals.looking_for_projects ||
+      goals.looking_for_paid_work ||
+      String(goals.preferred_time_commitment || "").trim()
+  );
+  const availabilityStatus =
+    requestedAvailabilityStatus ||
+    (hasLegacyAvailabilitySelection ? "available" : null);
+  const availabilityAnswered = Boolean(availabilityStatus);
+  const isAvailable = availabilityStatus === "available";
   const profile = {
     user_id: user.uid,
     display_name: identity.display_name,
@@ -277,8 +292,14 @@ export async function PUT(request) {
     portfolio_links: portfolioLinks,
     past_projects: portfolio.past_projects || [],
     current_goal: goals.current_goal || null,
-    looking_for_projects: !!goals.looking_for_projects,
-    looking_for_paid_work: !!goals.looking_for_paid_work,
+    availability_status: availabilityStatus,
+    availability_answered: availabilityAnswered,
+    looking_for_projects: isAvailable && !!goals.looking_for_projects,
+    looking_for_paid_work: isAvailable && !!goals.looking_for_paid_work,
+    preferred_time_commitment: isAvailable
+      ? String(goals.preferred_time_commitment || "").trim().slice(0, 100) ||
+        null
+      : null,
     looking_for_team: !!goals.looking_for_team,
     looking_for_mentorship: !!goals.looking_for_mentorship,
     looking_for_jobs: !!goals.looking_for_jobs,

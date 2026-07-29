@@ -275,7 +275,7 @@ const SubscriptionSuccessPage = observer(() => {
                     <h2 className="font-semibold">Quick onboarding</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Onboarding takes {ONBOARDING_ESTIMATE} and helps create
-                      your profile and draft GO CV.
+                      your profile and draft GameDev Passport.
                     </p>
                   </div>
                   <div className="rounded-md border border-border bg-background/60 p-4">
@@ -377,7 +377,7 @@ const SubscriptionSuccessPage = observer(() => {
               />
               <p className="text-sm leading-relaxed text-white/85">
                 Onboarding takes {ONBOARDING_ESTIMATE} and helps us create your
-                profile and draft GO CV.
+                profile and draft GameDev Passport.
               </p>
             </div>
 

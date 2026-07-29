@@ -77,3 +77,11 @@ test("billing page returns members to their profile", () => {
   assert.doesNotMatch(billingPageSource, /router\.push\("\/dashboard"\)/);
   assert.doesNotMatch(billingPageSource, /Back to Dashboard/);
 });
+
+test("billing presents one subscription CTA and no redundant Get Started card", () => {
+  assert.doesNotMatch(billingPageSource, /Get Started/);
+  assert.equal(
+    (billingPageSource.match(/Subscribe Now/g) || []).length,
+    1
+  );
+});

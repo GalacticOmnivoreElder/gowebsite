@@ -2,17 +2,28 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
+const availabilityHelpers = loadSourceModule("src/lib/availability.js", [
+  "normalizeAvailability",
+  "reconcileAvailabilityMissingInformation",
+]);
 const {
   buildCvExportModel,
   buildMissionProfile,
   redactCvContact,
   sanitizeCvFilename,
-} = loadSourceModule("src/lib/profile-mission.js", [
-  "buildCvExportModel",
-  "buildMissionProfile",
-  "redactCvContact",
-  "sanitizeCvFilename",
-]);
+} = loadSourceModule(
+  "src/lib/profile-mission.js",
+  [
+    "buildCvExportModel",
+    "buildMissionProfile",
+    "redactCvContact",
+    "sanitizeCvFilename",
+  ],
+  {
+    stripImports: true,
+    sandbox: availabilityHelpers,
+  }
+);
 
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
@@ -120,7 +131,7 @@ test("CV export includes only contact channels made public by the owner", () => 
     plain(model.socialLinks.map((link) => link.platform)),
     ["github"]
   );
-  assert.equal(model.filename, "ada-lovelace-go-cv.pdf");
+  assert.equal(model.filename, "ada-lovelace-gamedev-passport.pdf");
   assert.equal(model.billing, undefined);
   assert.equal(model.applications, undefined);
 });
@@ -133,7 +144,7 @@ test("CV export remains usable for incomplete profiles", () => {
   assert.equal(model.name, "New Pilot");
   assert.equal(model.headline, "Game development professional");
   assert.deepEqual(plain(model.experience), []);
-  assert.equal(model.filename, "new-pilot-go-cv.pdf");
+  assert.equal(model.filename, "new-pilot-gamedev-passport.pdf");
 });
 
 test("CV contact is exported when its matching visibility control is public", () => {
@@ -153,7 +164,7 @@ test("CV contact is exported when its matching visibility control is public", ()
 test("CV filenames are sanitized and contact redaction preserves non-sensitive fields", () => {
   assert.equal(
     sanitizeCvFilename("  Žan / QA: Lead  "),
-    "zan-qa-lead-go-cv.pdf"
+    "zan-qa-lead-gamedev-passport.pdf"
   );
 
   const redacted = redactCvContact(cv(), {
@@ -168,4 +179,74 @@ test("CV filenames are sanitized and contact redaction preserves non-sensitive f
   assert.equal(contact.discord_username, undefined);
   assert.equal(contact.location, "Skopje");
   assert.equal(contact.display_name, "Ada Lovelace");
+});
+
+test("profile availability badges and suggestions use the same normalized state", () => {
+  const model = buildMissionProfile({
+    profile: {
+      username: "Available Member",
+      cv: cv({
+        missing_information: ["availability"],
+        sections: [
+          ...cv().sections,
+          {
+            section_type: "availability",
+            content_json: {
+              availability_answered: true,
+              availability_status: "available",
+              available_for_projects: true,
+              available_for_paid_work: false,
+            },
+          },
+        ],
+      }),
+    },
+    isOwner: true,
+  });
+
+  assert.deepEqual(plain(model.availability), ["Available for projects"]);
+  assert.equal(model.hasExplicitAvailability, true);
+  assert.doesNotMatch(model.missingInformation.join(" "), /availability/iu);
+});
+
+test("explicit unavailable completes availability without displaying an add prompt", () => {
+  const model = buildMissionProfile({
+    profile: {
+      username: "Unavailable Member",
+      cv: cv({
+        missing_information: ["availability"],
+        sections: [
+          ...cv().sections,
+          {
+            section_type: "availability",
+            content_json: {
+              availability_answered: true,
+              availability_status: "unavailable",
+              available_for_projects: false,
+              available_for_paid_work: false,
+            },
+          },
+        ],
+      }),
+    },
+    isOwner: true,
+  });
+
+  assert.deepEqual(plain(model.availability), ["Not currently available"]);
+  assert.equal(model.availabilityStatus, "unavailable");
+  assert.doesNotMatch(model.missingInformation.join(" "), /availability/iu);
+});
+
+test("missing structured availability produces the availability recommendation", () => {
+  const model = buildMissionProfile({
+    profile: {
+      username: "Prose Only",
+      bio: "Available for projects.",
+      cv: cv({ missing_information: [] }),
+    },
+    isOwner: true,
+  });
+
+  assert.deepEqual(plain(model.availability), []);
+  assert.match(model.missingInformation.join(" "), /availability/iu);
 });

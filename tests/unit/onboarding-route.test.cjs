@@ -320,3 +320,42 @@ test("onboarding completes without AI consent and skips AI generation", async ()
   assert.deepEqual(response.body.profile.needs_help_with, ["Audio Design"]);
   assert.equal(response.body.cv.summary, "Updated summary");
 });
+
+test("onboarding stores explicit unavailable separately from unanswered", async () => {
+  const route = loadRoute({
+    onboarding_sessions: {
+      "user-1": {
+        draft_data_json: {
+          consent: {
+            consent_ai_generation: false,
+            consent_share_with_admins: true,
+            consent_store_data: true,
+          },
+          goals: {
+            availability_status: "unavailable",
+            looking_for_paid_work: true,
+            looking_for_projects: true,
+            preferred_time_commitment: "Full time",
+          },
+          identity: {
+            display_name: "Ada",
+            full_name: "Ada Lovelace",
+          },
+          "role-skills": {
+            primary_role: "Technical Artist",
+          },
+        },
+        status: "in_progress",
+      },
+    },
+  });
+
+  const response = await route.PUT(createRequest());
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.profile.availability_answered, true);
+  assert.equal(response.body.profile.availability_status, "unavailable");
+  assert.equal(response.body.profile.looking_for_projects, false);
+  assert.equal(response.body.profile.looking_for_paid_work, false);
+  assert.equal(response.body.profile.preferred_time_commitment, null);
+});

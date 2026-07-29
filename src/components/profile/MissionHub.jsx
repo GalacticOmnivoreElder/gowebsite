@@ -181,7 +181,7 @@ function ExperienceList({ items }) {
   if (!items.length) {
     return (
       <div className="rounded-lg border border-dashed border-white/10 bg-black/10 p-6 text-sm text-muted-foreground">
-        No experience entries have been added to this GO CV yet.
+        No experience entries have been added to this GameDev Passport yet.
       </div>
     );
   }
@@ -490,10 +490,10 @@ export default function MissionHub({
   );
   const cvStatus =
     model.cvStatus === "active"
-      ? "CV published"
+      ? "Passport published"
       : model.cvStatus === "draft"
-      ? "CV draft"
-      : "CV not generated";
+      ? "Passport draft"
+      : "Passport not generated";
   const profileVisibility =
     profile?.profilePrivacy === "private" ? "Private profile" : "Public profile";
   const missing = [
@@ -574,7 +574,11 @@ export default function MissionHub({
                       <Badge
                         key={item}
                         variant="secondary"
-                        className="bg-emerald-500/10 text-emerald-300"
+                        className={
+                          model.availabilityStatus === "unavailable"
+                            ? "bg-white/[0.07] text-muted-foreground"
+                            : "bg-emerald-500/10 text-emerald-300"
+                        }
                       >
                         <Sparkles className="mr-1 h-3 w-3" />
                         {item}
@@ -637,7 +641,7 @@ export default function MissionHub({
                   <Button variant="outline" asChild>
                     <Link href="/profile/cv">
                       <FileText className="mr-2 h-4 w-4" />
-                      Manage GO CV
+                      Manage GameDev Passport
                     </Link>
                   </Button>
                   <Button variant="ghost" asChild>
@@ -654,7 +658,7 @@ export default function MissionHub({
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            label="GO CV"
+            label="GameDev Passport"
             value={cvStatus}
             hint={model.skillLevel ? `${readableStatus(model.skillLevel)} level` : "Professional record"}
             icon={FileText}
@@ -747,7 +751,7 @@ export default function MissionHub({
           <MissionPanel title="Tools & Technologies" eyebrow="Systems loadout" icon={Wrench}>
             <TagCluster
               items={model.tools}
-              emptyText="No tools or engines are listed in this GO CV yet."
+              emptyText="No tools or engines are listed in this GameDev Passport yet."
             />
           </MissionPanel>
         </div>
@@ -852,9 +856,12 @@ export default function MissionHub({
               <div className="flex gap-3">
                 <User className="mt-0.5 h-6 w-6 shrink-0 text-primary" />
                 <div>
-                  <h2 className="font-semibold">Your GO CV is waiting for launch</h2>
+                  <h2 className="font-semibold">
+                    Your GameDev Passport is waiting for launch
+                  </h2>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Complete onboarding to generate your professional game-development CV.
+                    Complete onboarding to generate a reusable
+                    game-development resume/CV for project applications.
                   </p>
                 </div>
               </div>

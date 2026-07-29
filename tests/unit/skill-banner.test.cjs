@@ -9,10 +9,14 @@ const source = fs.readFileSync(
 );
 
 test("skill banner keeps an uninterrupted right-to-left marquee", () => {
+  assert.match(source, /const loopSkills = \[\.\.\.skills, \.\.\.skills\]/);
+  assert.match(source, /loopSkills\.map\(\(skill, index\)/);
+  assert.match(source, /aria-hidden=\{index >= skills\.length \|\| undefined\}/);
   assert.match(
     source,
     /animation:\s*go-skill-marquee-scroll 40s linear infinite/
   );
+  assert.match(source, /animation-play-state:\s*running/);
   assert.match(source, /transform:\s*translate3d\(-50%, 0, 0\)/);
   assert.doesNotMatch(source, /:hover[^}]*animation-play-state:\s*paused/s);
 });

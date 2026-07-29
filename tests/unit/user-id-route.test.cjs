@@ -13,9 +13,17 @@ const { validateProfileData } = loadSourceModule(
 const { sanitizeSkills } = loadSourceModule("src/lib/skills.js", [
   "sanitizeSkills",
 ]);
+const availabilityHelpers = loadSourceModule("src/lib/availability.js", [
+  "normalizeAvailability",
+  "reconcileAvailabilityMissingInformation",
+]);
 const { redactCvContact } = loadSourceModule(
   "src/lib/profile-mission.js",
-  ["redactCvContact"]
+  ["redactCvContact"],
+  {
+    stripImports: true,
+    sandbox: availabilityHelpers,
+  }
 );
 
 function plain(value) {
