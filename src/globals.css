@@ -366,15 +366,19 @@
 }
 
 .go-logo-spinner {
-  animation: go-logo-rotation 2.8s linear infinite;
   backface-visibility: hidden;
+  transform: translate3d(0, 0, 0) rotate(0deg);
   transform-origin: 50% 50%;
   will-change: transform;
 }
 
+.go-logo-spinner--running {
+  animation: go-logo-rotation 2.8s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mission-orbit,
-  .go-logo-spinner {
+  .go-logo-spinner--running {
     animation: none;
   }
 }

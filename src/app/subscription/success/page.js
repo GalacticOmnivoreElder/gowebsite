@@ -48,9 +48,19 @@ const SubscriptionSuccessPage = observer(() => {
   const [confirmationId, setConfirmationId] = useState(null);
   const [confirmationMode, setConfirmationMode] = useState("purchase");
   const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [logoReady, setLogoReady] = useState(false);
 
   useEffect(() => {
-    router.replace("/subscription/success", { scroll: false });
+    if (window.location.search || window.location.hash) {
+      window.history.replaceState(
+        window.history.state,
+        "",
+        "/subscription/success"
+      );
+    }
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     const verifyMembership = async () => {
@@ -151,7 +161,7 @@ const SubscriptionSuccessPage = observer(() => {
     return () => {
       cancelled = true;
     };
-  }, [router, verificationRun]);
+  }, [verificationRun]);
 
   const acknowledgeConfirmation = () => {
     acknowledgeMembershipConfirmation(confirmationId);
@@ -180,11 +190,17 @@ const SubscriptionSuccessPage = observer(() => {
           aria-live="polite"
         >
           <div
-            className="relative h-20 w-20"
+            className={`relative h-20 w-20 ${
+              logoReady ? "opacity-100" : "opacity-0"
+            }`}
             aria-hidden="true"
           >
             <span className="absolute inset-2 rounded-full bg-primary/25 blur-xl" />
-            <span className="go-logo-spinner relative block h-20 w-20">
+            <span
+              className={`go-logo-spinner relative block h-20 w-20 ${
+                logoReady ? "go-logo-spinner--running" : ""
+              }`}
+            >
               <Image
                 src="/galactic-omnivore-skull-v1-512.png"
                 alt=""
@@ -192,6 +208,18 @@ const SubscriptionSuccessPage = observer(() => {
                 sizes="80px"
                 priority
                 className="select-none object-contain"
+                onLoad={(event) => {
+                  const image = event.currentTarget;
+                  if (typeof image.decode !== "function") {
+                    setLogoReady(true);
+                    return;
+                  }
+
+                  image
+                    .decode()
+                    .catch(() => {})
+                    .finally(() => setLogoReady(true));
+                }}
               />
             </span>
           </div>

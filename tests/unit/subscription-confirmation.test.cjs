@@ -244,14 +244,21 @@ test("subscription success dialog is accessible, responsive, and links to every 
   assert.match(successPage, /navigateAfterConfirmation\(\"\/dashboard\"\)/);
   assert.match(successPage, /navigateAfterConfirmation\(\"\/projects\"\)/);
   assert.match(successPage, /go-logo-spinner/);
+  assert.match(successPage, /go-logo-spinner--running/);
   assert.match(successPage, /galactic-omnivore-skull-v1-512\.png/);
+  assert.match(successPage, /window\.history\.replaceState/);
+  assert.match(successPage, /\.decode\(\)/);
+  assert.doesNotMatch(successPage, /router\.replace/);
   assert.doesNotMatch(successPage, /select-none animate-spin/);
   assert.match(
     globalStyles,
-    /animation: go-logo-rotation 2\.8s linear infinite/
+    /\.go-logo-spinner--running \{\s*animation: go-logo-rotation 2\.8s linear infinite/
   );
   assert.match(globalStyles, /transform-origin: 50% 50%/);
-  assert.match(globalStyles, /\.go-logo-spinner \{\s*animation: none;/);
+  assert.match(
+    globalStyles,
+    /\.go-logo-spinner--running \{\s*animation: none;/
+  );
   assert.doesNotMatch(successPage, /useSearchParams/);
   assert.match(subscribeButton, /beginSubscriptionConfirmationAttempt/);
   assert.match(pricingDisplay, /beginSubscriptionConfirmationAttempt/);
