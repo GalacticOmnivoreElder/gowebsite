@@ -3,9 +3,9 @@ import { adminDb } from "@/lib/firebase-admin";
 import * as admin from "firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
 import {
-  canViewProject,
   COMPENSATION_TYPES,
-  PROJECT_STATUSES,
+  filterAndSortProjectsForDiscovery,
+  normalizeProjectDiscoveryStatus,
   PROJECT_TYPES,
   PUBLIC_PROJECT_STATUSES,
   REQUIRED_ROLES,
@@ -22,8 +22,13 @@ async function getUserFromToken(request) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const parsedPage = Number.parseInt(searchParams.get("page") || "1", 10);
+    const parsedLimit = Number.parseInt(searchParams.get("limit") || "20", 10);
+    const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+    const limit =
+      Number.isFinite(parsedLimit) && parsedLimit > 0
+        ? Math.min(parsedLimit, 100)
+        : 20;
     const search = searchParams.get("search") || "";
     const category = searchParams.get("category") || "all";
     const type = searchParams.get("type") || "all";
@@ -33,82 +38,55 @@ export async function GET(request) {
 
     // Get user to determine what projects they can see
     const user = await getUserFromToken(request);
+    const status = normalizeProjectDiscoveryStatus(requestedStatus);
 
+    if (status === null) {
+      return NextResponse.json({
+        projects: [],
+        hasMore: false,
+        pagination: { page, limit, total: 0 },
+      });
+    }
+
+    // Keep Firestore discovery queries deliberately simple. Combining status,
+    // type, visibility and dynamic orderBy fields requires many composite
+    // indexes, while orderBy also drops legacy documents missing optional
+    // fields such as budget. Filter and sort the approved set below instead.
     let query = adminDb.collection("projects");
-
-    const isAdmin = !!user?.admin;
-    const status =
-      requestedStatus === "all" || PROJECT_STATUSES.includes(requestedStatus)
-        ? requestedStatus
-        : "all";
-
-    // Apply filters. Non-admin discovery is restricted to public lifecycle states,
-    // then filtered again through canViewProject after fetch.
-    if (status !== "all") {
-      if (!isAdmin && !PUBLIC_PROJECT_STATUSES.includes(status)) {
-        return NextResponse.json({
-          projects: [],
-          hasMore: false,
-          pagination: { page, limit, total: 0 },
-        });
-      }
-      query = query.where("status", "==", status);
-    } else if (!isAdmin) {
-      query = query.where("status", "in", PUBLIC_PROJECT_STATUSES);
-    }
-
-    if (type !== "all") {
-      query = query.where("type", "==", type);
-    }
-
-    if (visibility !== "all" && VISIBILITY_OPTIONS.includes(visibility)) {
-      query = query.where("visibility", "==", visibility);
-    } else if (!user) {
-      // Non-authenticated users can only see public projects
-      query = query.where("visibility", "==", "Public");
-    }
-
-    // Apply sorting
-    const [sortField, sortDirection] = sortBy.split("_");
-    const firebaseSortField = sortField === "created" ? "createdAt" : sortField;
-    query = query.orderBy(
-      firebaseSortField,
-      sortDirection === "desc" ? "desc" : "asc"
-    );
-
-    // Apply pagination
-    const offset = (page - 1) * limit;
-    if (offset > 0) {
-      const offsetQuery = adminDb
-        .collection("projects")
-        .orderBy(firebaseSortField, sortDirection === "desc" ? "desc" : "asc")
-        .limit(offset);
-      const offsetSnapshot = await offsetQuery.get();
-      if (!offsetSnapshot.empty) {
-        const lastDoc = offsetSnapshot.docs[offsetSnapshot.docs.length - 1];
-        query = query.startAfter(lastDoc);
-      }
-    }
-
-    query = query.limit(limit + 1); // Get one extra to check if there are more
+    query =
+      status === "all"
+        ? query.where("status", "in", PUBLIC_PROJECT_STATUSES)
+        : query.where("status", "==", status);
 
     const snapshot = await query.get();
-    const projects = [];
-
-    // Fetch sourceProject names for projects that have them
-    const projectsWithSourceProjectIds = [];
-    const sourceProjectIds = new Set();
-
-    snapshot.docs.slice(0, limit).forEach((doc) => {
+    const approvedProjects = snapshot.docs.map((doc) => {
       const data = doc.data();
-      const project = {
+      return {
         id: doc.id,
         ...data,
         createdAt: serializeFirestoreDate(data.createdAt),
         updatedAt: serializeFirestoreDate(data.updatedAt),
       };
+    });
 
-      projectsWithSourceProjectIds.push(project);
+    const filteredProjects = filterAndSortProjectsForDiscovery(
+      approvedProjects,
+      {
+        category,
+        search,
+        sortBy,
+        status,
+        type,
+        visibility,
+      },
+      user
+    );
+    const offset = (page - 1) * limit;
+    const projects = filteredProjects.slice(offset, offset + limit);
+
+    // Fetch sourceProject names only for the current page.
+    const sourceProjectIds = new Set();
+    projects.forEach((project) => {
       if (project.sourceProject) {
         sourceProjectIds.add(project.sourceProject);
       }
@@ -146,18 +124,7 @@ export async function GET(request) {
       }
     }
 
-    // Apply search filter and add sourceProject details
-    projectsWithSourceProjectIds.forEach((project) => {
-      // Archived projects never appear in discovery (restore them from the
-      // owner's project page or the admin panel).
-      if (project.archived) {
-        return;
-      }
-      if (!canViewProject(project, user)) {
-        return;
-      }
-
-      // Add sourceProject details if available
+    projects.forEach((project) => {
       if (
         project.sourceProject &&
         sourceProjectsMap.has(project.sourceProject)
@@ -166,38 +133,12 @@ export async function GET(request) {
           project.sourceProject
         );
       }
-
-      // Apply search filter (client-side for now, could be improved with Algolia)
-      if (search) {
-        const searchLower = search.toLowerCase();
-        const matchesSearch =
-          project.title?.toLowerCase().includes(searchLower) ||
-          project.description?.toLowerCase().includes(searchLower) ||
-          project.goal?.toLowerCase().includes(searchLower) ||
-          project.categoryTags?.some((tag) =>
-            tag.toLowerCase().includes(searchLower)
-          );
-
-        if (matchesSearch) {
-          projects.push(project);
-        }
-      } else {
-        projects.push(project);
-      }
     });
 
-    // Apply category filter (if category tags include the specified category)
-    let filteredProjects = projects;
-    if (category !== "all") {
-      filteredProjects = projects.filter((project) =>
-        project.categoryTags?.includes(category)
-      );
-    }
-
-    const hasMore = snapshot.docs.length > limit;
+    const hasMore = offset + projects.length < filteredProjects.length;
 
     return NextResponse.json({
-      projects: filteredProjects,
+      projects,
       hasMore,
       pagination: {
         page,

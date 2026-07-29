@@ -369,12 +369,6 @@ const ProjectsPage = observer(() => {
                 Completed
               </div>
             </SelectItem>
-            <SelectItem value="pending">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                Pending Approval
-              </div>
-            </SelectItem>
             <SelectItem value="all">All Statuses</SelectItem>
           </SelectContent>
         </Select>

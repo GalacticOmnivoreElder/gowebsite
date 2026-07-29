@@ -1,20 +1,27 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
 const {
   canEditProject,
   canViewProject,
+  filterAndSortProjectsForDiscovery,
   isInvitedToProject,
   isPlatformAdmin,
   isProjectMember,
+  normalizeProjectDiscoveryStatus,
+  PROJECT_DISCOVERY_SORT_OPTIONS,
   validateArrayValues,
 } = loadSourceModule("src/lib/project-utils.js", [
   "canEditProject",
   "canViewProject",
+  "filterAndSortProjectsForDiscovery",
   "isInvitedToProject",
   "isPlatformAdmin",
   "isProjectMember",
+  "normalizeProjectDiscoveryStatus",
+  "PROJECT_DISCOVERY_SORT_OPTIONS",
   "validateArrayValues",
 ]);
 
@@ -88,4 +95,123 @@ test("validateArrayValues rejects empty, non-array, and unknown values", () => {
   assert.equal(validateArrayValues([], ["A", "B"], "field"), "field must include at least one value");
   assert.equal(validateArrayValues("A", ["A", "B"], "field"), "field must include at least one value");
   assert.equal(validateArrayValues(["C"], ["A", "B"], "field"), "field contains invalid values");
+});
+
+test("project discovery accepts only public lifecycle status filters", () => {
+  assert.equal(normalizeProjectDiscoveryStatus("all"), "all");
+  assert.equal(normalizeProjectDiscoveryStatus("Hiring"), "hiring");
+  assert.equal(normalizeProjectDiscoveryStatus("live"), "live");
+  assert.equal(normalizeProjectDiscoveryStatus("completed"), "completed");
+  assert.equal(normalizeProjectDiscoveryStatus("pending"), null);
+  assert.equal(normalizeProjectDiscoveryStatus("draft"), null);
+  assert.equal(normalizeProjectDiscoveryStatus("rejected"), null);
+});
+
+test("project discovery filters type and category case-insensitively", () => {
+  const projects = [
+    project({
+      categoryTags: ["VR/AR", "Cultural Heritage"],
+      createdAt: "2026-07-29T10:00:00.000Z",
+      duration: 40,
+      id: "glagolica",
+      title: "Glagolica",
+      type: "Art & Design",
+    }),
+    project({
+      categoryTags: ["Prototype"],
+      createdAt: "2026-07-28T10:00:00.000Z",
+      id: "game",
+      title: "Game",
+      type: "Game Development",
+    }),
+  ];
+
+  assert.deepEqual(
+    Array.from(
+      filterAndSortProjectsForDiscovery(projects, {
+        category: "cultural heritage",
+        type: " art & design ",
+      }),
+      (item) => item.id
+    ),
+    ["glagolica"]
+  );
+});
+
+test("project discovery keeps projects without optional sort fields", () => {
+  const projects = [
+    project({
+      budget: 1000,
+      createdAt: "2026-07-28T10:00:00.000Z",
+      duration: 20,
+      id: "funded",
+      title: "Funded project",
+      type: "Game Development",
+    }),
+    project({
+      createdAt: "2026-07-29T10:00:00.000Z",
+      duration: 40,
+      id: "glagolica",
+      title: "Glagolica",
+      type: "Art & Design",
+    }),
+  ];
+
+  assert.deepEqual(
+    Array.from(
+      filterAndSortProjectsForDiscovery(projects, { sortBy: "budget_desc" }),
+      (item) => item.id
+    ),
+    ["funded", "glagolica"]
+  );
+  assert.deepEqual(
+    Array.from(
+      filterAndSortProjectsForDiscovery(projects, { sortBy: "budget_asc" }),
+      (item) => item.id
+    ),
+    ["funded", "glagolica"]
+  );
+
+  PROJECT_DISCOVERY_SORT_OPTIONS.forEach((sortBy) => {
+    const sortedIds = Array.from(
+      filterAndSortProjectsForDiscovery(projects, { sortBy }),
+      (item) => item.id
+    );
+    assert.equal(sortedIds.length, 2, `${sortBy} must retain every project`);
+    assert.equal(
+      sortedIds.includes("glagolica"),
+      true,
+      `${sortBy} must retain Glagolica`
+    );
+  });
+});
+
+test("project discovery excludes pending projects even for admins and owners", () => {
+  const pendingProject = project({
+    id: "pending-project",
+    status: "pending",
+  });
+
+  assert.deepEqual(
+    Array.from(
+      filterAndSortProjectsForDiscovery([pendingProject], {}, admin),
+      (item) => item.id
+    ),
+    []
+  );
+  assert.deepEqual(
+    Array.from(
+      filterAndSortProjectsForDiscovery([pendingProject], {}, owner),
+      (item) => item.id
+    ),
+    []
+  );
+});
+
+test("the public Projects status filter does not offer pending approval", () => {
+  const projectsPage = fs.readFileSync("src/app/projects/page.js", "utf8");
+
+  assert.doesNotMatch(projectsPage, /SelectItem value="pending"/);
+  assert.doesNotMatch(projectsPage, />\s*Pending Approval\s*</);
+  assert.match(projectsPage, /SelectItem value="all">All Statuses/);
 });

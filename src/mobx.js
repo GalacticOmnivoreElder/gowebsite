@@ -65,6 +65,7 @@ class Store {
   projectDetails = new Map();
   cachedProjects = new Map();
   projectsLoading = false;
+  projectRequestId = 0;
   projectDetailsLoading = new Map();
   projectFilters = {
     search: "",
@@ -352,12 +353,14 @@ class Store {
 
   // Projects Methods
   async fetchProjects(filters = {}, reset = false) {
-    if (this.projectsLoading) return;
+    if (this.projectsLoading && !reset) return;
+
+    const requestId = ++this.projectRequestId;
+    const requestedPage = reset ? 1 : this.projectPagination.page;
 
     runInAction(() => {
       this.projectsLoading = true;
       if (reset) {
-        this.projects = [];
         this.projectPagination.page = 1;
         this.projectPagination.hasMore = true;
       }
@@ -365,7 +368,7 @@ class Store {
 
     try {
       const params = new URLSearchParams({
-        page: this.projectPagination.page.toString(),
+        page: requestedPage.toString(),
         limit: this.projectPagination.limit.toString(),
         ...this.projectFilters,
         ...filters,
@@ -388,6 +391,7 @@ class Store {
       if (!response.ok) throw new Error("Failed to fetch projects");
 
       const data = await response.json();
+      if (requestId !== this.projectRequestId) return;
 
       runInAction(() => {
         if (reset) {
@@ -402,16 +406,18 @@ class Store {
         });
 
         this.projectPagination.hasMore = data.hasMore;
-        if (data.hasMore) {
-          this.projectPagination.page += 1;
-        }
+        this.projectPagination.page = data.hasMore ? requestedPage + 1 : requestedPage;
       });
     } catch (error) {
-      console.error("Error fetching projects:", error);
+      if (requestId === this.projectRequestId) {
+        console.error("Error fetching projects:", error);
+      }
     } finally {
-      runInAction(() => {
-        this.projectsLoading = false;
-      });
+      if (requestId === this.projectRequestId) {
+        runInAction(() => {
+          this.projectsLoading = false;
+        });
+      }
     }
   }
 

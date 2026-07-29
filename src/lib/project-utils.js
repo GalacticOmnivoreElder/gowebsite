@@ -49,6 +49,14 @@ export const PROJECT_STATUSES = [
 ];
 export const PUBLIC_PROJECT_STATUSES = ["hiring", "live", "completed"];
 export const OWNER_MANAGED_STATUSES = ["draft", "pending"];
+export const PROJECT_DISCOVERY_SORT_OPTIONS = [
+  "created_desc",
+  "created_asc",
+  "budget_desc",
+  "budget_asc",
+  "duration_desc",
+  "duration_asc",
+];
 
 export function isPlatformAdmin(user) {
   return !!user?.admin;
@@ -94,6 +102,142 @@ export function canViewProject(project, user) {
 export function canEditProject(project, user) {
   if (!project || !user?.uid) return false;
   return isPlatformAdmin(user) || project.owner === user.uid || project.admins?.includes(user.uid);
+}
+
+export function normalizeProjectDiscoveryStatus(value) {
+  const normalized = String(value || "all").trim().toLowerCase();
+  if (normalized === "all") return "all";
+  return PUBLIC_PROJECT_STATUSES.includes(normalized) ? normalized : null;
+}
+
+function normalizeFilterValue(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function toSortableNumber(value) {
+  if (value === undefined || value === null || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function toSortableDate(value) {
+  if (!value) return null;
+
+  if (typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+
+  if (typeof value.toDate === "function") {
+    return value.toDate().getTime();
+  }
+
+  const timestamp = value instanceof Date ? value.getTime() : Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function compareOptionalValues(left, right, direction) {
+  if (left === null && right === null) return 0;
+  if (left === null) return 1;
+  if (right === null) return -1;
+  return direction === "asc" ? left - right : right - left;
+}
+
+export function filterAndSortProjectsForDiscovery(
+  projects,
+  filters = {},
+  user = null
+) {
+  const status = normalizeProjectDiscoveryStatus(filters.status);
+  if (status === null) return [];
+
+  const search = normalizeFilterValue(filters.search);
+  const category = normalizeFilterValue(filters.category);
+  const requestedType = normalizeFilterValue(filters.type);
+  const requestedVisibility = normalizeFilterValue(filters.visibility);
+  const sortBy = PROJECT_DISCOVERY_SORT_OPTIONS.includes(filters.sortBy)
+    ? filters.sortBy
+    : "created_desc";
+  const [sortField, sortDirection] = sortBy.split("_");
+
+  return (Array.isArray(projects) ? projects : [])
+    .filter((project) => {
+      // Discovery is approved content only. Admins and project owners review
+      // pending work through their dedicated management pages.
+      if (
+        project?.archived ||
+        !PUBLIC_PROJECT_STATUSES.includes(project?.status) ||
+        !canViewProject(project, user)
+      ) {
+        return false;
+      }
+
+      if (status !== "all" && project.status !== status) return false;
+
+      if (
+        requestedType &&
+        requestedType !== "all" &&
+        normalizeFilterValue(project.type) !== requestedType
+      ) {
+        return false;
+      }
+
+      if (
+        category &&
+        category !== "all" &&
+        !project.categoryTags?.some(
+          (tag) => normalizeFilterValue(tag) === category
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        requestedVisibility &&
+        requestedVisibility !== "all" &&
+        normalizeFilterValue(project.visibility) !== requestedVisibility
+      ) {
+        return false;
+      }
+
+      if (!search) return true;
+
+      return [
+        project.title,
+        project.description,
+        project.goal,
+        ...(project.categoryTags || []),
+      ].some((value) => normalizeFilterValue(value).includes(search));
+    })
+    .sort((left, right) => {
+      let comparison = 0;
+
+      if (sortField === "created") {
+        comparison = compareOptionalValues(
+          toSortableDate(left.createdAt),
+          toSortableDate(right.createdAt),
+          sortDirection
+        );
+      } else {
+        comparison = compareOptionalValues(
+          toSortableNumber(left[sortField]),
+          toSortableNumber(right[sortField]),
+          sortDirection
+        );
+      }
+
+      if (comparison !== 0) return comparison;
+
+      const createdComparison = compareOptionalValues(
+        toSortableDate(left.createdAt),
+        toSortableDate(right.createdAt),
+        "desc"
+      );
+      if (createdComparison !== 0) return createdComparison;
+
+      return String(left.id || left.title || "").localeCompare(
+        String(right.id || right.title || "")
+      );
+    });
 }
 
 export function serializeFirestoreDate(value) {

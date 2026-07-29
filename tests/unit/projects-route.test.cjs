@@ -6,6 +6,9 @@ const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs
 const projectUtils = loadSourceModule("src/lib/project-utils.js", [
   "canViewProject",
   "COMPENSATION_TYPES",
+  "filterAndSortProjectsForDiscovery",
+  "normalizeProjectDiscoveryStatus",
+  "PROJECT_DISCOVERY_SORT_OPTIONS",
   "PROJECT_STATUSES",
   "PROJECT_TYPES",
   "PUBLIC_PROJECT_STATUSES",
@@ -37,12 +40,44 @@ class FixedDate extends Date {
 
 function createDb(seed = {}) {
   const records = [];
+  const projects = seed.projects || {};
   const sourceProjects = seed.sourceProjects || {};
   let projectCounter = 0;
   let sourceCounter = 0;
 
   function ref(collectionName, id) {
     return { collectionName, id };
+  }
+
+  function query(collectionName, constraints = []) {
+    return {
+      async get() {
+        const collection =
+          collectionName === "projects"
+            ? projects
+            : collectionName === "sourceProjects"
+              ? sourceProjects
+              : {};
+        const entries = Object.entries(collection).filter(([, data]) =>
+          constraints.every(({ field, operator, value }) => {
+            if (operator === "==") return data[field] === value;
+            if (operator === "in") return value.includes(data[field]);
+            throw new Error(`Unsupported operator: ${operator}`);
+          })
+        );
+        const docs = entries.map(([id, data]) => ({
+          data: () => data,
+          id,
+        }));
+        return { docs, empty: docs.length === 0 };
+      },
+      where(field, operator, value) {
+        return query(collectionName, [
+          ...constraints,
+          { field, operator, value },
+        ]);
+      },
+    };
   }
 
   return {
@@ -63,6 +98,7 @@ function createDb(seed = {}) {
     },
     collection(name) {
       return {
+        ...query(name),
         doc(id) {
           if (!id) {
             if (name === "projects") id = `project-${++projectCounter}`;
@@ -74,7 +110,13 @@ function createDb(seed = {}) {
           return {
             ...targetRef,
             async get() {
-              const data = name === "sourceProjects" ? sourceProjects[id] : null;
+              const collection =
+                name === "sourceProjects"
+                  ? sourceProjects
+                  : name === "projects"
+                    ? projects
+                    : {};
+              const data = collection[id];
               return {
                 exists: !!data,
                 data: () => data || {},
@@ -92,7 +134,7 @@ function loadRoute({ user = null, seed = {} } = {}) {
   const adminDb = createDb(seed);
   const route = loadSourceModule(
     "src/app/api/projects/route.js",
-    ["POST"],
+    ["GET", "POST"],
     {
       stripImports: true,
       sandbox: {
@@ -244,4 +286,96 @@ test("project creation accepts an omitted budget", async () => {
     (record) => record.type === "set" && record.ref.collectionName === "projects"
   );
   assert.equal(Object.hasOwn(projectSet.data, "budget"), false);
+});
+
+test("project discovery keeps Glagolica in type and optional-field sorts", async () => {
+  const route = loadRoute({
+    seed: {
+      projects: {
+        funded: {
+          budget: 1000,
+          categoryTags: ["Prototype"],
+          createdAt: "2026-07-28T10:00:00.000Z",
+          duration: 20,
+          status: "hiring",
+          title: "Funded game",
+          type: "Game Development",
+          visibility: "Public",
+        },
+        glagolica: {
+          categoryTags: ["VR/AR", "Cultural Heritage"],
+          createdAt: "2026-07-29T10:00:00.000Z",
+          duration: 40,
+          status: "hiring",
+          title: "Glagolica",
+          type: "Art & Design",
+          visibility: "Public",
+        },
+      },
+    },
+  });
+
+  let response = await route.GET(
+    createRequest({
+      url: "http://localhost:3000/api/projects?type=Art%20%26%20Design&sortBy=budget_desc",
+    })
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    Array.from(response.body.projects, (project) => project.id),
+    ["glagolica"]
+  );
+
+  response = await route.GET(
+    createRequest({
+      url: "http://localhost:3000/api/projects?sortBy=budget_desc",
+    })
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    Array.from(response.body.projects, (project) => project.id),
+    ["funded", "glagolica"]
+  );
+});
+
+test("public discovery never returns pending projects, including to admins", async () => {
+  const route = loadRoute({
+    seed: {
+      projects: {
+        approved: {
+          createdAt: "2026-07-29T10:00:00.000Z",
+          status: "hiring",
+          title: "Approved",
+          type: "Art & Design",
+          visibility: "Public",
+        },
+        pending: {
+          createdAt: "2026-07-29T11:00:00.000Z",
+          owner: "admin-1",
+          status: "pending",
+          title: "Pending",
+          type: "Art & Design",
+          visibility: "Public",
+        },
+      },
+    },
+    user: { admin: true, uid: "admin-1" },
+  });
+
+  let response = await route.GET(
+    createRequest({ url: "http://localhost:3000/api/projects?status=all" })
+  );
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    Array.from(response.body.projects, (project) => project.id),
+    ["approved"]
+  );
+
+  response = await route.GET(
+    createRequest({ url: "http://localhost:3000/api/projects?status=pending" })
+  );
+  assert.equal(response.status, 200);
+  assert.deepEqual(Array.from(response.body.projects), []);
 });
