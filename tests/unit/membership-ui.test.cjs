@@ -1,10 +1,16 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
 const { canChooseMembershipPlan, isSubscriptionEnding } = loadSourceModule(
   "src/lib/membership-ui.js",
   ["canChooseMembershipPlan", "isSubscriptionEnding"]
+);
+
+const billingPageSource = fs.readFileSync(
+  "src/app/billing/page.js",
+  "utf8"
 );
 
 test("membership selection remains available without an active subscription", () => {
@@ -63,4 +69,11 @@ test("active Business members are not offered another plan", () => {
     }),
     false
   );
+});
+
+test("billing page returns members to their profile", () => {
+  assert.match(billingPageSource, /router\.push\("\/profile"\)/);
+  assert.match(billingPageSource, /Back to Profile/);
+  assert.doesNotMatch(billingPageSource, /router\.push\("\/dashboard"\)/);
+  assert.doesNotMatch(billingPageSource, /Back to Dashboard/);
 });
