@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { ArrowRight, Building2, Check, User } from "lucide-react";
@@ -42,6 +43,8 @@ export const PricingDisplay = observer(() => {
     MobxStore.permissions?.permissions?.membershipTier ||
     user?.membershipTier ||
     null;
+  const hasActiveBusinessMembership =
+    hasActiveSubscription && currentTier === "company";
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -159,6 +162,23 @@ export const PricingDisplay = observer(() => {
         </div>
       </div>
 
+      {hasActiveBusinessMembership && (
+        <div className="mx-auto flex max-w-5xl flex-col gap-4 rounded-lg border border-primary/35 bg-primary/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-foreground">
+              GO Business is active
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              You have every Community benefit plus project creation and
+              team-management tools.
+            </p>
+          </div>
+          <Button variant="outline" asChild className="shrink-0">
+            <Link href="/billing">Manage Business membership</Link>
+          </Button>
+        </div>
+      )}
+
       <div className="mx-auto grid min-w-0 max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
         {MEMBERSHIP_PLANS.map((plan) => {
           const Icon = planIcons[plan.id];
@@ -169,12 +189,18 @@ export const PricingDisplay = observer(() => {
             hasActiveSubscription &&
             currentTier === "member" &&
             plan.tier === "company";
+          const isIncludedWithBusiness =
+            hasActiveBusinessMembership && plan.tier === "member";
+          const isHighlighted =
+            isCurrentPlan ||
+            (!hasActiveBusinessMembership &&
+              (plan.popular || isUpgradeTarget));
 
           return (
             <Card
               key={plan.id}
               className={`relative min-w-0 max-w-full flex h-full flex-col overflow-hidden ${
-                plan.popular ? "border-primary" : ""
+                isHighlighted ? "border-primary" : ""
               }`}
             >
               <CardHeader className="min-w-0 space-y-5 px-4 pb-4 sm:px-6">
@@ -187,6 +213,10 @@ export const PricingDisplay = observer(() => {
                   </div>
                   {isCurrentPlan ? (
                     <Badge className="shrink-0">Current membership</Badge>
+                  ) : isIncludedWithBusiness ? (
+                    <Badge variant="outline" className="shrink-0">
+                      Included with Business
+                    </Badge>
                   ) : (
                     plan.popular && (
                       <Badge className="shrink-0">Most popular</Badge>
@@ -231,19 +261,43 @@ export const PricingDisplay = observer(() => {
               </CardContent>
 
               <CardFooter className="min-w-0 px-4 pt-6 sm:px-6">
-                <SubscribeButton
-                  tier={plan.tier}
-                  interval={interval}
-                  useServerCheckout
-                  className="w-full"
-                  variant={
-                    plan.popular || isUpgradeTarget ? "default" : "outline"
-                  }
-                  size="lg"
-                >
-                  Choose {plan.name}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </SubscribeButton>
+                {isCurrentPlan && hasActiveBusinessMembership ? (
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full"
+                    asChild
+                  >
+                    <Link href="/billing">Manage current membership</Link>
+                  </Button>
+                ) : isIncludedWithBusiness ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="w-full"
+                    disabled
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Included with GO Business
+                  </Button>
+                ) : (
+                  <SubscribeButton
+                    tier={plan.tier}
+                    interval={interval}
+                    useServerCheckout
+                    className="w-full"
+                    variant={
+                      plan.popular || isUpgradeTarget
+                        ? "default"
+                        : "outline"
+                    }
+                    size="lg"
+                  >
+                    Choose {plan.name}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </SubscribeButton>
+                )}
               </CardFooter>
             </Card>
           );

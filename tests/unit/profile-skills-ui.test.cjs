@@ -61,6 +61,15 @@ test("downloads use authenticated server entitlements instead of legacy client f
 test("membership UI identifies the current plan and highlights Business upgrades", () => {
   assert.match(pricingSource, /Current membership/);
   assert.match(pricingSource, /isUpgradeTarget/);
-  assert.match(pricingSource, /plan\.popular \|\| isUpgradeTarget/);
+  assert.match(pricingSource, /isHighlighted/);
   assert.match(pricingSource, /useServerCheckout/);
+});
+
+test("active Business membership is managed without offering another purchase", () => {
+  assert.match(pricingSource, /GO Business is active/);
+  assert.match(pricingSource, /Included with Business/);
+  assert.match(pricingSource, /Included with GO Business/);
+  assert.match(pricingSource, /Manage Business membership/);
+  assert.match(pricingSource, /Manage current membership/);
+  assert.match(pricingSource, /href="\/billing"/);
 });
