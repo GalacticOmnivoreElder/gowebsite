@@ -7,7 +7,11 @@ import {
   verifyToken,
 } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
-import { getPolarApiBase } from "@/lib/polar";
+import {
+  getPolarApiBase,
+  resolvePolarProductTier,
+} from "@/lib/polar";
+import { getPendingSubscriptionUpdate } from "@/lib/subscription-upgrade";
 
 export async function GET(request) {
   try {
@@ -66,6 +70,7 @@ export async function GET(request) {
 
       if (response.ok) {
         const subscription = await response.json();
+        const pendingUpdate = getPendingSubscriptionUpdate(subscription);
 
         return NextResponse.json({
           hasSubscription: true,
@@ -81,8 +86,32 @@ export async function GET(request) {
             currentPeriodEnd: subscription.current_period_end,
             cancelAtPeriodEnd: subscription.cancel_at_period_end,
             price: subscription.price,
+            amount: subscription.amount,
             currency: subscription.currency,
             product: subscription.product,
+            pendingUpdate: pendingUpdate
+              ? {
+                  id: pendingUpdate.id,
+                  appliesAt: pendingUpdate.appliesAt,
+                  productId: pendingUpdate.productId,
+                  tier: resolvePolarProductTier(pendingUpdate.productId),
+                  amount:
+                    userData.pendingMembershipProductId ===
+                    pendingUpdate.productId
+                      ? userData.pendingMembershipPriceAmount ?? null
+                      : null,
+                  currency:
+                    userData.pendingMembershipProductId ===
+                    pendingUpdate.productId
+                      ? userData.pendingMembershipCurrency || null
+                      : null,
+                  interval:
+                    userData.pendingMembershipProductId ===
+                    pendingUpdate.productId
+                      ? userData.pendingMembershipInterval || null
+                      : null,
+                }
+              : null,
           },
           canceledAt: userData.canceledAt,
           subscriptionEndsAt: userData.subscriptionEndsAt,

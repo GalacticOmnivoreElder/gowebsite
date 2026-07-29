@@ -291,6 +291,33 @@ const BillingPage = observer(() => {
     return "15.00";
   };
 
+  const pendingUpgrade =
+    subscriptionDetails?.pendingUpdate ||
+    (MobxStore.user?.pendingMembershipTier === "company" &&
+    MobxStore.user?.pendingMembershipStatus === "scheduled"
+      ? {
+          amount: MobxStore.user.pendingMembershipPriceAmount,
+          appliesAt: MobxStore.user.pendingMembershipEffectiveAt,
+          currency: MobxStore.user.pendingMembershipCurrency,
+          interval: MobxStore.user.pendingMembershipInterval,
+          tier: "company",
+        }
+      : null);
+
+  const formatPendingAmount = () => {
+    if (
+      !Number.isInteger(pendingUpgrade?.amount) ||
+      !pendingUpgrade?.currency
+    ) {
+      return "the Business plan price";
+    }
+    return new Intl.NumberFormat("en", {
+      style: "currency",
+      currency: pendingUpgrade.currency,
+      currencyDisplay: "code",
+    }).format(pendingUpgrade.amount / 100);
+  };
+
   // Clean function to get next billing date
   const getNextBillingInfo = () => {
     const user = MobxStore.user;
@@ -390,6 +417,29 @@ const BillingPage = observer(() => {
                 </div>
               </AlertDescription>
             </Alert>
+
+            {pendingUpgrade?.tier === "company" && (
+              <Alert className="border-primary/35 bg-primary/10">
+                <Clock className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="font-medium">
+                    Business upgrade scheduled
+                  </div>
+                  <div className="mt-1 text-sm">
+                    GO Community remains active until{" "}
+                    {convertToDate(pendingUpgrade.appliesAt)?.toLocaleDateString() ||
+                      "your next renewal date"}
+                    . Business access begins after Polar applies the change.
+                    The expected renewal is {formatPendingAmount()} per{" "}
+                    {pendingUpgrade.interval === "annual" ||
+                    pendingUpgrade.interval === "year"
+                      ? "year"
+                      : "month"}
+                    ; Polar confirms final discounts and taxes at renewal.
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
 
             {user?.activeMember && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

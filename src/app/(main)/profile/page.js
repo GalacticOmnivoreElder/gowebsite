@@ -86,6 +86,22 @@ const convertToDate = (timestamp) => {
 };
 
 const SubscriptionStatusOverview = ({ user }) => {
+  const pendingBusinessUpgrade =
+    user?.pendingMembershipTier === "company" &&
+    user?.pendingMembershipStatus === "scheduled";
+  const pendingEffectiveDate = convertToDate(
+    user?.pendingMembershipEffectiveAt
+  );
+  const pendingPrice =
+    Number.isInteger(user?.pendingMembershipPriceAmount) &&
+    user?.pendingMembershipCurrency
+      ? new Intl.NumberFormat("en", {
+          style: "currency",
+          currency: user.pendingMembershipCurrency,
+          currencyDisplay: "code",
+        }).format(user.pendingMembershipPriceAmount / 100)
+      : "the Business plan price";
+
   const getSubscriptionStatusInfo = () => {
     if (!MobxStore.hasActiveSubscription) {
       return {
@@ -126,7 +142,9 @@ const SubscriptionStatusOverview = ({ user }) => {
     return {
       status: "active",
       title: "Active Subscription",
-      description: "Your subscription is active and up to date",
+      description: `${
+        user?.membershipTier === "company" ? "GO Business" : "GO Community"
+      } is your current active membership`,
       icon: <CheckCircle className="h-5 w-5 text-green-500" />,
       variant: "default",
     };
@@ -152,6 +170,26 @@ const SubscriptionStatusOverview = ({ user }) => {
           )}
         </AlertDescription>
       </Alert>
+
+      {pendingBusinessUpgrade && (
+        <Alert className="border-primary/35 bg-primary/10">
+          <Clock className="h-4 w-4" />
+          <AlertDescription>
+            <div className="font-medium">Business upgrade scheduled</div>
+            <div className="mt-1 text-sm">
+              Community remains active until{" "}
+              {pendingEffectiveDate?.toLocaleDateString() ||
+                "your next renewal date"}
+              . Business access begins only after Polar applies the change.
+              The expected renewal is {pendingPrice} per{" "}
+              {user.pendingMembershipInterval === "annual"
+                ? "year"
+                : "month"}
+              ; Polar confirms final discounts and taxes at renewal.
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {MobxStore.hasActiveSubscription && (
         <div className="flex items-center justify-between pt-2">

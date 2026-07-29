@@ -8,16 +8,19 @@ const {
   getPolarServer,
   resolvePolarProductId,
   resolvePolarProductTier,
+  schedulePolarProductChange,
 } = loadSourceModule("src/lib/polar.js", [
   "getPolarApiBase",
   "getPolarPortalBase",
   "getPolarServer",
   "resolvePolarProductId",
   "resolvePolarProductTier",
+  "schedulePolarProductChange",
 ]);
 
 const polarEnvKeys = [
   "POLAR_SERVER",
+  "POLAR_ACCESS_TOKEN",
   "POLAR_ORGANIZATION_SLUG",
   "NEXT_PUBLIC_POLAR_PRODUCT_ID",
   "NEXT_PUBLIC_POLAR_COMPANY_PRODUCT_ID",
@@ -142,5 +145,56 @@ test("getPolarPortalBase requires an organization slug and uses the active serve
 
   withEnv({ POLAR_SERVER: "production", POLAR_ORGANIZATION_SLUG: "go" }, () => {
     assert.equal(getPolarPortalBase(), "https://polar.sh/go/portal/overview");
+  });
+});
+
+test("scheduled product changes always use next_period on the server", async () => {
+  const calls = [];
+  const module = loadSourceModule(
+    "src/lib/polar.js",
+    ["schedulePolarProductChange"],
+    {
+      sandbox: {
+        fetch: async (url, options) => {
+          calls.push({ options, url });
+          return {
+            ok: true,
+            async json() {
+              return {
+                pending_update: {
+                  applies_at: "2026-08-29T00:00:00.000Z",
+                  product_id: "business-product",
+                },
+              };
+            },
+          };
+        },
+      },
+    }
+  );
+  const originalToken = process.env.POLAR_ACCESS_TOKEN;
+  const originalServer = process.env.POLAR_SERVER;
+  process.env.POLAR_ACCESS_TOKEN = "secret";
+  process.env.POLAR_SERVER = "production";
+  try {
+    await module.schedulePolarProductChange(
+      "subscription/1",
+      "business-product"
+    );
+  } finally {
+    if (originalToken === undefined) delete process.env.POLAR_ACCESS_TOKEN;
+    else process.env.POLAR_ACCESS_TOKEN = originalToken;
+    if (originalServer === undefined) delete process.env.POLAR_SERVER;
+    else process.env.POLAR_SERVER = originalServer;
+  }
+
+  assert.equal(
+    calls[0].url,
+    "https://api.polar.sh/v1/subscriptions/subscription%2F1"
+  );
+  assert.equal(calls[0].options.method, "PATCH");
+  assert.deepEqual(JSON.parse(calls[0].options.body), {
+    product_id: "business-product",
+    proration_behavior: "next_period",
   });
 });

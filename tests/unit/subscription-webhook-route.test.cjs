@@ -107,7 +107,12 @@ function createAdminDb(seed = {}) {
   };
 }
 
-function loadRoute({ processed = new Set(), seed = {}, webhookThrows } = {}) {
+function loadRoute({
+  getPolarSubscriptionImpl,
+  processed = new Set(),
+  seed = {},
+  webhookThrows,
+} = {}) {
   const captured = {};
   const adminDb = createAdminDb(seed);
   const marks = [];
@@ -156,6 +161,22 @@ function loadRoute({ processed = new Set(), seed = {}, webhookThrows } = {}) {
             : productId === "member-product"
             ? "member"
             : null,
+        getPendingSubscriptionUpdate: (subscription) => {
+          const pending =
+            subscription?.pending_update || subscription?.pendingUpdate;
+          return pending
+            ? {
+                id: pending.id || null,
+                appliesAt: pending.applies_at || pending.appliesAt,
+                productId: pending.product_id || pending.productId,
+              }
+            : null;
+        },
+        getPolarSubscription:
+          getPolarSubscriptionImpl ||
+          (async () => {
+            throw new Error("Unexpected Polar subscription refresh");
+          }),
       },
     }
   );
@@ -366,6 +387,94 @@ test("subscription update handles past_due without revoking access", async () =>
   assert.equal(route.adminDb.docs.users["user-1"].subscriptionStatus, "past_due");
   assert.equal(route.adminDb.docs.users["user-1"].lastPaymentFailed, true);
   assert.equal(route.adminDb.docs.subscription_events[0].eventType, "past_due");
+});
+
+test("scheduled Business updates keep Community access until Polar applies them", async () => {
+  const polarStates = [
+    {
+      currency: "mkd",
+      current_period_end: "2026-08-14T12:00:00.000Z",
+      customer_id: "cus_123",
+      id: "sub_1",
+      pending_update: {
+        applies_at: "2026-08-14T12:00:00.000Z",
+        id: "pending_1",
+        product_id: "company-product",
+      },
+      product_id: "member-product",
+      status: "active",
+    },
+    {
+      currency: "mkd",
+      current_period_end: "2026-09-14T12:00:00.000Z",
+      customer_id: "cus_123",
+      id: "sub_1",
+      pending_update: null,
+      product_id: "company-product",
+      status: "active",
+    },
+  ];
+  const route = loadRoute({
+    getPolarSubscriptionImpl: async () => polarStates.shift(),
+    seed: {
+      users: {
+        "user-1": {
+          activeMember: true,
+          email: "member@example.com",
+          membershipTier: "member",
+          pendingMembershipCurrency: "MKD",
+          pendingMembershipEffectiveAt: "2026-08-14T12:00:00.000Z",
+          pendingMembershipPriceAmount: 299900,
+          pendingMembershipProductId: "company-product",
+          pendingMembershipStatus: "scheduled",
+          pendingMembershipTier: "company",
+          polarCustomerId: "cus_123",
+        },
+      },
+    },
+  });
+
+  // The adapter-stripped payload omits pending_update. The handler must fetch
+  // Polar's authoritative state because Firestore says an upgrade is pending.
+  await route.captured.onSubscriptionUpdated({
+    data: {
+      customer_id: "cus_123",
+      id: "sub_1",
+      product_id: "member-product",
+      status: "active",
+    },
+    id: "evt_upgrade_scheduled",
+    type: "subscription.updated",
+  });
+
+  let user = route.adminDb.docs.users["user-1"];
+  assert.equal(user.membershipTier, "member");
+  assert.equal(user.pendingMembershipTier, "company");
+  assert.equal(
+    route.emailEvents.some((event) => event.type === "billing.plan_changed"),
+    false
+  );
+
+  await route.captured.onSubscriptionUpdated({
+    data: {
+      customer_id: "cus_123",
+      id: "sub_1",
+      product_id: "company-product",
+      status: "active",
+    },
+    id: "evt_upgrade_applied",
+    type: "subscription.updated",
+  });
+
+  user = route.adminDb.docs.users["user-1"];
+  assert.equal(user.membershipTier, "company");
+  assert.equal(user.pendingMembershipTier, null);
+  assert.equal(
+    route.emailEvents.filter(
+      (event) => event.type === "billing.plan_changed"
+    ).length,
+    1
+  );
 });
 
 test("subscription canceled keeps access until period end and revoked removes access", async () => {

@@ -33,6 +33,9 @@ const SubscribeButton = observer(
       currentTier:
         (mounted && MobxStore.permissions?.permissions?.membershipTier) ||
         (mounted && MobxStore.user?.membershipTier),
+      pendingTier: mounted
+        ? MobxStore.user?.pendingMembershipTier
+        : null,
       targetTier: tier,
       subscriptionStatus: mounted
         ? MobxStore.user?.subscriptionStatus

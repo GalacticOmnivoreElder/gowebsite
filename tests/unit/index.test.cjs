@@ -47,6 +47,7 @@ require("./me-profile-route.test.cjs");
 require("./onboarding-route.test.cjs");
 require("./package-slug-route.test.cjs");
 require("./subscription-webhook-route.test.cjs");
+require("./subscription-upgrade.test.cjs");
 require("./subscription-confirmation.test.cjs");
 require("./token.test.cjs");
 require("./transformers.test.cjs");

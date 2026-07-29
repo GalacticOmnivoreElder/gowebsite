@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import SubscribeButton from "@/components/ui/SubscribeButton";
+import { BusinessUpgradeDialog } from "@/components/pricing/BusinessUpgradeDialog";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
 import { parseCheckoutPlanKey } from "@/lib/checkout-navigation";
@@ -32,8 +33,23 @@ const planIcons = {
 const formatPrice = (amount) =>
   new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(amount);
 
+const formatPendingDate = (value) => {
+  if (!value) return null;
+  const date =
+    typeof value?.toDate === "function"
+      ? value.toDate()
+      : value?._seconds || value?.seconds
+      ? new Date((value._seconds || value.seconds) * 1000)
+      : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("en", { dateStyle: "long" }).format(date);
+};
+
 export const PricingDisplay = observer(() => {
   const [interval, setInterval] = useState("monthly");
+  const [upgradeInterval, setUpgradeInterval] = useState("monthly");
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [scheduledUpgrade, setScheduledUpgrade] = useState(null);
   const resumedCheckout = useRef(false);
   const user = MobxStore.user;
   const authLoading = MobxStore.loading || MobxStore.permissionsLoading;
@@ -45,6 +61,18 @@ export const PricingDisplay = observer(() => {
     null;
   const hasActiveBusinessMembership =
     hasActiveSubscription && currentTier === "company";
+  const pendingBusinessUpgrade =
+    scheduledUpgrade ||
+    (user?.pendingMembershipTier === "company" &&
+    user?.pendingMembershipStatus === "scheduled"
+      ? {
+          pendingMembershipCurrency: user.pendingMembershipCurrency,
+          pendingMembershipEffectiveAt: user.pendingMembershipEffectiveAt,
+          pendingMembershipInterval: user.pendingMembershipInterval,
+          pendingMembershipPriceAmount: user.pendingMembershipPriceAmount,
+          pendingMembershipTier: user.pendingMembershipTier,
+        }
+      : null);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -75,6 +103,7 @@ export const PricingDisplay = observer(() => {
       currentTier:
         MobxStore.permissions?.permissions?.membershipTier ||
         user?.membershipTier,
+      pendingTier: user?.pendingMembershipTier,
       targetTier: selection.tier,
       subscriptionStatus: user?.subscriptionStatus,
       willRenew: user?.willRenew,
@@ -82,6 +111,16 @@ export const PricingDisplay = observer(() => {
 
     if (!canChoosePlan) {
       window.location.assign("/profile");
+      return;
+    }
+
+    if (
+      hasActiveSubscription &&
+      currentTier === "member" &&
+      selection.tier === "company"
+    ) {
+      setUpgradeInterval(selection.interval);
+      setUpgradeDialogOpen(true);
       return;
     }
 
@@ -179,6 +218,26 @@ export const PricingDisplay = observer(() => {
         </div>
       )}
 
+      {pendingBusinessUpgrade && !hasActiveBusinessMembership && (
+        <div className="mx-auto flex max-w-5xl flex-col gap-4 rounded-lg border border-primary/35 bg-primary/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-foreground">
+              GO Business upgrade scheduled
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              GO Community stays active until{" "}
+              {formatPendingDate(
+                pendingBusinessUpgrade.pendingMembershipEffectiveAt
+              ) || "your next renewal date"}
+              . Business access begins only after Polar applies the change.
+            </p>
+          </div>
+          <Button variant="outline" asChild className="shrink-0">
+            <Link href="/billing">Manage scheduled upgrade</Link>
+          </Button>
+        </div>
+      )}
+
       <div className="mx-auto grid min-w-0 max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
         {MEMBERSHIP_PLANS.map((plan) => {
           const Icon = planIcons[plan.id];
@@ -213,6 +272,8 @@ export const PricingDisplay = observer(() => {
                   </div>
                   {isCurrentPlan ? (
                     <Badge className="shrink-0">Current membership</Badge>
+                  ) : pendingBusinessUpgrade && plan.tier === "company" ? (
+                    <Badge className="shrink-0">Upgrade scheduled</Badge>
                   ) : isIncludedWithBusiness ? (
                     <Badge variant="outline" className="shrink-0">
                       Included with Business
@@ -261,7 +322,16 @@ export const PricingDisplay = observer(() => {
               </CardContent>
 
               <CardFooter className="min-w-0 px-4 pt-6 sm:px-6">
-                {isCurrentPlan && hasActiveBusinessMembership ? (
+                {pendingBusinessUpgrade && plan.tier === "company" ? (
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full"
+                    asChild
+                  >
+                    <Link href="/billing">Manage scheduled upgrade</Link>
+                  </Button>
+                ) : isCurrentPlan && hasActiveBusinessMembership ? (
                   <Button
                     variant="outline"
                     size="lg"
@@ -280,6 +350,20 @@ export const PricingDisplay = observer(() => {
                   >
                     <Check className="mr-2 h-4 w-4" />
                     Included with GO Business
+                  </Button>
+                ) : isUpgradeTarget ? (
+                  <Button
+                    type="button"
+                    className="w-full"
+                    variant="default"
+                    size="lg"
+                    onClick={() => {
+                      setUpgradeInterval(interval);
+                      setUpgradeDialogOpen(true);
+                    }}
+                  >
+                    Review Business upgrade
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
                   <SubscribeButton
@@ -308,6 +392,13 @@ export const PricingDisplay = observer(() => {
         Prices shown in MKD. Polar confirms the available regional price and
         applicable taxes at secure checkout.
       </p>
+
+      <BusinessUpgradeDialog
+        interval={upgradeInterval}
+        open={upgradeDialogOpen}
+        onOpenChange={setUpgradeDialogOpen}
+        onScheduled={setScheduledUpgrade}
+      />
     </div>
   );
 });

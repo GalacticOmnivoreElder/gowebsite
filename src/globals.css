@@ -356,8 +356,25 @@
   animation: mission-orbit 22s linear infinite;
 }
 
+@keyframes go-logo-rotation {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(0, 0, 0) rotate(360deg);
+  }
+}
+
+.go-logo-spinner {
+  animation: go-logo-rotation 2.8s linear infinite;
+  backface-visibility: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .mission-orbit {
+  .mission-orbit,
+  .go-logo-spinner {
     animation: none;
   }
 }

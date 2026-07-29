@@ -179,16 +179,22 @@ const SubscriptionSuccessPage = observer(() => {
           role="status"
           aria-live="polite"
         >
-          <Image
-            src="/galactic-omnivore-skull-v1-192.png"
-            alt=""
-            width={80}
-            height={80}
-            sizes="80px"
-            priority
+          <div
+            className="relative h-20 w-20"
             aria-hidden="true"
-            className="select-none animate-spin drop-shadow-[0_0_18px_hsl(var(--primary)/0.35)] [animation-duration:2.4s] motion-reduce:animate-none"
-          />
+          >
+            <span className="absolute inset-2 rounded-full bg-primary/25 blur-xl" />
+            <span className="go-logo-spinner relative block h-20 w-20">
+              <Image
+                src="/galactic-omnivore-skull-v1-512.png"
+                alt=""
+                fill
+                sizes="80px"
+                priority
+                className="select-none object-contain"
+              />
+            </span>
+          </div>
           <p className="max-w-md text-center text-muted-foreground">
             Confirming your Galactic Omnivore membership. This usually takes a
             few seconds.

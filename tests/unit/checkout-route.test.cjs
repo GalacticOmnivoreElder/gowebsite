@@ -34,12 +34,8 @@ function loadRoute({
   user,
   productId = "prod_member_monthly",
   polarCreate,
-  portalSession = {
-    customerPortalUrl: "https://sandbox.polar.sh/go/portal",
-  },
 } = {}) {
   const polarCalls = [];
-  const portalCalls = [];
   class Polar {
     constructor(config) {
       this.config = config;
@@ -75,12 +71,6 @@ function loadRoute({
       sandbox: {
         NextResponse,
         Polar,
-        createPolarCustomerSession: async (customerId) => {
-          portalCalls.push(customerId);
-          return portalSession;
-        },
-        getPolarPortalBase: () =>
-          "https://sandbox.polar.sh/go/portal/overview",
         getPolarServer: () => "sandbox",
         getRequestUser: async () => user || null,
         resolvePolarProductId: () => productId,
@@ -88,7 +78,7 @@ function loadRoute({
     }
   );
 
-  return { ...route, polarCalls, portalCalls };
+  return { ...route, polarCalls };
 }
 
 test("checkout route requires authentication", async () => {
@@ -100,9 +90,9 @@ test("checkout route requires authentication", async () => {
   assert.deepEqual(plain(response.body), { error: "Authentication required" });
 });
 
-test("Community upgrade opens Polar's customer-confirmed plan change without mutating the subscription", async () => {
+test("Community upgrade requires the in-app review flow without mutating checkout or Polar", async () => {
   await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
-    const { POST, polarCalls, portalCalls } = loadRoute({
+    const { POST, polarCalls } = loadRoute({
       productId: "configured-business-product",
       user: {
         activeMember: true,
@@ -127,20 +117,20 @@ test("Community upgrade opens Polar's customer-confirmed plan change without mut
       })
     );
 
-    assert.equal(response.status, 200);
+    assert.equal(response.status, 409);
     assert.deepEqual(plain(response.body), {
-      flow: "portal",
-      url: "https://sandbox.polar.sh/go/portal",
+      code: "upgrade_confirmation_required",
+      error:
+        "Review and confirm this Business upgrade from the membership page.",
+      upgradeUrl: "/membership#plans",
     });
-    assert.deepEqual(portalCalls, ["customer-1"]);
     assert.deepEqual(polarCalls, []);
   });
 });
 
-test("Community upgrade falls back to an encoded authenticated portal URL", async () => {
+test("Community upgrade cannot be forced through checkout with a forged product or interval", async () => {
   await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
     const { POST, polarCalls } = loadRoute({
-      portalSession: { token: "short lived token" },
       productId: "configured-business-annual",
       user: {
         activeMember: true,
@@ -159,27 +149,23 @@ test("Community upgrade falls back to an encoded authenticated portal URL", asyn
 
     const response = await POST(
       createRequest({
-        jsonBody: { interval: "annual", tier: "company" },
+        jsonBody: {
+          interval: "annual",
+          productId: "forged-cheap-product",
+          tier: "company",
+        },
       })
     );
 
-    assert.equal(response.status, 200);
-    assert.deepEqual(plain(response.body), {
-      flow: "portal",
-      url:
-        "https://sandbox.polar.sh/go/portal/overview" +
-        "?customer_session_token=short%20lived%20token&id=customer%2F1",
-    });
-    assert.equal(
-      polarCalls.some((call) => call.operation === "subscription.update"),
-      false
-    );
+    assert.equal(response.status, 409);
+    assert.equal(response.body.code, "upgrade_confirmation_required");
+    assert.deepEqual(polarCalls, []);
   });
 });
 
-test("Community upgrade requires a linked Polar customer", async () => {
+test("Community upgrade scheduled to end is rejected before review", async () => {
   await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
-    const { POST, polarCalls, portalCalls } = loadRoute({
+    const { POST, polarCalls } = loadRoute({
       productId: "configured-business-product",
       user: {
         activeMember: true,
@@ -188,8 +174,8 @@ test("Community upgrade requires a linked Polar customer", async () => {
         userData: {
           activeMember: true,
           membershipTier: "member",
-          subscriptionStatus: "active",
-          willRenew: true,
+          subscriptionStatus: "canceled",
+          willRenew: false,
         },
       },
     });
@@ -201,8 +187,7 @@ test("Community upgrade requires a linked Polar customer", async () => {
     );
 
     assert.equal(response.status, 409);
-    assert.equal(response.body.code, "missing_customer");
-    assert.deepEqual(portalCalls, []);
+    assert.equal(response.body.code, "subscription_ending");
     assert.deepEqual(polarCalls, []);
   });
 });

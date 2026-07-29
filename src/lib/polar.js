@@ -8,6 +8,72 @@ export function getPolarApiBase() {
     : "https://sandbox-api.polar.sh/v1";
 }
 
+async function polarApiRequest(path, options = {}) {
+  if (!process.env.POLAR_ACCESS_TOKEN) {
+    throw new Error("Polar is not configured (missing POLAR_ACCESS_TOKEN).");
+  }
+
+  const response = await fetch(`${getPolarApiBase()}${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${process.env.POLAR_ACCESS_TOKEN}`,
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const details = await response.text();
+    const error = new Error(
+      `Polar API request failed (${response.status}): ${details}`
+    );
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.json();
+}
+
+export function getPolarSubscription(subscriptionId) {
+  if (!subscriptionId) {
+    throw new Error("Polar subscription ID is required");
+  }
+  return polarApiRequest(
+    `/subscriptions/${encodeURIComponent(subscriptionId)}`
+  );
+}
+
+export function getPolarProduct(productId) {
+  if (!productId) {
+    throw new Error("Polar product ID is required");
+  }
+  return polarApiRequest(`/products/${encodeURIComponent(productId)}`);
+}
+
+/**
+ * Schedule a product change without granting the target product immediately.
+ *
+ * The pinned Polar SDK predates `next_period`, so this deliberately uses the
+ * current REST API. Keeping this policy in a server-only helper prevents the
+ * browser from choosing an unsafe proration behavior.
+ */
+export function schedulePolarProductChange(subscriptionId, productId) {
+  if (!subscriptionId || !productId) {
+    throw new Error("Polar subscription and product IDs are required");
+  }
+
+  return polarApiRequest(
+    `/subscriptions/${encodeURIComponent(subscriptionId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        product_id: productId,
+        proration_behavior: "next_period",
+      }),
+    }
+  );
+}
+
 // Product IDs exposed by the four production Checkout Links currently used on
 // /membership. Product IDs are public identifiers (the checkout pages expose
 // them); keeping them here lets webhooks recover the entitlement when an older

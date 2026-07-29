@@ -41,6 +41,14 @@ function loadRoute({ users = {}, tokenUid = "user-1", fetchImpl } = {}) {
         adminDb: createAdminDb({ users }),
         fetch: fetchImpl || (async () => ({ ok: false })),
         getPolarApiBase: () => "https://polar.test/v1",
+        getPendingSubscriptionUpdate: (subscription) =>
+          subscription.pending_update
+            ? {
+                id: subscription.pending_update.id || null,
+                appliesAt: subscription.pending_update.applies_at,
+                productId: subscription.pending_update.product_id,
+              }
+            : null,
         getEffectiveMembership,
         getMembershipConfirmationId: (userData) =>
           userData.membershipActivationPurchaseKey
@@ -48,6 +56,8 @@ function loadRoute({ users = {}, tokenUid = "user-1", fetchImpl } = {}) {
             : null,
         getTokenFromRequest: (request) => request.headers.get("authorization")?.replace("Bearer ", "") || null,
         hasActiveSubscription,
+        resolvePolarProductTier: (productId) =>
+          productId === "business-product" ? "company" : null,
         verifyToken: async () => ({ uid: tokenUid }),
       },
     }

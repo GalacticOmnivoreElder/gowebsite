@@ -136,6 +136,19 @@ export async function GET(request) {
         willRenew: userData?.willRenew ?? null,
         subscriptionEndsAt: userData?.subscriptionEndsAt || null,
         polarCustomerId: userData?.polarCustomerId || null,
+        pendingMembershipTier: userData?.pendingMembershipTier || null,
+        pendingMembershipProductId:
+          userData?.pendingMembershipProductId || null,
+        pendingMembershipEffectiveAt:
+          userData?.pendingMembershipEffectiveAt || null,
+        pendingMembershipInterval:
+          userData?.pendingMembershipInterval || null,
+        pendingMembershipPriceAmount:
+          userData?.pendingMembershipPriceAmount ?? null,
+        pendingMembershipCurrency:
+          userData?.pendingMembershipCurrency || null,
+        pendingMembershipStatus:
+          userData?.pendingMembershipStatus || null,
         ...(membershipConfirmationId ? { membershipConfirmationId } : {}),
       },
       subscription: subscriptionData,

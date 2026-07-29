@@ -5,7 +5,11 @@ import {
   isWebhookProcessed,
   markWebhookProcessed,
 } from "@/lib/webhook-deduplication";
-import { resolvePolarProductTier } from "@/lib/polar";
+import {
+  getPolarSubscription,
+  resolvePolarProductTier,
+} from "@/lib/polar";
+import { getPendingSubscriptionUpdate } from "@/lib/subscription-upgrade";
 import {
   cancelPendingEmailEvents,
   enqueueAdminEmailEvent,
@@ -398,6 +402,18 @@ async function handleOrderPaid(orderData, payload) {
             getActivationDate(orderData, payload) || new Date(),
         }
       : {}),
+    ...(tier === previousUserData.pendingMembershipTier
+      ? {
+          pendingMembershipTier: null,
+          pendingMembershipProductId: null,
+          pendingMembershipEffectiveAt: null,
+          pendingMembershipInterval: null,
+          pendingMembershipPriceAmount: null,
+          pendingMembershipCurrency: null,
+          pendingMembershipStatus: null,
+          pendingMembershipUpdateId: null,
+        }
+      : {}),
   };
 
   if (subscriptionId) {
@@ -560,10 +576,31 @@ async function handleSubscriptionActive(subscriptionData, payload) {
 }
 
 async function handleSubscriptionUpdated(subscriptionData) {
-  const status = subscriptionData.status || "active";
+  const linkedUser = await findUserForPolarData(subscriptionData);
+  const previousLinkedData = linkedUser?.data?.() || {};
+  const payloadIncludesPendingUpdate =
+    Object.hasOwn(subscriptionData || {}, "pending_update") ||
+    Object.hasOwn(subscriptionData || {}, "pendingUpdate");
+  let authoritativeData = subscriptionData;
+
+  // The pinned webhook adapter predates Polar's pending_update field and may
+  // strip it during validation. Once an upgrade is known to be pending, fetch
+  // the current subscription so a scheduled, canceled, superseded, or applied
+  // update cannot be mistaken for an immediate entitlement change.
+  if (
+    previousLinkedData.pendingMembershipTier &&
+    !payloadIncludesPendingUpdate
+  ) {
+    authoritativeData = await getPolarSubscription(
+      getSubscriptionId(subscriptionData)
+    );
+  }
+
+  const status = authoritativeData.status || "active";
   const cancelAtPeriodEnd =
-    subscriptionData.cancel_at_period_end || subscriptionData.cancelAtPeriodEnd;
-  const currentPeriodEnd = getCurrentPeriodEnd(subscriptionData);
+    authoritativeData.cancel_at_period_end ||
+    authoritativeData.cancelAtPeriodEnd;
+  const currentPeriodEnd = getCurrentPeriodEnd(authoritativeData);
 
   // past_due = a renewal payment failed and Polar is retrying. Keep the member's
   // access during the grace window; Polar sends subscription.revoked when it
@@ -574,7 +611,7 @@ async function handleSubscriptionUpdated(subscriptionData) {
     isPastDue ||
     (status === "canceled" && !!currentPeriodEnd);
 
-  const result = await updateSubscriptionUser(subscriptionData, {
+  const result = await updateSubscriptionUser(authoritativeData, {
     activeMember: keepsAccess,
     subscriptionStatus: cancelAtPeriodEnd ? "canceled" : status,
     willRenew: !cancelAtPeriodEnd && status === "active",
@@ -585,21 +622,21 @@ async function handleSubscriptionUpdated(subscriptionData) {
       : null,
   });
   const previous = result?.previousData;
-  const nextTier = getMetadataTier(subscriptionData);
+  const nextTier = getMetadataTier(authoritativeData);
   if (previous?.email && isPastDue && previous.subscriptionStatus !== "past_due") {
     await enqueueEmailEvent({
       type: "billing.payment_failed",
-      eventId: `${getSubscriptionId(subscriptionData)}-${getCurrentPeriodEnd(subscriptionData)?.toISOString() || "current"}`,
+      eventId: `${getSubscriptionId(authoritativeData)}-${getCurrentPeriodEnd(authoritativeData)?.toISOString() || "current"}`,
       userId: result.userId,
       recipient: previous.email,
       data: {
         displayName: previous.username || previous.name,
-        endsAt: getCurrentPeriodEnd(subscriptionData),
+        endsAt: getCurrentPeriodEnd(authoritativeData),
       },
     });
     await enqueueAdminEmailEvent({
       type: "admin.payment_failure",
-      eventId: `${getSubscriptionId(subscriptionData)}-${getCurrentPeriodEnd(subscriptionData)?.toISOString() || "current"}`,
+      eventId: `${getSubscriptionId(authoritativeData)}-${getCurrentPeriodEnd(authoritativeData)?.toISOString() || "current"}`,
       data: {
         subject: "Membership payment is past due",
         heading: "Payment failure",
@@ -616,14 +653,14 @@ async function handleSubscriptionUpdated(subscriptionData) {
   ) {
     await enqueueEmailEvent({
       type: "billing.plan_changed",
-      eventId: `${getSubscriptionId(subscriptionData)}-${nextTier}`,
+      eventId: `${getSubscriptionId(authoritativeData)}-${nextTier}`,
       userId: result.userId,
       recipient: previous.email,
       data: {
         previousTier: previous.membershipTier,
         tier: nextTier,
         effectiveAt: new Date(),
-        endsAt: getCurrentPeriodEnd(subscriptionData),
+        endsAt: getCurrentPeriodEnd(authoritativeData),
       },
     });
   }
@@ -834,10 +871,41 @@ async function updateSubscriptionUser(subscriptionData, state, options = {}) {
     state.subscriptionEndsAt || getCurrentPeriodEnd(subscriptionData);
   const subscriptionId = getSubscriptionId(subscriptionData);
   const tier = getMetadataTier(subscriptionData);
+  const pendingUpdate = getPendingSubscriptionUpdate(subscriptionData);
+  const hasPendingUpdateField =
+    Object.hasOwn(subscriptionData || {}, "pending_update") ||
+    Object.hasOwn(subscriptionData || {}, "pendingUpdate");
+  const pendingTier = pendingUpdate
+    ? resolvePolarProductTier(pendingUpdate.productId)
+    : null;
+  const clearedPendingState = {
+    pendingMembershipTier: null,
+    pendingMembershipProductId: null,
+    pendingMembershipEffectiveAt: null,
+    pendingMembershipInterval: null,
+    pendingMembershipPriceAmount: null,
+    pendingMembershipCurrency: null,
+    pendingMembershipStatus: null,
+    pendingMembershipUpdateId: null,
+  };
+  const pendingState = pendingUpdate
+    ? {
+        pendingMembershipTier: pendingTier,
+        pendingMembershipProductId: pendingUpdate.productId,
+        pendingMembershipEffectiveAt: parsePolarDate(
+          pendingUpdate.appliesAt
+        ),
+        pendingMembershipStatus: "scheduled",
+        pendingMembershipUpdateId: pendingUpdate.id,
+      }
+    : hasPendingUpdateField && previousData.pendingMembershipTier
+    ? clearedPendingState
+    : {};
   const updateData = {
     polarCustomerId: getCustomerId(subscriptionData),
     subscriptionId,
     ...(tier ? { membershipTier: tier } : {}),
+    ...pendingState,
     ...state,
     updatedAt: new Date(),
     webhookProcessedAt: new Date(),

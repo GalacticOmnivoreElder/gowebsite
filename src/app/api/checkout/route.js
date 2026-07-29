@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { Polar } from "@polar-sh/sdk";
 import { getRequestUser } from "@/lib/auth-utils";
 import {
-  createPolarCustomerSession,
-  getPolarPortalBase,
   getPolarServer,
   resolvePolarProductId,
 } from "@/lib/polar";
@@ -28,21 +26,6 @@ function getClientIp(request) {
     request.headers.get("cf-connecting-ip") ||
     undefined
   );
-}
-
-function getCustomerPortalUrl(customerSession, customerId) {
-  const directPortalUrl =
-    customerSession?.customerPortalUrl ||
-    customerSession?.customer_portal_url;
-
-  if (directPortalUrl) return directPortalUrl;
-  if (!customerSession?.token) {
-    throw new Error("Polar did not return a customer portal session.");
-  }
-
-  return `${getPolarPortalBase()}?customer_session_token=${encodeURIComponent(
-    customerSession.token
-  )}&id=${encodeURIComponent(customerId)}`;
 }
 
 export async function POST(request) {
@@ -88,67 +71,25 @@ export async function POST(request) {
     userData.willRenew === false;
 
   if (user.activeMember) {
-    if (currentTier !== "member" || tier !== "company") {
-      return NextResponse.json(
-        {
-          error:
-            "This account already has an active membership. Manage the current plan from Billing.",
-          code: "active_membership",
-        },
-        { status: 409 }
-      );
-    }
-
-    if (subscriptionEnding) {
-      return NextResponse.json(
-        {
-          error:
-            "This membership is scheduled to end. Manage or reactivate it from Billing before changing plans.",
-          code: "subscription_ending",
-        },
-        { status: 409 }
-      );
-    }
-
-    if (!userData.polarCustomerId) {
-      return NextResponse.json(
-        {
-          error:
-            "We could not identify the Polar billing account for this membership. Please contact support before upgrading.",
-          code: "missing_customer",
-        },
-        { status: 409 }
-      );
-    }
-
-    try {
-      // Paid customers can only have one active subscription per Polar
-      // organization by default. Their upgrade must therefore be confirmed as
-      // a plan change in Polar's Customer Portal, not performed silently by
-      // our server and not started as a second checkout.
-      const customerSession = await createPolarCustomerSession(
-        userData.polarCustomerId
-      );
-
-      return NextResponse.json({
-        flow: "portal",
-        url: getCustomerPortalUrl(
-          customerSession,
-          userData.polarCustomerId
-        ),
-      });
-    } catch (error) {
-      console.error("Polar upgrade portal creation failed:", error);
-      const status = error?.statusCode || error?.status;
-      return NextResponse.json(
-        {
-          error:
-            "Failed to open the secure Polar upgrade page. Please try again or manage the plan from Billing.",
-          code: "upgrade_portal_failed",
-        },
-        { status: status === 401 ? 401 : 500 }
-      );
-    }
+    const isBusinessUpgrade = currentTier === "member" && tier === "company";
+    return NextResponse.json(
+      {
+        error: subscriptionEnding
+          ? "This membership is scheduled to end. Reactivate it from Billing before changing plans."
+          : isBusinessUpgrade
+          ? "Review and confirm this Business upgrade from the membership page."
+          : "This account already has an active membership. Manage the current plan from Billing.",
+        code: subscriptionEnding
+          ? "subscription_ending"
+          : isBusinessUpgrade
+          ? "upgrade_confirmation_required"
+          : "active_membership",
+        ...(isBusinessUpgrade && !subscriptionEnding
+          ? { upgradeUrl: "/membership#plans" }
+          : {}),
+      },
+      { status: 409 }
+    );
   }
 
   const polar = new Polar({

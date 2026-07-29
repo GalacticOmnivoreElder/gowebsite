@@ -64,6 +64,21 @@ ADMIN_BOOTSTRAP_SECRET=
 3. Copy each product's **id** into the matching env var above.
 4. Settings → **Developers → Access Tokens** → create a sandbox org token → `POLAR_ACCESS_TOKEN`.
 
+### Required subscription-change settings
+
+The GO membership page owns Community-to-Business upgrades so it can show the
+effective date and price before anything changes.
+
+1. Open **Settings > Billing > Customer portal**.
+2. Turn **Enable subscription plan changes** off. Keep cancellation, receipts,
+   invoices, and payment-method management available in the portal.
+3. Open **Settings > Subscriptions** and set the default proration behavior to
+   **Next period** as defense in depth.
+
+The application still sends `proration_behavior: "next_period"` explicitly for
+every Business upgrade. The portal setting prevents customers from bypassing
+the GO review dialog with a different organization-level proration default.
+
 ## 3. Webhook endpoint
 
 1. Start a tunnel to localhost, e.g. `ngrok http 3000` → copy the `https://…ngrok…` URL.
@@ -100,6 +115,19 @@ ADMIN_BOOTSTRAP_SECRET=
 ### Cancellation
 - Open the billing portal from `/billing` → cancel. Access remains until
   `subscriptionEndsAt`; `willRenew=false`, `subscriptionStatus=canceled`.
+
+### Community to Business upgrade
+
+1. Start with an active Community subscription and open `/membership`.
+2. Select a Business billing interval and click **Review Business upgrade**.
+3. Confirm that the dialog shows **No charge today**, the renewal date, and the
+   expected Polar Business price.
+4. Confirm the scheduled upgrade. Community remains the active entitlement and
+   Firestore stores the separate `pendingMembership*` fields.
+5. Confirm `/membership`, `/billing`, and the Polar portal show the scheduled
+   change. Business-only project creation must remain unavailable.
+6. At the next renewal, verify the Polar webhook changes `membershipTier` to
+   `company`, clears `pendingMembership*`, and only then unlocks Business access.
 
 ### Webhook replay (idempotency)
 - Redeliver the same event from Polar → no duplicate order/event is written
@@ -138,6 +166,7 @@ the client SDK / console.
 - [ ] `POLAR_SERVER=production` + production token + product ids.
 - [ ] Webhook endpoint points at the production domain; production signing secret.
 - [ ] `POLAR_SUCCESS_URL=https://<prod-domain>/subscription/success`.
+- [ ] Customer Portal plan changes are disabled; default proration is **Next period**.
 - [ ] `firestore.rules` deployed and verified.
 - [ ] `ADMIN_BOOTSTRAP_SECRET` cleared once an admin exists.
 - [ ] Remove/lock the dev-only `/test-polar` page.
