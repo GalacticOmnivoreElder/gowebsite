@@ -169,14 +169,17 @@ export async function PUT(request) {
   const consent = draft.consent || {};
   const portfolio = draft.portfolio || {};
 
-  // Required consent gates (spec: cannot complete without consent).
+  // Data storage and admin sharing are required to operate the member profile.
+  // AI assistance is an explicit opt-in and never blocks onboarding.
   if (
     !consent.consent_store_data ||
-    !consent.consent_ai_generation ||
     !consent.consent_share_with_admins
   ) {
     return NextResponse.json(
-      { error: "All required consent checkboxes must be accepted." },
+      {
+        error:
+          "Consent to storing your profile data and sharing it with GO admins is required.",
+      },
       { status: 400 }
     );
   }
@@ -219,6 +222,8 @@ export async function PUT(request) {
     .replace(/\s+/gu, " ");
   const secondaryRoles = normalizeTags(roleSkills.secondary_roles, 8);
   const tools = normalizeTags(roleSkills.tools, 20);
+  const canHelpWith = normalizeTags(help.can_help_with, 20);
+  const needsHelpWith = normalizeTags(help.needs_help_with, 20);
   const skills = sanitizeSkills(
     Array.isArray(roleSkills.skills)
       ? roleSkills.skills
@@ -277,8 +282,8 @@ export async function PUT(request) {
     looking_for_team: !!goals.looking_for_team,
     looking_for_mentorship: !!goals.looking_for_mentorship,
     looking_for_jobs: !!goals.looking_for_jobs,
-    can_help_with: help.can_help_with || [],
-    needs_help_with: help.needs_help_with || [],
+    can_help_with: canHelpWith,
+    needs_help_with: needsHelpWith,
     is_blocked: !!help.is_blocked,
     blocker_description: help.blocker_description || null,
     visibility_public:
@@ -289,14 +294,20 @@ export async function PUT(request) {
     visibility_job_matching:
       consent.visibility_job_matching ??
       DEFAULT_PROFILE_VISIBILITY.visibility_job_matching,
+    consent_ai_generation: consent.consent_ai_generation === true,
+    consent_store_data: consent.consent_store_data === true,
+    consent_share_with_admins: consent.consent_share_with_admins === true,
     onboarding_completed: true,
     onboarding_completed_at: now,
     updated_at: now,
   };
 
-  // Generate the GO CV (deterministic + optional AI wording).
+  // Always generate a deterministic CV. AI wording is used only after an
+  // explicit opt-in and is never required to complete onboarding.
   const cvDraft = buildCvFromProfile(profile);
-  cvDraft.summary = await improveSummaryWithAI(profile, cvDraft.summary);
+  if (profile.consent_ai_generation) {
+    cvDraft.summary = await improveSummaryWithAI(profile, cvDraft.summary);
+  }
   cvDraft.sections = cvDraft.sections.map((s) =>
     s.section_type === "summary"
       ? { ...s, content_json: { text: cvDraft.summary } }

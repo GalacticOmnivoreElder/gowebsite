@@ -69,6 +69,7 @@ function loadRoute(seed) {
   const adminDb = createDb(seed);
   const skillSyncCalls = [];
   const emailEvents = [];
+  const aiImprovementCalls = [];
   const route = loadSourceModule(
     "src/app/api/onboarding/route.js",
     ["GET", "PUT"],
@@ -113,7 +114,10 @@ function loadRoute(seed) {
           email: "ada@example.com",
           uid: "user-1",
         }),
-        improveSummaryWithAI: async (_profile, summary) => summary,
+        improveSummaryWithAI: async (profile, summary) => {
+          aiImprovementCalls.push({ profile, summary });
+          return summary;
+        },
         isValidOnboardingStep: () => true,
         sanitizeSkills: (values) => {
           const seen = new Set();
@@ -135,7 +139,13 @@ function loadRoute(seed) {
     }
   );
 
-  return { ...route, adminDb, emailEvents, skillSyncCalls };
+  return {
+    ...route,
+    adminDb,
+    aiImprovementCalls,
+    emailEvents,
+    skillSyncCalls,
+  };
 }
 
 test("editing onboarding preserves skills already selected in the profile", async () => {
@@ -239,6 +249,10 @@ test("updating onboarding regenerates the CV and preserves its published state",
   );
   assert.equal(route.adminDb.docs.user_profiles["user-1"].discord_joined, true);
   assert.equal(
+    route.adminDb.docs.user_profiles["user-1"].consent_ai_generation,
+    true
+  );
+  assert.equal(
     route.adminDb.docs.user_profiles["user-1"].portfolio_links[0].url,
     "https://ada.example"
   );
@@ -263,8 +277,46 @@ test("updating onboarding regenerates the CV and preserves its published state",
     "Visual Studio Code",
   ]);
   assert.equal(route.skillSyncCalls[0].userId, "user-1");
+  assert.equal(route.aiImprovementCalls.length, 1);
   assert.deepEqual(
     route.emailEvents.filter((event) => event.type === "onboarding.completed"),
     []
   );
+});
+
+test("onboarding completes without AI consent and skips AI generation", async () => {
+  const route = loadRoute({
+    onboarding_sessions: {
+      "user-1": {
+        draft_data_json: {
+          consent: {
+            consent_ai_generation: false,
+            consent_share_with_admins: true,
+            consent_store_data: true,
+          },
+          identity: {
+            display_name: "Ada",
+            full_name: "Ada Lovelace",
+          },
+          "role-skills": {
+            primary_role: "Technical Artist",
+          },
+          help: {
+            can_help_with: ["Unity", " unity ", "2D Art"],
+            needs_help_with: ["Audio Design"],
+          },
+        },
+        status: "in_progress",
+      },
+    },
+  });
+
+  const response = await route.PUT(createRequest());
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.profile.consent_ai_generation, false);
+  assert.equal(route.aiImprovementCalls.length, 0);
+  assert.deepEqual(response.body.profile.can_help_with, ["Unity", "2D Art"]);
+  assert.deepEqual(response.body.profile.needs_help_with, ["Audio Design"]);
+  assert.equal(response.body.cv.summary, "Updated summary");
 });

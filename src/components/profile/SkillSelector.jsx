@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Check, Plus, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,8 @@ export function SkillSelector({
   submissionLabel = "save your profile",
   suggestions = LANDING_FALLBACK_SKILLS,
   loadCatalog = true,
+  catalogMode = "popular",
+  allowCustom = true,
   suggestionsLabel = "Popular community skills",
   suggestionsHelp = "Choose from the skills used most often across community profiles.",
   customLabel = "Can't find your skill?",
@@ -32,8 +34,17 @@ export function SkillSelector({
 }) {
   const [popularSkills, setPopularSkills] = useState(suggestions);
   const [customSkill, setCustomSkill] = useState("");
+  const [catalogSearch, setCatalogSearch] = useState("");
   const customSkillId = useId();
+  const catalogSearchId = useId();
   const selectedSkills = Array.isArray(value) ? value : [];
+  const visibleSkills = useMemo(() => {
+    const query = catalogSearch.trim().toLocaleLowerCase();
+    if (!query) return popularSkills;
+    return popularSkills.filter((skill) =>
+      skill.toLocaleLowerCase().includes(query)
+    );
+  }, [catalogSearch, popularSkills]);
 
   useEffect(() => {
     setPopularSkills(suggestions);
@@ -43,7 +54,11 @@ export function SkillSelector({
 
     const loadPopularSkills = async () => {
       try {
-        const response = await fetch("/api/skills?popular=true&limit=20", {
+        const endpoint =
+          catalogMode === "all"
+            ? "/api/skills"
+            : "/api/skills?popular=true&limit=20";
+        const response = await fetch(endpoint, {
           signal: controller.signal,
         });
         if (!response.ok) return;
@@ -61,7 +76,7 @@ export function SkillSelector({
     loadPopularSkills();
 
     return () => controller.abort();
-  }, [loadCatalog, suggestions]);
+  }, [catalogMode, loadCatalog, suggestions]);
 
   const addSkill = (skill) => {
     const normalizedSkill = normalizeSkillName(skill);
@@ -116,12 +131,29 @@ export function SkillSelector({
             {suggestionsHelp}
           </p>
         </div>
+        {catalogMode === "all" ? (
+          <div className="space-y-2">
+            <Label htmlFor={catalogSearchId}>Search skills</Label>
+            <Input
+              id={catalogSearchId}
+              type="search"
+              value={catalogSearch}
+              onChange={(event) => setCatalogSearch(event.target.value)}
+              placeholder="Search the complete skill directory"
+              autoComplete="off"
+            />
+          </div>
+        ) : null}
         <div
-          className="flex flex-wrap gap-2"
+          className={`flex flex-wrap gap-2 ${
+            catalogMode === "all"
+              ? "max-h-64 overflow-y-auto rounded-lg border bg-background/40 p-3"
+              : ""
+          }`}
           role="group"
-          aria-label="Popular community skills"
+          aria-label={suggestionsLabel}
         >
-          {popularSkills.map((skill) => {
+          {visibleSkills.map((skill) => {
             const selected = selectedSkills.some(
               (selectedSkill) =>
                 getSkillKey(selectedSkill) === getSkillKey(skill)
@@ -150,40 +182,47 @@ export function SkillSelector({
               </button>
             );
           })}
+          {visibleSkills.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No skills match your search.
+            </p>
+          ) : null}
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor={customSkillId}>{customLabel}</Label>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Input
-            id={customSkillId}
-            value={customSkill}
-            onChange={(event) => setCustomSkill(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                addSkill(customSkill);
-              }
-            }}
-            placeholder={customPlaceholder}
-            maxLength={MAX_SKILL_NAME_LENGTH}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => addSkill(customSkill)}
-            disabled={!normalizeSkillName(customSkill)}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {addLabel}
-          </Button>
+      {allowCustom ? (
+        <div className="space-y-2">
+          <Label htmlFor={customSkillId}>{customLabel}</Label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              id={customSkillId}
+              value={customSkill}
+              onChange={(event) => setCustomSkill(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  addSkill(customSkill);
+                }
+              }}
+              placeholder={customPlaceholder}
+              maxLength={MAX_SKILL_NAME_LENGTH}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => addSkill(customSkill)}
+              disabled={!normalizeSkillName(customSkill)}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {addLabel}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            New tags join the master directory for admin review when you{" "}
+            {submissionLabel}.
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          New tags join the master directory for admin review when you{" "}
-          {submissionLabel}.
-        </p>
-      </div>
+      ) : null}
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>Your selected skills</span>
@@ -232,7 +271,7 @@ export function SkillTagInput({
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/skills?popular=true&limit=50", { signal: controller.signal })
+    fetch("/api/skills", { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
         if (Array.isArray(data?.skills) && data.skills.length > 0) {
@@ -267,7 +306,8 @@ export function SkillTagInput({
         ))}
       </datalist>
       <p className="text-xs text-muted-foreground">
-        Choose a suggestion or enter your own role tag.
+        Choose any skill from the complete community directory or enter your
+        own role tag.
       </p>
     </div>
   );

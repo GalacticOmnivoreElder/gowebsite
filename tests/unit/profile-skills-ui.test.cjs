@@ -37,6 +37,11 @@ test("profile and onboarding share the accessible community skill selector", () 
 
 test("onboarding accepts directory-backed roles, custom tools, and optional Discord", () => {
   assert.match(onboardingSource, /<SkillTagInput/);
+  assert.match(selectorSource, /fetch\("\/api\/skills"/);
+  assert.match(
+    selectorSource,
+    /Choose any skill from the complete community directory/
+  );
   assert.match(onboardingSource, /Secondary roles \(optional\)/);
   assert.match(onboardingSource, /Common tools and engines/);
   assert.match(onboardingSource, /Discord username \(optional\)/);
@@ -48,6 +53,33 @@ test("onboarding accepts directory-backed roles, custom tools, and optional Disc
   assert.match(
     selectorSource,
     /onBlur=\{\(event\) => onChange\(normalizeSkillName/
+  );
+});
+
+test("help and contribution uses the full backend skill directory", () => {
+  assert.match(selectorSource, /catalogMode === "all"/);
+  assert.match(selectorSource, /\? "\/api\/skills"/);
+  assert.match(selectorSource, /Search the complete skill directory/);
+  assert.equal(
+    (onboardingSource.match(/catalogMode="all"/g) || []).length,
+    2
+  );
+  assert.equal(
+    (onboardingSource.match(/allowCustom=\{false\}/g) || []).length,
+    2
+  );
+  assert.doesNotMatch(onboardingSource, /HELP_TOPICS/);
+});
+
+test("AI assistance is optional during onboarding", () => {
+  assert.match(onboardingSource, /AI assistance.*\(optional\)/);
+  assert.match(
+    onboardingSource,
+    /GO uses deterministic templates and you can\s+still complete onboarding normally/
+  );
+  assert.doesNotMatch(
+    onboardingSource,
+    /AI-assisted profile\/CV generation \*/
   );
 });
 

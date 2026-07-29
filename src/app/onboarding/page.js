@@ -21,7 +21,6 @@ import {
   ONBOARDING_STEPS,
   SKILL_LEVELS,
   COMMON_TOOLS,
-  HELP_TOPICS,
   PORTFOLIO_LINK_TYPES,
   PAST_PROJECT_STATUSES,
   DISCORD_INVITE_URL,
@@ -55,29 +54,6 @@ async function authedFetch(url, method, body) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "Request failed");
   return data;
-}
-
-function Chips({ options, value = [], onChange }) {
-  const toggle = (opt) =>
-    onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt]);
-  return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((opt) => (
-        <button
-          key={opt}
-          type="button"
-          onClick={() => toggle(opt)}
-          className={`px-3 py-1 rounded-full border text-sm transition-colors ${
-            value.includes(opt)
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-background text-muted-foreground border-border hover:border-primary/50"
-          }`}
-        >
-          {opt}
-        </button>
-      ))}
-    </div>
-  );
 }
 
 const OnboardingContent = observer(() => {
@@ -377,10 +353,28 @@ const OnboardingContent = observer(() => {
             {step === "help" && (
               <>
                 <Field label="What can you help others with?">
-                  <Chips options={HELP_TOPICS} value={stepData.can_help_with || []} onChange={(v) => setField("can_help_with", v)} />
+                  <SkillSelector
+                    value={stepData.can_help_with || []}
+                    onChange={(value) => setField("can_help_with", value)}
+                    catalogMode="all"
+                    allowCustom={false}
+                    suggestionsLabel="Complete community skill directory"
+                    suggestionsHelp="Choose any active skill you can help other members with."
+                    emptyText="No contribution skills selected."
+                    submissionLabel="complete onboarding"
+                  />
                 </Field>
                 <Field label="What do you need help with?">
-                  <Chips options={HELP_TOPICS} value={stepData.needs_help_with || []} onChange={(v) => setField("needs_help_with", v)} />
+                  <SkillSelector
+                    value={stepData.needs_help_with || []}
+                    onChange={(value) => setField("needs_help_with", value)}
+                    catalogMode="all"
+                    allowCustom={false}
+                    suggestionsLabel="Complete community skill directory"
+                    suggestionsHelp="Choose any active skill where community support would help."
+                    emptyText="No support skills selected."
+                    submissionLabel="complete onboarding"
+                  />
                 </Field>
                 <CheckRow checked={!!stepData.is_blocked} onChange={(v) => setField("is_blocked", v)} label="I'm currently blocked on something" />
                 {stepData.is_blocked && (
@@ -394,7 +388,17 @@ const OnboardingContent = observer(() => {
             {step === "consent" && (
               <>
                 <CheckRow checked={!!stepData.consent_store_data} onChange={(v) => setField("consent_store_data", v)} label="I consent to GO storing my profile data *" />
-                <CheckRow checked={!!stepData.consent_ai_generation} onChange={(v) => setField("consent_ai_generation", v)} label="I consent to AI-assisted profile/CV generation *" />
+                <div className="space-y-1">
+                  <CheckRow
+                    checked={!!stepData.consent_ai_generation}
+                    onChange={(v) => setField("consent_ai_generation", v)}
+                    label="Use AI assistance to polish my generated profile/CV (optional)"
+                  />
+                  <p className="pl-7 text-xs text-muted-foreground">
+                    If unchecked, GO uses deterministic templates and you can
+                    still complete onboarding normally.
+                  </p>
+                </div>
                 <CheckRow checked={!!stepData.consent_share_with_admins} onChange={(v) => setField("consent_share_with_admins", v)} label="I consent to sharing my profile with GO admins *" />
                 <div className="h-px bg-border my-2" />
                 <CheckRow checked={stepData.visibility_project_creators ?? true} onChange={(v) => setField("visibility_project_creators", v)} label="Show my profile to project creators" />

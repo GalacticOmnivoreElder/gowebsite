@@ -58,6 +58,7 @@ function createDb(seed = {}) {
 
 function loadRoute({ user = { uid: "user-1" }, seed = {} } = {}) {
   const adminDb = createDb(seed);
+  const aiImprovementCalls = [];
   const route = loadSourceModule(
     "src/app/api/me/cv/route.js",
     ["GET", "POST", "PATCH", "PUT"],
@@ -83,13 +84,16 @@ function loadRoute({ user = { uid: "user-1" }, seed = {} } = {}) {
           title: `${profile.display_name} CV`,
         }),
         getRequestUser: async () => user,
-        improveSummaryWithAI: async () => "Improved summary",
+        improveSummaryWithAI: async (profile, summary) => {
+          aiImprovementCalls.push({ profile, summary });
+          return "Improved summary";
+        },
         serializeFirestoreDate: (value) => value?.toISOString?.() || value,
       },
     }
   );
 
-  return { ...route, adminDb };
+  return { ...route, adminDb, aiImprovementCalls };
 }
 
 test("me/cv route requires authentication", async () => {
@@ -141,6 +145,7 @@ test("POST /api/me/cv requires onboarding and then generates a CV", async () => 
     seed: {
       user_profiles: {
         "user-1": {
+          consent_ai_generation: true,
           display_name: "Ada",
           primary_role: "Programmer",
           skill_level: "intermediate",
@@ -156,8 +161,34 @@ test("POST /api/me/cv requires onboarding and then generates a CV", async () => 
   assert.equal(response.status, 200);
   assert.equal(response.body.cv.title, "Ada CV");
   assert.equal(response.body.cv.summary, "Improved summary");
+  assert.equal(route.aiImprovementCalls.length, 1);
   assert.equal(route.adminDb.docs.go_cvs["user-1"].sections[0].content_json.text, "Improved summary");
   assert.equal(route.adminDb.docs.users["user-1"].hasCv, true);
+});
+
+test("POST /api/me/cv regenerates without AI when the member has not opted in", async () => {
+  const route = loadRoute({
+    seed: {
+      user_profiles: {
+        "user-1": {
+          consent_ai_generation: false,
+          display_name: "Ada",
+          primary_role: "Technical Artist",
+          skill_level: "intermediate",
+        },
+      },
+    },
+  });
+
+  const response = await route.POST(createRequest());
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.cv.summary, "Baseline summary");
+  assert.equal(route.aiImprovementCalls.length, 0);
+  assert.equal(
+    route.adminDb.docs.go_cvs["user-1"].sections[0].content_json.text,
+    "Baseline summary"
+  );
 });
 
 test("PATCH /api/me/cv only stores allowed editable fields", async () => {

@@ -86,19 +86,6 @@ export const PORTFOLIO_LINK_TYPES = [
   "other",
 ];
 
-export const HELP_TOPICS = [
-  "Programming",
-  "Art",
-  "Design",
-  "Audio",
-  "Writing",
-  "Production",
-  "Marketing",
-  "Finding a team",
-  "Publishing",
-  "Portfolio review",
-];
-
 export const PAST_PROJECT_STATUSES = ["prototype", "released", "jam", "portfolio"];
 
 export const DISCORD_INVITE_URL = "https://discord.gg/ZbSShxu6K4";
