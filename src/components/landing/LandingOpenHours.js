@@ -11,7 +11,7 @@ export const LandingOpenHours = () => {
     <section className="relative text-white py-16 md:py-24 min-h-[450px] flex items-center justify-center">
       <Image
         src={hqImg}
-        alt="Galactic Omnivore HQ"
+        alt=""
         fill
         sizes="100vw"
         className="z-0 object-cover"
@@ -21,18 +21,17 @@ export const LandingOpenHours = () => {
       <div className="relative z-20 container mx-auto px-4 text-center">
         <Clock className="h-12 w-12 mx-auto mb-4 text-primary" />
         <h2 className="text-3xl md:text-4xl font-bold mb-4">
-          Want to Visit Us?
+          Plan a visit to GOHQ
         </h2>
-        <p className="text-xl font-semibold mb-4">HQ Open Hours</p>
+        <p className="text-xl font-semibold mb-4">Visits are scheduled in advance</p>
         <p className="text-neutral-200 mb-6 max-w-2xl mx-auto">
-          Located on the eleventh floor next to the Macedonian Archbishop
-          Cathedral, our 60 sqm community space offers a cool view to inspire
-          your best game ideas.
+          Open the calendar to see current availability and choose a time. Your
+          booking confirmation provides the visit details.
         </p>
 
         <div className="text-2xl md:text-3xl font-bold mb-8 bg-black/50 p-6 rounded-lg max-w-md mx-auto border-2 border-primary">
-          <p className="text-white">Monday - Friday</p>
-          <p className="text-primary text-3xl md:text-4xl">12:00 - 20:00</p>
+          <p className="text-white">Visit by appointment</p>
+          <p className="text-primary text-2xl md:text-3xl">Check current availability</p>
         </div>
 
         <Button
@@ -44,7 +43,7 @@ export const LandingOpenHours = () => {
             target="_blank"
             href="https://calendar.app.google/Ge6GvfiaaaMhAHHf6"
           >
-            Schedule a Visit
+            View visit calendar
           </Link>
         </Button>
       </div>

@@ -1,5 +1,5 @@
 export function isNewsletterEnabled() {
-  return process.env.NEWSLETTER_ENABLED === "true";
+  return process.env.NEWSLETTER_ENABLED !== "false";
 }
 
 export function newsletterUnavailableResponse() {

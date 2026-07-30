@@ -33,7 +33,7 @@ export default function PackageCard({ package: pkg }) {
         <CardContent className="flex-grow">
           <p className="mb-4 line-clamp-3">{pkg.description}</p>
 
-          <h4 className="font-semibold text-sm mb-2">Package Includes:</h4>
+          <h4 className="font-semibold text-sm mb-2">Package includes</h4>
           <ul className="space-y-1">
             {pkg.assets.slice(0, 2).map((asset, index) => (
               <li key={index} className="flex items-start gap-1 text-sm">
@@ -50,7 +50,7 @@ export default function PackageCard({ package: pkg }) {
         </CardContent>
         <CardFooter>
           <Button className="w-full">
-            View Package <ArrowRight className="h-4 w-4 ml-2" />
+            View resource <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </CardFooter>
       </Card>

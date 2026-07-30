@@ -45,50 +45,50 @@ import {
 const exploreItems = [
   {
     id: "blog",
-    tabLabel: "Blog",
+    tabLabel: "GO Signal",
     icon: Newspaper,
-    eyebrow: "Latest from the blog",
-    title: "Ideas, lessons, and stories from the G.O. community",
+    eyebrow: "Latest from GO Signal",
+    title: "Notes, lessons, and project signals from GO",
     description:
-      "Follow the people, projects, and practical discoveries shaping game development inside Galactic Omnivore.",
-    highlights: ["Community stories", "Game-dev insights", "Project updates"],
+      "Read practical notes from the people and projects moving through Galactic Omnivore.",
+    highlights: ["Creator notes", "Practical lessons", "Project updates"],
     href: "/blog",
-    cta: "Visit the blog",
+    cta: "Read GO Signal",
     image: achievementImg2,
     imageAlt: "Galactic Omnivore community artwork",
-    imageLabel: "Fresh from G.O.",
+    imageLabel: "Latest signal",
     imagePosition: "center",
   },
   {
     id: "games",
     tabLabel: "Games",
     icon: Gamepad2,
-    eyebrow: "Community-made games",
-    title: "Play what the community is creating",
+    eyebrow: "Games from GO creators",
+    title: "See what creators are making",
     description:
-      "Discover original digital and tabletop games built by G.O. creators, from early experiments to finished releases.",
-    highlights: ["Original games", "Creator spotlights", "Playable projects"],
+      "Review listed digital and tabletop work, from early playable tests to released projects.",
+    highlights: ["Playable work", "Creator credits", "Project stages"],
     href: "/games",
     cta: "Explore games",
     image: gamesImg,
-    imageAlt: "A collection of printable tabletop games by G.O. creators",
-    imageLabel: "Made in the community",
+    imageAlt: "A collection of printable tabletop games by GO creators",
+    imageLabel: "Created through GO",
     imagePosition: "center",
   },
   {
     id: "resources",
     tabLabel: "Resources",
     icon: BookOpen,
-    eyebrow: "Tools for game makers",
-    title: "Learn, prototype, and build with G.O. resources",
+    eyebrow: "Resources for game creators",
+    title: "Find material for the task in front of you",
     description:
-      "Browse educational material, asset packs, source files, and practical tools made to move your next game forward.",
-    highlights: ["Learning materials", "Asset packs", "Source files"],
+      "Browse available learning material and practical files that can support your next test.",
+    highlights: ["Learning material", "Available files", "Practical tools"],
     href: "/resources",
     cta: "Browse resources",
     image: "/g1/g1-mvp.gif",
-    imageAlt: "Mrale the rat in the G.O. platformer prototype",
-    imageLabel: "Built to help you create",
+    imageAlt: "Mrale the rat in a GO platformer prototype",
+    imageLabel: "For the next useful task",
     imagePosition: "center",
   },
   {
@@ -96,15 +96,15 @@ const exploreItems = [
     tabLabel: "Community",
     icon: Users,
     eyebrow: "Join Galactic Omnivore",
-    title: "Meet collaborators. Build something real.",
+    title: "Review the current route into the community",
     description:
-      "Join a game-development community where learners, creators, and studios share skills, form teams, and bring ideas to life.",
-    highlights: ["Meet collaborators", "Join projects", "Grow your skills"],
+      "See the current access, benefits, requirements, and next step before you join.",
+    highlights: ["Current access", "Clear requirements", "What happens next"],
     href: "/membership",
     cta: "Explore membership",
     image: communityImg,
     imageAlt: "Galactic Omnivore community illustration",
-    imageLabel: "Create together",
+    imageLabel: "Unite. Create. Evolve.",
     imagePosition: "center",
   },
 ];
@@ -171,19 +171,19 @@ export const ExploreGo = () => {
         <div className="grid gap-4 md:grid-cols-[minmax(0,0.8fr)_minmax(20rem,1fr)] md:items-end md:gap-12">
           <div>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.22em] text-primary">
-              Find your way in
+              Follow the signal
             </p>
             <h2
               id="explore-go-heading"
               className="text-4xl font-bold tracking-tight sm:text-5xl"
             >
-              EXPLORE G.O.
+              Explore Galactic Omnivore
             </h2>
           </div>
           <p className="max-w-2xl text-base leading-relaxed text-white/65 md:text-lg">
-            Step inside Galactic Omnivore&mdash;read the latest stories, play
-            community-made games, find tools for your next project, or meet the
-            people building alongside you.
+            Read the latest signal, review listed games, find material for a
+            current task, or check the community route. Choose the path that
+            moves your work one step forward.
           </p>
         </div>
 

@@ -5,7 +5,7 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://www.galacticomnivore.com"
 ).replace(/\/$/, "");
 export const DEFAULT_DESCRIPTION =
-  "Galactic Omnivore is Macedonia's game development community for learning, collaboration, portfolio building, and finding a game dev team.";
+  "Galactic Omnivore is a North Macedonian nonprofit community and platform helping game creators learn, find projects, and move toward a playable milestone.";
 export const DEFAULT_OG_IMAGE = "/opengraph-image";
 export const DEFAULT_KEYWORDS = [
   "Galactic Omnivore",
@@ -178,7 +178,7 @@ export async function getWordPressPostBySlug(slug) {
       post._embedded?.["wp:term"]?.[0]?.map((term) => term.name) || [];
 
     return {
-      title: stripHtml(post.title?.rendered || "Galactic Omnivore Blog"),
+      title: stripHtml(post.title?.rendered || "Galactic Omnivore GO Signal"),
       slug: post.slug,
       excerpt: truncate(post.excerpt?.rendered || post.content?.rendered),
       date: post.date_gmt || post.date,

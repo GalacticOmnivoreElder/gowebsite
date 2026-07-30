@@ -113,14 +113,14 @@ const SourceProjectDetailsPage = observer(() => {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-4">Source Project Not Found</h2>
+          <h2 className="text-2xl font-bold mb-4">Project group not found</h2>
           <p className="text-muted-foreground mb-4">
             The source project you&apos;re looking for doesn&apos;t exist or you
             don&apos;t have permission to view it.
           </p>
           <Button onClick={() => router.push("/projects")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Projects
+            Back to projects
           </Button>
         </div>
       </div>
@@ -251,14 +251,14 @@ const SourceProjectDetailsPage = observer(() => {
             <Card>
               <CardContent className="p-8 text-center">
                 <Folder className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Projects Yet</h3>
+          <h3 className="text-lg font-medium mb-2">No projects in this group</h3>
                 <p className="text-muted-foreground mb-4">
                   This source project doesn&apos;t have any projects associated
                   with it yet.
                 </p>
                 {sourceProject.ownerDetails?.uid === MobxStore.user?.uid && (
                   <Button asChild>
-                    <Link href="/project/create">Create New Project</Link>
+            <Link href="/project/create">Create a project</Link>
                   </Button>
                 )}
               </CardContent>

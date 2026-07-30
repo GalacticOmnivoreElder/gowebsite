@@ -187,8 +187,8 @@ const ProfileEditor = observer(({ onSave }) => {
       await MobxStore.checkAuth();
 
       toast({
-        title: "Success",
-        description: "Profile updated successfully!",
+        title: "Profile updated",
+        description: "Your changes were saved.",
       });
 
       // Call onSave callback to exit edit mode
@@ -198,7 +198,7 @@ const ProfileEditor = observer(({ onSave }) => {
     } catch (error) {
       console.error("Error updating profile:", error);
       toast({
-        title: "Error",
+        title: "Profile could not be updated",
         description: error.message || "Failed to update profile",
         variant: "destructive",
       });
@@ -226,7 +226,7 @@ const ProfileEditor = observer(({ onSave }) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Basic Information
+            Basic information
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -278,7 +278,7 @@ const ProfileEditor = observer(({ onSave }) => {
           </div>
 
           <div>
-            <Label htmlFor="aboutMe">About Me</Label>
+            <Label htmlFor="aboutMe">About you</Label>
             <Textarea
               id="aboutMe"
               value={formData.aboutMe}
@@ -306,7 +306,7 @@ const ProfileEditor = observer(({ onSave }) => {
       {/* Skills */}
       <Card>
         <CardHeader>
-          <CardTitle>Skills & Expertise</CardTitle>
+          <CardTitle>Skills and experience</CardTitle>
         </CardHeader>
         <CardContent>
           <SkillSelector
@@ -319,7 +319,7 @@ const ProfileEditor = observer(({ onSave }) => {
       {/* Social Links */}
       <Card>
         <CardHeader>
-          <CardTitle>Social Links</CardTitle>
+          <CardTitle>Contact links</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {SOCIAL_PLATFORMS.map((platform) => (
@@ -403,13 +403,13 @@ const ProfileEditor = observer(({ onSave }) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            Privacy Settings
+            Privacy settings
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <Label>Profile Visibility</Label>
+              <Label>Profile visibility</Label>
               <p className="text-sm text-muted-foreground">
                 Control who can see your profile information
               </p>
@@ -443,13 +443,13 @@ const ProfileEditor = observer(({ onSave }) => {
           <div className="text-sm text-muted-foreground">
             {formData.profilePrivacy === "public" ? (
               <p>
-                ✅ Your profile is visible to everyone. Others can see your bio,
-                skills, and public social links.
+                Your profile is public. Others can see your bio, skills, and
+                public contact links.
               </p>
             ) : (
               <p>
-                🔒 Your profile is private. Only your username and avatar are
-                visible to others.
+                Your profile is private. Other people can see only your
+                username and avatar.
               </p>
             )}
           </div>
@@ -460,7 +460,7 @@ const ProfileEditor = observer(({ onSave }) => {
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving}>
           <Save className="h-4 w-4 mr-2" />
-          {saving ? "Saving..." : "Save Changes"}
+          {saving ? "Saving..." : "Save changes"}
         </Button>
       </div>
     </div>

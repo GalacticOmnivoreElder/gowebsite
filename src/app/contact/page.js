@@ -4,14 +4,14 @@ import { createMetadata } from "@/lib/seo";
 export const metadata = createMetadata({
   title: "Contact",
   description:
-    "Contact Galactic Omnivore for support, partnerships, business inquiries, and game development community questions in Skopje, Macedonia.",
+    "Contact Galactic Omnivore for account support, project questions, or organization inquiries.",
   path: "/contact",
 });
 
 export default function ContactPage() {
   return (
     <div className="container max-w-4xl mx-auto py-12">
-      <h1 className="text-4xl font-bold text-center mb-8">Contact Us</h1>
+      <h1 className="text-4xl font-bold text-center mb-8">Contact GO</h1>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">
         <Card>
@@ -20,8 +20,8 @@ export default function ContactPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Need help with your subscription, assets or game development
-              journey in general?
+              Use the support desk for account, billing, resource, or platform
+              questions.
             </p>
             <a
               href="https://galacticomnivore.atlassian.net/servicedesk/customer/portal/"
@@ -36,11 +36,11 @@ export default function ContactPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Business Inquiries</CardTitle>
+            <CardTitle>Organization inquiries</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Interested in partnerships or collaboration?
+              Use this address for organization and project-owner inquiries.
             </p>
             <p className="font-medium">business@galacticomnivore.com</p>
           </CardContent>
@@ -49,7 +49,7 @@ export default function ContactPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Visit Us</CardTitle>
+          <CardTitle>Visit GOHQ</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-6">
@@ -66,7 +66,7 @@ export default function ContactPage() {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">Working Hours</h3>
+              <h3 className="font-semibold mb-2">Working hours</h3>
               <p className="text-muted-foreground">
                 Monday - Friday
                 <br />

@@ -215,7 +215,7 @@ export default function ProfileInfo({
           <p className="text-muted-foreground mb-4">
             {subscriptionStatus === "Active"
               ? "You have an active subscription with access to all current assets."
-              : "You don't have an active subscription. Subscribe to access premium assets."}
+              : "You do not have an active membership. Review current member access."}
           </p>
 
           <Button

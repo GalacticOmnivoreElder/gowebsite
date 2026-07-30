@@ -129,9 +129,9 @@ function eventCopy(type, data) {
               "Welcome to Galactic Omnivore—a community where creators can share their skills, find collaborators, and build projects together."
             ) +
             paragraph(planParagraph) +
-            `<p style="margin:0 0 12px;color:#f5f5f5;font-weight:700;">Your best first steps</p>` +
+            `<p style="margin:0 0 12px;color:#f5f5f5;font-weight:700;">Useful first steps</p>` +
             bulletList(steps),
-          text: `${data.firstName ? `Hi ${data.firstName},` : "Hello,"}\n\nWelcome to Galactic Omnivore—a community where creators can share their skills, find collaborators, and build projects together.\n\n${planParagraph}\n\nYour best first steps\n${steps
+          text: `${data.firstName ? `Hi ${data.firstName},` : "Hello,"}\n\nWelcome to Galactic Omnivore—a community where creators can share their skills, find collaborators, and build projects together.\n\n${planParagraph}\n\nUseful first steps\n${steps
             .map((step, index) => `${index + 1}. ${step}`)
             .join("\n")}${plan ? `\n\nMembership: ${plan.name}` : ""}`,
           ctaLabel: "Finish onboarding",
@@ -513,7 +513,7 @@ function eventCopy(type, data) {
       };
     case "package.published":
       return {
-        subject: `New member package: ${data.packageTitle || "Monthly resources"}`,
+        subject: `New member package: ${data.packageTitle || "Member resources"}`,
         heading: "A new member package is available",
         preheader: `${data.packageTitle || "A new package"} is ready to download.`,
         body: paragraph(

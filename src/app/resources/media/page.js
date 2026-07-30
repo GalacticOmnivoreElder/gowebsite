@@ -158,6 +158,8 @@ const MediaItemCard = ({ item }) => {
 export default function MediaLibraryPage() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const mediaLibraryAvailable =
+    process.env.NEXT_PUBLIC_MEDIA_LIBRARY_ENABLED === "true";
 
   const filteredMedia = useMemo(() => {
     return mediaData.filter((item) => {
@@ -170,6 +172,21 @@ export default function MediaLibraryPage() {
       return matchesFilter && matchesSearch;
     });
   }, [activeFilter, searchTerm]);
+
+  if (!mediaLibraryAvailable) {
+    return (
+      <div className="container mx-auto max-w-3xl px-4 py-16 text-center">
+        <h1 className="text-4xl font-bold">Planned media library</h1>
+        <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+          This route is not available yet. When it opens, each item should state
+          its source, usage terms, format, and access requirements.
+        </p>
+        <Button asChild variant="outline" className="mt-6">
+          <Link href="/resources">Back to resources</Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-12 md:py-16">

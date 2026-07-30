@@ -249,7 +249,7 @@ const SubscriptionSuccessPage = observer(() => {
                       className="mb-3 h-6 w-6 text-primary"
                       aria-hidden="true"
                     />
-                    <h2 className="font-semibold">Quick onboarding</h2>
+                    <h2 className="font-semibold">Profile setup</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Onboarding takes {ONBOARDING_ESTIMATE} and helps create
                       your profile and draft GameDev Passport.
@@ -334,8 +334,8 @@ const SubscriptionSuccessPage = observer(() => {
             <DialogHeader className="text-center sm:text-center">
               <DialogTitle className="font-heading text-2xl leading-tight sm:text-3xl">
                 {confirmationMode === "upgrade"
-                  ? "Your GO Business upgrade is confirmed!"
-                  : "You’re officially a Galactic Omnivore member!"}
+                  ? "Your GO Business upgrade is confirmed"
+                  : "Your GO membership is active"}
               </DialogTitle>
               <DialogDescription className="text-base leading-relaxed text-white/75">
                 {confirmationMode === "upgrade"

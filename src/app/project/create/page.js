@@ -162,7 +162,7 @@ const projectSchema = z
       return true;
     },
     {
-      message: "Source project configuration is invalid",
+    message: "Choose a valid project group.",
       path: ["sourceProjectOption"],
     }
   );
@@ -405,7 +405,7 @@ const CreateProjectContent = observer(() => {
       const newProject = await response.json();
 
       toast({
-        title: "Project Created!",
+        title: "Project created",
         description:
           "Your project draft has been created. Submit it for review when it is ready for moderation.",
       });
@@ -444,15 +444,15 @@ const CreateProjectContent = observer(() => {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">Basic Information</h2>
+        <h2 className="text-2xl font-bold">Project basics</h2>
         <p className="text-muted-foreground">
-          Let&apos;s start with the basics of your project
+          Name the project and choose how related listings should be grouped.
         </p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <Label htmlFor="title">Project Title *</Label>
+          <Label htmlFor="title">Project title *</Label>
           <Controller
             name="title"
             control={control}
@@ -460,7 +460,7 @@ const CreateProjectContent = observer(() => {
               <Input
                 {...field}
                 id="title"
-                placeholder="Enter your project title"
+                placeholder="Enter the project title"
                 className={errors.title ? "border-red-500" : ""}
               />
             )}
@@ -505,7 +505,7 @@ const CreateProjectContent = observer(() => {
         </div>
 
         <div>
-          <Label>Category Tags *</Label>
+          <Label>Category tags *</Label>
           <div className="flex gap-2 mb-2">
             <Input
               value={newCategoryTag}
@@ -546,7 +546,7 @@ const CreateProjectContent = observer(() => {
         </div>
 
         <div>
-          <Label>Project Type *</Label>
+          <Label>Project type *</Label>
           <Controller
             name="type"
             control={control}
@@ -571,7 +571,7 @@ const CreateProjectContent = observer(() => {
         </div>
 
         <div>
-          <Label>Source Project *</Label>
+          <Label>Project group *</Label>
           <Controller
             name="sourceProjectOption"
             control={control}
@@ -588,14 +588,14 @@ const CreateProjectContent = observer(() => {
                 <SelectTrigger
                   className={errors.sourceProjectOption ? "border-red-500" : ""}
                 >
-                  <SelectValue placeholder="Select source project option" />
+                  <SelectValue placeholder="Choose a project group" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">
-                    Basic - New Source Project
+                    Create a new project group
                   </SelectItem>
                   <SelectItem value="existing">
-                    Choose Existing Source Project
+                    Use an existing project group
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -610,7 +610,7 @@ const CreateProjectContent = observer(() => {
 
         {watchedValues.sourceProjectOption === "new" && (
           <div>
-            <Label htmlFor="sourceProjectName">Source Project Name *</Label>
+            <Label htmlFor="sourceProjectName">Project group name *</Label>
             <Controller
               name="sourceProjectName"
               control={control}
@@ -618,7 +618,7 @@ const CreateProjectContent = observer(() => {
                 <Input
                   {...field}
                   id="sourceProjectName"
-                  placeholder="Enter source project name (3-50 characters)"
+                  placeholder="Enter a group name (3-50 characters)"
                   className={errors.sourceProjectName ? "border-red-500" : ""}
                 />
               )}
@@ -629,19 +629,18 @@ const CreateProjectContent = observer(() => {
               </p>
             )}
             <p className="text-sm text-muted-foreground mt-1">
-              This will create a new source project to group related projects
-              together.
+              A project group connects related listings.
             </p>
           </div>
         )}
 
         {watchedValues.sourceProjectOption === "existing" && (
           <div>
-            <Label>Existing Source Project *</Label>
+            <Label>Existing project group *</Label>
             {loadingSourceProjects ? (
               <div className="flex items-center justify-center p-3 border rounded">
                 <span className="text-sm text-muted-foreground">
-                  Loading your source projects...
+                  Loading your project groups...
                 </span>
               </div>
             ) : (
@@ -655,7 +654,7 @@ const CreateProjectContent = observer(() => {
                         errors.existingSourceProjectId ? "border-red-500" : ""
                       }
                     >
-                      <SelectValue placeholder="Select an existing source project" />
+                      <SelectValue placeholder="Choose an existing project group" />
                     </SelectTrigger>
                     <SelectContent>
                       {sourceProjects.length > 0 ? (
@@ -670,7 +669,7 @@ const CreateProjectContent = observer(() => {
                         ))
                       ) : (
                         <div className="px-2 py-3 text-sm text-muted-foreground">
-                          No source projects available
+                          No project groups available
                         </div>
                       )}
                     </SelectContent>
@@ -685,8 +684,8 @@ const CreateProjectContent = observer(() => {
             )}
             {sourceProjects.length === 0 && !loadingSourceProjects && (
               <p className="text-sm text-muted-foreground mt-1">
-                You don&apos;t have any existing source projects. Choose
-                &quot;New Source Project&quot; instead.
+                You do not have an existing project group. Create a new group
+                instead.
               </p>
             )}
           </div>
@@ -698,15 +697,15 @@ const CreateProjectContent = observer(() => {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">Project Details</h2>
+        <h2 className="text-2xl font-bold">Scope and next milestone</h2>
         <p className="text-muted-foreground">
-          Describe your project and its goals
+          Explain what exists now and what should become playable next.
         </p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <Label htmlFor="goal">Project Goal *</Label>
+          <Label htmlFor="goal">Project goal *</Label>
           <Controller
             name="goal"
             control={control}
@@ -714,7 +713,7 @@ const CreateProjectContent = observer(() => {
               <Textarea
                 {...field}
                 id="goal"
-                placeholder="What do you want to achieve with this project?"
+                placeholder="What is playable now, and what should become playable next?"
                 rows={3}
                 className={errors.goal ? "border-red-500" : ""}
               />
@@ -726,7 +725,7 @@ const CreateProjectContent = observer(() => {
         </div>
 
         <div>
-          <Label htmlFor="description">Project Description (Markdown) *</Label>
+          <Label htmlFor="description">Project description (Markdown) *</Label>
           <Controller
             name="description"
             control={control}
@@ -734,7 +733,7 @@ const CreateProjectContent = observer(() => {
               <Textarea
                 {...field}
                 id="description"
-                placeholder="Describe your project in detail. You can use Markdown formatting."
+                placeholder="Describe the scope, context, requirements, and current state."
                 rows={8}
                 className={errors.description ? "border-red-500" : ""}
               />
@@ -746,7 +745,7 @@ const CreateProjectContent = observer(() => {
             </p>
           )}
           <p className="text-sm text-muted-foreground mt-1">
-            You can use Markdown formatting (headers, lists, links, etc.)
+            Markdown supports headings, lists, and links.
           </p>
         </div>
       </div>
@@ -756,9 +755,9 @@ const CreateProjectContent = observer(() => {
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">Project Settings</h2>
+        <h2 className="text-2xl font-bold">Terms and visibility</h2>
         <p className="text-muted-foreground">
-          Configure timeline, budget, and visibility
+          State how people can access and assess the project.
         </p>
       </div>
 
@@ -793,7 +792,7 @@ const CreateProjectContent = observer(() => {
         </div>
 
         <div>
-          <Label>Compensation Type *</Label>
+          <Label>Compensation type *</Label>
           <Controller
             name="compensationType"
             control={control}
@@ -874,14 +873,14 @@ const CreateProjectContent = observer(() => {
   const renderStep4 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">Required Roles</h2>
+        <h2 className="text-2xl font-bold">Open roles</h2>
         <p className="text-muted-foreground">
-          Select the roles you need for your project
+          Select each role needed to reach the next milestone.
         </p>
       </div>
 
       <div>
-        <Label>Required Roles *</Label>
+        <Label>Required roles *</Label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
           {REQUIRED_ROLES.map((role) => (
             <div key={role} className="flex items-center space-x-2">
@@ -941,7 +940,7 @@ const CreateProjectContent = observer(() => {
           <h1 className="mb-4 text-2xl font-bold">Access check unavailable</h1>
           <p className="mb-6 text-muted-foreground">{accessCheckError}</p>
           <Button onClick={() => setAccessCheckVersion((value) => value + 1)}>
-            Try Again
+            Try again
           </Button>
         </div>
       </div>
@@ -952,14 +951,14 @@ const CreateProjectContent = observer(() => {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+          <h1 className="text-2xl font-bold mb-4">Sign in required</h1>
           <p className="text-muted-foreground mb-4">
             You need to be logged in to create a project.
           </p>
           <Button
             onClick={() => router.push("/login?redirect=/project/create")}
           >
-            Login to Continue
+            Sign in to continue
           </Button>
         </div>
       </div>
@@ -973,7 +972,7 @@ const CreateProjectContent = observer(() => {
         <div className="flex items-center justify-between mb-8">
           <Button variant="outline" onClick={() => router.push("/projects")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Projects
+            Back to projects
           </Button>
         </div>
 
@@ -983,7 +982,7 @@ const CreateProjectContent = observer(() => {
             <span>
               Step {currentStep} of {totalSteps}
             </span>
-            <span>{Math.round(getStepProgress())}% Complete</span>
+            <span>{Math.round(getStepProgress())}% complete</span>
           </div>
           <Progress value={getStepProgress()} className="h-2" />
         </div>
@@ -1010,13 +1009,13 @@ const CreateProjectContent = observer(() => {
                   disabled={currentStep === 1}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Previous
+                  Back
                 </Button>
 
                 <div className="flex gap-2">
                   {currentStep < totalSteps ? (
                     <Button type="button" onClick={handleNext}>
-                      Next
+                      Continue
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   ) : (
@@ -1026,7 +1025,7 @@ const CreateProjectContent = observer(() => {
                       className="w-full"
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      {isSubmitting ? "Creating..." : "Create Project"}
+                      {isSubmitting ? "Creating..." : "Create project"}
                     </Button>
                   )}
                 </div>

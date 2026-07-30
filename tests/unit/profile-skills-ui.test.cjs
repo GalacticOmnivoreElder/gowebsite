@@ -27,7 +27,7 @@ const pricingSource = fs.readFileSync(
 test("profile and onboarding share the accessible community skill selector", () => {
   assert.match(profileSource, /<SkillSelector/);
   assert.match(onboardingSource, /<SkillSelector/);
-  assert.match(onboardingSource, /Skills & expertise \(optional\)/);
+  assert.match(onboardingSource, /Skills and experience \(optional\)/);
   assert.match(selectorSource, /\/api\/skills\?popular=true&limit=20/);
   assert.match(selectorSource, /Popular community skills/);
   assert.match(selectorSource, /aria-pressed=\{selected\}/);
@@ -91,7 +91,6 @@ test("membership UI identifies the current plan and highlights Business upgrades
 
 test("active Business membership is managed without offering another purchase", () => {
   assert.match(pricingSource, /GO Business is active/);
-  assert.match(pricingSource, /Included with Business/);
   assert.match(pricingSource, /Included with GO Business/);
   assert.match(pricingSource, /Manage Business membership/);
   assert.match(pricingSource, /Manage current membership/);

@@ -382,7 +382,7 @@ export default function AdminPackagesPage() {
         <CardHeader>
           <CardTitle>All Packages</CardTitle>
           <CardDescription>
-            Manage your monthly themed packages and their assets.
+            Manage member resource packages and their assets.
           </CardDescription>
           <div className="flex items-center mt-2">
             <Search className="h-4 w-4 mr-2 text-muted-foreground" />

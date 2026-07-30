@@ -51,7 +51,7 @@ const EducationPage = observer(() => {
             fetchError =
               fetchError ||
               result.reason?.message ||
-              "Failed to load education posts.";
+              "Some learning material could not be loaded.";
           }
         });
 
@@ -62,7 +62,7 @@ const EducationPage = observer(() => {
         }
       } catch (error) {
         console.error("Error fetching education posts:", error);
-        setError("Failed to load education posts. Please try again later.");
+        setError("Learning material could not be loaded. Try again.");
       } finally {
         setLoading(false);
       }
@@ -78,7 +78,7 @@ const EducationPage = observer(() => {
         <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
           <p className="text-red-600 dark:text-red-400">{error}</p>
           <Button onClick={() => window.location.reload()} className="mt-4">
-            Try Again
+            Try again
           </Button>
         </div>
       </div>
@@ -107,10 +107,11 @@ const EducationPage = observer(() => {
     if (posts.length === 0) {
       return (
         <div className="rounded-lg border bg-card p-8 text-center">
-          <p className="text-xl mb-3">No {streamTitle.toLowerCase()} found yet.</p>
+          <p className="text-xl mb-3">
+            No {streamTitle.toLowerCase()} are available now.
+          </p>
           <p className="text-muted-foreground">
-            Add the #{streamSlug} tag or category to WordPress posts to publish
-            them here.
+            Return to this page to review newly listed material.
           </p>
         </div>
       );
@@ -134,23 +135,12 @@ const EducationPage = observer(() => {
         </div>
         <div className="text-muted-foreground max-w-3xl space-y-4">
           <p>
-            Learn game development by building, testing, and improving real
-            projects.
+            Build one practical skill, test it in context, and keep the result
+            visible.
           </p>
           <p>
-            Galactic Omnivore Education is where we collect our courses,
-            workshops, learning programs, and practical resources for game
-            developers, artists, designers, writers, producers, and students.
-          </p>
-          <p>
-            Here you can discover upcoming learning opportunities, follow
-            community workshops, and access practical material created to help
-            you move from curiosity to playable projects.
-          </p>
-          <p>
-            Whether you are starting your first game, improving your portfolio,
-            or preparing to work with a team, this page will help you find the
-            right next step.
+            Review the courses and workshops currently listed by GO. Open an
+            item to check its topic, level, timing, and next action.
           </p>
         </div>
       </div>

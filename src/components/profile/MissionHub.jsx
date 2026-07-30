@@ -150,8 +150,8 @@ function LongProfile({ value }) {
 
   return (
     <MissionPanel
-      title="Full Profile"
-      eyebrow="Captain's log"
+      title="Full profile"
+      eyebrow="Profile detail"
       icon={BookOpen}
     >
       <div className="max-w-4xl">
@@ -249,7 +249,7 @@ function EducationList({ items }) {
   if (!items.length) return null;
 
   return (
-    <MissionPanel title="Education" eyebrow="Training records" icon={GraduationCap}>
+    <MissionPanel title="Education" eyebrow="Training and learning" icon={GraduationCap}>
       <div className="space-y-5">
         {items.map((item, index) => {
           if (typeof item === "string") {
@@ -445,31 +445,31 @@ const commandLinks = [
   {
     href: "/profile?tab=projects",
     label: "Projects",
-    description: "Owned and joined missions",
+    description: "Owned and joined projects",
     icon: Briefcase,
   },
   {
     href: "/profile?tab=applications",
     label: "Applications",
-    description: "Review active submissions",
+    description: "Track your applications",
     icon: FileText,
   },
   {
     href: "/profile?tab=downloads",
     label: "Downloads",
-    description: "Access member resources",
+    description: "Open member downloads",
     icon: Download,
   },
   {
     href: "/billing",
     label: "Membership",
-    description: "Subscription and billing",
+    description: "Manage membership and billing",
     icon: CreditCard,
   },
   {
     href: "/profile?tab=settings",
     label: "Settings",
-    description: "Account controls",
+    description: "Manage account details",
     icon: Settings,
   },
 ];
@@ -518,13 +518,13 @@ export default function MissionHub({
           <div>
             <div className="mb-2 flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-primary">
               <CircleDot className="h-3 w-3" aria-hidden="true" />
-              Galactic Omnivore command deck
+              Galactic Omnivore profile
             </div>
             <h1 id="mission-hub-title" className="text-3xl font-bold tracking-tight sm:text-4xl">
-              {isOwner ? "Your Mission Hub" : "Mission Profile"}
+              {isOwner ? "Your creator profile" : "Creator profile"}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              A professional flight record through the universe of game development.
+              Skills, projects, experience, availability, and ways to make contact.
             </p>
           </div>
           <Badge
@@ -532,7 +532,7 @@ export default function MissionHub({
             className="border-primary/30 bg-primary/10 px-3 py-1 text-primary"
           >
             <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
-            {isOwner ? profileVisibility : "Public transmission"}
+            {isOwner ? profileVisibility : "Public profile"}
           </Badge>
         </div>
 
@@ -549,13 +549,13 @@ export default function MissionHub({
                   </Avatar>
                   <span
                     className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-background bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]"
-                    aria-label="Profile online"
+                    aria-label="Profile status marker"
                   />
                 </div>
 
                 <div className="min-w-0">
                   <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                    Player identity
+                    Creator identity
                   </div>
                   <h2 className="mt-1 break-words text-3xl font-bold tracking-tight sm:text-4xl">
                     {model.name}
@@ -594,7 +594,7 @@ export default function MissionHub({
                         }
                       >
                         <BadgeCheck className="mr-1 h-3 w-3" />
-                        {hasActiveSubscription ? "Premium member" : "GO member"}
+                        {hasActiveSubscription ? "Active membership" : "GO account"}
                       </Badge>
                     ) : null}
                   </div>
@@ -630,7 +630,7 @@ export default function MissionHub({
                 <div className="flex w-full flex-col gap-2 sm:w-auto lg:min-w-[188px]">
                   <Button onClick={onEdit}>
                     <Pencil className="mr-2 h-4 w-4" />
-                    Edit Profile
+                    Edit profile
                   </Button>
                   <CvDownloadButton
                     profile={profile}
@@ -647,7 +647,7 @@ export default function MissionHub({
                   <Button variant="ghost" asChild>
                     <Link href="/onboarding?edit=1">
                       <Rocket className="mr-2 h-4 w-4" />
-                      Update Onboarding
+                      Update onboarding
                     </Link>
                   </Button>
                 </div>
@@ -660,7 +660,7 @@ export default function MissionHub({
           <StatCard
             label="GameDev Passport"
             value={cvStatus}
-            hint={model.skillLevel ? `${readableStatus(model.skillLevel)} level` : "Professional record"}
+            hint={model.skillLevel ? `${readableStatus(model.skillLevel)} level` : "Creator resume"}
             icon={FileText}
           />
           <StatCard
@@ -670,9 +670,9 @@ export default function MissionHub({
             icon={Code2}
           />
           <StatCard
-            label="Missions"
+            label="Projects"
             value={`${model.platformProjects.length} projects`}
-            hint={model.joinedAt ? `Member since ${model.joinedAt}` : "Community flight record"}
+            hint={model.joinedAt ? `Member since ${model.joinedAt}` : "Project record"}
             icon={Orbit}
           />
           <StatCard
@@ -685,8 +685,8 @@ export default function MissionHub({
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(260px,0.8fr)]">
           <MissionPanel
-            title="Professional Summary"
-            eyebrow="Mission overview"
+            title="Profile overview"
+            eyebrow="Current summary"
             icon={Compass}
           >
             <p className="max-w-4xl whitespace-pre-wrap text-[15px] leading-7 text-muted-foreground">
@@ -694,11 +694,11 @@ export default function MissionHub({
             </p>
           </MissionPanel>
 
-          <MissionPanel title="Mission Readiness" eyebrow="Systems check" icon={Target}>
+          <MissionPanel title="Profile completeness" eyebrow="Setup progress" icon={Target}>
             <div className="flex items-end justify-between gap-3">
               <span className="text-3xl font-semibold">{model.completion}%</span>
               <span className="text-xs text-muted-foreground">
-                {model.completion >= 80 ? "Ready to transmit" : "Setup in progress"}
+                {model.completion >= 80 ? "Ready to share" : "Setup in progress"}
               </span>
             </div>
             <div
@@ -718,7 +718,7 @@ export default function MissionHub({
               {missing.length ? (
                 <>
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Suggested next coordinates
+                    Suggested next details
                   </p>
                   <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                     {missing.slice(0, 3).map((item) => (
@@ -732,7 +732,7 @@ export default function MissionHub({
               ) : (
                 <div className="flex items-center gap-2 text-sm text-emerald-300">
                   <BadgeCheck className="h-4 w-4" />
-                  Core profile systems are online.
+                  Core profile details are complete.
                 </div>
               )}
             </div>
@@ -742,13 +742,13 @@ export default function MissionHub({
         {model.longBio ? <LongProfile value={model.longBio} /> : null}
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <MissionPanel title="Skills & Expertise" eyebrow="Core capabilities" icon={Sparkles}>
+          <MissionPanel title="Skills and experience" eyebrow="Current skills" icon={Sparkles}>
             <TagCluster
               items={model.skills}
               emptyText="Add skills to help collaborators understand your strengths."
             />
           </MissionPanel>
-          <MissionPanel title="Tools & Technologies" eyebrow="Systems loadout" icon={Wrench}>
+          <MissionPanel title="Tools and technologies" eyebrow="Current tools" icon={Wrench}>
             <TagCluster
               items={model.tools}
               emptyText="No tools or engines are listed in this GameDev Passport yet."
@@ -758,15 +758,15 @@ export default function MissionHub({
 
         <MissionPanel
           title="Experience"
-          eyebrow="Flight record"
+          eyebrow="Project record"
           icon={Briefcase}
         >
           <ExperienceList items={model.cvProjects} />
         </MissionPanel>
 
         <MissionPanel
-          title="Selected Projects"
-          eyebrow="Active missions"
+          title="Selected projects"
+          eyebrow="Current work"
           icon={Layers3}
         >
           <SelectedProjects
@@ -786,7 +786,7 @@ export default function MissionHub({
         <EducationList items={model.education} />
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <MissionPanel title="Availability" eyebrow="Open channels" icon={CalendarDays}>
+          <MissionPanel title="Availability" eyebrow="Current status" icon={CalendarDays}>
             <div className="space-y-5">
               <TagCluster
                 items={model.availability}
@@ -808,8 +808,8 @@ export default function MissionHub({
           </MissionPanel>
 
           <MissionPanel
-            title="Social & Contact"
-            eyebrow="Communication array"
+            title="Contact and links"
+            eyebrow="Ways to connect"
             icon={Contact}
           >
             <ContactGrid
@@ -821,7 +821,7 @@ export default function MissionHub({
         </div>
 
         {isOwner ? (
-          <MissionPanel title="Command Deck" eyebrow="Private controls" icon={Users}>
+          <MissionPanel title="Profile tools" eyebrow="Private controls" icon={Users}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {commandLinks.map(({ href, label, description, icon: Icon }) => (
                 <Link
@@ -842,8 +842,8 @@ export default function MissionHub({
 
         {isOwner && membershipContent ? (
           <MissionPanel
-            title="Membership & Billing"
-            eyebrow="Account systems"
+            title="Membership and billing"
+            eyebrow="Account"
             icon={ShieldCheck}
           >
             {membershipContent}
@@ -857,7 +857,7 @@ export default function MissionHub({
                 <User className="mt-0.5 h-6 w-6 shrink-0 text-primary" />
                 <div>
                   <h2 className="font-semibold">
-                    Your GameDev Passport is waiting for launch
+                    Create your GameDev Passport
                   </h2>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
                     Complete onboarding to generate a reusable

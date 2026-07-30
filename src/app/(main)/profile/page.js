@@ -106,8 +106,8 @@ const SubscriptionStatusOverview = ({ user }) => {
     if (!MobxStore.hasActiveSubscription) {
       return {
         status: "inactive",
-        title: "No Active Subscription",
-        description: "Subscribe to access premium content",
+        title: "No active membership",
+        description: "Review current plans and member access",
         icon: <XCircle className="h-5 w-5 text-red-500" />,
         variant: "destructive",
       };
@@ -129,7 +129,7 @@ const SubscriptionStatusOverview = ({ user }) => {
 
       return {
         status: "canceled",
-        title: "Subscription Canceled",
+        title: "Membership canceled",
         description:
           daysLeft > 0
             ? `Access ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
@@ -141,7 +141,7 @@ const SubscriptionStatusOverview = ({ user }) => {
 
     return {
       status: "active",
-      title: "Active Subscription",
+      title: "Active membership",
       description: `${
         user?.membershipTier === "company" ? "GO Business" : "GO Community"
       } is your current active membership`,
@@ -165,7 +165,7 @@ const SubscriptionStatusOverview = ({ user }) => {
           </div>
           {statusInfo.status !== "active" && (
             <SubscribeButton size="sm" className="ml-4">
-              Subscribe Now
+              Review membership
             </SubscribeButton>
           )}
         </AlertDescription>
@@ -542,7 +542,7 @@ const ProfileContent = observer(() => {
     <div className="container max-w-[1500px] py-6 sm:py-8 lg:py-10">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          Member command center
+          GO account
         </div>
         <Badge variant="outline" className="border-white/10 bg-card/60">
           Private account navigation
@@ -579,7 +579,7 @@ const ProfileContent = observer(() => {
           ) : isEditMode ? (
             <div className="space-y-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Edit Profile</h2>
+                <h2 className="text-2xl font-bold">Edit profile</h2>
                 <Button variant="outline" onClick={toggleEditMode}>
                   <X className="h-4 w-4 mr-2" />
                   Cancel
@@ -701,14 +701,14 @@ const ProfileContent = observer(() => {
                     <CardContent className="p-8 text-center">
                       <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <h3 className="text-lg font-medium mb-2">
-                        No Projects Yet
+                        No projects yet
                       </h3>
                       <p className="text-muted-foreground mb-4">
                         You haven&apos;t created or joined any projects yet.
                       </p>
                       <Button asChild>
                         <Link href="/project/create">
-                          Create Your First Project
+                          Create a project
                         </Link>
                       </Button>
                     </CardContent>

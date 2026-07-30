@@ -52,18 +52,18 @@ function EmailButton({ selectedPlan, MobxStore }) {
           href={mailto}
           onClick={() => {
             alert(
-              "If nothing happens, make sure you have a default mail app set up, or use the Gmail button below!"
+              "If your mail app does not open, use the Gmail option below."
             );
           }}
         >
           <Mail className="mr-2 h-4 w-4" />
-          Compose Email
+          Compose email
         </a>
       </Button>
 
       <Button variant="outline" className="w-full" asChild>
         <a href={gmail} target="_blank" rel="noopener noreferrer">
-          📧 Open Gmail Instead
+          Open Gmail instead
         </a>
       </Button>
     </div>
@@ -133,7 +133,7 @@ const CheckoutContent = observer(() => {
       name: "Annual Membership",
       price: "4,800",
       interval: "year",
-      description: "Our best value. Save 1,200 MKD compared to monthly.",
+      description: "Save 1,200 MKD compared with 12 monthly payments.",
       totalAmount: "4,800 MKD",
       billingCycle: "Yearly",
       nextBilling: new Date(
@@ -145,13 +145,10 @@ const CheckoutContent = observer(() => {
   const selectedPlan = planDetails[plan];
 
   const benefits = [
-    "Theme of the Month Art packages",
-    "Music packs",
-    "Code packs (bundle assets)",
-    "Instructional tutorial videos",
-    "Free game (thematic for the month)",
-    "Community events",
-    "Member only Discord access",
+    "Apply to open community projects",
+    "Periodic asset, music, and code resource drops",
+    "Tutorials and learning resources",
+    "Community events and member Discord access",
   ];
 
   return (
@@ -159,21 +156,21 @@ const CheckoutContent = observer(() => {
       <Button variant="ghost" asChild className="mb-8">
         <Link href="/membership">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Membership
+          Back to membership
         </Link>
       </Button>
 
-      <h1 className="text-3xl font-bold mb-2">Complete Your Subscription</h1>
+      <h1 className="text-3xl font-bold mb-2">Complete your membership request</h1>
       <p className="text-muted-foreground mb-8">
-        You&apos;re just a few steps away from accessing exclusive game
-        development resources.
+        Review the selected plan, transfer the exact amount, and send the
+        requested confirmation.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
+              <CardTitle>Order summary</CardTitle>
               <CardDescription>
                 Review your subscription details
               </CardDescription>
@@ -197,7 +194,7 @@ const CheckoutContent = observer(() => {
               <Separator />
 
               <div>
-                <h4 className="font-medium mb-2">Includes:</h4>
+                <h4 className="font-medium mb-2">Includes</h4>
                 <ul className="space-y-1">
                   {benefits.map((benefit, index) => (
                     <li key={index} className="flex items-start">
@@ -224,7 +221,7 @@ const CheckoutContent = observer(() => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Payment Instructions</CardTitle>
+              <CardTitle>Payment instructions</CardTitle>
               <CardDescription>
                 Follow these steps to complete your subscription
               </CardDescription>
@@ -235,7 +232,7 @@ const CheckoutContent = observer(() => {
                 className="bg-amber-50 dark:bg-amber-950/30"
               >
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Payment Information</AlertTitle>
+                <AlertTitle>Payment information</AlertTitle>
                 <AlertDescription>
                   We are currently setting up online payments. To become a
                   member at this time, please follow the instructions below.
@@ -248,7 +245,7 @@ const CheckoutContent = observer(() => {
                     <CreditCard className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-medium">1. Bank Transfer Details</h3>
+                    <h3 className="font-medium">1. Bank transfer details</h3>
                     <p className="text-muted-foreground mb-2">
                       Please transfer the exact amount to our bank account:
                     </p>
@@ -257,7 +254,7 @@ const CheckoutContent = observer(() => {
                         <div className="cursor-pointer hover:opacity-90 transition-opacity">
                           <Image
                             src="/uplatnica.png"
-                            alt="Uplatnica"
+                            alt="Bank transfer form"
                             width={400}
                             height={400}
                           />
@@ -267,7 +264,7 @@ const CheckoutContent = observer(() => {
                         <div className="relative w-full h-full">
                           <Image
                             src="/uplatnica.png"
-                            alt="Uplatnica Full Size"
+                            alt="Bank transfer form, enlarged"
                             width={1200}
                             height={1200}
                             className="w-full h-auto object-contain"
@@ -283,7 +280,7 @@ const CheckoutContent = observer(() => {
                     <Camera className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-medium">2. Take a Screenshot</h3>
+                    <h3 className="font-medium">2. Save payment confirmation</h3>
                     <p className="text-muted-foreground">
                       After completing the payment, take a screenshot or photo
                       of the payment confirmation. This will serve as proof of
@@ -297,7 +294,7 @@ const CheckoutContent = observer(() => {
                     <Mail className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-medium">3. Send Confirmation Email</h3>
+                    <h3 className="font-medium">3. Send confirmation email</h3>
                     <p className="text-muted-foreground mb-2">
                       Send an email to galacticomnivore@galacticomnivore.com with:
                     </p>
@@ -333,11 +330,11 @@ const CheckoutContent = observer(() => {
                     <ExternalLink className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-medium">4. Activation</h3>
+                    <h3 className="font-medium">4. Access review</h3>
                     <p className="text-muted-foreground">
-                      An administrator will review your payment within 24 hours
-                      and activate your membership. You&apos;ll receive a
-                      confirmation email once your access is granted.
+                      GO will review the payment information. You will receive a
+                      confirmation email after your membership access is
+                      updated.
                     </p>
                   </div>
                 </div>

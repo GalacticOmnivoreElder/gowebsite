@@ -212,6 +212,6 @@ test("the public Projects status filter does not offer pending approval", () => 
   const projectsPage = fs.readFileSync("src/app/projects/page.js", "utf8");
 
   assert.doesNotMatch(projectsPage, /SelectItem value="pending"/);
-  assert.doesNotMatch(projectsPage, />\s*Pending Approval\s*</);
-  assert.match(projectsPage, /SelectItem value="all">All Statuses/);
+  assert.doesNotMatch(projectsPage, />\s*Pending approval\s*</);
+  assert.match(projectsPage, /SelectItem value="all">All statuses/);
 });

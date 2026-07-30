@@ -193,7 +193,7 @@ const SubscribeButton = observer(
         size={size}
         {...props}
       >
-        {loading ? "Starting checkout..." : children || "Subscribe Premium"}
+        {loading ? "Opening membership..." : children || "Review membership"}
       </Button>
     );
   }

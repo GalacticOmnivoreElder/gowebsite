@@ -67,7 +67,7 @@ export default function Downloads() {
   if (loading) {
     return (
       <div>
-        <h2 className="text-2xl font-bold mb-4">Community Resource Drops</h2>
+        <h2 className="text-2xl font-bold mb-4">Member resources</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="overflow-hidden">
@@ -87,7 +87,7 @@ export default function Downloads() {
   if (!packages || packages.length === 0) {
     return (
       <div>
-        <h2 className="text-2xl font-bold mb-4">Community Resource Drops</h2>
+        <h2 className="text-2xl font-bold mb-4">Member resources</h2>
         <Card className="p-6 text-center">
           <p className={error ? "text-destructive" : "text-muted-foreground"}>
             {error || "No resource drops are available yet."}
@@ -99,7 +99,7 @@ export default function Downloads() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4">Community Resource Drops</h2>
+      <h2 className="text-2xl font-bold mb-4">Member resources</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {packages.map((pkg) => (
           <PackageCard

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 // New Landing Components
 import { HeroSection } from "@/components/landing/HeroSection";
 import { SkillBanner } from "@/components/landing/SkillBanner";
+import { PartnerBanner } from "@/components/landing/PartnerBanner";
 import { FullCTA } from "@/components/landing/FullCTA";
 import { PixelSectionDivider } from "@/components/landing/PixelSectionDivider";
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
@@ -25,12 +26,6 @@ import achievementImg3 from "../../assets/A3.png";
 import joinusImg from "../../assets/joinus.png";
 import discordImg from "../../assets/discord.png";
 
-import edu1Img from "../../assets/EDUCATION.png";
-import edu2Img from "../../assets/PORTFOLIO.png";
-import edu3Img from "../../assets/OUTSOURCING.png";
-
-import pixelUpImg from "../../assets/pixelup.png";
-
 import driveTruImg from "../../assets/logosImg.png";
 
 import transparentImg from "../../assets/transparent.png";
@@ -38,7 +33,11 @@ import transparentImg from "../../assets/transparent.png";
 import Link from "next/link";
 import Image from "next/image";
 import {
+  ArrowRight,
+  BookOpen,
+  Briefcase,
   Facebook,
+  FolderKanban,
   Instagram,
   Linkedin,
   Twitch,
@@ -49,29 +48,39 @@ import {
 import { Button } from "@/components/ui/button";
 import { ExploreGo } from "@/components/landing/ExploreGo";
 
-const newsletterEnabled =
-  process.env.NEXT_PUBLIC_NEWSLETTER_ENABLED === "true";
-
-const practicalRoutes = [
+const creatorPillars = [
   {
-    title: "Learn",
-    description: "Build practical skills with GO education and resources.",
+    title: "Education",
+    signal: "Learn",
+    icon: BookOpen,
+    description:
+      "Build practical game-development skills through current learning material, workshops, and shared community knowledge.",
+    detail:
+      "Choose the topic that fits your level, your current task, and the next milestone you want to reach.",
     href: "/education",
+    cta: "Explore education",
   },
   {
-    title: "Find a Project",
-    description: "Explore approved projects and apply to suitable open roles.",
+    title: "Portfolio",
+    signal: "Build",
+    icon: FolderKanban,
+    description:
+      "Turn real contributions into credited project experience and a stronger GameDev Passport.",
+    detail:
+      "Browse approved briefs, review the terms, and apply for a role that matches your skills and availability.",
     href: "/projects",
+    cta: "Browse projects",
   },
   {
-    title: "Create a Project",
-    description: "Business members can submit project needs for admin review.",
-    href: "/project/create",
-  },
-  {
-    title: "Join the Community",
-    description: "Compare current membership options and community access.",
+    title: "Business",
+    signal: "Launch",
+    icon: Briefcase,
+    description:
+      "Create clear project briefs, recruit collaborators, and manage your game-development team.",
+    detail:
+      "Review GO Business membership, project-creation access, and the tools available to project owners.",
     href: "/membership",
+    cta: "Explore business",
   },
 ];
 
@@ -136,57 +145,6 @@ const Dot = ({ isActive }) => (
   ></div>
 );
 
-const EduBox = ({ isFull, img, text, noImg }) => {
-  return (
-    <div
-      className={`border-2 border-white bg-black flex ${
-        isFull ? "w-full" : "w-[150px]"
-      }
-      ${noImg ? "p-4" : ""}
-      h-[250px] md:h-[300px]
-      `}
-    >
-      {!noImg && (
-        <div className="flex-shrink-0 flex flex-col justify-center">
-          <Image
-            src={img}
-            height={100}
-            width={50}
-            alt="Pillar Icon"
-            className="h-full w-[30px] object-contain"
-          />
-        </div>
-      )}
-      <div
-        className={`text-white flex flex-col w-full p-2 ${
-          noImg ? "items-center text-center" : "justify-center"
-        }`}
-      >
-        {text && <div className="text-white mb-4">{text}</div>}
-      </div>
-    </div>
-  );
-};
-
-const EduBoxLarge = ({ title, jsx, img, noImg, buttonText, buttonLink }) => {
-  return (
-    <div className="flex flex-col bg-[#CA2380] p-4 sm:p-6 lg:p-8 justify-start items-center lg:w-1/3">
-      <div className="text-3xl h-[70px] text-center mb-4 font-bold text-white sm:block hidden">
-        {title}
-      </div>
-      <EduBox img={img} isFull text={jsx} noImg={noImg} />
-      {buttonLink && buttonText && (
-        <Button
-          asChild
-          className="bg-white text-black hover:bg-neutral-200 rounded-sm w-full mt-4"
-        >
-          <Link href={buttonLink}>{buttonText}</Link>
-        </Button>
-      )}
-    </div>
-  );
-};
-
 const socialMedia = [
   {
     icon: <Facebook />,
@@ -218,7 +176,7 @@ const socialMedia = [
 const ContactUs = () => {
   return (
     <div className={`flex justify-center flex-col p-4 bg-[${magenta}]`}>
-      <div className="text-4xl text-center mb-4 text-white">CONTACT US</div>
+      <div className="text-4xl text-center mb-4 text-white">Contact GO</div>
       <div className="text-center lg:mx-[10%] text-white">
         Got a game idea, a unique skill set, or just want to connect with fellow
         game enthusiasts? Reach out! Whether you&apos;re here to learn
@@ -230,7 +188,7 @@ const ContactUs = () => {
         className="w-full flex justify-center"
       >
         <Button className="bg-white text-black p-4 mt-4 w-full lg:w-[200px] rounded-[0px]">
-          CONTACT US!
+          Contact GO
         </Button>
       </a>
     </div>
@@ -265,32 +223,64 @@ const SocialFooter = () => {
 
 const About = () => {
   return (
-    <div className="relative lg:my-16">
-      <div id="about" className="absolute top-[-80px]"></div>
-      <div className="text-4xl mb-8 text-center text-white">ABOUT</div>
-      <div className="text-center mb-4 text-white lg:mx-[10%] lg:text-[22px]">
-        Galactic Omnivore is{" "}
-        <span className="text-primary">
-          the only Game Dev. Community in Macedonia
-        </span>{" "}
-        where you can greet, meet and create your own game dev. team.{" "}
+    <div
+      id="about"
+      className="relative scroll-mt-24 px-1 py-16 sm:px-6 sm:py-20 lg:py-24"
+    >
+      <div className="mx-auto max-w-4xl">
+        <h2 className="text-left text-3xl font-bold text-white sm:text-center sm:text-4xl">
+          About Galactic Omnivore
+        </h2>
+
+        <div className="mt-8 space-y-7 text-left text-base leading-8 text-white/80 sm:text-center sm:text-lg lg:text-xl lg:leading-9">
+          <p>
+            Galactic Omnivore is an{" "}
+            <strong className="font-semibold text-primary">
+              independent nonprofit
+            </strong>{" "}
+            game-development community and platform based in Skopje and active
+            across North Macedonia and beyond.
+          </p>
+
+          <p>
+            GOHQ is our human ground station—a place where{" "}
+            <strong className="font-semibold text-primary">
+              useful signals become practical routes
+            </strong>
+            . We help creators learn game-development skills, find collaborators
+            and suitable project roles, strengthen their portfolios, structure
+            their work, and move ideas toward their{" "}
+            <strong className="font-semibold text-primary">
+              next playable milestone
+            </strong>
+            .
+          </p>
+
+          <p>
+            We also support suitable projects through mentorship, visibility,
+            publishing preparation, and pathways to relevant digital
+            storefronts. Throughout the process, we protect{" "}
+            <strong className="font-semibold text-primary">
+              clear terms, proper credit, and fair collaboration
+            </strong>
+            .
+          </p>
+        </div>
+
+        <figure className="mt-12 border-t border-white/10 pt-8">
+          <figcaption className="text-left text-sm font-medium text-white/65 sm:text-center sm:text-base">
+            Publishing and distribution pathways may include:
+          </figcaption>
+          <Image
+            src={driveTruImg}
+            width={1646}
+            height={209}
+            sizes="(max-width: 768px) calc(100vw - 48px), 768px"
+            className="mx-auto mt-6 h-auto max-h-24 w-full max-w-3xl object-contain"
+            alt="Steam, DriveThruRPG, and itch.io storefront logos"
+          />
+        </figure>
       </div>
-      <div className="text-center mb-4 text-white lg:mx-[10%] lg:text-[22px]">
-        We help in <span className="text-primary">teaching</span> new people{" "}
-        <span className="text-primary">
-          how to make games, build or expand their portfolio and structure their
-          work.
-        </span>{" "}
-        We also help in <span className="text-primary">publishing games</span>{" "}
-        to the world&apos;s most popular online stores.{" "}
-      </div>
-      <Image
-        src={driveTruImg}
-        width={1000}
-        height={125}
-        className="my-6 w-full max-w-3xl mx-auto h-auto object-contain"
-        alt="Game distribution platforms like Steam, Itch.io, etc."
-      />
     </div>
   );
 };
@@ -299,19 +289,19 @@ const carouselData = [
   {
     title: "Glagolica 2.0",
     image: achievementImg2,
-    text: "Curious about how you can be part of a groundbreaking VR project that brings the ancient Glagolitic script to life? We're inviting passionate creatives from all backgrounds to explore, collaborate, and shape immersive environments inspired by Macedonian heritage. If this sounds like something you'd love to contribute to, take a moment to dive into the details and register your interest—your journey starts here. Read more and apply.",
+    text: "Read the linked project post to review its scope, current stage, credits, and any listed way to contribute.",
     link: "https://go-platform-eight.vercel.app/blog/macedonian-glagolitic-in-vr-immersive-letter-environments",
   },
   {
     title: "Print N'Play Games",
     image: achievementImg3,
-    text: "Two years ago, game designer Andreja Popovik joined G.O. the local GameDev community, shifting from digital games to TTRPGs. He created the successful Kickstarter campaign within the Songs and Sagas, system leading to PrintN'Play's rise. Collaborations followed, including the tool Birthplace of Evil and the D&;D product Dezriel's Elemental Spellbook, showcasing community innovation in game development. Currently working on a Point & Click adventure with Monstergarden.",
+    text: "Read the linked creator story for the work, project credits, and current context.",
     link: "https://go-platform-eight.vercel.app/blog/print-nplay-games-a-printable-games-brand-brewed-inside-the-community",
   },
   {
     title: "Human Rights Trivia Game",
     image: achievementImg1,
-    text: "For Human Rights Day (December 10th), Galactic Omnivore, in collaboration with Europe House and the Macedonian Young Lawyers Association (MYLA), developed a trivia web game engaging thousands in an interactive learning experience. In just 14 days, it reached 48,332 unique plays, showcasing the power of gamification. Now available to play here, Navigator reflects our commitment to knowledge, evolution, and engagement.",
+    text: "Open the linked project to review the current game information and creator credits.",
     link: "https://kikerkov.itch.io/navigator",
   },
   // {
@@ -349,7 +339,7 @@ const CarouselItem = ({ title, image, text, link }) => {
       <div className="mt-auto">
         <a href={link} target="_blank" rel="noopener noreferrer">
           <Button className="bg-[#CA2280] text-white hover:bg-[#CA2280] rounded-[0px]">
-            LEARN MORE
+            Learn more
           </Button>
         </a>
       </div>
@@ -358,57 +348,107 @@ const CarouselItem = ({ title, image, text, link }) => {
 };
 
 const HomePage = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (typeof window !== "undefined") {
-        setIsMobile(window.innerWidth <= 1024);
-      }
-    };
-
-    if (typeof window !== "undefined") {
-      handleResize();
-      window.addEventListener("resize", handleResize);
-    }
-
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("resize", handleResize);
-      }
-    };
-  }, []);
-
   return (
     <div className="bg-black" id="home">
       <HeroSection />
       <SkillBanner />
+      <PartnerBanner />
 
-      <section id="routes" className="border-y bg-background px-4 py-16">
+      <section
+        id="pillars"
+        className="relative isolate overflow-hidden border-y border-primary/35 bg-[#a51561] px-4 py-16 sm:px-6 sm:py-20 lg:py-24"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_50%_-15%,rgba(255,255,255,0.2),transparent_34%),linear-gradient(135deg,rgba(48,5,31,0.16),rgba(202,34,128,0.18)_48%,rgba(35,4,24,0.28))]"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 opacity-30 [background-image:radial-gradient(circle,rgba(255,255,255,0.75)_0.7px,transparent_0.8px),linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:43px_43px,72px_72px,72px_72px] [mask-image:linear-gradient(to_bottom,black,transparent_90%)]"
+        />
+
         <div className="mx-auto max-w-7xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">
-              Four practical routes
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/75">
+              Three routes through GO
             </p>
-            <h2 className="mt-3 text-3xl font-bold sm:text-4xl">
-              Choose what you want to do next
+            <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
+              Choose your next orbit
             </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/75 sm:text-base">
+              Learn a skill, build credited experience, or launch and manage a
+              project with the route that fits your current mission.
+            </p>
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {practicalRoutes.map((route) => (
-              <article
-                key={route.title}
-                className="flex flex-col rounded-xl border bg-card p-5"
-              >
-                <h3 className="text-xl font-semibold">{route.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
-                  {route.description}
-                </p>
-                <Button asChild variant="outline" className="mt-5 w-full">
-                  <Link href={route.href}>Explore {route.title}</Link>
-                </Button>
-              </article>
-            ))}
+
+          <div className="mt-10 grid gap-6 md:grid-cols-3 lg:mt-14 lg:gap-8">
+            {creatorPillars.map((pillar, index) => {
+              const PillarIcon = pillar.icon;
+
+              return (
+                <article
+                  key={pillar.title}
+                  className="group relative flex min-w-0 flex-col"
+                >
+                  <div className="mb-4 flex items-end justify-between px-1">
+                    <div>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/60">
+                        Route 0{index + 1} / {pillar.signal}
+                      </span>
+                      <h3 className="mt-1 text-2xl font-bold uppercase tracking-tight text-white sm:text-3xl">
+                        {pillar.title}
+                      </h3>
+                    </div>
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-black/40 text-white shadow-[0_0_24px_rgba(255,255,255,0.12)] backdrop-blur-sm transition-transform duration-300 group-hover:-translate-y-1">
+                      <PillarIcon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                  </div>
+
+                  <div className="relative flex min-h-[340px] flex-1 flex-col overflow-hidden border border-white/35 bg-[#080609]/95 p-6 shadow-[0_18px_55px_rgba(31,3,21,0.38),inset_0_1px_0_rgba(255,255,255,0.12)] sm:p-7">
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent"
+                    />
+                    <div
+                      aria-hidden="true"
+                      className="absolute left-0 top-10 h-24 w-px bg-gradient-to-b from-primary via-white/40 to-transparent"
+                    />
+                    <div
+                      aria-hidden="true"
+                      className="absolute right-0 bottom-10 h-24 w-px bg-gradient-to-t from-primary via-white/40 to-transparent"
+                    />
+                    <div className="mb-8 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.24em] text-primary">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_12px_rgba(202,34,128,0.9)]" />
+                      Navigation channel online
+                    </div>
+                    <p className="text-lg font-medium leading-8 text-white">
+                      {pillar.description}
+                    </p>
+                    <p className="mt-5 text-sm leading-6 text-white/65">
+                      {pillar.detail}
+                    </p>
+                    <div
+                      aria-hidden="true"
+                      className="mt-auto flex items-center gap-2 pt-10"
+                    >
+                      <span className="h-px flex-1 bg-white/10" />
+                      <span className="h-1.5 w-8 bg-primary/70" />
+                      <span className="h-px w-8 bg-white/10" />
+                    </div>
+                  </div>
+
+                  <Button
+                    asChild
+                    className="mt-3 h-12 w-full rounded-sm border border-white bg-white text-black shadow-[0_10px_28px_rgba(31,3,21,0.28)] hover:bg-neutral-100"
+                  >
+                    <Link href={pillar.href}>
+                      {pillar.cta}
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -416,89 +456,6 @@ const HomePage = () => {
       <section className="bg-black p-4 flex flex-col justify-center">
         <About />
       </section>
-
-      <div id="pillars" className="relative">
-        <div className="absolute -top-20"></div>
-      </div>
-      <Image
-        src={pixelUpImg}
-        alt="pixel section divider"
-        width={1920}
-        height={100}
-        className="w-full h-auto mb-[-1px]"
-      />
-      <div className="bg-[#CA2380]">
-        <div className="container max-w-7xl mx-auto px-4 py-12 md:py-16 lg:py-20">
-          <div className="flex flex-col lg:flex-row justify-between lg:items-start gap-8 md:gap-12 lg:gap-8">
-            <EduBoxLarge
-              title="EDUCATION"
-              noImg={!isMobile}
-              img={edu1Img}
-              jsx={
-                <div className="text-center flex flex-col gap-2">
-                  <div>As a community, we offer everyone an opportunity to</div>
-                  <span className="text-primary">
-                    become both students and mentors,
-                  </span>
-                  <div>
-                    learning or sharing knowledge about game development.
-                  </div>
-                </div>
-              }
-              buttonText="See Education"
-              buttonLink="/education"
-            />
-            <EduBoxLarge
-              title="PORTFOLIO"
-              img={edu2Img}
-              noImg={!isMobile}
-              jsx={
-                <div className="text-center flex flex-col gap-2">
-                  <div>Need help building your portfolio?</div>
-                  <div>
-                    We provide the know-how to{" "}
-                    <span className="text-primary">
-                      build, showcase, and present
-                    </span>{" "}
-                    your work effectively.
-                  </div>
-                  <div>
-                    <span className="text-primary">Join</span> an existing
-                    project or <span className="text-primary">start</span> your
-                    own.
-                  </div>
-                </div>
-              }
-              buttonText="See Projects"
-              buttonLink="/projects"
-            />
-            <EduBoxLarge
-              title="BUSINESS"
-              img={edu3Img}
-              noImg={!isMobile}
-              jsx={
-                <div className="text-center flex flex-col gap-2">
-                  <div>
-                    Looking for your{" "}
-                    <span className="text-primary">first job</span> or a
-                    high-end <span className="text-primary">consultancy</span>{" "}
-                    role?
-                  </div>
-                  <div>
-                    We create{" "}
-                    <span className="text-primary">B2B connections</span> and
-                    provide{" "}
-                    <span className="text-primary">work challenges</span> for
-                    our community members.
-                  </div>
-                </div>
-              }
-              buttonText="Contact Us"
-              buttonLink="/membership"
-            />
-          </div>
-        </div>
-      </div>
 
       <ExploreGo />
 
@@ -519,22 +476,20 @@ const HomePage = () => {
 
       <FullCTA />
 
-      {newsletterEnabled && (
-        <>
-          <PixelSectionDivider className="-my-px" />
-          <section
-            id="newsletter"
-            className="bg-primary px-4 py-16 text-white sm:px-6 md:py-20"
-          >
-            <div className="mx-auto w-full max-w-7xl">
-              <NewsletterSignup
-                source="homepage"
-                className="mx-auto w-full max-w-2xl text-center"
-              />
-            </div>
-          </section>
-        </>
-      )}
+      <PixelSectionDivider className="-my-px" />
+      <section
+        id="newsletter"
+        aria-labelledby="newsletter-heading-landing-page"
+        className="bg-primary px-4 py-12 text-white sm:px-6 sm:py-14"
+      >
+        <div className="mx-auto w-full max-w-7xl">
+          <NewsletterSignup
+            source="landing-page"
+            variant="section"
+            className="mx-auto w-full max-w-2xl text-center"
+          />
+        </div>
+      </section>
     </div>
   );
 };

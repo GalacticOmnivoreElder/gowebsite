@@ -6,9 +6,9 @@ export async function generateMetadata({ params }) {
 
   if (!post) {
     return createMetadata({
-      title: "Blog Post",
+      title: "GO Signal post",
       description:
-        "Read stories, tutorials, and insights from the Galactic Omnivore game development community.",
+        "Read a post from Galactic Omnivore's GO Signal.",
       path: `/blog/${slug}`,
       noIndex: true,
     });

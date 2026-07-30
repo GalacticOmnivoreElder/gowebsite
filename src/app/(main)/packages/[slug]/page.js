@@ -110,7 +110,7 @@ export default function PackageDetailPage({ params }) {
         <Button variant="ghost" asChild className="mb-6">
           <Link href="/resources">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Packages
+            Back to resources
           </Link>
         </Button>
 
@@ -135,7 +135,7 @@ export default function PackageDetailPage({ params }) {
             <h2 className="text-xl font-bold">{error}</h2>
           </div>
           <Button asChild>
-            <Link href="/resources">View All Packages</Link>
+            <Link href="/resources">View all resources</Link>
           </Button>
         </Card>
       </div>
@@ -189,7 +189,7 @@ export default function PackageDetailPage({ params }) {
         <Button asChild variant="secondary" className="w-full">
           <Link href="/membership">
             <Lock className="h-4 w-4 mr-2" />
-            Subscribe to Unlock
+            Review membership access
           </Link>
         </Button>
       );
@@ -227,7 +227,7 @@ export default function PackageDetailPage({ params }) {
             This package is part of your collection.
           </p>
           <Button asChild variant="outline" className="w-full">
-            <Link href="/profile?tab=downloads">View All Packages</Link>
+            <Link href="/profile?tab=downloads">View all resources</Link>
           </Button>
         </>
       );
@@ -235,23 +235,23 @@ export default function PackageDetailPage({ params }) {
       return packageData.isAuthenticated ? (
         <>
           <p className="text-sm text-muted-foreground mb-2">
-            Subscribe to get this month&apos;s package and future releases.
+            Review current membership access for this resource.
           </p>
           <Button asChild className="w-full">
-            <Link href="/membership">Subscribe Now</Link>
+            <Link href="/membership">Review membership</Link>
           </Button>
         </>
       ) : (
         <>
           <p className="text-sm text-muted-foreground mb-2">
-            Sign up and subscribe to access this month&apos;s package.
+            Sign in, then review current membership access for this resource.
           </p>
           <div className="space-y-2">
             <Button asChild className="w-full">
-              <Link href="/membership">View Membership Options</Link>
+              <Link href="/membership">Review membership</Link>
             </Button>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/login">Sign In</Link>
+              <Link href="/login">Sign in</Link>
             </Button>
           </div>
         </>
@@ -260,23 +260,23 @@ export default function PackageDetailPage({ params }) {
       return packageData.isAuthenticated ? (
         <>
           <p className="text-sm text-muted-foreground mb-2">
-            This is a past package available for individual purchase.
+            Review the current availability of this earlier resource.
           </p>
           <Button asChild className="w-full">
-            <Link href="/membership">Buy in Shop</Link>
+            <Link href="/membership">Review availability</Link>
           </Button>
         </>
       ) : (
         <>
           <p className="text-sm text-muted-foreground mb-2">
-            This is a past package available for individual purchase.
+            Review the current availability of this earlier resource.
           </p>
           <div className="space-y-2">
             <Button asChild className="w-full">
-              <Link href="/membership">Buy in Shop</Link>
+              <Link href="/membership">Review availability</Link>
             </Button>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/login">Sign In</Link>
+              <Link href="/login">Sign in</Link>
             </Button>
           </div>
         </>
@@ -289,7 +289,7 @@ export default function PackageDetailPage({ params }) {
       <Button variant="ghost" asChild className="mb-6">
         <Link href="/resources">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Packages
+          Back to resources
         </Link>
       </Button>
 
@@ -315,7 +315,7 @@ export default function PackageDetailPage({ params }) {
             <Badge variant="secondary">{packageData.theme}</Badge>
             {isCurrentMonth && (
               <Badge variant="default" className="bg-green-600">
-                Current Month
+                Current listing
               </Badge>
             )}
           </div>
@@ -326,7 +326,7 @@ export default function PackageDetailPage({ params }) {
 
           <Separator className="my-6" />
 
-          <h2 className="text-2xl font-bold mb-4">Package Contents</h2>
+          <h2 className="text-2xl font-bold mb-4">Package contents</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {packageData.assets.map((asset, index) => (
@@ -362,7 +362,7 @@ export default function PackageDetailPage({ params }) {
         <div>
           <Card className="sticky top-6">
             <CardContent className="p-6">
-              <h3 className="text-lg font-bold mb-4">About This Package</h3>
+              <h3 className="text-lg font-bold mb-4">About this package</h3>
 
               <div className="space-y-4">
                 <div>
@@ -374,7 +374,7 @@ export default function PackageDetailPage({ params }) {
 
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
-                    Release Date
+                    Release date
                   </p>
                   <p>
                     {packageData.month} {packageData.year}

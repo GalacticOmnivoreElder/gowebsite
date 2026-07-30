@@ -37,7 +37,7 @@ const BlogPage = observer(() => {
         setBlogs(data);
       } catch (error) {
         console.error("Error fetching blogs:", error);
-        setError("Failed to load blogs. Please try again later.");
+        setError("GO Signal could not be loaded. Try again.");
       } finally {
         setLoading(false);
       }
@@ -53,11 +53,11 @@ const BlogPage = observer(() => {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-4xl font-bold mb-8">Blog</h1>
+        <h1 className="text-4xl font-bold mb-8">GO Signal</h1>
         <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
           <p className="text-red-600 dark:text-red-400">{error}</p>
           <Button onClick={() => window.location.reload()} className="mt-4">
-            Try Again
+            Try again
           </Button>
         </div>
       </div>
@@ -72,10 +72,10 @@ const BlogPage = observer(() => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-4">Blog</h1>
+      <h1 className="text-4xl font-bold mb-4">GO Signal</h1>
       <p className="text-muted-foreground mb-8">
-        Explore our latest articles, tutorials, and insights from the Galactic
-        Omnivore team.
+        Read practical notes, project updates, and lessons from Galactic
+        Omnivore.
       </p>
 
       {/* Search Filter */}
@@ -83,7 +83,8 @@ const BlogPage = observer(() => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search posts..."
+            placeholder="Search GO Signal"
+            aria-label="Search GO Signal"
             className="pl-10"
             value={searchQuery}
             maxLength={100}
@@ -101,9 +102,9 @@ const BlogPage = observer(() => {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-xl mb-4">No blog posts found.</p>
+          <p className="text-xl mb-4">No signals match this search.</p>
           <p className="text-muted-foreground">
-            Check back soon for our latest articles!
+            Change the search text or return to all posts.
           </p>
         </div>
       )}
@@ -161,7 +162,7 @@ export const BlogCard = ({ post }) => {
           />
         </CardContent>
         <CardFooter>
-          <Button className="w-full">Read More</Button>
+          <Button className="w-full">Read article</Button>
         </CardFooter>
       </Card>
     </Link>

@@ -140,7 +140,7 @@ export const SignupForm = observer(() => {
                 <Input
                   id="username"
                   type="string"
-                  placeholder="First and Last Name"
+                  placeholder="Choose a public username"
                   disabled={isLoading}
                   {...field}
                 />
@@ -160,7 +160,7 @@ export const SignupForm = observer(() => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Password (8+ characters)"
+                  placeholder="Password (6+ characters)"
                   disabled={isLoading}
                   {...field}
                 />
@@ -177,7 +177,7 @@ export const SignupForm = observer(() => {
         )}
         <Button className="w-full" type="submit" disabled={isLoading}>
           {isLoading && <CgSpinner className="mr-2 h-4 w-4 animate-spin" />}
-          Create Account
+          Create account
         </Button>
       </form>
     </Form>
@@ -214,22 +214,22 @@ const SignupCard = observer(() => {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl">
           {isUserAnonymous
-            ? "Upgrade to Permanent Account"
+            ? "Keep your GO account"
             : "Create an account"}
         </CardTitle>
         <CardDescription>
           {isCheckoutContinuation
             ? "Create or upgrade your GO account to continue to secure membership checkout."
             : isUserAnonymous
-            ? "Don't lose your hard work. Sign up to save your progress."
-            : "Get started for free. No credit card required. Currently only available on desktop web"}
+            ? "Add sign-in details to keep the progress on this account."
+            : "Create a GO account to build a profile and use available platform routes."}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="grid grid-cols-1 gap-6">
           <Button variant="outline" onClick={handleGoogleSignIn}>
             <FaGoogle className="mr-2 h-4 w-4" />
-            Google
+            Continue with Google
           </Button>
         </div>
         <div className="relative">
@@ -246,19 +246,19 @@ const SignupCard = observer(() => {
       </CardContent>
       <CardFooter className="flex flex-col">
         <div className="text-muted-foreground text-sm text-center">
-          By continuing, you agree to Pathway&apos;s{" "}
-          <Link href="/terms">Terms & Conditions</Link> and
+          By continuing, you agree to Galactic Omnivore&apos;s{" "}
+          <Link href="/terms">Terms of Service</Link> and
           <Link href="/privacy"> Privacy Policy</Link>
         </div>
         <div className="flex flex-col gap-2 text-center mt-4 text-sm">
-          Already Have An Account?{" "}
+          Already have an account?{" "}
           <Link
             href={`/login${
               searchParams.toString() ? `?${searchParams.toString()}` : ""
             }`}
           >
             <Button variant="outline" className="w-full">
-              Login
+              Sign in
             </Button>
           </Link>
         </div>

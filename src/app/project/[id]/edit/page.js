@@ -367,8 +367,8 @@ const EditProjectPage = observer(() => {
       MobxStore.projectDetails.set(projectId, updatedProject);
 
       toast({
-        title: "Success",
-        description: "Project updated successfully!",
+        title: "Project updated",
+        description: "Your changes were saved.",
       });
 
       router.push(`/project/${projectId}`);
@@ -380,14 +380,14 @@ const EditProjectPage = observer(() => {
         });
         setErrors(fieldErrors);
         toast({
-          title: "Validation Error",
-          description: "Please fix the form errors",
+          title: "Check the project details",
+          description: "Review the highlighted fields.",
           variant: "destructive",
         });
       } else {
         console.error("Error updating project:", error);
         toast({
-          title: "Error",
+          title: "Project could not be updated",
           description: error.message || "Failed to update project",
           variant: "destructive",
         });
@@ -415,14 +415,14 @@ const EditProjectPage = observer(() => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+          <h1 className="text-2xl font-bold mb-4">Access denied</h1>
           <p className="text-muted-foreground mb-6">
             You don&apos;t have permission to edit this project.
           </p>
           <Button asChild>
             <Link href={`/project/${projectId}`}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Project
+              Back to project
             </Link>
           </Button>
         </div>
@@ -439,11 +439,11 @@ const EditProjectPage = observer(() => {
             <Button variant="ghost" asChild>
               <Link href={`/project/${projectId}`}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Project
+                Back to project
               </Link>
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">Edit Project</h1>
+              <h1 className="text-3xl font-bold">Edit project</h1>
               <p className="text-muted-foreground">
                 Update your project details
               </p>
@@ -451,7 +451,7 @@ const EditProjectPage = observer(() => {
           </div>
           <Button onClick={handleSave} disabled={saving}>
             <Save className="mr-2 h-4 w-4" />
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "Saving..." : "Save changes"}
           </Button>
         </div>
 
@@ -459,11 +459,11 @@ const EditProjectPage = observer(() => {
           {/* Basic Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>Project basics</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label htmlFor="title">Project Title *</Label>
+                <Label htmlFor="title">Project title *</Label>
                 <Input
                   id="title"
                   value={formData.title}
@@ -522,7 +522,7 @@ const EditProjectPage = observer(() => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label>Project Type *</Label>
+              <Label>Project type *</Label>
                   <Select
                     value={formData.type}
                     onValueChange={(value) => handleInputChange("type", value)}
@@ -569,7 +569,7 @@ const EditProjectPage = observer(() => {
               </div>
 
               <div>
-                <Label>Project Status *</Label>
+              <Label>Project status *</Label>
                 {MobxStore.isAdmin ? (
                   <Select
                     value={formData.status}
@@ -688,16 +688,16 @@ const EditProjectPage = observer(() => {
           {/* Project Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Project Details</CardTitle>
+            <CardTitle>Scope and terms</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label htmlFor="goal">Project Goal</Label>
+              <Label htmlFor="goal">Project goal</Label>
                 <Textarea
                   id="goal"
                   value={formData.goal}
                   onChange={(e) => handleInputChange("goal", e.target.value)}
-                  placeholder="What do you hope to achieve with this project?"
+                    placeholder="What is playable now, and what should become playable next?"
                   rows={3}
                 />
               </div>
@@ -747,7 +747,7 @@ const EditProjectPage = observer(() => {
               </div>
 
               <div>
-                <Label>Compensation Type</Label>
+              <Label>Compensation type</Label>
                 <Select
                   value={formData.compensationType}
                   onValueChange={(value) =>
@@ -775,7 +775,7 @@ const EditProjectPage = observer(() => {
           {/* Required Roles */}
           <Card>
             <CardHeader>
-              <CardTitle>Required Roles</CardTitle>
+            <CardTitle>Required roles</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

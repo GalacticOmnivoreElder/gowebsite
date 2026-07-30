@@ -7,21 +7,33 @@ const source = fs.readFileSync(
   path.resolve(__dirname, "../../src/components/landing/SkillBanner.js"),
   "utf8"
 );
+const styles = fs.readFileSync(
+  path.resolve(__dirname, "../../src/globals.css"),
+  "utf8"
+);
 
 test("skill banner keeps an uninterrupted right-to-left marquee", () => {
-  assert.match(source, /const loopSkills = \[\.\.\.skills, \.\.\.skills\]/);
-  assert.match(source, /loopSkills\.map\(\(skill, index\)/);
-  assert.match(source, /aria-hidden=\{index >= skills\.length \|\| undefined\}/);
+  assert.match(source, /const skillGroup = \(duplicate = false\)/);
+  assert.match(source, /\{skillGroup\(\)\}\s*\{skillGroup\(true\)\}/s);
+  assert.match(source, /aria-hidden=\{duplicate \|\| undefined\}/);
+  assert.match(styles, /\.go-skill-marquee-group,[^}]*min-width:\s*100vw/s);
   assert.match(
-    source,
+    styles,
     /animation:\s*go-skill-marquee-scroll 40s linear infinite/
   );
-  assert.match(source, /animation-play-state:\s*running/);
-  assert.match(source, /transform:\s*translate3d\(-50%, 0, 0\)/);
-  assert.doesNotMatch(source, /:hover[^}]*animation-play-state:\s*paused/s);
+  assert.match(styles, /animation-play-state:\s*running/);
+  assert.match(styles, /transform:\s*translate3d\(-50%, 0, 0\)/);
+  assert.doesNotMatch(styles, /:hover[^}]*animation-play-state:\s*paused/s);
 });
 
-test("skill banner still respects reduced-motion preferences", () => {
-  assert.match(source, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.match(source, /\.go-skill-marquee\s*\{\s*animation:\s*none/s);
+test("skill banner remains automatic instead of becoming manually scrollable", () => {
+  assert.doesNotMatch(
+    styles,
+    /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.go-skill-marquee[\s\S]*animation:\s*none/
+  );
+  assert.doesNotMatch(
+    styles,
+    /\.skill-banner[^}]*overflow-x:\s*auto !important/s
+  );
+  assert.doesNotMatch(styles, /flex-wrap:\s*wrap/);
 });

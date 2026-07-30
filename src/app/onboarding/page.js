@@ -36,13 +36,13 @@ import {
 } from "@/utils/validateProfile";
 
 const STEP_TITLES = {
-  identity: "Identity",
-  discord: "Discord",
-  "role-skills": "Role & Skills",
-  portfolio: "Portfolio & Experience",
-  goals: "Goals & Interests",
-  help: "Help & Contribution",
-  consent: "Consent & Visibility",
+  identity: "Your profile",
+  discord: "Community access",
+  "role-skills": "Roles and skills",
+  portfolio: "Portfolio and experience",
+  goals: "Goals and availability",
+  help: "Support and contribution",
+  consent: "Consent and visibility",
 };
 
 async function authedFetch(url, method, body) {
@@ -143,7 +143,7 @@ const OnboardingContent = observer(() => {
       countWords(stepData.about_me) > MAX_PROFILE_ABOUT_WORDS
     ) {
       const validationError = new Error(
-        `About Me must be ${MAX_PROFILE_ABOUT_WORDS.toLocaleString()} words or less.`
+        `About you must be ${MAX_PROFILE_ABOUT_WORDS.toLocaleString()} words or less.`
       );
       setError(validationError.message);
       throw validationError;
@@ -231,7 +231,7 @@ const OnboardingContent = observer(() => {
                     onChange={(e) => setField("bio", e.target.value)}
                   />
                 </Field>
-                <Field label="About Me (optional)">
+                <Field label="About you (optional)">
                   <Textarea
                     rows={6}
                     value={stepData.about_me || ""}
@@ -248,7 +248,7 @@ const OnboardingContent = observer(() => {
                 <Field label="Location (optional)">
                   <Input value={stepData.location || ""} onChange={(e) => setField("location", e.target.value)} />
                 </Field>
-                <Field label="Timezone *">
+                <Field label="Time zone *">
                   <Input placeholder="e.g. GMT+1 / CET" value={stepData.timezone || ""} onChange={(e) => setField("timezone", e.target.value)} />
                 </Field>
               </>
@@ -302,7 +302,7 @@ const OnboardingContent = observer(() => {
                     submissionLabel="complete onboarding"
                   />
                 </Field>
-                <Field label="Skills & expertise (optional)">
+                <Field label="Skills and experience (optional)">
                   <SkillSelector
                     value={
                       Array.isArray(stepData.skills)
@@ -479,11 +479,11 @@ const OnboardingContent = observer(() => {
               </Button>
               {stepIndex < ONBOARDING_STEPS.length - 1 ? (
                 <Button onClick={next} disabled={saving}>
-                  {saving ? "Saving…" : "Continue"}
+                  {saving ? "Saving..." : "Continue"}
                 </Button>
               ) : (
                 <Button onClick={complete} disabled={saving}>
-                  {saving ? "Finishing…" : "Finish & generate my GameDev Passport"}
+                  {saving ? "Finishing..." : "Finish and generate my GameDev Passport"}
                 </Button>
               )}
             </div>

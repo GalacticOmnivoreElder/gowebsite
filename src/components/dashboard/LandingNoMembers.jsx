@@ -11,16 +11,16 @@ const LandingNoMembers = () => {
       <section className="container min-h-[60vh] py-12 flex flex-col lg:flex-row items-center gap-8">
         <div className="flex-1 space-y-6">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Get this month&apos;s game!{" "}
-            <span className="text-primary">Join us!</span>
+            Review current{" "}
+            <span className="text-primary">GO membership</span>
           </h1>
 
           <ul className="space-y-4">
             {[
-              "New complete game with source code",
-              "Professional game asset pack",
-              "Exclusive music collection",
-              "In-depth instructional videos",
+              "Apply to open community projects",
+              "Periodic asset, music, and code resources",
+              "Tutorials and learning resources",
+              "Community events and member Discord access",
             ].map((perk, index) => (
               <li key={index} className="flex items-center gap-3">
                 <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
@@ -32,14 +32,14 @@ const LandingNoMembers = () => {
           </ul>
 
           <Button size="lg" className="text-lg px-8">
-            Become a Member
+            Review membership
           </Button>
         </div>
 
         <div className="flex-1 relative h-[400px] w-full">
           <Image
             src="/images/hero-game.jpg" // You'll need to add this image
-            alt="This month's featured game"
+            alt="Galactic Omnivore membership resources"
             fill
             className="object-cover rounded-lg"
             priority
@@ -53,24 +53,22 @@ const LandingNoMembers = () => {
           {/* Game Section */}
           <div className="space-y-8">
             <h2 className="text-3xl font-bold text-center">
-              This Month&apos;s Game
+              Project access
             </h2>
             <div className="grid lg:grid-cols-2 gap-8 items-center">
               <div className="relative h-[300px] w-full">
                 <Image
                   src="/images/current-game.jpg" // You'll need to add this image
-                  alt="Current month's game"
+                  alt="A listed community project"
                   fill
                   className="object-cover rounded-lg"
                 />
               </div>
               <div className="space-y-4">
-                <h3 className="text-2xl font-semibold">Medieval Quest</h3>
+                <h3 className="text-2xl font-semibold">Open project roles</h3>
                 <p className="text-muted-foreground">
-                  Embark on an epic journey in this month&apos;s featured game.
-                  Built with modern game development practices, this project
-                  includes full source code and demonstrates advanced gaming
-                  concepts.
+                  Community members can review approved briefs and apply to
+                  suitable open roles.
                 </p>
               </div>
             </div>
@@ -79,23 +77,22 @@ const LandingNoMembers = () => {
           {/* Music Pack Section */}
           <div className="space-y-8">
             <h2 className="text-3xl font-bold text-center">
-              This Month&apos;s Music Pack
+              Periodic resources
             </h2>
             <div className="grid lg:grid-cols-2 gap-8 items-center">
               <div className="relative h-[300px] w-full">
                 <Image
                   src="/images/music-pack.jpg" // You'll need to add this image
-                  alt="Current month's music pack"
+                  alt="A GO audio resource"
                   fill
                   className="object-cover rounded-lg"
                 />
               </div>
               <div className="space-y-4">
-                <h3 className="text-2xl font-semibold">Medieval Soundscapes</h3>
+                <h3 className="text-2xl font-semibold">Asset, music, and code files</h3>
                 <p className="text-muted-foreground">
-                  A complete collection of original music tracks perfect for
-                  your medieval-themed games. Includes ambient, battle, and
-                  victory themes.
+                  Review each available item for its format, access, source, and
+                  usage terms.
                 </p>
               </div>
             </div>
@@ -104,25 +101,24 @@ const LandingNoMembers = () => {
           {/* Asset Pack Section */}
           <div className="space-y-8">
             <h2 className="text-3xl font-bold text-center">
-              This Month&apos;s Asset Pack
+              Community access
             </h2>
             <div className="grid lg:grid-cols-2 gap-8 items-center">
               <div className="relative h-[300px] w-full">
                 <Image
                   src="/images/asset-pack.jpg" // You'll need to add this image
-                  alt="Current month's asset pack"
+                  alt="A GO community resource"
                   fill
                   className="object-cover rounded-lg"
                 />
               </div>
               <div className="space-y-4">
                 <h3 className="text-2xl font-semibold">
-                  Medieval Art Collection
+                  Member Discord access
                 </h3>
                 <p className="text-muted-foreground">
-                  High-quality game assets including characters, environments,
-                  UI elements, and animations - everything you need to create
-                  your own medieval adventure.
+                  Community membership includes member Discord access and
+                  current community events.
                 </p>
               </div>
             </div>
@@ -131,23 +127,22 @@ const LandingNoMembers = () => {
           {/* Tutorial Section */}
           <div className="space-y-8">
             <h2 className="text-3xl font-bold text-center">
-              Instructional Videos
+              Learning resources
             </h2>
             <div className="grid lg:grid-cols-2 gap-8 items-center">
               <div className="relative h-[300px] w-full">
                 <Image
                   src="/images/tutorials.jpg" // You'll need to add this image
-                  alt="This month's tutorials"
+                  alt="GO learning material"
                   fill
                   className="object-cover rounded-lg"
                 />
               </div>
               <div className="space-y-4">
-                <h3 className="text-2xl font-semibold">Step-by-Step Guides</h3>
+                <h3 className="text-2xl font-semibold">Tutorials and practical material</h3>
                 <p className="text-muted-foreground">
-                  Comprehensive video tutorials walking you through the
-                  development process, game mechanics, and advanced techniques
-                  used in this month&apos;s game.
+                  Choose material that matches your current role, level, and
+                  next useful task.
                 </p>
               </div>
             </div>
@@ -158,7 +153,7 @@ const LandingNoMembers = () => {
       {/* Previous Months Section */}
       <section className="container py-16">
         <h2 className="text-3xl font-bold text-center mb-12">
-          Previous Months
+          Earlier listed resources
         </h2>
         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {[

@@ -228,10 +228,7 @@ test("subscription success dialog is accessible, responsive, and links to every 
   );
   const globalStyles = fs.readFileSync("src/globals.css", "utf8");
 
-  assert.match(
-    successPage,
-    /You’re officially a Galactic Omnivore member!/
-  );
+  assert.match(successPage, /Your GO membership is active/);
   assert.match(successPage, /about 10 minutes/);
   assert.match(successPage, /DialogTitle/);
   assert.match(successPage, /DialogDescription/);

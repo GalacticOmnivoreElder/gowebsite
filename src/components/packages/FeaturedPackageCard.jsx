@@ -30,7 +30,7 @@ export default function FeaturedPackageCard({
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-2xl font-bold">{pkg.title}</h3>
                 <Badge variant={isUnlocked ? "success" : "secondary"}>
-                  {isUnlocked ? "Owned" : "Locked"}
+                  {isUnlocked ? "Available" : "Member access"}
                 </Badge>
               </div>
               <p className="text-lg text-muted-foreground mb-4">
@@ -40,7 +40,7 @@ export default function FeaturedPackageCard({
 
               {pkg.assets && pkg.assets.length > 0 && (
                 <div className="mb-6">
-                  <p className="font-medium mb-2">Includes:</p>
+                  <p className="font-medium mb-2">Includes</p>
                   <ul className="list-disc pl-5">
                     {pkg.assets.slice(0, 3).map((asset, index) => (
                       <li key={index} className="text-sm">
@@ -58,7 +58,7 @@ export default function FeaturedPackageCard({
             </div>
 
             <Button className="w-full md:w-auto">
-              View Package <ArrowRight className="h-4 w-4 ml-2" />
+              View resource <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function FeaturedPackageCard({
             />
             <div className="absolute top-2 right-2">
               <Badge variant={isUnlocked ? "success" : "secondary"}>
-                {isUnlocked ? "Owned" : "Locked"}
+                {isUnlocked ? "Available" : "Member access"}
               </Badge>
             </div>
           </div>
@@ -90,12 +90,12 @@ export default function FeaturedPackageCard({
 
             {isUnlocked ? (
               <Button className="w-full">
-                View Package <ArrowRight className="h-4 w-4 ml-2" />
+                View resource <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             ) : (
               <Button variant="default" className="w-full">
                 <LockIcon className="h-4 w-4 mr-2" />
-                Subscribe to Unlock
+                Review membership access
               </Button>
             )}
           </div>

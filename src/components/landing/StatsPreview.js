@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 const stats = [
-  { value: "360+", label: "Members" },
-  { value: "20+", label: "Projects" },
-  { value: "35+", label: "Games Released" }, // Changed label slightly
-  { value: "45+", label: "Events Hosted" }, // Changed label slightly
+  { value: "4", label: "Creator routes" },
+  { value: "1", label: "Useful next step" },
+  { value: "GO", label: "North Macedonian nonprofit" },
+  { value: "GOHQ", label: "Human ground station" },
 ];
 
 export const StatsPreview = () => {
@@ -31,7 +31,7 @@ export const StatsPreview = () => {
             size="lg"
             className="border-primary text-primary hover:bg-primary/10 hover:text-primary rounded-sm"
           >
-            <Link href="/about">Find Out More</Link>
+            <Link href="/about">About Galactic Omnivore</Link>
           </Button>
         </div>
       </div>

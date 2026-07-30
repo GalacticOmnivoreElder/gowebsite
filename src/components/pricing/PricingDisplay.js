@@ -276,11 +276,11 @@ export const PricingDisplay = observer(() => {
                     <Badge className="shrink-0">Upgrade scheduled</Badge>
                   ) : isIncludedWithBusiness ? (
                     <Badge variant="outline" className="shrink-0">
-                      Included with Business
+                      Included with GO Business
                     </Badge>
                   ) : (
                     plan.popular && (
-                      <Badge className="shrink-0">Most popular</Badge>
+                      <Badge className="shrink-0">For individual creators</Badge>
                     )
                   )}
                 </div>

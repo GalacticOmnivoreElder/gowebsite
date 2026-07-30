@@ -1,102 +1,193 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  NEWSLETTER_FORM_MESSAGES,
+  validateNewsletterSubmission,
+} from "@/lib/newsletter-client";
+
+const copyByVariant = {
+  section: {
+    heading: "Join the GO mailing list",
+    description: "Enter your email to receive updates from Galactic Omnivore.",
+  },
+  footer: {
+    heading: "Newsletter",
+    description: "Join the Galactic Omnivore mailing list.",
+  },
+};
 
 export function NewsletterSignup({
-  source = "homepage",
-  compact = false,
+  source = "landing-page",
+  variant = "section",
   className = "",
 }) {
+  const presentation = copyByVariant[variant] || copyByVariant.section;
+  const isFooter = variant === "footer";
+  const inFlight = useRef(false);
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [company, setCompany] = useState("");
   const [state, setState] = useState("idle");
-  const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [consentError, setConsentError] = useState("");
+  const [submissionError, setSubmissionError] = useState("");
+
+  const emailId = `newsletter-email-${source}`;
+  const emailErrorId = `${emailId}-error`;
+  const consentId = `newsletter-consent-${source}`;
+  const consentErrorId = `${consentId}-error`;
+  const companyId = `newsletter-company-${source}`;
+  const feedbackId = `newsletter-feedback-${source}`;
 
   const submit = async (event) => {
     event.preventDefault();
+    if (inFlight.current) return;
+
+    const validation = validateNewsletterSubmission({ email, consent });
+    setEmailError(validation.emailError);
+    setConsentError(validation.consentError);
+    setSubmissionError("");
+
+    if (validation.emailError || validation.consentError) {
+      setState("idle");
+      return;
+    }
+
+    inFlight.current = true;
     setState("loading");
-    setError("");
+
     try {
       const response = await fetch("/api/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, consent, source, company }),
+        credentials: "same-origin",
+        body: JSON.stringify({
+          email: validation.email,
+          consent: true,
+          source,
+          company,
+        }),
       });
-      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        throw new Error(data.error || "Newsletter signup is unavailable.");
+        throw new Error(NEWSLETTER_FORM_MESSAGES.genericError);
       }
+
       setState("success");
       setEmail("");
       setConsent(false);
-    } catch (submitError) {
+    } catch {
       setState("error");
-      setError(submitError.message);
+      setSubmissionError(NEWSLETTER_FORM_MESSAGES.genericError);
+    } finally {
+      inFlight.current = false;
     }
   };
 
+  const headingId = `newsletter-heading-${source}`;
+
   return (
     <div className={className}>
-      {!compact && (
-        <>
-          <h2 className="text-3xl md:text-4xl font-bold">Join the newsletter</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-white/80">
-            Get Galactic Omnivore community news, new opportunities, and
-            selected resources in your inbox.
-          </p>
-        </>
+      {isFooter ? (
+        <h3 id={headingId} className="text-lg font-semibold">
+          {presentation.heading}
+        </h3>
+      ) : (
+        <h2
+          id={headingId}
+          className="text-3xl font-bold sm:text-4xl"
+        >
+          {presentation.heading}
+        </h2>
       )}
-      {compact && (
-        <>
-          <h3 className="font-semibold text-lg">Newsletter</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Community news and opportunities, sent thoughtfully.
-          </p>
-        </>
-      )}
+      <p
+        className={
+          isFooter
+            ? "mt-1 text-sm text-muted-foreground"
+            : "mx-auto mt-3 max-w-xl text-white/90"
+        }
+      >
+        {presentation.description}
+      </p>
 
       {state === "success" ? (
         <div
-          className={`mt-4 rounded-md border border-green-500/40 bg-green-500/10 p-4 ${
-            compact ? "text-sm" : ""
+          id={feedbackId}
+          className={`mt-5 rounded-md border p-4 ${
+            isFooter
+              ? "border-green-500/40 bg-green-500/10 text-sm"
+              : "border-white/40 bg-black/20 text-white"
           }`}
           role="status"
+          aria-live="polite"
+          aria-atomic="true"
         >
-          If this address can be subscribed, a confirmation email will arrive
-          shortly. Check your inbox and spam folder.
+          {NEWSLETTER_FORM_MESSAGES.success}
         </div>
       ) : (
         <form
           onSubmit={submit}
-          className="mx-auto mt-4 max-w-2xl"
+          className={`mt-5 ${isFooter ? "max-w-2xl" : "mx-auto max-w-2xl"}`}
           noValidate
+          aria-labelledby={headingId}
+          aria-describedby={state === "error" ? feedbackId : undefined}
         >
-          <label htmlFor={`newsletter-email-${source}`} className="sr-only">
+          <label htmlFor={emailId} className="sr-only">
             Email address
           </label>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              id={`newsletter-email-${source}`}
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              disabled={state === "loading"}
-              className={compact ? "bg-background" : "bg-white text-black"}
-            />
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="min-w-0 flex-1">
+              <Input
+                id={emailId}
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  if (emailError) setEmailError("");
+                }}
+                aria-invalid={Boolean(emailError)}
+                aria-describedby={emailError ? emailErrorId : undefined}
+                required
+                disabled={state === "loading"}
+                className={`h-11 w-full ${
+                  isFooter
+                    ? "bg-background"
+                    : "border-white/50 bg-white text-black placeholder:text-black/55"
+                }`}
+              />
+              {emailError && (
+                <p
+                  id={emailErrorId}
+                  className={`mt-2 text-left text-sm ${
+                    isFooter ? "text-destructive" : "font-medium text-white"
+                  }`}
+                  role="alert"
+                >
+                  {emailError}
+                </p>
+              )}
+            </div>
             <Button
               type="submit"
-              disabled={state === "loading" || !consent}
-              className={compact ? "" : "bg-white text-black hover:bg-white/90"}
+              size="lg"
+              disabled={state === "loading"}
+              className={`h-11 w-full sm:w-auto ${
+                isFooter
+                  ? ""
+                  : "bg-white text-black hover:bg-white/90 focus-visible:ring-white"
+              }`}
             >
-              {state === "loading" ? "Subscribing…" : "Subscribe"}
+              {state === "loading"
+                ? NEWSLETTER_FORM_MESSAGES.loading
+                : "Subscribe"}
             </Button>
           </div>
 
@@ -104,9 +195,9 @@ export function NewsletterSignup({
             className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden"
             aria-hidden="true"
           >
-            <label htmlFor={`newsletter-company-${source}`}>Company</label>
+            <label htmlFor={companyId}>Company</label>
             <input
-              id={`newsletter-company-${source}`}
+              id={companyId}
               name="company"
               type="text"
               tabIndex={-1}
@@ -116,35 +207,75 @@ export function NewsletterSignup({
             />
           </div>
 
-          <label
-            htmlFor={`newsletter-consent-${source}`}
-            className={`mt-3 flex items-start gap-2 text-left ${
-              compact ? "text-xs" : "text-sm"
-            }`}
-          >
-            <input
-              id={`newsletter-consent-${source}`}
-              type="checkbox"
-              checked={consent}
-              onChange={(event) => setConsent(event.target.checked)}
-              disabled={state === "loading"}
-              className="mt-1 h-4 w-4 shrink-0 accent-primary"
-            />
-            <span className={compact ? "text-muted-foreground" : "text-white/80"}>
-              I want to receive the Galactic Omnivore newsletter and understand
-              that I can unsubscribe at any time. See the{" "}
-              <Link href="/privacy" className="underline hover:no-underline">
-                Privacy Policy
-              </Link>
-              .
-            </span>
-          </label>
+          <div className="mt-3 text-left">
+            <label
+              htmlFor={consentId}
+              className={`flex cursor-pointer items-start gap-3 ${
+                isFooter ? "text-xs" : "text-sm"
+              }`}
+            >
+              <input
+                id={consentId}
+                name="consent"
+                type="checkbox"
+                checked={consent}
+                onChange={(event) => {
+                  setConsent(event.target.checked);
+                  if (consentError) setConsentError("");
+                }}
+                aria-invalid={Boolean(consentError)}
+                aria-describedby={
+                  consentError ? consentErrorId : undefined
+                }
+                disabled={state === "loading"}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+              <span
+                className={
+                  isFooter ? "text-muted-foreground" : "text-white/90"
+                }
+              >
+                I agree to receive email updates from Galactic Omnivore and
+                understand that I can unsubscribe at any time. See the{" "}
+                <Link
+                  href="/privacy"
+                  className="font-medium underline underline-offset-2 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+            {consentError && (
+              <p
+                id={consentErrorId}
+                className={`mt-2 text-sm ${
+                  isFooter ? "text-destructive" : "font-medium text-white"
+                }`}
+                role="alert"
+              >
+                {consentError}
+              </p>
+            )}
+          </div>
 
-          {state === "error" && (
-            <p className="mt-3 text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          )}
+          <div
+            id={feedbackId}
+            className="mt-3"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {state === "error" && (
+              <p
+                className={`text-sm ${
+                  isFooter ? "text-destructive" : "font-medium text-white"
+                }`}
+                role="alert"
+              >
+                {submissionError}
+              </p>
+            )}
+          </div>
         </form>
       )}
     </div>

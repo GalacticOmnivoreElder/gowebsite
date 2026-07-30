@@ -240,8 +240,8 @@ const BillingPage = observer(() => {
     if (!user?.activeMember) {
       return {
         status: "inactive",
-        title: "No Active Subscription",
-        description: "Subscribe to access premium content",
+        title: "No active membership",
+        description: "Review current plans and member access",
         icon: <XCircle className="h-5 w-5 text-red-500" />,
         variant: "destructive",
       };
@@ -263,7 +263,7 @@ const BillingPage = observer(() => {
 
       return {
         status: "canceled",
-        title: "Subscription Canceled",
+        title: "Membership canceled",
         description:
           daysLeft > 0
             ? `Access ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
@@ -275,8 +275,8 @@ const BillingPage = observer(() => {
 
     return {
       status: "active",
-      title: "Active Subscription",
-      description: "Your subscription is active and up to date",
+      title: "Active membership",
+      description: "Your membership is active",
       icon: <CheckCircle className="h-5 w-5 text-green-500" />,
       variant: "default",
     };
@@ -381,10 +381,10 @@ const BillingPage = observer(() => {
             </Button>
             <div>
               <h1 className="text-3xl font-bold mb-2">
-                Billing & Subscription
+                Membership and billing
               </h1>
               <p className="text-muted-foreground">
-                Manage your subscription and view payment history
+                Review membership status and payment history.
               </p>
             </div>
           </div>
@@ -400,7 +400,7 @@ const BillingPage = observer(() => {
             <RefreshCw
               className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
             />
-            {refreshing ? "Refreshing..." : "Refresh Status"}
+            {refreshing ? "Refreshing..." : "Refresh status"}
           </Button>
         </div>
 
@@ -408,10 +408,10 @@ const BillingPage = observer(() => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              Subscription Overview
+              Membership overview
             </CardTitle>
             <CardDescription>
-              Your current subscription details and status
+              Current access and billing status
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -455,7 +455,7 @@ const BillingPage = observer(() => {
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
                     <p className="text-sm font-medium">Plan</p>
                   </div>
-                  <p className="text-lg">Monthly Subscription</p>
+                  <p className="text-lg">Current membership</p>
                   <p className="text-sm text-muted-foreground">
                     ${actualPrice} per month
                   </p>
@@ -465,7 +465,7 @@ const BillingPage = observer(() => {
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <p className="text-sm font-medium">
-                      {user?.willRenew ? "Next Billing" : "Access Ends"}
+                      {user?.willRenew ? "Next billing" : "Access ends"}
                     </p>
                   </div>
                   <p className="text-lg">{nextBillingInfo.date}</p>
@@ -499,11 +499,11 @@ const BillingPage = observer(() => {
                 disabled={loading}
                 className="flex-1"
               >
-                {loading ? "Opening Portal..." : "Manage Subscription"}
+                {loading ? "Opening portal..." : "Manage membership"}
               </Button>
             ) : (
               <SubscribeButton className="flex-1">
-                Subscribe Now
+                Review membership
               </SubscribeButton>
             )}
           </CardFooter>
@@ -514,11 +514,11 @@ const BillingPage = observer(() => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5" />
-              Payment History
+              Payment history
             </CardTitle>
             <CardDescription>
-              Your subscription payments - download invoices from the customer
-              portal
+              Review recorded payments. Download invoices from the customer
+              portal.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -532,7 +532,7 @@ const BillingPage = observer(() => {
                           <CreditCard className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium">Monthly Subscription</p>
+                          <p className="font-medium">Membership payment</p>
                           <p className="text-sm text-muted-foreground">
                             {(() => {
                               const paidDate =
@@ -572,7 +572,7 @@ const BillingPage = observer(() => {
                   No payment history available
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Your payments will appear here once you subscribe
+                  Recorded membership payments will appear here.
                 </p>
               </div>
             )}

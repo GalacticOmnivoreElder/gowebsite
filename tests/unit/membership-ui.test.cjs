@@ -78,10 +78,10 @@ test("billing page returns members to their profile", () => {
   assert.doesNotMatch(billingPageSource, /Back to Dashboard/);
 });
 
-test("billing presents one subscription CTA and no redundant Get Started card", () => {
+test("billing presents one membership CTA and no redundant Get Started card", () => {
   assert.doesNotMatch(billingPageSource, /Get Started/);
   assert.equal(
-    (billingPageSource.match(/Subscribe Now/g) || []).length,
+    (billingPageSource.match(/>\s*Review membership\s*</g) || []).length,
     1
   );
 });

@@ -306,6 +306,70 @@
   @apply text-4xl md:text-5xl;
 }
 
+@keyframes go-skill-marquee-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes go-partner-marquee-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.go-skill-marquee,
+.go-partner-marquee {
+  display: flex;
+  width: max-content;
+  min-width: max-content;
+  align-items: center;
+  animation-play-state: running;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.skill-banner,
+.go-partner-banner {
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none;
+}
+
+.go-skill-marquee {
+  animation: go-skill-marquee-scroll 40s linear infinite;
+}
+
+.go-partner-marquee {
+  animation: go-partner-marquee-scroll 50s linear infinite;
+}
+
+.go-skill-marquee-group,
+.go-partner-marquee-group {
+  display: flex;
+  flex: none;
+  min-width: 100vw;
+  align-items: center;
+  justify-content: space-around;
+  box-sizing: border-box;
+}
+
+.go-skill-marquee-group {
+  gap: 1rem;
+  padding: 0 1rem;
+}
+
+.go-partner-marquee-group {
+  gap: 4rem;
+  padding: 0 2rem;
+}
+
 /* Subtle command-center treatment shared by owner and public profile hubs. */
 .mission-hub-shell {
   background:

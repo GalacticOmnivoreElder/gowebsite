@@ -1,9 +1,9 @@
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata({
-  title: "Game Dev Blog",
+  title: "Signal",
   description:
-    "Read Galactic Omnivore articles, tutorials, project stories, and game development insights from Macedonia's game dev community.",
+    "Read practical notes, project updates, and lessons from Galactic Omnivore.",
   path: "/blog",
 });
 

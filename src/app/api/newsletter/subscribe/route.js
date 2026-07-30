@@ -76,7 +76,7 @@ export async function POST(request) {
         error:
           status === 400
             ? error.message
-            : "Newsletter signup is temporarily unavailable.",
+            : "We could not complete the subscription. Please try again.",
       },
       { status }
     );

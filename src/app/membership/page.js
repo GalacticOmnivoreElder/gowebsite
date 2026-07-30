@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 export const metadata = createMetadata({
   title: "GO Membership",
   description:
-    "Choose a Galactic Omnivore Community or Business membership for resources, projects, team-building tools, and game development support.",
+    "Compare current GO Community and GO Business membership, pricing, billing, and access.",
   path: "/membership",
 });
 
@@ -52,8 +52,9 @@ export default async function MembershipPage({ searchParams }) {
               Community and Business membership
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-              Join projects and access member resources, or unlock project
-              creation and team-building tools for your studio.
+              Compare current access, requirements, prices, and billing. Choose
+              Community for an individual creator or Business for project
+              creation and team management.
             </p>
           </div>
         </section>
@@ -94,7 +95,8 @@ export default async function MembershipPage({ searchParams }) {
             <div>
               <h2 className="text-2xl font-semibold">Questions before joining?</h2>
               <p className="mt-1 text-muted-foreground">
-                We can help you choose the membership that fits your work.
+                Contact support if you need help understanding access or
+                billing before you choose.
               </p>
             </div>
             <Button variant="outline" asChild>

@@ -48,7 +48,7 @@ export default function SubscriptionStatus({ user }) {
   if (loading) {
     return (
       <div className="space-y-2">
-        <h3 className="text-lg font-medium">Subscription Status</h3>
+        <h3 className="text-lg font-medium">Membership status</h3>
         <div className="h-6 w-24 bg-muted rounded animate-pulse"></div>
       </div>
     );
@@ -61,7 +61,7 @@ export default function SubscriptionStatus({ user }) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Subscription Status</h3>
+      <h3 className="text-lg font-medium">Membership status</h3>
 
       <div className="flex items-center gap-2">
         <Badge variant={isActive ? "success" : "outline"} className="px-3 py-1">
@@ -79,13 +79,13 @@ export default function SubscriptionStatus({ user }) {
       <div className="flex flex-col sm:flex-row gap-2 mt-2">
         {!isActive && (
           <Button asChild>
-            <Link href="/membership">Subscribe Now</Link>
+            <Link href="/membership">Review membership</Link>
           </Button>
         )}
 
         {isActive && (
           <Button variant="outline" asChild>
-            <Link href="/membership">Manage Subscription</Link>
+            <Link href="/membership">Manage membership</Link>
           </Button>
         )}
       </div>
@@ -97,15 +97,15 @@ export default function SubscriptionStatus({ user }) {
         </div>
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-green-500" />
-          <span className="text-sm">Exclusive game assets</span>
+          <span className="text-sm">Periodic asset resources</span>
         </div>
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-green-500" />
-          <span className="text-sm">Tutorial videos</span>
+          <span className="text-sm">Tutorials and learning resources</span>
         </div>
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-green-500" />
-          <span className="text-sm">Code snippets</span>
+          <span className="text-sm">Periodic code resources</span>
         </div>
       </div>
     </div>

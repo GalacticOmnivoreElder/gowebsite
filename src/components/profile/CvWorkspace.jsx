@@ -555,7 +555,7 @@ function CvSectionEditor({ section, onChange }) {
           />
           <div className="md:col-span-2">
             <Field
-              label="Timezone"
+              label="Time zone"
               value={content.timezone}
               onChange={(timezone) => setContent({ timezone })}
             />
@@ -593,7 +593,7 @@ function ProfileCvFrame({ children, onSectionChange }) {
     <div className="container max-w-[1500px] py-6 sm:py-8 lg:py-10">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          Member command center
+          GO account
         </div>
         <Badge variant="outline" className="border-white/10 bg-card/60">
           Private account navigation
@@ -967,7 +967,7 @@ const CvWorkspace = observer(() => {
           <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-start">
             <div className="max-w-2xl">
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
-                Career transmission
+                Creator resume
               </p>
               <h1
                 id="cv-page-title"
@@ -1031,7 +1031,7 @@ const CvWorkspace = observer(() => {
                 onClick={publishCv}
               >
                 <CheckCircle className="mr-2 h-4 w-4" />
-                {busy === "publish" ? "Publishing…" : "Approve & Publish"}
+                {busy === "publish" ? "Publishing…" : "Approve and publish"}
               </Button>
             )}
           </div>

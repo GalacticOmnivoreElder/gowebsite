@@ -5,9 +5,6 @@ import Image from "next/image";
 import discordImg from "@/assets/discord.png";
 import { NewsletterSignup } from "@/components/newsletter/NewsletterSignup";
 
-const newsletterEnabled =
-  process.env.NEXT_PUBLIC_NEWSLETTER_ENABLED === "true";
-
 // Custom X (Twitter) icon component
 const TwitterIcon = () => (
   <svg
@@ -70,7 +67,7 @@ export default function Footer() {
       icon: (
         <Image
           src={discordImg}
-          alt="Discord"
+          alt=""
           width={20}
           height={20}
           className="h-5 w-5"
@@ -90,9 +87,8 @@ export default function Footer() {
               Galactic Omnivore
             </Link>
             <p className="mt-2 text-muted-foreground max-w-md">
-              Building a stronger game development ecosystem
-              through community, education, mentorship, events,
-              and creative collaboration.
+              A North Macedonian nonprofit community and platform helping game
+              creators move toward the next playable milestone.
             </p>
             <div className="flex gap-4 mt-4">
               {socialMedia.map((social) => (
@@ -119,7 +115,7 @@ export default function Footer() {
                   href="/blog"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Blog
+                  GO Signal
                 </Link>
               </li>
               <li>
@@ -151,14 +147,14 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="font-medium text-sm mb-3">Company</h3>
+            <h3 className="font-medium text-sm mb-3">Organization</h3>
             <ul className="space-y-2">
               <li>
                 <Link
                   href="/about"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  About Us
+                  About GO
                 </Link>
               </li>
               <li>
@@ -181,11 +177,9 @@ export default function Footer() {
           </div>
         </div>
 
-        {newsletterEnabled && (
-          <div className="border-t mt-8 pt-8">
-            <NewsletterSignup source="footer" compact />
-          </div>
-        )}
+        <div className="mt-8 border-t pt-8">
+          <NewsletterSignup source="footer" variant="footer" />
+        </div>
 
         <div className="border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">

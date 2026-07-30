@@ -41,7 +41,7 @@ export default function PackageCard({ package: pkg, isUnlocked }) {
         />
         <div className="absolute top-2 right-2">
           <Badge variant={isUnlocked ? "success" : "secondary"}>
-            {isUnlocked ? "Owned" : "Locked"}
+            {isUnlocked ? "Available" : "Member access"}
           </Badge>
         </div>
       </div>
@@ -59,14 +59,14 @@ export default function PackageCard({ package: pkg, isUnlocked }) {
           <Button asChild className="w-full">
             <Link href={`/packages/${pkg.slug}`}>
               <UnlockIcon className="h-4 w-4 mr-2" />
-              Open Package
+              Open resource
             </Link>
           </Button>
         ) : (
           <Button asChild className="w-full">
             <Link href="/membership" className="w-full flex justify-center">
               <LockIcon className="h-4 w-4 mr-2" />
-              Subscribe to Unlock
+              Review membership access
             </Link>
           </Button>
         )}

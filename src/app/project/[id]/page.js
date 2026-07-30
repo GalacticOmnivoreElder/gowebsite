@@ -364,7 +364,7 @@ const ProjectDetailsPage = observer(() => {
     } catch (error) {
       console.error("Error archiving project:", error);
       toast({
-        title: "Error",
+        title: "Project could not be updated",
         description: error.message || "Something went wrong.",
         variant: "destructive",
       });
@@ -467,7 +467,7 @@ const ProjectDetailsPage = observer(() => {
   const submitApplication = async () => {
     if (!consentGiven) {
       toast({
-        title: "Consent Required",
+        title: "Consent required",
         description:
           "Please confirm that you consent to sharing your profile information.",
         variant: "destructive",
@@ -501,7 +501,7 @@ const ProjectDetailsPage = observer(() => {
       }
 
       toast({
-        title: "Application Submitted!",
+        title: "Application submitted",
         description:
           "Your application has been sent to the project owner and admins.",
       });
@@ -515,7 +515,7 @@ const ProjectDetailsPage = observer(() => {
     } catch (error) {
       console.error("Error submitting application:", error);
       toast({
-        title: "Error",
+        title: "Application could not be submitted",
         description: error.message || "Failed to submit application",
         variant: "destructive",
       });
@@ -542,15 +542,15 @@ const ProjectDetailsPage = observer(() => {
       }
 
       toast({
-        title: "Application Cancelled",
-        description: "Your application has been cancelled successfully.",
+        title: "Application canceled",
+        description: "Your application has been canceled.",
       });
 
       setUserApplication(null);
     } catch (error) {
       console.error("Error cancelling application:", error);
       toast({
-        title: "Error",
+        title: "Application could not be canceled",
         description: error.message || "Failed to cancel application",
         variant: "destructive",
       });
@@ -709,20 +709,20 @@ const ProjectDetailsPage = observer(() => {
 
       const statusMessages = {
         approved:
-          "Application approved successfully! The user has been added to the project team.",
+          "Application approved. The applicant now has project access.",
         rejected: "Application rejected. The applicant has been notified.",
         pending: "Application status updated to pending.",
       };
 
       toast({
-        title: "Success",
+        title: "Application updated",
         description:
           statusMessages[status] || `Application ${status} successfully`,
       });
     } catch (error) {
       console.error("Error updating application:", error);
       toast({
-        title: "Error",
+        title: "Application could not be updated",
         description: error.message || "Failed to update application",
         variant: "destructive",
       });
@@ -768,7 +768,7 @@ const ProjectDetailsPage = observer(() => {
             className="mt-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Projects
+            Back to projects
           </Button>
         </div>
       </div>
@@ -779,14 +779,14 @@ const ProjectDetailsPage = observer(() => {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-4">Project Not Found</h2>
+          <h2 className="text-2xl font-bold mb-4">Project not found</h2>
           <p className="text-muted-foreground mb-4">
             The project you&apos;re looking for doesn&apos;t exist or you
             don&apos;t have permission to view it.
           </p>
           <Button onClick={() => router.push("/projects")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Projects
+            Back to projects
           </Button>
         </div>
       </div>
@@ -800,7 +800,7 @@ const ProjectDetailsPage = observer(() => {
         <div className="flex items-center justify-between mb-6">
           <Button variant="outline" onClick={() => router.push("/projects")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Projects
+            Back to projects
           </Button>
 
           <div className="flex gap-2 flex-col sm:flex-row">
@@ -814,7 +814,7 @@ const ProjectDetailsPage = observer(() => {
                   }}
                 >
                   <Users className="h-4 w-4 mr-2" />
-                  View Applicants
+                  View applicants
                   {applications.filter((app) => app.status === "pending")
                     .length > 0 && (
                     <Badge variant="secondary" className="ml-2">
@@ -827,7 +827,7 @@ const ProjectDetailsPage = observer(() => {
                 </Button>
                 <Button onClick={handleEdit}>
                   <Edit className="h-4 w-4 mr-2" />
-                  Edit Project
+                  Edit project
                 </Button>
               </>
             )}
@@ -945,7 +945,7 @@ const ProjectDetailsPage = observer(() => {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-semibold mb-2">
-                        Your Application Status
+                        Your application status
                       </h3>
                       <div className="flex items-center gap-2">
                         <Badge
@@ -965,7 +965,7 @@ const ProjectDetailsPage = observer(() => {
                         {userApplication.status === "pending" &&
                           "Your application is being reviewed by the project team."}
                         {userApplication.status === "approved" &&
-                          "Congratulations! Your application has been approved."}
+                          "Your application was approved."}
                         {userApplication.status === "rejected" &&
                           "Your application was not accepted this time."}
                       </p>
@@ -978,12 +978,12 @@ const ProjectDetailsPage = observer(() => {
                             handleCancelApplication(userApplication.id)
                           }
                         >
-                          Cancel Application
+                          Cancel application
                         </Button>
                       )}
                       <Button variant="outline" asChild>
                         <Link href="/profile?tab=applications">
-                          View All Applications
+                          View all applications
                         </Link>
                       </Button>
                     </div>
@@ -995,8 +995,8 @@ const ProjectDetailsPage = observer(() => {
                         Interested in joining this project?
                       </h3>
                       <p className="text-muted-foreground">
-                        Apply to become a team member and contribute your skills
-                        to this project.
+                        Review the brief and terms. Apply if the role fits your
+                        skills and availability.
                       </p>
                     </div>
                     <Button
@@ -1013,12 +1013,12 @@ const ProjectDetailsPage = observer(() => {
                       ) : MobxStore.user ? (
                         <>
                           <Send className="h-4 w-4 mr-2" />
-                          Apply to Project
+                          Apply to project
                         </>
                       ) : (
                         <>
                           <LogIn className="h-4 w-4 mr-2" />
-                          Login to Apply
+                          Sign in to apply
                         </>
                       )}
                     </Button>
@@ -1031,7 +1031,7 @@ const ProjectDetailsPage = observer(() => {
           {project.status === "live" && !isProjectMember && (
             <Card className="mb-6 bg-muted/50 border-muted">
               <CardContent className="p-6 text-center">
-                <h3 className="text-lg font-semibold mb-2">Project is Live</h3>
+                <h3 className="text-lg font-semibold mb-2">Project is live</h3>
                 <p className="text-muted-foreground">
                   This project is currently ongoing and hiring has closed.
                   Applications are no longer being accepted.
@@ -1043,7 +1043,7 @@ const ProjectDetailsPage = observer(() => {
           {project.status === "pending" && (
             <Card className="mb-6 bg-muted/50 border-muted">
               <CardContent className="p-6 text-center">
-                <h3 className="text-lg font-semibold mb-2">Pending Approval</h3>
+                <h3 className="text-lg font-semibold mb-2">Pending approval</h3>
                 <p className="text-muted-foreground">
                   This project is awaiting admin approval before going public.
                 </p>
@@ -1055,7 +1055,7 @@ const ProjectDetailsPage = observer(() => {
             <Card className="mb-6 bg-muted/50 border-muted">
               <CardContent className="p-6 text-center">
                 <h3 className="text-lg font-semibold mb-2">
-                  Project Completed
+                  Project completed
                 </h3>
                 <p className="text-muted-foreground">
                   This project has been completed and is now archived.
@@ -1117,7 +1117,7 @@ const ProjectDetailsPage = observer(() => {
               <p className="font-semibold">
                 {project.teamMemberDetails?.length || 0}
               </p>
-              <p className="text-sm text-muted-foreground">Team Members</p>
+              <p className="text-sm text-muted-foreground">Team members</p>
             </CardContent>
           </Card>
         </div>
@@ -1125,7 +1125,7 @@ const ProjectDetailsPage = observer(() => {
         {/* Goal */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Project Goal</CardTitle>
+            <CardTitle>Project goal</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-lg">{project.goal}</p>
@@ -1151,7 +1151,7 @@ const ProjectDetailsPage = observer(() => {
         {project.requiredRoles && project.requiredRoles.length > 0 && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Required Roles</CardTitle>
+              <CardTitle>Required roles</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
@@ -1171,7 +1171,7 @@ const ProjectDetailsPage = observer(() => {
           {project.ownerDetails && (
             <Card>
               <CardHeader>
-                <CardTitle>Project Owner</CardTitle>
+                <CardTitle>Project owner</CardTitle>
               </CardHeader>
               <CardContent>
                 <UserCard user={project.ownerDetails} role="Owner" />
@@ -1183,7 +1183,7 @@ const ProjectDetailsPage = observer(() => {
           {project.adminDetails && project.adminDetails.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Project Admins</CardTitle>
+                <CardTitle>Project admins</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {project.adminDetails.map((admin) => (
@@ -1198,7 +1198,7 @@ const ProjectDetailsPage = observer(() => {
         {project.teamMemberDetails && project.teamMemberDetails.length > 0 && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Team Members</CardTitle>
+              <CardTitle>Team members</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1225,7 +1225,7 @@ const ProjectDetailsPage = observer(() => {
         {project.linkedProjects && project.linkedProjects.length > 0 && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Related Projects</CardTitle>
+              <CardTitle>Related projects</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1268,7 +1268,7 @@ const ProjectDetailsPage = observer(() => {
             <div className="space-y-4">
               <div className="bg-muted/50 p-4 rounded-lg">
                 <h4 className="font-medium mb-2">
-                  What happens when you apply:
+                  What happens when you apply
                 </h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>
@@ -1320,7 +1320,7 @@ const ProjectDetailsPage = observer(() => {
                 onClick={submitApplication}
                 disabled={!consentGiven || applying}
               >
-                {applying ? "Submitting..." : "Submit Application"}
+                {applying ? "Submitting..." : "Submit application"}
               </Button>
             </DialogFooter>
           </DialogContent>

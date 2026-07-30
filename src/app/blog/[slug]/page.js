@@ -125,7 +125,7 @@ const BlogPost = observer(() => {
                   className="flex items-center gap-2 hover:text-primary transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Blog
+                  GO Signal
                 </Link>
                 <span>/</span>
                 <span className="truncate">{he.decode(post.title)}</span>
@@ -138,7 +138,7 @@ const BlogPost = observer(() => {
               <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  <span>Admin</span>
+                  <span>Galactic Omnivore</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4" />
@@ -178,6 +178,7 @@ const BlogPost = observer(() => {
                 variant="ghost"
                 size="icon"
                 className="rounded-full hover:bg-primary/10 hover:text-primary"
+                aria-label="Share on X"
                 onClick={() => handleShare("twitter")}
               >
                 <Twitter className="h-5 w-5" />
@@ -186,6 +187,7 @@ const BlogPost = observer(() => {
                 variant="ghost"
                 size="icon"
                 className="rounded-full hover:bg-primary/10 hover:text-primary"
+                aria-label="Share on Facebook"
                 onClick={() => handleShare("facebook")}
               >
                 <Facebook className="h-5 w-5" />
@@ -194,6 +196,7 @@ const BlogPost = observer(() => {
                 variant="ghost"
                 size="icon"
                 className="rounded-full hover:bg-primary/10 hover:text-primary"
+                aria-label="Share on LinkedIn"
                 onClick={() => handleShare("linkedin")}
               >
                 <Linkedin className="h-5 w-5" />
@@ -219,6 +222,7 @@ const BlogPost = observer(() => {
                   variant="ghost"
                   size="icon"
                   className="rounded-full hover:bg-primary/10 hover:text-primary"
+                  aria-label="Share on X"
                   onClick={() => handleShare("twitter")}
                 >
                   <Twitter className="h-5 w-5" />
@@ -227,6 +231,7 @@ const BlogPost = observer(() => {
                   variant="ghost"
                   size="icon"
                   className="rounded-full hover:bg-primary/10 hover:text-primary"
+                  aria-label="Share on Facebook"
                   onClick={() => handleShare("facebook")}
                 >
                   <Facebook className="h-5 w-5" />
@@ -235,6 +240,7 @@ const BlogPost = observer(() => {
                   variant="ghost"
                   size="icon"
                   className="rounded-full hover:bg-primary/10 hover:text-primary"
+                  aria-label="Share on LinkedIn"
                   onClick={() => handleShare("linkedin")}
                 >
                   <Linkedin className="h-5 w-5" />

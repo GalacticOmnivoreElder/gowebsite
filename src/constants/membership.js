@@ -10,7 +10,7 @@ export const MEMBERSHIP_PLANS = [
     name: "GO Community",
     audience: "For individual creators",
     description:
-      "Join projects, access member resources, and grow with the Galactic Omnivore community.",
+      "Apply to listed projects and use the current Community member resources.",
     popular: true,
     benefits: [
       "Apply to open community projects",
@@ -42,7 +42,7 @@ export const MEMBERSHIP_PLANS = [
     name: "GO Business",
     audience: "For studios and project creators",
     description:
-      "Run projects, recruit collaborators, and use every Community membership benefit.",
+      "Create project briefs, review applicants, manage teams, and use every Community benefit.",
     benefits: [
       "Everything included in GO Community",
       "Create and publish community projects",

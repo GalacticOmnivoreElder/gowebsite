@@ -31,7 +31,7 @@ export const revalidate = 3600; // Revalidate every hour
 export const metadata = createMetadata({
   title: "Game Development Resources",
   description:
-    "Explore Galactic Omnivore educational content, asset packs, media resources, tutorials, and premium drops for game developers.",
+    "Review learning material and available member resources from Galactic Omnivore.",
   path: "/resources",
 });
 
@@ -113,15 +113,15 @@ export default async function ResourcesPage() {
         Resources
       </h1>
       <p className="text-xl text-muted-foreground text-center mb-12 md:mb-16 max-w-3xl mx-auto">
-        Explore educational content, license-free media, premium assets, and
-        community resources to fuel your game development journey.
+        Find material for the task in front of you. Check each item for access,
+        usage terms, and file details before you use it.
       </p>
 
       {/* Featured Latest Package */}
       {latestPackage && (
         <div className="mb-12 md:mb-16">
           <h2 className="text-3xl font-semibold mb-6 text-center md:text-left">
-            Latest Community Resource Drop
+            Latest listed resource
           </h2>
           <FeaturedPackageCardWrapper package={latestPackage} />{" "}
           {/* Reverted prop name */}
@@ -134,21 +134,20 @@ export default async function ResourcesPage() {
           <CardHeader>
             <CardTitle className="text-2xl md:text-3xl flex items-center gap-3">
               <BookOpen className="h-8 w-8 text-primary" />
-              Educational Content
+              Learning material
             </CardTitle>
             <CardDescription>
-              Explore guides, tutorials, workshop notes, and course updates created for developers, artists, designers, writers, and anyone building games.
+              Review listed guides, workshops, courses, and practical notes.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Learn about game design, production workflows, game engines
-              (Unity, Godot, Unreal), prototyping, community projects, and the
-              practical skills needed to move from idea to a playable game.
+              Choose material that matches your role, current level, and next
+              test. The learning page shows what is available now.
             </p>
             <Button asChild variant="outline">
               <Link href="/education">
-                Explore Education <ArrowRight className="ml-2 h-4 w-4" />
+                Explore learning <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </CardContent>
@@ -159,18 +158,16 @@ export default async function ResourcesPage() {
           <CardHeader>
             <CardTitle className="text-2xl md:text-3xl flex items-center gap-3">
               <Package className="h-8 w-8 text-primary" />
-              License-Free Media Library
+              Planned media library
             </CardTitle>
             <CardDescription>
-              Access a growing collection of videos, books, asset packs, and
-              pipeline examples.
+              This route is not available yet.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-6">
-              Explore resources shared by the community and public domain assets
-              curated for game developers. Find inspiration, tools, and learning
-              materials.
+              When the library opens, each item should state its source, usage
+              terms, format, and access requirements.
             </p>
             <div className="flex flex-wrap gap-4 mb-6">
               <span className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -180,7 +177,7 @@ export default async function ResourcesPage() {
                 <BookOpen className="h-4 w-4" /> Books
               </span>
               <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Package className="h-4 w-4" /> Asset Packs
+                <Package className="h-4 w-4" /> Asset packs
               </span>
               <span className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Workflow className="h-4 w-4" /> Pipelines
@@ -188,33 +185,32 @@ export default async function ResourcesPage() {
             </div>
             <Button variant="outline" disabled>
               <Link href="/resources/media">
-                Explore Media Library (Coming Soon){" "}
+                Media library unavailable{" "}
                 {/* <ArrowRight className="ml-2 h-4 w-4" /> */}
               </Link>
             </Button>
           </CardContent>
         </Card>
 
-        {/* Section 3: Premium Content */}
+        {/* Section 3: Member resources */}
         <Card className="overflow-hidden bg-gradient-to-r from-primary/10 to-background border border-primary/30">
           <CardHeader>
             <CardTitle className="text-2xl md:text-3xl flex items-center gap-3">
               <Sparkles className="h-8 w-8 text-primary" />
-              Premium Membership Resources
+              Member resources
             </CardTitle>
             <CardDescription>
-              Unlock exclusive monthly themed asset packs, source code, and
-              more.
+              Review the resource access included with current GO membership.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Become a member to get full access to our monthly curated content
-              drops, including playable prototypes, art, music, and code.
+              Community membership currently includes periodic asset, music,
+              and code resource drops, plus tutorials and learning resources.
             </p>
             <Button asChild>
               <Link href="/membership">
-                View Membership Plans <ArrowRight className="ml-2 h-4 w-4" />
+                Review membership <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </CardContent>
@@ -227,7 +223,7 @@ export default async function ResourcesPage() {
       {pastPackages.length > 0 && (
         <div className="mt-12 md:mt-16">
           <h2 className="text-3xl font-semibold mb-6 text-center md:text-left">
-            Past Resources
+            Earlier listed resources
           </h2>
           <PackageList packages={pastPackages} />{" "}
           {/* Reverted component name & prop name */}

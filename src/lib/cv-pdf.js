@@ -168,7 +168,7 @@ export function buildCvPdfDefinition(model = {}) {
             {
               stack: [
                 { text: "GALACTIC OMNIVORE", style: "brand" },
-                { text: "PROFESSIONAL MISSION PROFILE", style: "documentType" },
+                { text: "CREATOR PROFILE", style: "documentType" },
               ],
               alignment: "right",
               border: [false, false, false, false],
@@ -287,7 +287,7 @@ export function buildCvPdfDefinition(model = {}) {
       return {
         columns: [
           {
-            text: "GALACTIC OMNIVORE • GAME DEVELOPMENT MISSION HUB",
+            text: "GALACTIC OMNIVORE • CREATOR PROFILE",
             color: "#777178",
             fontSize: 6.5,
           },

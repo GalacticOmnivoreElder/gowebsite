@@ -48,7 +48,7 @@ const GamesPage = observer(() => {
         <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
           <p className="text-red-600 dark:text-red-400">{error}</p>
           <Button onClick={() => window.location.reload()} className="mt-4">
-            Try Again
+            Try again
           </Button>
         </div>
       </div>
@@ -59,8 +59,8 @@ const GamesPage = observer(() => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-4">Games</h1>
       <p className="text-muted-foreground mb-8">
-        Explore our collection of original games created by the Galactic
-        Omnivore team and community.
+        Review games and playable work listed by Galactic Omnivore. Each entry
+        carries its own project details and creator credit.
       </p>
 
       {games.length > 0 ? (
@@ -71,9 +71,9 @@ const GamesPage = observer(() => {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-xl mb-4">No games available at the moment.</p>
+          <p className="text-xl mb-4">No games are listed now.</p>
           <p className="text-muted-foreground">
-            Check back soon for our upcoming game releases!
+            Return to this page to review newly listed work.
           </p>
         </div>
       )}

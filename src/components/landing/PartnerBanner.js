@@ -13,50 +13,40 @@ const partnerLogos = [
   { src: "/logos/logo9.png", alt: "Partner 9" },
 ];
 
-// Duplicate for seamless loop
-const doubledLogos = [...partnerLogos, ...partnerLogos];
-
 export const PartnerBanner = () => {
+  const logoGroup = (duplicate = false) => (
+    <div
+      className="go-partner-marquee-group"
+      aria-hidden={duplicate || undefined}
+    >
+      {partnerLogos.map((logo) => (
+        <div
+          key={`${duplicate ? "duplicate-" : ""}${logo.src}`}
+          className="flex h-16 w-32 shrink-0 items-center justify-center opacity-70 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
+        >
+          <Image
+            src={logo.src}
+            alt={duplicate ? "" : logo.alt}
+            width={128}
+            height={64}
+            className="h-16 w-32 object-contain"
+          />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
-    <section className="bg-black py-12 overflow-hidden whitespace-nowrap relative">
-      {/* <h2 className="text-center text-2xl text-muted-foreground font-semibold mb-8">
-        Our Collaborators
-      </h2> */}
-      <div className="animate-marquee-slow inline-block">
-        {doubledLogos.map((logo, index) => (
-          <div
-            key={`logo-${index}`}
-            className="inline-flex items-center justify-center mx-8 h-16 w-32 filter grayscale hover:filter-none transition-all duration-300 opacity-70 hover:opacity-100"
-          >
-            <Image
-              src={logo.src}
-              alt={logo.alt}
-              width={128} // Adjust width as needed
-              height={64} // Adjust height as needed
-              objectFit="contain"
-            />
-          </div>
-        ))}
+    <section
+      className="go-partner-banner relative overflow-hidden bg-black py-12"
+      aria-label="Galactic Omnivore collaborators"
+    >
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-black to-transparent sm:w-24" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-black to-transparent sm:w-24" />
+      <div className="go-partner-marquee">
+        {logoGroup()}
+        {logoGroup(true)}
       </div>
-      {/* CSS for animation - Add this to your globals.css or style tag */}
-      <style jsx global>{`
-        @keyframes marqueeSlow {
-          0% {
-            transform: translateX(0%);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        .animate-marquee-slow {
-          animation: marqueeSlow 60s linear infinite; /* Slower duration */
-          will-change: transform;
-        }
-        /* Optional: Pause on hover */
-        /* .animate-marquee-slow:hover {
-          animation-play-state: paused;
-        } */
-      `}</style>
     </section>
   );
 };

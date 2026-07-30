@@ -3,7 +3,7 @@ import { createMetadata } from "@/lib/seo";
 export const metadata = createMetadata({
   title: "Community Games",
   description:
-    "Explore games created by the Galactic Omnivore team and community, including releases, prototypes, and featured projects.",
+    "Review games and playable work listed by Galactic Omnivore, with project details and creator credit.",
   path: "/games",
 });
 

@@ -285,14 +285,14 @@ const ProjectsPage = observer(() => {
         <div>
           <h1 className="text-4xl font-bold mb-2">Projects</h1>
           <p className="text-xl text-muted-foreground">
-            Discover and join exciting game development projects
+            Review approved project briefs, open roles, terms, and current status.
           </p>
         </div>
 
         <div className="flex gap-2">
           <Button onClick={handleCreateProject} className="whitespace-nowrap">
             <Plus className="h-4 w-4 mr-2" />
-            Create Project
+            Create project
           </Button>
         </div>
       </div>
@@ -302,7 +302,8 @@ const ProjectsPage = observer(() => {
         <div className="relative lg:col-span-2">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search projects..."
+            placeholder="Search projects"
+            aria-label="Search projects"
             value={localFilters.search}
             onChange={(e) => handleFilterChange("search", e.target.value)}
             className="pl-10"
@@ -331,10 +332,10 @@ const ProjectsPage = observer(() => {
           onValueChange={(value) => handleFilterChange("type", value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Project Type" />
+            <SelectValue placeholder="Project type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="all">All types</SelectItem>
             {uniqueTypes.map((type) => (
               <SelectItem key={type} value={type}>
                 {type}
@@ -360,7 +361,7 @@ const ProjectsPage = observer(() => {
             <SelectItem value="live">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                Live Projects
+                Live projects
               </div>
             </SelectItem>
             <SelectItem value="completed">
@@ -369,7 +370,7 @@ const ProjectsPage = observer(() => {
                 Completed
               </div>
             </SelectItem>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">All statuses</SelectItem>
           </SelectContent>
         </Select>
 
@@ -381,12 +382,12 @@ const ProjectsPage = observer(() => {
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="created_desc">Newest First</SelectItem>
-            <SelectItem value="created_asc">Oldest First</SelectItem>
-            <SelectItem value="budget_desc">Highest Budget</SelectItem>
-            <SelectItem value="budget_asc">Lowest Budget</SelectItem>
-            <SelectItem value="duration_desc">Longest Duration</SelectItem>
-            <SelectItem value="duration_asc">Shortest Duration</SelectItem>
+            <SelectItem value="created_desc">Newest first</SelectItem>
+            <SelectItem value="created_asc">Oldest first</SelectItem>
+            <SelectItem value="budget_desc">Highest budget</SelectItem>
+            <SelectItem value="budget_asc">Lowest budget</SelectItem>
+            <SelectItem value="duration_desc">Longest duration</SelectItem>
+            <SelectItem value="duration_asc">Shortest duration</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -409,11 +410,11 @@ const ProjectsPage = observer(() => {
           <div className="text-center py-12">
             <h3 className="text-lg font-medium mb-2">No projects found</h3>
             <p className="text-muted-foreground mb-4">
-              Be the first to create a project in our community!
+              No project briefs match the current filters.
             </p>
             <Button onClick={handleCreateProject}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Project
+              Create project
             </Button>
           </div>
         ) : (
@@ -435,7 +436,7 @@ const ProjectsPage = observer(() => {
                 >
                   {MobxStore.projectsLoading
                     ? "Loading..."
-                    : "Load More Projects"}
+                    : "Load more projects"}
                 </Button>
               </div>
             )}
@@ -449,14 +450,14 @@ const ProjectsPage = observer(() => {
           <h3 className="text-2xl font-bold text-primary mb-2">
             {MobxStore.projects.length}
           </h3>
-          <p className="text-muted-foreground">Active Projects</p>
+          <p className="text-muted-foreground">Projects shown</p>
         </Card>
 
         <Card className="text-center p-6">
           <h3 className="text-2xl font-bold text-primary mb-2">
             {uniqueCategories.length}
           </h3>
-          <p className="text-muted-foreground">Project Categories</p>
+          <p className="text-muted-foreground">Project categories</p>
         </Card>
 
         <Card className="text-center p-6">
@@ -466,7 +467,7 @@ const ProjectsPage = observer(() => {
               0
             )}
           </h3>
-          <p className="text-muted-foreground">Open Roles</p>
+          <p className="text-muted-foreground">Open roles</p>
         </Card>
       </div>
     </div>

@@ -164,7 +164,7 @@ export const LoginForm = observer(() => {
         )}
         <Button className="w-full" type="submit" disabled={isLoading}>
           {isLoading && <CgSpinner className="mr-2 h-4 w-4 animate-spin" />}
-          Login
+          Sign in
         </Button>
       </form>
     </Form>
@@ -208,11 +208,11 @@ const LoginCard = observer(() => {
   return (
     <Card className="min-w-3xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Welcome Back!</CardTitle>
+        <CardTitle className="text-2xl">Sign in to Galactic Omnivore</CardTitle>
         <CardDescription>
           {isCheckoutContinuation
             ? "Sign in to continue to secure membership checkout."
-            : "Glad to see you again! Log in to continue your journey."}
+            : "Use your GO account to continue."}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
@@ -227,7 +227,7 @@ const LoginCard = observer(() => {
             ) : (
               <FaGoogle className="mr-2 h-4 w-4" />
             )}
-            {isGoogleLoading ? "Signing in..." : "Google"}
+            {isGoogleLoading ? "Signing in..." : "Continue with Google"}
           </Button>
           {googleError && (
             <div className="text-destructive text-sm text-center">
@@ -249,14 +249,14 @@ const LoginCard = observer(() => {
       </CardContent>
       <CardFooter>
         <div className="flex flex-col text-center text-sm w-full gap-2">
-          Don&apos;t have account?&nbsp;
+          Don&apos;t have an account?
           <Link
             href={`/signup${
               searchParams.toString() ? `?${searchParams.toString()}` : ""
             }`}
           >
             <Button variant="outline" className="w-full">
-              Create Account
+              Create account
             </Button>
           </Link>
         </div>

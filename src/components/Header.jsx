@@ -66,7 +66,12 @@ const Header = observer(() => {
             className="flex items-center gap-2"
             onClick={handleNavigation}
           >
-            <Image src={logoImg} height={40} width={100} alt="Logo" />
+            <Image
+              src={logoImg}
+              height={40}
+              width={100}
+              alt="Galactic Omnivore"
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -89,7 +94,7 @@ const Header = observer(() => {
               <Link href="/games">Games</Link>
             </Button>
             <Button asChild variant={isActive("/blog")} size="sm">
-              <Link href="/blog">Blog</Link>
+              <Link href="/blog">GO Signal</Link>
             </Button>
             <Button asChild variant={isActive("/membership")} size="sm">
               <Link href="/membership">Membership</Link>
@@ -104,7 +109,7 @@ const Header = observer(() => {
                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hidden md:flex"
                 size="sm"
               >
-                Subscribe Premium
+                Review membership
               </SubscribeButton>
 
               {user ? (
@@ -139,6 +144,8 @@ const Header = observer(() => {
             variant="ghost"
             size="icon"
             className="md:hidden"
+            aria-label={isMenuOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={isMenuOpen}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? (
@@ -209,7 +216,7 @@ const Header = observer(() => {
               className="justify-start"
             >
               <Link href="/blog" onClick={handleNavigation}>
-                Blog
+                GO Signal
               </Link>
             </Button>
 
@@ -248,7 +255,7 @@ const Header = observer(() => {
 
             {authReady && (
               <SubscribeButton className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 justify-start">
-                Subscribe Premium
+                Review membership
               </SubscribeButton>
             )}
           </nav>

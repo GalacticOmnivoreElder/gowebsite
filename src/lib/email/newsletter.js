@@ -23,6 +23,7 @@ export const NEWSLETTER_CONSENT_TEXT =
   "I want to receive the Galactic Omnivore newsletter and understand that I can unsubscribe at any time.";
 
 const ALLOWED_SOURCES = new Set([
+  "landing-page",
   "homepage",
   "footer",
   "signup",
@@ -102,12 +103,14 @@ export async function requestNewsletterSubscription({
   if (honeypot) return NEWSLETTER_GENERIC_RESPONSE;
   const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) {
-    const error = new Error("Enter a valid email address");
+    const error = new Error("Enter a valid email address.");
     error.code = "invalid_email";
     throw error;
   }
   if (consent !== true) {
-    const error = new Error("Newsletter consent is required");
+    const error = new Error(
+      "Please confirm that you agree to receive email updates."
+    );
     error.code = "consent_required";
     throw error;
   }

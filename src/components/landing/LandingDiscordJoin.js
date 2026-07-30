@@ -17,7 +17,7 @@ export const LandingDiscordJoin = () => {
       {/* Background Image */}
       <Image
         src={joinusImg}
-        alt="Join the Galactic Omnivore community"
+        alt=""
         fill
         sizes="100vw"
         className="z-0 object-cover"
@@ -32,19 +32,18 @@ export const LandingDiscordJoin = () => {
         {/* Placeholder with Users icon until a proper Discord icon is confirmed/added */}
         <Image
           src="/discord.png"
-          alt="Discord Logo"
+          alt=""
           width={64}
           height={64}
           className="mx-auto mb-4"
         />
 
         <h2 className="text-3xl md:text-4xl font-bold mb-4">
-          Over 360+ Omnivores in our Discord!
+          Join the GO community on Discord
         </h2>
         <p className="text-lg text-primary-foreground/90 mb-8 max-w-3xl mx-auto">
-          From junior game developers to senior app developers, artists
-          switching to digital, and writers crafting game narratives... everyone
-          is welcome, regardless of industry or experience level.
+          Read the community rules, introduce your current craft, and choose one
+          useful first action. You can also observe before you take part.
         </p>
         <Button
           asChild
@@ -60,12 +59,12 @@ export const LandingDiscordJoin = () => {
             {/* <ActualDiscordIcon className="h-5 w-5" /> */}
             <Image
               src="/discord-logo.svg"
-              alt="Discord Logo"
+              alt=""
               width={24}
               height={24}
               className="mx-auto"
             />
-            Join Our Discord
+            Open GO Discord
           </Link>
         </Button>
       </div>

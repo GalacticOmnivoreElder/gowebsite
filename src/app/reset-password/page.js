@@ -74,7 +74,7 @@ const ResetPasswordForm = observer(() => {
     return (
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Check Your Email</CardTitle>
+          <CardTitle>Check your email</CardTitle>
           <CardDescription>
             {PASSWORD_RESET_GENERIC_MESSAGE}
           </CardDescription>
@@ -107,7 +107,7 @@ const ResetPasswordForm = observer(() => {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Reset Password</CardTitle>
+        <CardTitle>Reset your password</CardTitle>
         <CardDescription>
           Enter your email address and we&apos;ll send you instructions to reset
           your password.
