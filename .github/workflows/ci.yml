@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - prod
+      - dev
+      - develop
+  pull_request:
+    branches:
+      - prod
+      - dev
+      - develop
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24.x"
+
+jobs:
+  lint-unit-build:
+    name: Lint, unit tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Production build
+        run: npm run build
+
+  firestore-rules:
+    name: Firestore rules tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Firestore rules emulator tests
+        run: npm run test:rules
+
+  playwright-visual:
+    name: Playwright visual/smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright's Chrome channel
+        run: npx playwright install --with-deps chrome
+
+      - name: Run all visual/smoke suites
+        run: npm run test:visual:all
+
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            .playwright-artifacts
+            .playwright-hero-artifacts
+            .playwright-marquee-artifacts
+            test-results
+          retention-days: 7
+
+  ci:
+    name: CI status
+    if: always()
+    needs:
+      - lint-unit-build
+      - firestore-rules
+      - playwright-visual
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required jobs
+        run: |
+          if [ "${{ needs.lint-unit-build.result }}" != "success" ] || \
+             [ "${{ needs.firestore-rules.result }}" != "success" ] || \
+             [ "${{ needs.playwright-visual.result }}" != "success" ]; then
+            echo "One or more required CI jobs failed."
+            exit 1
+          fi

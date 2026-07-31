@@ -13,7 +13,13 @@
     "test": "node --test tests/unit/index.test.cjs",
     "test:unit": "node --test tests/unit/index.test.cjs",
     "test:rules": "firebase emulators:exec --only firestore --project demo-go-platform \"node --test tests/firestore-rules.test.cjs\"",
-    "test:visual": "playwright test"
+    "test:visual": "playwright test",
+    "test:visual:about": "playwright test --config=playwright.about.config.js",
+    "test:visual:hero": "playwright test --config=playwright.hero.config.js",
+    "test:visual:marquee": "playwright test --config=playwright.marquee.config.js",
+    "test:visual:newsletter": "playwright test --config=playwright.newsletter.config.js",
+    "test:visual:all": "npm run test:visual && npm run test:visual:about && npm run test:visual:hero && npm run test:visual:marquee && npm run test:visual:newsletter",
+    "test:all": "npm run lint && npm run test:unit && npm run build"
   },
   "dependencies": {
     "@dicebear/collection": "^9.2.2",
