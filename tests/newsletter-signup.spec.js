@@ -91,6 +91,61 @@ test("landing and footer newsletter forms are responsive and accessible", async 
   });
 });
 
+test("final CTA and signal divider keep their hierarchy at every breakpoint", async ({
+  page,
+}, testInfo) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+
+  const cta = page.getByRole("region", {
+    name: "Find your place in Galactic Omnivore",
+  });
+  const divider = page.locator("[data-signal-divider]");
+  const ctaLinks = [
+    cta.getByRole("link", { name: "Join Our Discord" }),
+    cta.getByRole("link", { name: "Review Membership" }),
+    cta.getByRole("link", { name: "Explore Projects" }),
+  ];
+
+  await expect(cta).toBeVisible();
+  await expect(ctaLinks[0]).toHaveAttribute(
+    "href",
+    "https://discord.gg/ZbSShxu6K4"
+  );
+  await expect(ctaLinks[1]).toHaveAttribute("href", "/membership");
+  await expect(ctaLinks[2]).toHaveAttribute("href", "/projects");
+  await expect(divider).toHaveAttribute("aria-hidden", "true");
+
+  const dividerBox = await divider.boundingBox();
+  const expectedHeight =
+    testInfo.project.name === "mobile-390"
+      ? 88
+      : testInfo.project.name === "tablet-768"
+        ? 120
+        : 160;
+  expect(dividerBox.height).toBe(expectedHeight);
+
+  const visibleFragments = divider.locator("[data-signal-fragment]:visible");
+  const fragmentCount = await visibleFragments.count();
+  expect(fragmentCount).toBeGreaterThanOrEqual(8);
+  expect(fragmentCount).toBeLessThanOrEqual(15);
+  for (let index = 0; index < fragmentCount; index += 1) {
+    await expect(visibleFragments.nth(index)).toHaveCSS("animation-name", "none");
+  }
+
+  const pageOverflows = await page.evaluate(
+    () => document.documentElement.scrollWidth > window.innerWidth + 1
+  );
+  expect(pageOverflows).toBeFalsy();
+
+  if (testInfo.project.name === "mobile-390") {
+    const boxes = await Promise.all(ctaLinks.map((link) => link.boundingBox()));
+    expect(boxes[1].y).toBeGreaterThan(boxes[0].y);
+    expect(boxes[2].y).toBeGreaterThan(boxes[1].y);
+    for (const box of boxes) expect(box.width).toBeGreaterThan(300);
+  }
+});
+
 test("validation, keyboard submission, loading, success, and deduplication work", async ({
   page,
 }, testInfo) => {

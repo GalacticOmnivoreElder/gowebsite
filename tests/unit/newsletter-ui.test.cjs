@@ -21,6 +21,14 @@ const newsletterSource = fs.readFileSync(
   path.join(root, "src/lib/email/newsletter.js"),
   "utf8"
 );
+const ctaSource = fs.readFileSync(
+  path.join(root, "src/components/landing/FullCTA.js"),
+  "utf8"
+);
+const dividerSource = fs.readFileSync(
+  path.join(root, "src/components/landing/PixelSectionDivider.js"),
+  "utf8"
+);
 
 const newsletterClient = loadSourceModule(
   "src/lib/newsletter-client.js",
@@ -92,6 +100,31 @@ test("landing and footer restore their distinct audited sources", () => {
   assert.doesNotMatch(footerSource, /NEXT_PUBLIC_NEWSLETTER_ENABLED/);
   assert.match(newsletterSource, /"landing-page"/);
   assert.match(newsletterSource, /"footer"/);
+});
+
+test("landing close uses the approved CTA copy and verified destinations", () => {
+  assert.match(ctaSource, /Find your place in Galactic Omnivore/);
+  assert.match(ctaSource, /Whether you want to learn, contribute to a project/);
+  assert.match(ctaSource, /Join Our Discord/);
+  assert.match(ctaSource, /https:\/\/discord\.gg\/ZbSShxu6K4/);
+  assert.match(ctaSource, /href="\/membership"/);
+  assert.match(ctaSource, /Review Membership/);
+  assert.match(ctaSource, /href="\/projects"/);
+  assert.match(ctaSource, /Explore Projects/);
+  assert.doesNotMatch(ctaSource, /Level up your game development journey/i);
+  assert.doesNotMatch(ctaSource, /ENGAGE/);
+});
+
+test("signal transition is short, deterministic, and decorative", () => {
+  assert.match(dividerSource, /h-\[88px\]/);
+  assert.match(dividerSource, /sm:h-\[120px\]/);
+  assert.match(dividerSource, /lg:h-\[160px\]/);
+  assert.match(dividerSource, /aria-hidden="true"/);
+  assert.match(dividerSource, /SIGNAL_FRAGMENTS\.map/);
+  assert.doesNotMatch(dividerSource, /Math\.random/);
+  assert.doesNotMatch(dividerSource, /pixeldown|pixelup|next\/image/i);
+  assert.match(landingSource, /className="bg-\[#0a090a\]/);
+  assert.match(landingSource, /border-primary\/30 bg-\[#151015\]/);
 });
 
 test("newsletter remains enabled by default with a server-only emergency opt-out", () => {

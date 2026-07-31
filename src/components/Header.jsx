@@ -75,7 +75,7 @@ const Header = observer(() => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1 ml-6">
+          <nav className="ml-6 hidden items-center gap-1 lg:flex">
             {user && (
               <Button asChild variant={isProfileActive} size="sm">
                 <Link href="/profile">Profile</Link>
@@ -106,7 +106,7 @@ const Header = observer(() => {
           {authReady && (
             <>
               <SubscribeButton
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hidden md:flex"
+                className="hidden bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 lg:flex"
                 size="sm"
               >
                 Review membership
@@ -115,7 +115,7 @@ const Header = observer(() => {
               {user ? (
                 <UserNav user={user} logout={MobxStore.logout} />
               ) : (
-                <div className="hidden items-center gap-2 md:flex">
+                <div className="hidden items-center gap-2 lg:flex">
                   <Button
                     asChild
                     variant={pathname === "/login" ? "default" : "ghost"}
@@ -143,7 +143,7 @@ const Header = observer(() => {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="lg:hidden"
             aria-label={isMenuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={isMenuOpen}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -159,7 +159,7 @@ const Header = observer(() => {
 
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="md:hidden border-t">
+        <div className="border-t lg:hidden">
           <nav className="flex flex-col p-4 space-y-2">
             {user && (
               <Button

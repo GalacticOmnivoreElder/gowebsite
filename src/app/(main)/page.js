@@ -476,13 +476,13 @@ const HomePage = () => {
 
       <FullCTA />
 
-      <PixelSectionDivider className="-my-px" />
+      <PixelSectionDivider />
       <section
         id="newsletter"
         aria-labelledby="newsletter-heading-landing-page"
-        className="bg-primary px-4 py-12 text-white sm:px-6 sm:py-14"
+        className="bg-[#0a090a] px-4 py-14 text-white sm:px-6 sm:py-[72px] lg:py-24"
       >
-        <div className="mx-auto w-full max-w-7xl">
+        <div className="mx-auto w-full max-w-4xl rounded-2xl border border-primary/30 bg-[#151015] px-5 py-10 shadow-[0_0_80px_hsl(var(--primary)/0.08)] sm:px-10 sm:py-12 lg:px-16">
           <NewsletterSignup
             source="landing-page"
             variant="section"

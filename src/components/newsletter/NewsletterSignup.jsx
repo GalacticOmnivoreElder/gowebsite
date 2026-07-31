@@ -108,7 +108,7 @@ export function NewsletterSignup({
         className={
           isFooter
             ? "mt-1 text-sm text-muted-foreground"
-            : "mx-auto mt-3 max-w-xl text-white/90"
+            : "mx-auto mt-3 max-w-xl text-neutral-300"
         }
       >
         {presentation.description}
@@ -120,7 +120,7 @@ export function NewsletterSignup({
           className={`mt-5 rounded-md border p-4 ${
             isFooter
               ? "border-green-500/40 bg-green-500/10 text-sm"
-              : "border-white/40 bg-black/20 text-white"
+              : "border-emerald-400/40 bg-emerald-400/10 text-emerald-100"
           }`}
           role="status"
           aria-live="polite"
@@ -160,14 +160,14 @@ export function NewsletterSignup({
                 className={`h-11 w-full ${
                   isFooter
                     ? "bg-background"
-                    : "border-white/50 bg-white text-black placeholder:text-black/55"
+                    : "border-white/20 bg-[#f7f4f6] text-neutral-950 placeholder:text-neutral-500 focus-visible:ring-primary"
                 }`}
               />
               {emailError && (
                 <p
                   id={emailErrorId}
                   className={`mt-2 text-left text-sm ${
-                    isFooter ? "text-destructive" : "font-medium text-white"
+                    isFooter ? "text-destructive" : "font-medium text-rose-200"
                   }`}
                   role="alert"
                 >
@@ -182,7 +182,7 @@ export function NewsletterSignup({
               className={`h-11 w-full sm:w-auto ${
                 isFooter
                   ? ""
-                  : "bg-white text-black hover:bg-white/90 focus-visible:ring-white"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary focus-visible:ring-offset-[#151015]"
               }`}
             >
               {state === "loading"
@@ -228,18 +228,20 @@ export function NewsletterSignup({
                   consentError ? consentErrorId : undefined
                 }
                 disabled={state === "loading"}
-                className="mt-0.5 h-5 w-5 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="mt-0.5 h-5 w-5 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#151015]"
               />
               <span
                 className={
-                  isFooter ? "text-muted-foreground" : "text-white/90"
+                  isFooter ? "text-muted-foreground" : "text-neutral-300"
                 }
               >
                 I agree to receive email updates from Galactic Omnivore and
                 understand that I can unsubscribe at any time. See the{" "}
                 <Link
                   href="/privacy"
-                  className="font-medium underline underline-offset-2 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={`font-medium underline decoration-primary underline-offset-2 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    isFooter ? "" : "text-white hover:text-white"
+                  }`}
                 >
                   Privacy Policy
                 </Link>
@@ -250,7 +252,7 @@ export function NewsletterSignup({
               <p
                 id={consentErrorId}
                 className={`mt-2 text-sm ${
-                  isFooter ? "text-destructive" : "font-medium text-white"
+                  isFooter ? "text-destructive" : "font-medium text-rose-200"
                 }`}
                 role="alert"
               >
@@ -268,7 +270,7 @@ export function NewsletterSignup({
             {state === "error" && (
               <p
                 className={`text-sm ${
-                  isFooter ? "text-destructive" : "font-medium text-white"
+                  isFooter ? "text-destructive" : "font-medium text-rose-200"
                 }`}
                 role="alert"
               >
