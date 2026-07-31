@@ -7,6 +7,11 @@
 
 # testing
 /coverage
+/test-results
+/.playwright-artifacts
+/.playwright-hero-artifacts
+/.playwright-marquee-artifacts
+/playwright-report
 
 # next.js
 /.next/

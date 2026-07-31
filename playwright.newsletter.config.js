@@ -32,4 +32,11 @@ module.exports = defineConfig({
       use: { viewport: { width: 390, height: 844 } },
     },
   ],
+  webServer: {
+    command:
+      "node ./node_modules/next/dist/bin/next dev -H 127.0.0.1 -p 3000",
+    url: "http://127.0.0.1:3000",
+    reuseExistingServer: true,
+    timeout: 120000,
+  },
 });
