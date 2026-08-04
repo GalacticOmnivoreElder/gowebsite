@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebase-admin";
+import { isPublicResourceStatus, toPublicResourceDto } from "@/lib/content-visibility";
 
 export async function GET() {
   try {
@@ -8,10 +9,8 @@ export async function GET() {
     const packages = [];
     snapshot.forEach((doc) => {
       const data = doc.data();
-      // Packages created before publication states were introduced are public
-      // for backwards compatibility. New drafts must never leave this route.
-      if (data.status !== "draft") {
-        packages.push({ id: doc.id, ...data });
+      if (isPublicResourceStatus(data.status)) {
+        packages.push(toPublicResourceDto({ id: doc.id, ...data }));
       }
     });
 

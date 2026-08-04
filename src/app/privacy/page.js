@@ -2,7 +2,7 @@ import LegalPageLayout from "@/components/legal/LegalPageLayout";
 
 export default function PrivacyPage() {
   return (
-    <LegalPageLayout title="Privacy Policy" lastUpdated="July 27, 2026">
+    <LegalPageLayout title="Privacy Policy" lastUpdated="August 4, 2026">
       <h2>1. Information We Collect</h2>
       <p>We collect information that you provide directly to us, including:</p>
       <ul>
@@ -65,7 +65,18 @@ export default function PrivacyPage() {
         <li>Request deletion or anonymization where applicable</li>
       </ul>
 
-      <h2>6. Newsletter Consent and Unsubscribe</h2>
+      <h2>6. Mentorship Reviews and Public References</h2>
+      <p>
+        After a completed engagement, each participant may submit one private
+        direct review. There are no stars, rankings, numeric scores, or
+        automatic aggregates. A student may separately write a public excerpt
+        and consent to sharing it; GO must approve it, and the mentor chooses
+        whether it appears on their mentor profile and GameDev Passport.
+        Consent can be revoked, and reports or correction requests remove the
+        excerpt from public eligibility.
+      </p>
+
+      <h2>7. Newsletter Consent and Unsubscribe</h2>
       <p>
         Newsletter signup is optional and separate from account creation,
         membership purchases, and acceptance of our Terms. We use double
@@ -81,7 +92,7 @@ export default function PrivacyPage() {
         re-import. A new explicit double opt-in is required to resubscribe.
       </p>
 
-      <h2>7. Delivery and Engagement Data</h2>
+      <h2>8. Delivery and Engagement Data</h2>
       <p>
         We process delivery events such as sent, delivered, delayed, failed,
         bounced, complained, and suppressed to operate the service and protect
@@ -92,7 +103,7 @@ export default function PrivacyPage() {
         decisions.
       </p>
 
-      <h2>8. Retention</h2>
+      <h2>9. Retention</h2>
       <p>
         Email delivery and outbox records are scheduled for deletion after
         approximately 90 days, webhook deduplication records after 30 days, and
@@ -104,7 +115,7 @@ export default function PrivacyPage() {
         legal requirements may require a different period.
       </p>
 
-      <h2>9. Contact and Review</h2>
+      <h2>10. Contact and Review</h2>
       <p>
         Contact us through the website to exercise your rights or ask about
         this processing. This policy wording should be reviewed by Galactic

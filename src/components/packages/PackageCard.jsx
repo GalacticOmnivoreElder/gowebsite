@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 
 export default function PackageCard({ package: pkg }) {
   return (
@@ -24,9 +25,12 @@ export default function PackageCard({ package: pkg }) {
         <CardHeader>
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold">{pkg.title}</h3>
-            <span className="text-muted-foreground">
-              {pkg.month} {pkg.year}
-            </span>
+            <div className="flex items-center gap-2">
+              {pkg.status === "legacy" && <Badge variant="secondary">Legacy</Badge>}
+              <span className="text-muted-foreground">
+                {pkg.month} {pkg.year}
+              </span>
+            </div>
           </div>
           <p className="text-muted-foreground">{pkg.theme}</p>
         </CardHeader>

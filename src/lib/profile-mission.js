@@ -128,7 +128,7 @@ function titleWithoutName(title, name) {
   if (!escapedName) return cleanTitle;
 
   return cleanTitle
-    .replace(new RegExp(`^${escapedName}\\s*[—–-]\\s*`, "i"), "")
+    .replace(new RegExp(`^${escapedName}\\s*[–-]\\s*`, "i"), "")
     .trim();
 }
 

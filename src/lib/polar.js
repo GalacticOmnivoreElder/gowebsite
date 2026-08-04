@@ -119,7 +119,7 @@ export function resolvePolarProductTier(productId) {
  * Resolve the Polar product id for a (tier, interval) pair.
  *
  * Polar products each have a single recurring interval, so monthly and annual
- * are separate products — hence four env vars. The legacy single-interval vars
+ * are separate products - hence four env vars. The legacy single-interval vars
  * (NEXT_PUBLIC_POLAR_PRODUCT_ID / NEXT_PUBLIC_POLAR_COMPANY_PRODUCT_ID) are used
  * as the MONTHLY fallback so existing config keeps working.
  *

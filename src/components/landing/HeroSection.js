@@ -28,7 +28,7 @@ export const HeroSection = () => (
 
     <div className="mx-auto w-full max-w-5xl px-5 sm:px-8">
       <p className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-white/80 sm:text-sm sm:tracking-[0.3em]">
-        From game creators, for game creators—and more.
+        From game creators, for game creators-and more.
       </p>
 
       <h1

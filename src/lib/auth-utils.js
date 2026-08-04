@@ -71,7 +71,7 @@ export function getEffectiveMembership(userData = {}, { admin = false, now = new
  *  - uid / email
  *  - admin: TRUE if the Firebase Auth custom claim `admin` OR the Firestore
  *    users/{uid}.admin field is set. Platform-admin (superadmin) powers depend
- *    on this being Firestore-aware — many admins are flagged only in Firestore.
+ *    on this being Firestore-aware - many admins are flagged only in Firestore.
  *  - activeMember / membershipTier: derived from the Polar subscription model
  *    (users/{uid}.activeMember + subscriptionEndsAt), with lapsed windows
  *    treated as inactive.

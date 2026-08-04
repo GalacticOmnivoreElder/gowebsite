@@ -11,6 +11,7 @@ import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
 import { LandingOpenHours } from "@/components/landing/LandingOpenHours";
 import { LandingDiscordJoin } from "@/components/landing/LandingDiscordJoin";
 import { NewsletterSignup } from "@/components/newsletter/NewsletterSignup";
+import { GoPillars } from "@/components/landing/GoPillars";
 
 import background1Img from "../../assets/background1.png";
 import heroImg from "../../assets/HERO.png";
@@ -35,11 +36,14 @@ import Image from "next/image";
 import {
   ArrowRight,
   BookOpen,
-  Briefcase,
+  Clapperboard,
   Facebook,
   FolderKanban,
+  Users,
   Instagram,
   Linkedin,
+  PackageOpen,
+  Search,
   Twitch,
   Twitter,
   Youtube,
@@ -48,39 +52,66 @@ import {
 import { Button } from "@/components/ui/button";
 import { ExploreGo } from "@/components/landing/ExploreGo";
 
-const creatorPillars = [
+const orbitRoutes = [
   {
-    title: "Education",
-    signal: "Learn",
-    icon: BookOpen,
+    title: "Find a Project",
+    signal: "Collaborate",
+    icon: Search,
     description:
-      "Build practical game-development skills through current learning material, workshops, and shared community knowledge.",
+      "Browse approved game-development briefs and find a role that matches your skills and availability.",
     detail:
-      "Choose the topic that fits your level, your current task, and the next milestone you want to reach.",
-    href: "/education",
-    cta: "Explore education",
-  },
-  {
-    title: "Portfolio",
-    signal: "Build",
-    icon: FolderKanban,
-    description:
-      "Turn real contributions into credited project experience and a stronger GameDev Passport.",
-    detail:
-      "Browse approved briefs, review the terms, and apply for a role that matches your skills and availability.",
+      "Review the project terms, current stage, and listed contribution routes before applying.",
     href: "/projects",
     cta: "Browse projects",
   },
   {
-    title: "Business",
+    title: "Create a Project",
     signal: "Launch",
-    icon: Briefcase,
+    icon: FolderKanban,
     description:
-      "Create clear project briefs, recruit collaborators, and manage your game-development team.",
+      "Create a clear project brief, recruit collaborators, and manage a game-development team.",
     detail:
-      "Review GO Business membership, project-creation access, and the tools available to project owners.",
-    href: "/membership",
-    cta: "Explore business",
+      "Project creation and team-management tools are included with GO Business.",
+    href: "/membership?reason=creator",
+    cta: "Review Business access",
+  },
+  {
+    title: "Find a Mentor",
+    signal: "Guidance",
+    icon: Users,
+    description:
+      "Browse approved mentor profiles and request focused guidance when matching is enabled.",
+    detail:
+      "Completed engagements support private direct reviews and optional author-consented mentor references.",
+    href: "/matchmaking",
+    cta: "Explore matchmaking",
+  },
+  {
+    title: "Learn",
+    signal: "Develop",
+    icon: BookOpen,
+    description: "Build practical skills through current learning material and community knowledge.",
+    detail: "Choose material that fits your role, current level, and next playable milestone.",
+    href: "/education",
+    cta: "Explore learning",
+  },
+  {
+    title: "Video Bundles",
+    signal: "Watch",
+    icon: Clapperboard,
+    description: "Follow focused video collections through eligible learning content.",
+    detail: "Published availability, membership access, and progress are shown on each bundle without promising unavailable material.",
+    href: "/video-bundles",
+    cta: "Browse video bundles",
+  },
+  {
+    title: "Community Resources",
+    signal: "Connect",
+    icon: PackageOpen,
+    description: "Explore current resources, approved community asset packs, creator stories, games, and Discord.",
+    detail: "Each resource route shows its published availability and any membership or account requirement.",
+    href: "/resources",
+    cta: "Explore resources",
   },
 ];
 
@@ -243,7 +274,7 @@ const About = () => {
           </p>
 
           <p>
-            GOHQ is our human ground station—a place where{" "}
+            GOHQ is our human ground station-a place where{" "}
             <strong className="font-semibold text-primary">
               useful signals become practical routes
             </strong>
@@ -353,9 +384,11 @@ const HomePage = () => {
       <HeroSection />
       <SkillBanner />
       <PartnerBanner />
+      <GoPillars />
 
       <section
-        id="pillars"
+        id="orbits"
+        aria-labelledby="orbits-heading"
         className="relative isolate overflow-hidden border-y border-primary/35 bg-[#a51561] px-4 py-16 sm:px-6 sm:py-20 lg:py-24"
       >
         <div
@@ -370,37 +403,37 @@ const HomePage = () => {
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/75">
-              Three routes through GO
+              Product routes through GO
             </p>
-            <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
+            <h2 id="orbits-heading" className="mt-3 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
               Choose your next orbit
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/75 sm:text-base">
-              Learn a skill, build credited experience, or launch and manage a
-              project with the route that fits your current mission.
+              Find the project, guidance, learning, resources, or community
+              route that fits your current mission.
             </p>
           </div>
 
-          <div className="mt-10 grid gap-6 md:grid-cols-3 lg:mt-14 lg:gap-8">
-            {creatorPillars.map((pillar, index) => {
-              const PillarIcon = pillar.icon;
+          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:mt-14 lg:grid-cols-3 lg:gap-8">
+            {orbitRoutes.map((orbit, index) => {
+              const OrbitIcon = orbit.icon;
 
               return (
                 <article
-                  key={pillar.title}
+                  key={orbit.title}
                   className="group relative flex min-w-0 flex-col"
                 >
                   <div className="mb-4 flex items-end justify-between px-1">
                     <div>
                       <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/60">
-                        Route 0{index + 1} / {pillar.signal}
+                        Route 0{index + 1} / {orbit.signal}
                       </span>
                       <h3 className="mt-1 text-2xl font-bold uppercase tracking-tight text-white sm:text-3xl">
-                        {pillar.title}
+                        {orbit.title}
                       </h3>
                     </div>
                     <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-black/40 text-white shadow-[0_0_24px_rgba(255,255,255,0.12)] backdrop-blur-sm transition-transform duration-300 group-hover:-translate-y-1">
-                      <PillarIcon className="h-5 w-5" aria-hidden="true" />
+                      <OrbitIcon className="h-5 w-5" aria-hidden="true" />
                     </div>
                   </div>
 
@@ -422,10 +455,10 @@ const HomePage = () => {
                       Navigation channel online
                     </div>
                     <p className="text-lg font-medium leading-8 text-white">
-                      {pillar.description}
+                      {orbit.description}
                     </p>
                     <p className="mt-5 text-sm leading-6 text-white/65">
-                      {pillar.detail}
+                      {orbit.detail}
                     </p>
                     <div
                       aria-hidden="true"
@@ -441,8 +474,8 @@ const HomePage = () => {
                     asChild
                     className="mt-3 h-12 w-full rounded-sm border border-white bg-white text-black shadow-[0_10px_28px_rgba(31,3,21,0.28)] hover:bg-neutral-100"
                   >
-                    <Link href={pillar.href}>
-                      {pillar.cta}
+                    <Link href={orbit.href}>
+                      {orbit.cta}
                       <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                     </Link>
                   </Button>

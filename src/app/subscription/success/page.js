@@ -296,7 +296,7 @@ const SubscriptionSuccessPage = observer(() => {
               <div className="flex flex-col items-center gap-3 text-center">
                 <p className="max-w-lg text-sm text-muted-foreground">
                   Polar webhooks can occasionally take a little longer. You
-                  can retry safely—this does not create another payment.
+                  can retry safely-this does not create another payment.
                 </p>
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Button

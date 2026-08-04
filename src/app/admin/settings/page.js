@@ -1,12 +1,79 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { auth } from "@/firebase";
 
 export default function SettingsPage() {
+  const [productSettings, setProductSettings] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const load = async () => {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return;
+      const response = await fetch("/api/admin/product-settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) setProductSettings(await response.json());
+    };
+    load().catch(() => setMessage("Could not load product settings."));
+  }, []);
+
+  const saveMentorApplications = async () => {
+    if (!productSettings) return;
+    setSaving(true);
+    setMessage("");
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch("/api/admin/product-settings", {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ mentorApplicationsOpen: productSettings.mentorApplicationsOpen }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Could not save product settings.");
+      setProductSettings(result);
+      setMessage("Product settings saved.");
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Settings</h1>
+
+      <div className="rounded-lg border border-border bg-card p-8 shadow">
+        <h2 className="text-xl font-semibold">Product availability</h2>
+        <p className="mt-2 text-sm text-muted-foreground">The server configuration remains the safety gate. An admin override cannot open mentor applications until the application URL and environment flag are configured.</p>
+        <div className="mt-6 flex items-start gap-3">
+          <input
+            id="mentor-applications-open"
+            type="checkbox"
+            className="mt-1 h-4 w-4"
+            checked={productSettings?.mentorApplicationsOpen === true}
+            disabled={!productSettings || !productSettings.mentorApplicationsConfigured || saving}
+            onChange={(event) => setProductSettings((current) => ({ ...current, mentorApplicationsOpen: event.target.checked }))}
+          />
+          <div>
+            <label htmlFor="mentor-applications-open" className="font-medium">Mentor applications open</label>
+            <p className="text-sm text-muted-foreground">
+              {productSettings?.mentorApplicationsConfigured
+                ? "The application destination is configured on the server."
+                : "Coming soon: MENTOR_APPLICATION_URL and MENTOR_APPLICATIONS_OPEN are not enabled."}
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 flex items-center gap-3">
+          <Button onClick={saveMentorApplications} disabled={!productSettings?.mentorApplicationsConfigured || saving}>{saving ? "Saving..." : "Save product availability"}</Button>
+          {message && <p className="text-sm text-muted-foreground" role="status">{message}</p>}
+        </div>
+      </div>
 
       <div className="bg-card p-8 rounded-lg shadow border border-border">
         <h2 className="text-xl font-semibold mb-4">Admin Settings</h2>

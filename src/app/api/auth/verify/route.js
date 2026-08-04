@@ -29,7 +29,7 @@ export async function GET(request) {
           {
             error: "Server misconfiguration: Firebase Admin credentials are invalid",
             details: e?.message || String(e),
-            hint: "Your login is fine. Common fix on Windows: delete GOOGLE_APPLICATION_CREDENTIALS from System/User environment variables if gcloud set it — it overrides Firebase. This app now uses FIREBASE_* from .env first. Also wrap the key in double quotes in .env, or use FIREBASE_PRIVATE_KEY_BASE64.",
+            hint: "Your login is fine. Common fix on Windows: delete GOOGLE_APPLICATION_CREDENTIALS from System/User environment variables if gcloud set it - it overrides Firebase. This app now uses FIREBASE_* from .env first. Also wrap the key in double quotes in .env, or use FIREBASE_PRIVATE_KEY_BASE64.",
             notYourFault: true,
           },
           { status: 503 }
@@ -55,8 +55,8 @@ export async function GET(request) {
           {
             error: "Firestore rejected the server credential (not your login)",
             details:
-              "verifyIdToken succeeded but Firestore returned UNAUTHENTICATED — almost always wrong GCP project or key/email mismatch.",
-            hint: "Fix 1: Unset GCLOUD_PROJECT for this shell / Windows env if gcloud pointed at another project. Fix 2: Use one source only — FIREBASE_SERVICE_ACCOUNT_PATH pointing at your downloaded JSON (same file for all fields). Fix 3: Ensure FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, and FIREBASE_PROJECT_ID are copied from the SAME JSON in one paste (no mixing old email with new key). Then restart next dev.",
+              "verifyIdToken succeeded but Firestore returned UNAUTHENTICATED - almost always wrong GCP project or key/email mismatch.",
+            hint: "Fix 1: Unset GCLOUD_PROJECT for this shell / Windows env if gcloud pointed at another project. Fix 2: Use one source only - FIREBASE_SERVICE_ACCOUNT_PATH pointing at your downloaded JSON (same file for all fields). Fix 3: Ensure FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, and FIREBASE_PROJECT_ID are copied from the SAME JSON in one paste (no mixing old email with new key). Then restart next dev.",
           },
           { status: 503 }
         );
@@ -83,7 +83,7 @@ export async function GET(request) {
         : null;
 
       if (endsAt && now > endsAt) {
-        // Access window has lapsed — flip the flag so gating is accurate.
+        // Access window has lapsed - flip the flag so gating is accurate.
         try {
           await adminDb.collection("users").doc(uid).update({
             activeMember: false,

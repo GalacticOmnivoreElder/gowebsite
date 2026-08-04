@@ -11,7 +11,7 @@ const source = fs.readFileSync(
 test("landing hero uses the approved hierarchy and Voice of GO copy", () => {
   assert.match(
     source,
-    /From game creators, for game creators—and more\./
+    /From game creators, for game creators-and more\./
   );
   assert.match(
     source,

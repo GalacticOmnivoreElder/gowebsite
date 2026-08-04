@@ -1,5 +1,7 @@
 import { adminDb } from "@/lib/firebase-admin";
-import { getEffectiveMembership, getRequestUser } from "@/lib/auth-utils";
+import { getRequestUser } from "@/lib/auth-utils";
+import { hasResourceAccess } from "@/lib/content-entitlements";
+import { isPublicResourceStatus, toPublicResourceDto } from "@/lib/content-visibility";
 
 export async function GET(request, { params }) {
   try {
@@ -20,31 +22,21 @@ export async function GET(request, { params }) {
     const packageData = { id: packageDoc.id, ...packageDoc.data() };
 
     const user = await getRequestUser(request);
-    if (packageData.status === "draft" && user?.admin !== true) {
+    if (!isPublicResourceStatus(packageData.status) && user?.admin !== true) {
       // Do not reveal whether a private draft slug exists.
       return Response.json({ error: "Package not found" }, { status: 404 });
     }
     const isAuthenticated = !!user;
-    const membership = getEffectiveMembership(user?.userData || {}, {
+    const hasAccess = hasResourceAccess(packageData.id, user?.userData || {}, {
       admin: user?.admin === true,
     });
-    const hasPackageUnlock = user?.userData?.unlockedPackages?.includes(packageData.id) === true;
-    const hasAccess = membership.activeMember || hasPackageUnlock;
 
     // Prepare response based on access level
     const responseData = {
-      ...packageData,
+      ...toPublicResourceDto(packageData),
       isAuthenticated,
       hasAccess,
     };
-
-    // If user doesn't have access, remove download URLs from assets
-    if (!hasAccess) {
-      responseData.assets = (packageData.assets || []).map((asset) => ({
-        ...asset,
-        downloadUrl: undefined, // Remove download URL
-      }));
-    }
 
     return Response.json(responseData);
   } catch (error) {

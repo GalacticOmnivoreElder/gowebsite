@@ -24,7 +24,7 @@ test("landing hero is responsive, accessible, and uses the verified CTAs", async
   await expect(hero).toBeVisible();
   await expect(heading).toHaveCount(1);
   await expect(
-    page.getByText("From game creators, for game creators—and more.")
+    page.getByText("From game creators, for game creators-and more.")
   ).toBeVisible();
   await expect(hero).toContainText(
     "Galactic Omnivore is a nonprofit game-development community and platform from North Macedonia."

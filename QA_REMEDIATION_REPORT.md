@@ -47,11 +47,11 @@ Date: 2026-07-29
 
 | Command | Result |
 |---|---|
-| `npm run test:unit` | **Passed — 298/298** |
+| `npm run test:unit` | **Passed - 298/298** |
 | `npm run lint` | **Passed** with non-blocking existing hook/image optimization warnings |
-| `npm run build` | **Passed** — 87 pages generated; Next.js 15.3.8 production build completed |
-| `npm run test:visual` | **Passed — 14/14** desktop/mobile Chrome tests |
-| `npm run test:rules` | **Blocked before test execution** — Firebase emulator could not spawn `java -version` |
+| `npm run build` | **Passed** - 87 pages generated; Next.js 15.3.8 production build completed |
+| `npm run test:visual` | **Passed - 14/14** desktop/mobile Chrome tests |
+| `npm run test:rules` | **Blocked before test execution** - Firebase emulator could not spawn `java -version` |
 
 There is no separate formatter or TypeScript type-check script in this JavaScript repository. The production build ran Next.js linting and validity checks.
 

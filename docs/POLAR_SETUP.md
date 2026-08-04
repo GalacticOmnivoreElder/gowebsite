@@ -1,9 +1,9 @@
-# Polar Payments — Setup, Env Vars & Testing Guide
+# Polar Payments - Setup, Env Vars & Testing Guide
 
 This is the single source of truth for wiring Polar (sandbox → production) after the
 Projects + Polar migration. Two membership tiers exist:
 
-Polar has no "enable annual" toggle — each product is one interval — so there are
+Polar has no "enable annual" toggle - each product is one interval - so there are
 **4 products** (2 tiers × monthly/annual):
 
 | Tier | Interval | Product env var | Unlocks |
@@ -20,13 +20,13 @@ The `SubscribeButton` picks the product from `tier` + `interval` props
 
 ## 1. Environment variables
 
-All live in `.env` (already gitignored). Firebase is already configured — you only need
+All live in `.env` (already gitignored). Firebase is already configured - you only need
 to fill the **Polar** block. Copy this and replace the blanks:
 
 ```bash
 # ── POLAR ──────────────────────────────────────────────
 POLAR_SERVER=sandbox                     # "sandbox" for local, "production" for live
-POLAR_ACCESS_TOKEN=                       # Org access token — MUST match POLAR_SERVER
+POLAR_ACCESS_TOKEN=                       # Org access token - MUST match POLAR_SERVER
 POLAR_ORGANIZATION_SLUG=                  # your org slug (portal URL)
 POLAR_WEBHOOK_SECRET=                      # signing secret from the webhook endpoint
 POLAR_SUCCESS_URL=http://localhost:3000/subscription/success
@@ -45,9 +45,9 @@ ADMIN_BOOTSTRAP_SECRET=
 > (or vice-versa) will fail.
 
 ### What I need from you (to finish sandbox testing)
-1. `POLAR_ACCESS_TOKEN` — a **sandbox** org access token.
-2. `POLAR_ORGANIZATION_SLUG` — your sandbox org slug.
-3. `POLAR_WEBHOOK_SECRET` — from the webhook endpoint you create in step 3.
+1. `POLAR_ACCESS_TOKEN` - a **sandbox** org access token.
+2. `POLAR_ORGANIZATION_SLUG` - your sandbox org slug.
+3. `POLAR_WEBHOOK_SECRET` - from the webhook endpoint you create in step 3.
 4. The **4 sandbox product ids** (member monthly/annual, company monthly/annual).
 5. A public tunnel URL (ngrok/cloudflared) pointing at your local `:3000`.
 
@@ -57,10 +57,10 @@ ADMIN_BOOTSTRAP_SECRET=
 
 1. Sign in at **https://sandbox.polar.sh** and create a sandbox organization.
 2. Create **four subscription products** (Polar = one interval per product):
-   - *GO Community Membership — Monthly* (e.g. €10/mo)
-   - *GO Community Membership — Annual* (e.g. €100/yr)
-   - *GO Company / Partner — Monthly* (e.g. €50/mo)
-   - *GO Company / Partner — Annual* (e.g. €500/yr)
+   - *GO Community Membership - Monthly* (e.g. €10/mo)
+   - *GO Community Membership - Annual* (e.g. €100/yr)
+   - *GO Company / Partner - Monthly* (e.g. €50/mo)
+   - *GO Company / Partner - Annual* (e.g. €500/yr)
 3. Copy each product's **id** into the matching env var above.
 4. Settings → **Developers → Access Tokens** → create a sandbox org token → `POLAR_ACCESS_TOKEN`.
 
@@ -96,7 +96,7 @@ the GO review dialog with a different organization-level proration default.
 > For production: replace the webhook URL with the live site
 > (`https://<prod-domain>/api/subscription/webhook`) and use a **production** endpoint
 > + token + `POLAR_SERVER=production`. The current webhook still points at an old ngrok
-> URL — swap it before launch.
+> URL - swap it before launch.
 
 ---
 
@@ -137,7 +137,7 @@ the GO review dialog with a different organization-level proration default.
 
 ## 5. Deploy Firestore security rules (REQUIRED)
 
-The migration adds `firestore.rules` at the repo root — this is what actually hides
+The migration adds `firestore.rules` at the repo root - this is what actually hides
 private projects from the browser (projects/applications/orders are server-only).
 
 ```bash

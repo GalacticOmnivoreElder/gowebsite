@@ -7,13 +7,26 @@ const source = fs.readFileSync(
   path.resolve(__dirname, "../../src/app/(main)/page.js"),
   "utf8"
 );
+const pillars = fs.readFileSync(
+  path.resolve(__dirname, "../../src/components/landing/GoPillars.jsx"),
+  "utf8"
+);
 
-test("landing page presents one data-driven three-pillar route section", () => {
-  assert.match(source, /const creatorPillars = \[/);
-  assert.match(source, /title: "Education"[\s\S]*href: "\/education"/);
-  assert.match(source, /title: "Portfolio"[\s\S]*href: "\/projects"/);
-  assert.match(source, /title: "Business"[\s\S]*href: "\/membership"/);
-  assert.match(source, /creatorPillars\.map\(\(pillar, index\)/);
-  assert.equal((source.match(/id="pillars"/g) || []).length, 1);
-  assert.doesNotMatch(source, /Four creator routes|practicalRoutes|EduBoxLarge/);
+test("landing page presents the six approved product routes", () => {
+  assert.match(source, /const orbitRoutes = \[/);
+  for (const title of ["Find a Project", "Create a Project", "Find a Mentor", "Learn", "Video Bundles", "Community Resources"]) {
+    assert.match(source, new RegExp(`title: "${title}"`));
+  }
+  assert.match(source, /orbitRoutes\.map\(\(orbit, index\)/);
+  assert.equal((source.match(/id="orbits"/g) || []).length, 1);
+});
+
+test("the GO pillars are a separate non-navigational progression before the orbits", () => {
+  for (const title of ["Learn", "Portfolio", "Business"]) {
+    assert.match(pillars, new RegExp(`title: "${title}"`));
+  }
+  assert.match(pillars, /The GO path/);
+  assert.match(pillars, /Learn\. Build your portfolio\. Move toward business\./);
+  assert.doesNotMatch(pillars, /<Link|<Button|href=/);
+  assert.ok(source.indexOf("<GoPillars />") < source.indexOf('id="orbits"'));
 });

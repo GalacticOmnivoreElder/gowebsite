@@ -119,7 +119,7 @@ function sectionBody(section) {
             <li key={index} className="text-sm">
               <p className="font-medium text-foreground">
                 {project.title || "Untitled project"}
-                {project.role ? ` — ${project.role}` : ""}
+                {project.role ? ` - ${project.role}` : ""}
               </p>
               {project.description ? (
                 <p className="mt-1 whitespace-pre-wrap text-muted-foreground">

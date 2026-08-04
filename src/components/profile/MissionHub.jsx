@@ -24,6 +24,7 @@ import {
   GraduationCap,
   Layers3,
   MapPin,
+  MessageSquare,
   Orbit,
   Pencil,
   Radio,
@@ -289,6 +290,11 @@ function EducationList({ items }) {
       </div>
     </MissionPanel>
   );
+}
+
+function MentorReferences({ items = [] }) {
+  if (!items.length) return null;
+  return <MissionPanel title="Mentor references" eyebrow="Verified direct reviews" icon={MessageSquare}><p className="mb-4 text-sm text-muted-foreground">Author-consented excerpts approved by GO and selected by this mentor for their GameDev Passport.</p><div className="grid gap-4 md:grid-cols-2">{items.map((reference, index) => <blockquote key={`${reference.sharedAt || "reference"}-${index}`} className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4"><p className="whitespace-pre-wrap text-sm leading-6">“{reference.text}”</p><div className="mt-3 flex flex-wrap gap-2">{(reference.qualities || []).map((quality) => <Badge key={quality} variant="outline">{readableStatus(quality)}</Badge>)}</div><footer className="mt-3 text-xs text-muted-foreground">{reference.attribution}</footer></blockquote>)}</div></MissionPanel>;
 }
 
 function SelectedProjects({ projects, loading }) {
@@ -784,6 +790,8 @@ export default function MissionHub({
         </MissionPanel>
 
         <EducationList items={model.education} />
+
+        <MentorReferences items={profile?.mentorReferences} />
 
         <div className="grid gap-6 lg:grid-cols-2">
           <MissionPanel title="Availability" eyebrow="Current status" icon={CalendarDays}>

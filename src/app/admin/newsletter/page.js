@@ -280,7 +280,7 @@ export default function AdminNewsletterPage() {
                     <TableCell>
                       {subscriber.updatedAt
                         ? new Date(subscriber.updatedAt).toLocaleDateString()
-                        : "—"}
+                        : "-"}
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
@@ -344,7 +344,7 @@ export default function AdminNewsletterPage() {
                 <span className="text-muted-foreground">
                   {event.occurredAt
                     ? new Date(event.occurredAt).toLocaleString()
-                    : "—"}
+                    : "-"}
                 </span>
               </div>
             ))}

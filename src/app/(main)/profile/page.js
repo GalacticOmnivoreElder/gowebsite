@@ -41,6 +41,11 @@ import Image from "next/image";
 import { toast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import SubscribeButton from "@/components/ui/SubscribeButton";
+import { LearningDashboard } from "@/components/learning/LearningDashboard";
+import { NotificationsPanel } from "@/components/notifications/NotificationsPanel";
+import { MentorWorkspace } from "@/components/mentors/MentorWorkspace";
+import { MentorshipDashboard } from "@/components/mentors/MentorshipDashboard";
+import { AssetPackWorkspace } from "@/components/asset-packs/AssetPackWorkspace";
 
 // Helper function to safely convert Firestore timestamp to Date
 const convertToDate = (timestamp) => {
@@ -367,6 +372,11 @@ const ProfileContent = observer(() => {
         "projects",
         "applications",
         "downloads",
+        "learning",
+        "mentor",
+        "mentorships",
+        "asset-packs",
+        "notifications",
         "billing",
         "settings",
       ].includes(tabParam)
@@ -850,6 +860,26 @@ const ProfileContent = observer(() => {
 
         <TabsContent value="downloads">
           <Downloads />
+        </TabsContent>
+
+        <TabsContent value="learning">
+          <LearningDashboard />
+        </TabsContent>
+
+        <TabsContent value="mentor">
+          <MentorWorkspace />
+        </TabsContent>
+
+        <TabsContent value="mentorships">
+          <MentorshipDashboard />
+        </TabsContent>
+
+        <TabsContent value="asset-packs">
+          <AssetPackWorkspace />
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <NotificationsPanel />
         </TabsContent>
 
         <TabsContent value="settings">

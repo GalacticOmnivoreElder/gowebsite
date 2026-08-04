@@ -15,6 +15,21 @@ function getEffectiveMembership(userData = {}, { admin = false } = {}) {
   };
 }
 
+function isPublicResourceStatus(status) {
+  return status === "published" || status === "legacy";
+}
+
+function hasResourceAccess(resourceId, userData = {}, { admin = false } = {}) {
+  return Boolean(admin || userData.activeMember === true || userData.unlockedPackages?.includes(resourceId));
+}
+
+function toPublicResourceDto(resource) {
+  return {
+    ...resource,
+    assets: (resource.assets || []).map(({ downloadUrl, ...asset }, assetIndex) => ({ ...asset, assetIndex })),
+  };
+}
+
 function loadRoute({ packageData, user = null } = {}) {
   return loadSourceModule(
     "src/app/api/packages/[slug]/route.js",
@@ -57,6 +72,9 @@ function loadRoute({ packageData, user = null } = {}) {
         },
         getEffectiveMembership,
         getRequestUser: async () => user,
+        hasResourceAccess,
+        isPublicResourceStatus,
+        toPublicResourceDto,
       },
     }
   );
@@ -73,6 +91,7 @@ function monthlyPackage() {
     id: "pack_1",
     slug: "starter-pack",
     title: "Starter Pack",
+    status: "published",
   };
 }
 
@@ -87,7 +106,7 @@ test("package detail route hides download urls without access", async () => {
   assert.equal(response.body.assets[0].downloadUrl, undefined);
 });
 
-test("package detail route grants access to active members, admins, and legacy unlocks", async () => {
+test("package detail route grants access without returning protected urls", async () => {
   let route = loadRoute({
     packageData: monthlyPackage(),
     user: {
@@ -103,7 +122,8 @@ test("package detail route grants access to active members, admins, and legacy u
 
   assert.equal(response.status, 200);
   assert.equal(response.body.hasAccess, true);
-  assert.equal(response.body.assets[0].downloadUrl, "https://downloads.test/sprites.zip");
+  assert.equal(response.body.assets[0].downloadUrl, undefined);
+  assert.equal(response.body.assets[0].assetIndex, 0);
 
   route = loadRoute({
     packageData: monthlyPackage(),
@@ -138,7 +158,7 @@ test("package detail route grants access to active members, admins, and legacy u
   assert.deepEqual(plain(response.body.assets), [
     {
       title: "Sprite Sheet",
-      downloadUrl: "https://downloads.test/sprites.zip",
+      assetIndex: 0,
     },
   ]);
 });

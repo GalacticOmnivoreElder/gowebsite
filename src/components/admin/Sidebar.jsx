@@ -15,6 +15,11 @@ import {
   FolderOpen,
   Tags,
   Mail,
+  GraduationCap,
+  Video,
+  HeartHandshake,
+  PackagePlus,
+  ArchiveRestore,
 } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase";
@@ -39,6 +44,12 @@ export function Sidebar() {
     { name: "Projects", href: "/admin/projects", icon: FolderOpen },
     { name: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
     { name: "Packages", href: "/admin/packages", icon: Package },
+    { name: "Learning", href: "/admin/learning", icon: GraduationCap },
+    { name: "Video Bundles", href: "/admin/video-bundles", icon: Video },
+    { name: "Training Access", href: "/admin/training-assignments", icon: GraduationCap },
+    { name: "Mentorships", href: "/admin/mentorships", icon: HeartHandshake },
+    { name: "Asset Pack Reviews", href: "/admin/asset-packs", icon: PackagePlus },
+    { name: "Legacy Resources", href: "/admin/resources-review", icon: ArchiveRestore },
     { name: "Newsletter", href: "/admin/newsletter", icon: Mail },
     { name: "Skills", href: "/admin/skills", icon: Tags },
     { name: "Analytics", href: "/admin/analytics", icon: BarChart4 },

@@ -1,10 +1,10 @@
 rules_version = '2';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GO Platform — Firestore Security Rules
+// GO Platform - Firestore Security Rules
 //
 // These rules are the real security backstop. The Next.js API routes use the
-// Firebase ADMIN SDK, which bypasses these rules entirely — so anything the API
+// Firebase ADMIN SDK, which bypasses these rules entirely - so anything the API
 // is responsible for (projects, applications, source projects, orders, webhook
 // bookkeeping) is denied to the browser here. That is what actually prevents a
 // random signed-in user from reading private/community projects directly from
@@ -36,7 +36,9 @@ service cloud.firestore {
         'admin', 'adminGrantedBy', 'activeMember', 'membershipTier',
         'subscriptionId', 'subscriptionStatus', 'subscriptionEndsAt',
         'willRenew', 'polarCustomerId', 'unlockedPackages',
-        'ownerOfProjects', 'adminOfProjects', 'teamMemberOfProjects'
+        'ownerOfProjects', 'adminOfProjects', 'teamMemberOfProjects',
+        'mentorStatus', 'mentorPublicProfileEnabled',
+        'mentorStatusUpdatedBy', 'mentorStatusUpdatedAt'
       ];
     }
 
@@ -60,13 +62,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Legacy packages without a publication state remain public. New drafts
-    // are available only to admins and must never appear in public list reads.
+    // Resource documents can contain protected destinations, so browsers never
+    // read them directly. Public metadata and entitled opens go through the
+    // server APIs, which apply explicit publication and entitlement checks.
     match /packages/{doc} {
-      allow read: if isAdmin()
-        || !resource.data.keys().hasAny(['status'])
-        || resource.data.status == 'published';
-      allow write: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
     // Legacy subscriptions collection. Client (admin panel) manages these;
@@ -86,6 +86,27 @@ service cloud.firestore {
     match /processed_webhooks/{doc}  { allow read, write: if false; }
     match /project_creation_requests/{doc} { allow read, write: if false; }
     match /admin_audit_events/{doc} { allow read, write: if false; }
+    match /site_settings/{doc}      { allow read, write: if false; }
+    match /protected_link_tickets/{doc} { allow read, write: if false; }
+    match /learning_items/{doc}       { allow read, write: if false; }
+    match /learning_enrollments/{doc} { allow read, write: if false; }
+    match /product_notifications/{doc} { allow read, write: if false; }
+    match /video_bundles/{doc}        { allow read, write: if false; }
+    match /video_bundle_progress/{doc} { allow read, write: if false; }
+    match /training_assignments/{doc} { allow read, write: if false; }
+    match /mentor_profiles/{doc}       { allow read, write: if false; }
+    match /mentor_availability/{doc}   { allow read, write: if false; }
+    match /mentorship_requests/{doc}   { allow read, write: if false; }
+    match /mentorship_active_requests/{doc} { allow read, write: if false; }
+    match /mentorship_request_overrides/{doc} { allow read, write: if false; }
+    match /mentorship_engagements/{doc} { allow read, write: if false; }
+    match /mentorship_active_engagements/{doc} { allow read, write: if false; }
+    match /mentorship_concerns/{doc}   { allow read, write: if false; }
+    match /mentorship_feedback/{doc}   { allow read, write: if false; }
+    match /mentorship_feedback_audit/{doc} { allow read, write: if false; }
+    match /asset_packs/{doc}           { allow read, write: if false; }
+    match /asset_pack_versions/{doc}   { allow read, write: if false; }
+    match /asset_pack_grants/{doc}     { allow read, write: if false; }
     match /email_outbox/{doc}        { allow read, write: if false; }
     match /email_deduplication/{doc} { allow read, write: if false; }
     match /email_delivery_events/{doc} { allow read, write: if false; }
@@ -95,7 +116,7 @@ service cloud.firestore {
     match /newsletter_events/{doc}   { allow read, write: if false; }
     match /newsletter_rate_limits/{doc} { allow read, write: if false; }
     match /email_action_rate_limits/{doc} { allow read, write: if false; }
-    // GO 2.0 onboarding / profile / CV — all go through /api (Admin SDK).
+    // GO 2.0 onboarding / profile / CV - all go through /api (Admin SDK).
     match /user_profiles/{doc}       { allow read, write: if false; }
     match /onboarding_sessions/{doc} { allow read, write: if false; }
     match /go_cvs/{doc}              { allow read, write: if false; }

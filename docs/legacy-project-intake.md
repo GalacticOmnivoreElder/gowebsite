@@ -58,45 +58,45 @@ new provenance fields are optional.
 Create the form with email collection disabled unless the privacy notice
 explicitly describes its use. Fields marked **required** are mandatory.
 
-1. Submission ID — **required**, short text, generated or copied from the
+1. Submission ID - **required**, short text, generated or copied from the
    source archive; must be stable and unique.
-2. Project title — **required**, short text, 3–120 characters.
-3. One-sentence summary — **required**, paragraph, up to 300 characters.
-4. Full project description — **required**, paragraph.
-5. Project goal — **required**, paragraph.
-6. Project type — **required**, single choice using the current project-type
+2. Project title - **required**, short text, 3–120 characters.
+3. One-sentence summary - **required**, paragraph, up to 300 characters.
+4. Full project description - **required**, paragraph.
+5. Project goal - **required**, paragraph.
+6. Project type - **required**, single choice using the current project-type
    catalogue.
-7. Current status — **required**, single choice mapped to the current status
+7. Current status - **required**, single choice mapped to the current status
    catalogue.
-8. Visibility — **required**, Public, Private, or Invite Only.
-9. Start date — optional date.
-10. Completion or last-active date — optional date.
-11. Duration in days — optional integer greater than zero.
-12. Compensation — **required**, current compensation choice.
-13. Budget amount — optional non-negative number.
-14. Budget currency — required only when a budget is supplied; ISO currency
+8. Visibility - **required**, Public, Private, or Invite Only.
+9. Start date - optional date.
+10. Completion or last-active date - optional date.
+11. Duration in days - optional integer greater than zero.
+12. Compensation - **required**, current compensation choice.
+13. Budget amount - optional non-negative number.
+14. Budget currency - required only when a budget is supplied; ISO currency
     code.
-15. Owner display name — **required**, short text.
-16. Owner account email — **required for account matching**, email; never
+15. Owner display name - **required**, short text.
+16. Owner account email - **required for account matching**, email; never
     published.
-17. Contributors — optional, one contributor per line as
+17. Contributors - optional, one contributor per line as
     `display name | account email | role`.
-18. Technologies, tools, and engines — optional, comma-separated tags.
-19. Roles represented on the project — optional, comma-separated tags.
-20. Roles still needed — optional, comma-separated tags.
-21. Project links — optional, one per line as `label | https://…`.
-22. Repository link — optional URL.
-23. Playable/download link — optional URL.
-24. Media links — optional, one per line as `caption | https://…`.
-25. Media ownership — **required when media is supplied**, confirm the
+18. Technologies, tools, and engines - optional, comma-separated tags.
+19. Roles represented on the project - optional, comma-separated tags.
+20. Roles still needed - optional, comma-separated tags.
+21. Project links - optional, one per line as `label | https://…`.
+22. Repository link - optional URL.
+23. Playable/download link - optional URL.
+24. Media links - optional, one per line as `caption | https://…`.
+25. Media ownership - **required when media is supplied**, confirm the
     submitter owns it or has permission to share it.
-26. Media display permission — **required**, Granted, Restricted, or Not
+26. Media display permission - **required**, Granted, Restricted, or Not
     granted.
-27. Contributor-name display consent — **required**, yes/no.
-28. Accuracy confirmation — **required**, checkbox.
-29. Import/privacy consent — **required**, checkbox linking to the current
+27. Contributor-name display consent - **required**, yes/no.
+28. Accuracy confirmation - **required**, checkbox.
+29. Import/privacy consent - **required**, checkbox linking to the current
     privacy notice.
-30. Additional notes for the admin importer — optional paragraph, restricted
+30. Additional notes for the admin importer - optional paragraph, restricted
     and never published.
 
 ## Validation and normalization

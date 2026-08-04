@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -27,6 +28,8 @@ export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [reasons, setReasons] = useState({});
+  const [message, setMessage] = useState("");
 
   // Single server-side read. Membership comes from the Polar user-doc model,
   // so there are no per-user client Firestore queries (that was an N+1 request
@@ -53,8 +56,14 @@ export default function UsersPage() {
   }, [fetchUsers]);
 
   const updateMembership = async (userId, update, action) => {
+    const reason = reasons[userId]?.trim();
+    if (!reason) {
+      setMessage("Enter an administrative reason before changing account controls.");
+      return;
+    }
     try {
       setActionLoading(`${userId}:${action}`);
+      setMessage("");
       const token = await auth.currentUser.getIdToken();
       const response = await fetch("/api/admin/users", {
         method: "PUT",
@@ -62,12 +71,16 @@ export default function UsersPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userId, ...update }),
+        body: JSON.stringify({ userId, ...update, reason }),
       });
-      if (!response.ok) throw new Error("Failed to update membership");
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Failed to update account controls");
+      setReasons((current) => ({ ...current, [userId]: "" }));
+      setMessage("Account controls updated and audited.");
       await fetchUsers();
     } catch (error) {
       console.error("Error toggling membership:", error);
+      setMessage(error.message);
     } finally {
       setActionLoading(null);
     }
@@ -85,6 +98,12 @@ export default function UsersPage() {
 
   const updateMembershipTier = (userId, membershipTier) =>
     updateMembership(userId, { membershipTier }, "tier");
+
+  const updateMentorStatus = (userId, mentorStatus) =>
+    updateMembership(userId, { mentorStatus }, "mentor-status");
+
+  const updateMentorVisibility = (userId, mentorPublicProfileEnabled) =>
+    updateMembership(userId, { mentorPublicProfileEnabled }, "mentor-visibility");
 
   const formatJoined = (joined) => {
     if (!joined) return "N/A";
@@ -112,6 +131,7 @@ export default function UsersPage() {
           </Button>
         </div>
       </div>
+      {message ? <p role="status" className="rounded-md border p-3 text-sm">{message}</p> : null}
 
       <div className="rounded-md border border-border">
         <Table>
@@ -124,6 +144,8 @@ export default function UsersPage() {
               <TableHead>Role</TableHead>
               <TableHead>Membership Status</TableHead>
               <TableHead>Membership Tier</TableHead>
+              <TableHead>Mentor Status</TableHead>
+              <TableHead>Mentor Visibility</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -151,7 +173,7 @@ export default function UsersPage() {
                     onValueChange={(membershipTier) =>
                       updateMembershipTier(user.id, membershipTier)
                     }
-                    disabled={actionLoading?.startsWith(`${user.id}:`)}
+                    disabled={actionLoading?.startsWith(`${user.id}:`) || !reasons[user.id]?.trim()}
                   >
                     <SelectTrigger className="h-9 w-48">
                       <SelectValue placeholder="Unassigned" />
@@ -170,8 +192,38 @@ export default function UsersPage() {
                     </p>
                   )}
                 </TableCell>
+                <TableCell className="min-w-56">
+                  <Select
+                    value={user.mentorStatus || "none"}
+                    onValueChange={(mentorStatus) => updateMentorStatus(user.id, mentorStatus)}
+                    disabled={actionLoading?.startsWith(`${user.id}:`) || !reasons[user.id]?.trim()}
+                  >
+                    <SelectTrigger className="h-9 w-52"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not a mentor</SelectItem>
+                      <SelectItem value="applicant">Mentor applicant</SelectItem>
+                      <SelectItem value="approved">Approved mentor</SelectItem>
+                      <SelectItem value="temporarily_unavailable">Temporarily unavailable</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                      <SelectItem value="inactive">No longer active</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={user.mentorPublicProfileEnabled === true}
+                      disabled={user.mentorStatus !== "approved" || actionLoading?.startsWith(`${user.id}:`) || !reasons[user.id]?.trim()}
+                      onChange={(event) => updateMentorVisibility(user.id, event.target.checked)}
+                    />
+                    Public profile
+                  </label>
+                </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex min-w-64 flex-col items-end gap-2">
+                    <Input aria-label={`Administrative reason for ${user.name}`} placeholder="Reason required" value={reasons[user.id] || ""} onChange={(event) => setReasons((current) => ({ ...current, [user.id]: event.target.value }))} />
                     <Button
                       variant={user.isMember ? "destructive" : "success"}
                       size="sm"
@@ -182,7 +234,7 @@ export default function UsersPage() {
                           user.membershipTier
                         )
                       }
-                      disabled={actionLoading?.startsWith(`${user.id}:`)}
+                      disabled={actionLoading?.startsWith(`${user.id}:`) || !reasons[user.id]?.trim()}
                     >
                       {actionLoading === `${user.id}:status` ? (
                         <span className="animate-pulse">Processing...</span>

@@ -31,7 +31,7 @@ export async function GET(request) {
 
     if (viewingArchived) {
       // Only archived projects. No orderBy here so we don't require an
-      // (archived, createdAt) composite index — sorted in code below.
+      // (archived, createdAt) composite index - sorted in code below.
       query = query.where("archived", "==", true).limit(200);
     } else {
       if (status !== "all") {
@@ -92,7 +92,7 @@ export async function GET(request) {
       });
     }
 
-    // Archived view isn't ordered by the query (to avoid a composite index) —
+    // Archived view isn't ordered by the query (to avoid a composite index) -
     // sort newest-first in code.
     if (viewingArchived) {
       projects.sort((a, b) => {

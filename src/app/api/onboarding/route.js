@@ -24,7 +24,7 @@ async function requireUser(request) {
   return { user };
 }
 
-// GET /api/onboarding — current session (+ whether onboarding is complete).
+// GET /api/onboarding - current session (+ whether onboarding is complete).
 export async function GET(request) {
   const { user, error } = await requireUser(request);
   if (error) return error;
@@ -52,7 +52,7 @@ export async function GET(request) {
   });
 }
 
-// POST /api/onboarding — start (or resume) an onboarding session.
+// POST /api/onboarding - start (or resume) an onboarding session.
 export async function POST(request) {
   const { user, error } = await requireUser(request);
   if (error) return error;
@@ -114,7 +114,7 @@ export async function POST(request) {
   return NextResponse.json({ id: user.uid, ...serializeSession(session) });
 }
 
-// PATCH /api/onboarding — save one step: body { step, data, nextStep? }.
+// PATCH /api/onboarding - save one step: body { step, data, nextStep? }.
 export async function PATCH(request) {
   const { user, error } = await requireUser(request);
   if (error) return error;
@@ -143,7 +143,7 @@ export async function PATCH(request) {
   return NextResponse.json({ ok: true, current_step: update.current_step });
 }
 
-// PUT /api/onboarding — complete: validate consent and build profile data.
+// PUT /api/onboarding - complete: validate consent and build profile data.
 export async function PUT(request) {
   const { user, error } = await requireUser(request);
   if (error) return error;

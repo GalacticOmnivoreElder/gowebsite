@@ -1,4 +1,4 @@
-# GO 2.0 — One-Pass Action Checklist (Dejan)
+# GO 2.0 - One-Pass Action Checklist (Dejan)
 
 Everything you need to do to get this branch fully working locally, then to production.
 Code is done; these are the **manual** steps. Do them top to bottom.
@@ -19,7 +19,7 @@ POLAR_ACCESS_TOKEN=<your SANDBOX org token>        # replace the legacy prod tok
 POLAR_ORGANIZATION_SLUG=<your sandbox org slug>
 POLAR_WEBHOOK_SECRET=<from step C>
 POLAR_SUCCESS_URL=http://localhost:3000/subscription/success
-# 4 products (2 tiers × monthly/annual — Polar has no annual toggle):
+# 4 products (2 tiers × monthly/annual - Polar has no annual toggle):
 NEXT_PUBLIC_POLAR_MEMBER_MONTHLY_PRODUCT_ID=<id>
 NEXT_PUBLIC_POLAR_MEMBER_ANNUAL_PRODUCT_ID=<id>
 NEXT_PUBLIC_POLAR_COMPANY_MONTHLY_PRODUCT_ID=<id>
@@ -33,10 +33,10 @@ ADMIN_BOOTSTRAP_SECRET=<any long random string>    # to make yourself admin (ste
 
 ## B. Create Polar sandbox org + 2 products (🟢) ⏱️ 15 min
 1. Sign in at **https://sandbox.polar.sh**, create a sandbox organization.
-2. Create **four subscription products** (Polar has no annual toggle — each product
+2. Create **four subscription products** (Polar has no annual toggle - each product
    is one interval):
-   - **Member — Monthly** and **Member — Annual** (GO Community Membership)
-   - **Company — Monthly** and **Company — Annual** (B2B Partner)
+   - **Member - Monthly** and **Member - Annual** (GO Community Membership)
+   - **Company - Monthly** and **Company - Annual** (B2B Partner)
 3. For each product: add a **"required membership" checkbox** in its checkout fields,
    and attach the **Discord benefit** (Polar → Benefits → Discord) so roles are granted
    automatically. Put the annual wording in the annual products' names/descriptions.
@@ -109,10 +109,10 @@ npm run dev      # http://localhost:3000
 
 ## Optional / Phase 2 (not blocking launch)
 - **Embedded checkout** (keep the customer visually on the GO domain instead of
-  redirecting to polar.sh) — say the word and I'll wire Polar's embed.
+  redirecting to polar.sh) - say the word and I'll wire Polar's embed.
 - **Discord OAuth auto-role** (MVP grants Discord role via Polar benefit; full OAuth
   bot assignment is Phase 2 per the GO 2.0 spec).
-- **Public GameDev Passport share links / Quest Log** — Phase 2 per the spec.
+- **Public GameDev Passport share links / Quest Log** - Phase 2 per the spec.
 - **Richer project statuses** (submitted_for_review, changes_requested,
-  public_recruiting…) — current system uses draft/pending/hiring/live/completed/rejected.
+  public_recruiting…) - current system uses draft/pending/hiring/live/completed/rejected.
 ```

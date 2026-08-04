@@ -26,7 +26,7 @@ async function auth(request) {
   return { user };
 }
 
-// GET /api/me/cv — the member's own CV.
+// GET /api/me/cv - the member's own CV.
 export async function GET(request) {
   const { user, error } = await auth(request);
   if (error) return error;
@@ -34,7 +34,7 @@ export async function GET(request) {
   return NextResponse.json({ cv: snap.exists ? serializeCv(snap.data()) : null });
 }
 
-// POST /api/me/cv — (re)generate the CV from the current GO profile.
+// POST /api/me/cv - (re)generate the CV from the current GO profile.
 export async function POST(request) {
   const { user, error } = await auth(request);
   if (error) return error;
@@ -79,7 +79,7 @@ export async function POST(request) {
   return NextResponse.json({ cv: serializeCv(cv) });
 }
 
-// PATCH /api/me/cv — user edits to the generated CV (title/summary/sections/visibility).
+// PATCH /api/me/cv - user edits to the generated CV (title/summary/sections/visibility).
 export async function PATCH(request) {
   const { user, error } = await auth(request);
   if (error) return error;
@@ -190,7 +190,7 @@ export async function PATCH(request) {
   return NextResponse.json({ cv: serializeCv(snap.data()) });
 }
 
-// PUT /api/me/cv — publish (activate) the CV so it can be used for applications.
+// PUT /api/me/cv - publish (activate) the CV so it can be used for applications.
 export async function PUT(request) {
   const { user, error } = await auth(request);
   if (error) return error;

@@ -15,7 +15,7 @@ import {
  *    Polar localizes currency by the actual buyer.
  *  - Identity comes from the verified Firebase token, not spoofable query
  *    params. We link the checkout to the buyer via `externalCustomerId` (their
- *    uid) and, once we know their Polar customer, via `customerId` — which
+ *    uid) and, once we know their Polar customer, via `customerId` - which
  *    makes Polar LOCK the email field during checkout.
  */
 function getClientIp(request) {
@@ -110,7 +110,7 @@ export async function POST(request) {
 
   // Always link by external id (the Firebase uid) rather than a stored Polar
   // customerId. Polar links to the existing customer when one matches this
-  // external id — which locks the email — or creates a new customer otherwise.
+  // external id - which locks the email - or creates a new customer otherwise.
   // This is robust across environment/org switches; a stored polarCustomerId
   // from a different org would 422 with "Customer does not exist". The webhook
   // refreshes users.polarCustomerId to the correct value after checkout.
@@ -130,7 +130,7 @@ export async function POST(request) {
     if (status === 401) {
       hint =
         `Polar rejected the access token (401 invalid_token). Make sure ` +
-        `POLAR_ACCESS_TOKEN matches POLAR_SERVER — you're on "${getPolarServer()}", ` +
+        `POLAR_ACCESS_TOKEN matches POLAR_SERVER - you're on "${getPolarServer()}", ` +
         `so it must be a ${getPolarServer()} token.`;
     } else if (status === 404 || status === 422) {
       hint =

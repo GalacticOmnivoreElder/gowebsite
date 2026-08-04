@@ -110,7 +110,7 @@ export function buildCvFromProfile(profile = {}) {
   ];
 
   return {
-    title: `${displayName} — ${primaryRole}`,
+    title: `${displayName} - ${primaryRole}`,
     summary,
     sections,
     suggested_improvements: buildSuggestions({

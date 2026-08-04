@@ -9,10 +9,19 @@ function plain(value) {
 
 function createAdminDb(seed = {}) {
   const users = { ...(seed.users || {}) };
+  const auditEvents = [];
 
   return {
     users,
+    auditEvents,
     collection(name) {
+      if (name === "admin_audit_events") {
+        return {
+          async add(value) {
+            auditEvents.push(value);
+          },
+        };
+      }
       assert.equal(name, "users");
       return {
         async get() {
@@ -25,6 +34,12 @@ function createAdminDb(seed = {}) {
         },
         doc(id) {
           return {
+            async get() {
+              return {
+                exists: Object.hasOwn(users, id),
+                data: () => users[id],
+              };
+            },
             async set(update, options = {}) {
               users[id] = options.merge
                 ? { ...(users[id] || {}), ...update }
@@ -48,6 +63,7 @@ function loadRoute({ requestUser = null, seed = {} } = {}) {
         Response: NextResponse,
         adminDb,
         getRequestUser: async () => requestUser,
+        MENTOR_STATUSES: ["none", "applicant", "approved", "temporarily_unavailable", "suspended", "inactive", "rejected"],
       },
     }
   );
@@ -84,7 +100,7 @@ test("admin can assign Business creator membership", async () => {
 
   const response = await route.PUT(
     createRequest({
-      jsonBody: { membershipTier: "company", userId: "user-1" },
+      jsonBody: { membershipTier: "company", userId: "user-1", reason: "Approved Business access override" },
     })
   );
 
@@ -111,4 +127,41 @@ test("admin users rejects invalid membership tiers", async () => {
 
   assert.equal(response.status, 400);
   assert.equal(response.body.error, "membershipTier must be member or company");
+});
+
+test("admin controls mentor status and prevents public profiles before approval", async () => {
+  const route = loadRoute({
+    requestUser: { admin: true, uid: "admin-1" },
+    seed: { users: { "user-1": { mentorStatus: "applicant" } } },
+  });
+
+  const rejected = await route.PUT(
+    createRequest({
+      jsonBody: { mentorPublicProfileEnabled: true, userId: "user-1", reason: "Profile requested before approval" },
+    })
+  );
+  assert.equal(rejected.status, 409);
+
+  const approved = await route.PUT(
+    createRequest({
+      jsonBody: {
+        mentorStatus: "approved",
+        mentorPublicProfileEnabled: true,
+        userId: "user-1",
+        reason: "Mentor application approved",
+      },
+    })
+  );
+  assert.equal(approved.status, 200);
+  assert.equal(route.adminDb.users["user-1"].mentorStatus, "approved");
+  assert.equal(route.adminDb.users["user-1"].mentorPublicProfileEnabled, true);
+  assert.equal(route.adminDb.auditEvents.length, 1);
+  assert.equal(route.adminDb.auditEvents[0].targetUserId, "user-1");
+
+  await route.PUT(
+    createRequest({
+      jsonBody: { mentorStatus: "suspended", userId: "user-1", reason: "Temporary account suspension" },
+    })
+  );
+  assert.equal(route.adminDb.users["user-1"].mentorPublicProfileEnabled, false);
 });

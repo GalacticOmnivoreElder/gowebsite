@@ -126,12 +126,12 @@ function eventCopy(type, data) {
           body:
             greeting(data) +
             paragraph(
-              "Welcome to Galactic Omnivore—a community where creators can share their skills, find collaborators, and build projects together."
+              "Welcome to Galactic Omnivore-a community where creators can share their skills, find collaborators, and build projects together."
             ) +
             paragraph(planParagraph) +
             `<p style="margin:0 0 12px;color:#f5f5f5;font-weight:700;">Useful first steps</p>` +
             bulletList(steps),
-          text: `${data.firstName ? `Hi ${data.firstName},` : "Hello,"}\n\nWelcome to Galactic Omnivore—a community where creators can share their skills, find collaborators, and build projects together.\n\n${planParagraph}\n\nUseful first steps\n${steps
+          text: `${data.firstName ? `Hi ${data.firstName},` : "Hello,"}\n\nWelcome to Galactic Omnivore-a community where creators can share their skills, find collaborators, and build projects together.\n\n${planParagraph}\n\nUseful first steps\n${steps
             .map((step, index) => `${index + 1}. ${step}`)
             .join("\n")}${plan ? `\n\nMembership: ${plan.name}` : ""}`,
           ctaLabel: "Finish onboarding",
@@ -528,6 +528,95 @@ function eventCopy(type, data) {
             : "/resources"
         ),
       };
+    case "learning.enrollment_confirmed":
+    case "learning.enrollment_pending":
+    case "learning.waitlisted":
+    case "learning.waitlist_promoted":
+    case "learning.enrollment_canceled":
+    case "learning.announcement": {
+      const learningTitle = data.learningTitle || "GO learning activity";
+      const learningUrl = absoluteSiteUrl(
+        data.learningSlug
+          ? `/education/${encodeURIComponent(data.learningSlug)}`
+          : "/education"
+      );
+      const messages = {
+        "learning.enrollment_confirmed": "Your enrollment is confirmed.",
+        "learning.enrollment_pending": "Your enrollment request is waiting for organizer approval.",
+        "learning.waitlisted": "You have been added to the waiting list.",
+        "learning.waitlist_promoted": "A place is available. Confirm it before the deadline shown on the learning page.",
+        "learning.enrollment_canceled": "Your enrollment has been canceled.",
+        "learning.announcement": data.message || "The organizer shared an update.",
+      };
+      const headings = {
+        "learning.enrollment_confirmed": "Enrollment confirmed",
+        "learning.enrollment_pending": "Enrollment request received",
+        "learning.waitlisted": "Waiting-list confirmation",
+        "learning.waitlist_promoted": "A place is available",
+        "learning.enrollment_canceled": "Enrollment canceled",
+        "learning.announcement": data.subject || "Course update",
+      };
+      return {
+        subject: `${headings[type]}: ${learningTitle}`,
+        heading: headings[type],
+        preheader: `${learningTitle} - ${messages[type]}`,
+        body: greeting(data) + paragraph(messages[type]) + paragraph(learningTitle),
+        text: `${messages[type]}\n\n${learningTitle}`,
+        ctaLabel: "View learning item",
+        ctaUrl: learningUrl,
+      };
+    }
+    case "training.assignment": {
+      const contentTitle = data.contentTitle || "GO mentor preparation";
+      const contentUrl = absoluteSiteUrl(
+        data.contentType === "video_bundle"
+          ? data.contentSlug
+            ? `/video-bundles/${encodeURIComponent(data.contentSlug)}`
+            : "/video-bundles"
+          : data.contentSlug
+            ? `/education/${encodeURIComponent(data.contentSlug)}`
+            : "/education"
+      );
+      return {
+        subject: `Preparation assigned: ${contentTitle}`,
+        heading: "Mentor preparation assigned",
+        preheader: `You have free access to ${contentTitle}.`,
+        body: greeting(data) + paragraph("Galactic Omnivore assigned this learning item as mentor preparation.") + paragraph(contentTitle),
+        text: `Galactic Omnivore assigned this learning item as mentor preparation.\n\n${contentTitle}`,
+        ctaLabel: "Open assigned preparation",
+        ctaUrl: contentUrl,
+      };
+    }
+    case "mentorship.request_received":
+    case "mentorship.response":
+    case "mentorship.scheduling":
+    case "mentorship.update":
+    case "mentorship.feedback": {
+      const heading = data.title || "Mentorship update";
+      const message = data.message || "There is an update in your Galactic Omnivore mentorship dashboard.";
+      return {
+        subject: heading,
+        heading,
+        preheader: message,
+        body: greeting(data) + paragraph(message),
+        text: message,
+        ctaLabel: "Open mentorship dashboard",
+        ctaUrl: absoluteSiteUrl("/profile?tab=mentorships"),
+      };
+    }
+    case "asset_pack.review_update": {
+      const heading = data.title || "Asset-pack review update";
+      const message = data.message || "Your community asset-pack submission has a review update.";
+      return {
+        subject: heading,
+        heading,
+        preheader: message,
+        body: greeting(data) + paragraph(message),
+        text: message,
+        ctaLabel: "Open asset-pack workspace",
+        ctaUrl: absoluteSiteUrl("/profile?tab=asset-packs"),
+      };
+    }
     case "newsletter.confirm":
       return {
         subject: "Confirm your Galactic Omnivore newsletter signup",

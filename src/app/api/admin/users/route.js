@@ -1,5 +1,6 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
+import { MENTOR_STATUSES } from "@/lib/mentor-profiles";
 
 function toIso(value) {
   if (!value) return null;
@@ -29,7 +30,7 @@ async function requireAdmin(request) {
 // GET /api/admin/users
 // Returns every user in a single server-side read (adminDb bypasses client
 // Firestore rules). Membership is derived from the Polar fields written by the
-// subscription webhook onto users/{uid} — NOT from the legacy `subscriptions`
+// subscription webhook onto users/{uid} - NOT from the legacy `subscriptions`
 // collection, which was the source of the client-side N+1 query storm.
 export async function GET(request) {
   try {
@@ -57,6 +58,8 @@ export async function GET(request) {
         subscriptionStatus: data.subscriptionStatus || null,
         subscriptionEndsAt: toIso(data.subscriptionEndsAt),
         willRenew: data.willRenew ?? null,
+        mentorStatus: MENTOR_STATUSES.includes(data.mentorStatus) ? data.mentorStatus : "none",
+        mentorPublicProfileEnabled: data.mentorPublicProfileEnabled === true,
       };
     });
 
@@ -70,20 +73,22 @@ export async function GET(request) {
   }
 }
 
-// PUT /api/admin/users  { userId, activeMember?, membershipTier? }
+// PUT /api/admin/users  { userId, activeMember?, membershipTier?, mentorStatus?, mentorPublicProfileEnabled? }
 // Manual membership override for admins, written to the Polar user-doc model.
 export async function PUT(request) {
   try {
     const gate = await requireAdmin(request);
     if (gate.error) return Response.json({ error: gate.error }, { status: gate.status });
 
-    const { userId, activeMember, membershipTier } = await request.json();
+    const { userId, activeMember, membershipTier, mentorStatus, mentorPublicProfileEnabled, reason: reasonInput } = await request.json();
     const hasActiveMember = typeof activeMember === "boolean";
     const hasMembershipTier = membershipTier !== undefined;
+    const hasMentorStatus = mentorStatus !== undefined;
+    const hasMentorVisibility = typeof mentorPublicProfileEnabled === "boolean";
 
-    if (!userId || (!hasActiveMember && !hasMembershipTier)) {
+    if (!userId || (!hasActiveMember && !hasMembershipTier && !hasMentorStatus && !hasMentorVisibility)) {
       return Response.json(
-        { error: "userId and a membership update are required" },
+        { error: "userId and an account update are required" },
         { status: 400 }
       );
     }
@@ -97,12 +102,30 @@ export async function PUT(request) {
         { status: 400 }
       );
     }
+    if (hasMentorStatus && !MENTOR_STATUSES.includes(mentorStatus)) {
+      return Response.json({ error: "mentorStatus is not supported" }, { status: 400 });
+    }
 
-    const update = {
-      updatedAt: new Date(),
-      membershipOverrideBy: gate.adminUser.uid,
-      membershipOverrideAt: new Date(),
-    };
+    const reason = String(reasonInput || "").trim().slice(0, 2000);
+    if (!reason) return Response.json({ error: "A reason is required for account control changes" }, { status: 400 });
+    const userRef = adminDb.collection("users").doc(userId);
+    const existing = await userRef.get();
+    if (!existing.exists) return Response.json({ error: "User not found" }, { status: 404 });
+    const previous = existing.data();
+    if (hasMentorVisibility && mentorPublicProfileEnabled) {
+      const effectiveStatus = hasMentorStatus ? mentorStatus : previous.mentorStatus || "none";
+      if (effectiveStatus !== "approved") {
+        return Response.json({ error: "Only approved mentors can have a public profile" }, { status: 409 });
+      }
+    }
+
+    const now = new Date();
+    const update = { updatedAt: now };
+
+    if (hasActiveMember || hasMembershipTier) {
+      update.membershipOverrideBy = gate.adminUser.uid;
+      update.membershipOverrideAt = now;
+    }
 
     if (hasActiveMember) {
       update.activeMember = activeMember;
@@ -112,20 +135,49 @@ export async function PUT(request) {
     if (hasMembershipTier) {
       update.membershipTier = membershipTier;
     }
+    if (hasMentorStatus) {
+      update.mentorStatus = mentorStatus;
+      update.mentorStatusUpdatedBy = gate.adminUser.uid;
+      update.mentorStatusUpdatedAt = now;
+      if (mentorStatus !== "approved") update.mentorPublicProfileEnabled = false;
+    }
+    if (hasMentorVisibility) update.mentorPublicProfileEnabled = mentorPublicProfileEnabled;
 
-    await adminDb.collection("users").doc(userId).set(
+    await userRef.set(
       update,
       { merge: true }
     );
+    await adminDb.collection("admin_audit_events").add({
+      action: hasActiveMember || hasMembershipTier ? (hasMentorStatus || hasMentorVisibility ? "account.controls_updated" : "account.entitlement_override_updated") : "mentor.account_controls_updated",
+      actorId: gate.adminUser.uid,
+      target: { type: "user", id: userId },
+      targetUserId: userId,
+      previousValue: {
+        activeMember: previous.activeMember === true,
+        membershipTier: previous.membershipTier || null,
+        mentorStatus: previous.mentorStatus || "none",
+        mentorPublicProfileEnabled: previous.mentorPublicProfileEnabled === true,
+      },
+      newValue: {
+        activeMember: hasActiveMember ? activeMember : previous.activeMember === true,
+        membershipTier: hasMembershipTier ? membershipTier : previous.membershipTier || null,
+        mentorStatus: hasMentorStatus ? mentorStatus : previous.mentorStatus || "none",
+        mentorPublicProfileEnabled: update.mentorPublicProfileEnabled ?? (hasMentorVisibility ? mentorPublicProfileEnabled : previous.mentorPublicProfileEnabled === true),
+      },
+      reason,
+      createdAt: now,
+    });
 
     return Response.json({
       success: true,
       userId,
       ...(hasActiveMember ? { activeMember } : {}),
       ...(hasMembershipTier ? { membershipTier } : {}),
+      ...(hasMentorStatus ? { mentorStatus } : {}),
+      ...(hasMentorVisibility ? { mentorPublicProfileEnabled } : {}),
     });
   } catch (error) {
     console.error("Error updating user membership:", error);
-    return Response.json({ error: "Failed to update membership" }, { status: 500 });
+    return Response.json({ error: "Failed to update account" }, { status: 500 });
   }
 }

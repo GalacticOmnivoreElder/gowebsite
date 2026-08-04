@@ -16,7 +16,7 @@ test("landing About section uses the approved three-paragraph copy", () => {
   );
   assert.match(
     source,
-    /GOHQ is our human ground station—a place where[\s\S]*useful signals become practical routes[\s\S]*We help creators learn game-development skills, find collaborators\s+and suitable project roles, strengthen their portfolios, structure\s+their work, and move ideas toward their[\s\S]*next playable milestone/
+    /GOHQ is our human ground station-a place where[\s\S]*useful signals become practical routes[\s\S]*We help creators learn game-development skills, find collaborators\s+and suitable project roles, strengthen their portfolios, structure\s+their work, and move ideas toward their[\s\S]*next playable milestone/
   );
   assert.match(
     source,

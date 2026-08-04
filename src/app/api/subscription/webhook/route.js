@@ -47,7 +47,7 @@ const polarWebhookHandler = Webhooks({
 // Polar emits events (e.g. member.created) that our pinned @polar-sh/sdk
 // version doesn't know how to parse. The SDK throws an SDKValidationError
 // ("Unknown event type: ...") *after* the signature has already verified, which
-// the Webhooks() wrapper rethrows as a 500 — so Polar keeps retrying forever.
+// the Webhooks() wrapper rethrows as a 500 - so Polar keeps retrying forever.
 // Acknowledge those with a 200 so they're dropped instead of retried. Signature
 // failures still surface as the wrapper's 403, and real handler errors (which
 // we *do* want Polar to retry) still bubble up as 500s.
@@ -538,7 +538,7 @@ async function handleOrderPaid(orderData, payload) {
 
 async function handleSubscriptionCreated(subscriptionData) {
   // Fires when the subscription record is created. Access is granted by
-  // order.paid / subscription.active — here we just link the record so we
+  // order.paid / subscription.active - here we just link the record so we
   // never miss the customer/tier association.
   const status = subscriptionData.status || "incomplete";
   await updateSubscriptionUser(

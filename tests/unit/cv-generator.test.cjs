@@ -49,7 +49,7 @@ test("buildCvFromProfile creates a deterministic CV from onboarding facts", () =
     user_portfolio_links: ["https://ada.dev"],
   });
 
-  assert.equal(cv.title, "Ada \u2014 Programmer");
+  assert.equal(cv.title, "Ada - Programmer");
   assert.match(cv.summary, /Intermediate programmer working with Unity, C#, Git\./);
   assert.match(cv.summary, /Looking for projects, paid work\./);
   assert.equal(cv.sections.length, 8);

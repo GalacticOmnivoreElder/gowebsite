@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { auth } from "@/firebase";
+import { ProtectedResourceOpenButton } from "@/components/packages/ProtectedResourceOpenButton";
 
 export default function PackageDetailPage({ params }) {
   const [packageData, setPackageData] = useState(null);
@@ -176,14 +177,7 @@ export default function PackageDetailPage({ params }) {
     }
 
     if (packageData.hasAccess) {
-      return (
-        <Button asChild className="w-full">
-          <a href={asset.downloadUrl} target="_blank" rel="noopener noreferrer">
-            <Download className="h-4 w-4 mr-2" />
-            Download
-          </a>
-        </Button>
-      );
+      return <ProtectedResourceOpenButton assetIndex={asset.assetIndex} resourceId={packageData.id} />;
     } else if (isCurrentMonth) {
       return (
         <Button asChild variant="secondary" className="w-full">
@@ -313,6 +307,9 @@ export default function PackageDetailPage({ params }) {
               {packageData.month} {packageData.year}
             </Badge>
             <Badge variant="secondary">{packageData.theme}</Badge>
+            {packageData.status === "legacy" && (
+              <Badge variant="secondary">Legacy</Badge>
+            )}
             {isCurrentMonth && (
               <Badge variant="default" className="bg-green-600">
                 Current listing

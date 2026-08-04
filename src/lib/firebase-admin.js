@@ -19,7 +19,7 @@ import { getFirestore } from "firebase-admin/firestore";
  *   -----END PRIVATE KEY-----
  * Between them is random-looking letters/numbers (base64). That whole block is what Google
  * needs to prove the server is allowed to use Firebase Admin. People call that text shape
- * "PEM" — you can ignore the acronym; it's just a standard way to store a key as text.
+ * "PEM" - you can ignore the acronym; it's just a standard way to store a key as text.
  *
  * In .env you normally put that whole block on ONE line, with \n where the line breaks were
  * in the JSON file, OR use FIREBASE_PRIVATE_KEY_BASE64 (same text, base64-encoded = one safe
@@ -27,7 +27,7 @@ import { getFirestore } from "firebase-admin/firestore";
  */
 
 /**
- * True when the failure is server credentials — not the user's login token.
+ * True when the failure is server credentials - not the user's login token.
  */
 export function isFirebaseAdminSetupError(err) {
   const code = err?.code || err?.errorInfo?.code;
@@ -197,8 +197,10 @@ function proxyService(realGetter) {
   );
 }
 
-export const adminAuth = proxyService(() => getAuth(getFirebaseAdminApp()));
+export const adminAuth = /** @type {any} */ (
+  proxyService(() => getAuth(getFirebaseAdminApp()))
+);
 
-export const adminDb = proxyService(() =>
-  getFirestore(getFirebaseAdminApp())
+export const adminDb = /** @type {any} */ (
+  proxyService(() => getFirestore(getFirebaseAdminApp()))
 );

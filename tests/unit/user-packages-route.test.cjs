@@ -68,6 +68,13 @@ function loadRoute({ decoded = {}, packages = {}, userDocs = {} } = {}) {
             userData,
           };
         },
+        isPublicResourceStatus: (status) => status === "published" || status === "legacy",
+        toPublicResourceDto: (resource) => ({
+          id: resource.id,
+          title: resource.title || "Resource",
+          status: resource.status,
+          assets: (resource.assets || []).map(({ downloadUrl, ...asset }, assetIndex) => ({ ...asset, assetIndex })),
+        }),
       },
     }
   );
@@ -104,8 +111,8 @@ test("user packages route fetches unlocked packages", async () => {
       token: { uid: "user-1" },
     },
     packages: {
-      pack_1: { id: "pack_1", title: "Starter Pack" },
-      pack_2: { id: "pack_2", title: "Advanced Pack" },
+      pack_1: { id: "pack_1", title: "Starter Pack", status: "published" },
+      pack_2: { id: "pack_2", title: "Advanced Pack", status: "legacy" },
     },
     userDocs: {
       "user-1": { unlockedPackages: ["pack_1", "pack_2", "missing"] },
@@ -115,7 +122,7 @@ test("user packages route fetches unlocked packages", async () => {
   const response = await GET(createRequest({ headers: { authorization: "Bearer token" } }));
 
   assert.equal(response.status, 200);
-  assert.deepEqual(plain(response.body), [
+  assert.deepEqual(plain(response.body).map(({ id, title }) => ({ id, title })), [
     { id: "pack_1", title: "Starter Pack" },
     { id: "pack_2", title: "Advanced Pack" },
   ]);
@@ -127,8 +134,8 @@ test("user packages route returns every package for active members and admins", 
       token: { uid: "member-1" },
     },
     packages: {
-      pack_1: { id: "pack_1", title: "Starter Pack" },
-      pack_2: { id: "pack_2", title: "Advanced Pack" },
+      pack_1: { id: "pack_1", title: "Starter Pack", status: "published" },
+      pack_2: { id: "pack_2", title: "Advanced Pack", status: "legacy" },
     },
     userDocs: {
       "member-1": { activeMember: true, unlockedPackages: [] },
@@ -138,7 +145,7 @@ test("user packages route returns every package for active members and admins", 
   let response = await route.GET(createRequest({ headers: { authorization: "Bearer token" } }));
 
   assert.equal(response.status, 200);
-  assert.deepEqual(plain(response.body), [
+  assert.deepEqual(plain(response.body).map(({ id, title }) => ({ id, title })), [
     { id: "pack_1", title: "Starter Pack" },
     { id: "pack_2", title: "Advanced Pack" },
   ]);
@@ -148,7 +155,7 @@ test("user packages route returns every package for active members and admins", 
       token: { uid: "admin-1" },
     },
     packages: {
-      pack_1: { id: "pack_1", title: "Starter Pack" },
+      pack_1: { id: "pack_1", title: "Starter Pack", status: "draft" },
     },
     userDocs: {
       "admin-1": { admin: true, activeMember: false, unlockedPackages: [] },
@@ -158,5 +165,5 @@ test("user packages route returns every package for active members and admins", 
   response = await route.GET(createRequest({ headers: { authorization: "Bearer token" } }));
 
   assert.equal(response.status, 200);
-  assert.deepEqual(plain(response.body), [{ id: "pack_1", title: "Starter Pack" }]);
+  assert.deepEqual(plain(response.body).map(({ id, title }) => ({ id, title })), [{ id: "pack_1", title: "Starter Pack" }]);
 });

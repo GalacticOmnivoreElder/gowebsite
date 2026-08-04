@@ -179,6 +179,7 @@ test("email cron requires its bearer secret before processing jobs", async () =>
           return { sent: 0 };
         },
         requeueExpiredEmailJobs: async () => 0,
+        processExpiredWaitlistOffers: async () => ({ expired: 0, scanned: 0 }),
         sendEmailDeliveryTest: async () => null,
       },
     }
@@ -216,6 +217,7 @@ test("email cron accepts the pinned GitHub Actions OIDC identity", async () => {
           return { sent: 0 };
         },
         requeueExpiredEmailJobs: async () => 0,
+        processExpiredWaitlistOffers: async () => ({ expired: 0, scanned: 0 }),
         sendEmailDeliveryTest: async () => null,
       },
     }
@@ -252,6 +254,7 @@ test("email cron can send an OIDC-protected production delivery test", async () 
         enqueueDailyEmailFailureDigest: async () => ({ queued: 0 }),
         processEmailOutbox: async () => ({ sent: 0 }),
         requeueExpiredEmailJobs: async () => 0,
+        processExpiredWaitlistOffers: async () => ({ expired: 0, scanned: 0 }),
         sendEmailDeliveryTest: async (recipient) => {
           recipients.push(recipient);
           return { providerEmailId: "email-test-1" };

@@ -86,7 +86,7 @@ export async function POST(request) {
       );
     }
 
-    // Applying to projects is a membership benefit — require an active
+    // Applying to projects is a membership benefit - require an active
     // subscription (any tier) or platform admin.
     if (!user.activeMember && !user.admin) {
       return NextResponse.json(

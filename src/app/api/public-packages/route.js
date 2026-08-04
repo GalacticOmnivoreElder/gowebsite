@@ -1,35 +1,13 @@
 import { adminDb } from "@/lib/firebase-admin";
+import { isPublicResourceStatus, toPublicResourceDto } from "@/lib/content-visibility";
 
 export async function GET() {
   try {
     const packagesSnapshot = await adminDb.collection("packages").get();
 
     const packages = packagesSnapshot.docs
-      .filter((doc) => doc.data().status !== "draft")
-      .map((doc) => {
-      const data = doc.data();
-      // Sanitize the package data to remove sensitive information
-      const assets =
-        data.assets?.map((asset) => ({
-          title: asset.title,
-          description: asset.description,
-          type: asset.type,
-          image: asset.image,
-          // Deliberately omitting downloadUrl
-        })) || [];
-
-      return {
-        id: doc.id,
-        title: data.title,
-        description: data.description,
-        theme: data.theme,
-        month: data.month,
-        year: data.year,
-        coverImage: data.coverImage,
-        slug: data.slug,
-        assets,
-      };
-      });
+      .filter((doc) => isPublicResourceStatus(doc.data().status))
+      .map((doc) => toPublicResourceDto({ id: doc.id, ...doc.data() }));
 
     return Response.json(packages);
   } catch (error) {

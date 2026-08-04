@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
+import { isPublicResourceStatus, toPublicResourceDto } from "@/lib/content-visibility";
 
 export async function GET(request) {
   try {
@@ -13,11 +14,7 @@ export async function GET(request) {
     const userData = user.userData || {};
 
     const packagesRef = adminDb.collection("packages");
-    const snapshot = user.activeMember
-      ? await packagesRef.get()
-      : Array.isArray(userData.unlockedPackages) && userData.unlockedPackages.length > 0
-      ? await packagesRef.where("id", "in", userData.unlockedPackages).get()
-      : null;
+    const snapshot = await packagesRef.get();
 
     if (!snapshot) {
       return Response.json([]);
@@ -26,8 +23,10 @@ export async function GET(request) {
     const packages = [];
     snapshot.forEach((doc) => {
       const data = doc.data();
-      if (user.admin || data.status !== "draft") {
-        packages.push({ id: doc.id, ...data });
+      const isEntitled =
+        user.admin || user.activeMember || userData.unlockedPackages?.includes(doc.id);
+      if (isEntitled && (user.admin || isPublicResourceStatus(data.status))) {
+        packages.push(toPublicResourceDto({ id: doc.id, ...data }));
       }
     });
 

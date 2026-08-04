@@ -33,7 +33,7 @@ async function viewerReviewsAnApplicationFrom(targetUid, viewerUid) {
   return false;
 }
 
-// GET /api/users/:id/cv — visibility-gated per spec.
+// GET /api/users/:id/cv - visibility-gated per spec.
 export async function GET(request, { params }) {
   const { id: targetUid } = await params;
   const viewer = await getRequestUser(request);

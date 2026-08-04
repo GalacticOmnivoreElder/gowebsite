@@ -32,6 +32,7 @@ export default function FeaturedPackageCard({
                 <Badge variant={isUnlocked ? "success" : "secondary"}>
                   {isUnlocked ? "Available" : "Member access"}
                 </Badge>
+                {pkg.status === "legacy" && <Badge variant="secondary">Legacy</Badge>}
               </div>
               <p className="text-lg text-muted-foreground mb-4">
                 {pkg.month} {pkg.year}
@@ -78,6 +79,7 @@ export default function FeaturedPackageCard({
               <Badge variant={isUnlocked ? "success" : "secondary"}>
                 {isUnlocked ? "Available" : "Member access"}
               </Badge>
+              {pkg.status === "legacy" && <Badge variant="secondary">Legacy</Badge>}
             </div>
           </div>
 

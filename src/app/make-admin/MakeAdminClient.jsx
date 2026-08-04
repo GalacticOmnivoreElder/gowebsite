@@ -18,7 +18,7 @@ export default function MakeAdminPage() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  // Bootstrap-only tool — hidden in production (admins are already provisioned).
+  // Bootstrap-only tool - hidden in production (admins are already provisioned).
   // Kept below the hooks so hook order stays stable (rules-of-hooks).
   const handleMakeAdmin = async (e) => {
     e.preventDefault();
