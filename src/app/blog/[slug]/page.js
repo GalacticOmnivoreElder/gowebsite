@@ -172,37 +172,6 @@ const BlogPost = observer(() => {
               ))}
             </div>
 
-            {/* Share buttons - Floating */}
-            <div className="fixed left-[15%] top-1/2 -translate-y-1/2 hidden lg:flex flex-col gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full hover:bg-primary/10 hover:text-primary"
-                aria-label="Share on X"
-                onClick={() => handleShare("twitter")}
-              >
-                <Twitter className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full hover:bg-primary/10 hover:text-primary"
-                aria-label="Share on Facebook"
-                onClick={() => handleShare("facebook")}
-              >
-                <Facebook className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full hover:bg-primary/10 hover:text-primary"
-                aria-label="Share on LinkedIn"
-                onClick={() => handleShare("linkedin")}
-              >
-                <Linkedin className="h-5 w-5" />
-              </Button>
-            </div>
-
             {/* Main Content */}
             <div
               className="wordpress-content"
