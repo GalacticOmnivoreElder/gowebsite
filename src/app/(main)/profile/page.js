@@ -43,8 +43,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import SubscribeButton from "@/components/ui/SubscribeButton";
 import { LearningDashboard } from "@/components/learning/LearningDashboard";
 import { NotificationsPanel } from "@/components/notifications/NotificationsPanel";
-import { MentorWorkspace } from "@/components/mentors/MentorWorkspace";
-import { MentorshipDashboard } from "@/components/mentors/MentorshipDashboard";
+import { MentorshipPilotMentorWorkspace } from "@/components/mentors/MentorshipPilotMentorWorkspace";
+import { MentorshipPilotDashboard } from "@/components/mentors/MentorshipPilotDashboard";
 import { AssetPackWorkspace } from "@/components/asset-packs/AssetPackWorkspace";
 
 // Helper function to safely convert Firestore timestamp to Date
@@ -867,11 +867,11 @@ const ProfileContent = observer(() => {
         </TabsContent>
 
         <TabsContent value="mentor">
-          <MentorWorkspace />
+          <MentorshipPilotMentorWorkspace />
         </TabsContent>
 
         <TabsContent value="mentorships">
-          <MentorshipDashboard />
+          <MentorshipPilotDashboard />
         </TabsContent>
 
         <TabsContent value="asset-packs">

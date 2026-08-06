@@ -1,12 +1,16 @@
 export const dynamic = "force-dynamic";
 
-import { getProductConfig } from "@/lib/product-config";
+import { getMentorshipPilotConfig, getProductConfig } from "@/lib/product-config";
 import { getPublicMentor } from "@/lib/mentor-directory";
 import { listPublicMentorReferences } from "@/lib/mentorship-feedback-service";
 
 export async function GET(_request, { params }) {
   const product = getProductConfig();
   if (!product.featureFlags.mentorDirectory) {
+    return Response.json({ error: "The mentor directory is not available yet" }, { status: 503 });
+  }
+  const pilot = getMentorshipPilotConfig();
+  if (!pilot.featureFlags.mentorshipSystem || !pilot.featureFlags.publicMentorBrowsing) {
     return Response.json({ error: "The mentor directory is not available yet" }, { status: 503 });
   }
   const { mentorId } = await params;

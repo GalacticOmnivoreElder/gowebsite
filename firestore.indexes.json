@@ -73,6 +73,54 @@
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "responseDeadline", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "mentorship_pilot_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "menteeUserId", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mentorship_suggestions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "requestId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mentorship_applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "menteeUserId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mentorship_applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mentorId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mentorship_pilot_engagements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "menteeUserId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mentorship_pilot_engagements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mentorId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

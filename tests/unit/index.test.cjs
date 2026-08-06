@@ -20,6 +20,7 @@ require("./phase3-training.test.cjs");
 require("./phase4-mentorship.test.cjs");
 require("./phase4-asset-packs.test.cjs");
 require("./phase5-mentorship-feedback.test.cjs");
+require("./mentorship-pilot.test.cjs");
 require("./phase6-asset-pack-hardening.test.cjs");
 require("./production-env.test.cjs");
 require("./production-route-lockout.test.cjs");

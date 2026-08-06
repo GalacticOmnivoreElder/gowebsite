@@ -6,8 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { MentorshipPilotAdminWorkspace } from "@/components/admin/MentorshipPilotAdminWorkspace";
 
 export default function AdminMentorshipsPage() {
+  return <MentorshipPilotAdminWorkspace />;
+}
+
+function LegacyMentorshipsPage() {
   const [data, setData] = useState(null);
   const [message, setMessage] = useState("");
   const [selected, setSelected] = useState({});

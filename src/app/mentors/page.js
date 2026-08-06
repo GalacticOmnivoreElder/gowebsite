@@ -1,5 +1,5 @@
 import { Users } from "lucide-react";
-import { getProductConfig } from "@/lib/product-config";
+import { getMentorshipPilotConfig, getProductConfig } from "@/lib/product-config";
 import { MentorDirectory } from "@/components/mentors/MentorDirectory";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +13,9 @@ export const metadata = createMetadata({
 });
 
 export default function MentorsPage() {
-  const enabled = getProductConfig().featureFlags.mentorDirectory;
+  const product = getProductConfig();
+  const pilot = getMentorshipPilotConfig();
+  const enabled = product.featureFlags.mentorDirectory && pilot.featureFlags.mentorshipSystem && pilot.featureFlags.publicMentorBrowsing;
   return (
     <main className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
       <div className="flex items-start gap-4">

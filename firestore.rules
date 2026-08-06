@@ -96,6 +96,9 @@ service cloud.firestore {
     match /training_assignments/{doc} { allow read, write: if false; }
     match /mentor_profiles/{doc}       { allow read, write: if false; }
     match /mentor_availability/{doc}   { allow read, write: if false; }
+    match /mentor_applications/{doc}    { allow read, write: if false; }
+    match /mentorship_applications/{doc} { allow read, write: if false; }
+    match /mentorship_suggestions/{doc} { allow read, write: if false; }
     match /mentorship_requests/{doc}   { allow read, write: if false; }
     match /mentorship_active_requests/{doc} { allow read, write: if false; }
     match /mentorship_request_overrides/{doc} { allow read, write: if false; }
@@ -104,6 +107,14 @@ service cloud.firestore {
     match /mentorship_concerns/{doc}   { allow read, write: if false; }
     match /mentorship_feedback/{doc}   { allow read, write: if false; }
     match /mentorship_feedback_audit/{doc} { allow read, write: if false; }
+    match /mentorship_pilot_requests/{doc} { allow read, write: if false; }
+    match /mentorship_pilot_active_requests/{doc} { allow read, write: if false; }
+    match /mentorship_pilot_engagements/{doc} { allow read, write: if false; }
+    match /mentorship_checkins/{doc} { allow read, write: if false; }
+    match /mentorship_closing_feedback/{doc} { allow read, write: if false; }
+    match /mentorship_reports/{doc} { allow read, write: if false; }
+    match /mentorship_staff_alerts/{doc} { allow read, write: if false; }
+    match /mentorship_audit_events/{doc} { allow read, write: if false; }
     match /asset_packs/{doc}           { allow read, write: if false; }
     match /asset_pack_versions/{doc}   { allow read, write: if false; }
     match /asset_pack_grants/{doc}     { allow read, write: if false; }

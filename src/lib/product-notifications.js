@@ -13,6 +13,12 @@ export const PRODUCT_NOTIFICATION_TYPES = Object.freeze([
   "mentorship_scheduling",
   "mentorship_update",
   "mentorship_feedback",
+  "mentorship_review",
+  "mentorship_suggestion",
+  "mentorship_application",
+  "mentorship_agreement",
+  "mentorship_checkin",
+  "mentorship_report",
   "asset_pack_update",
   "training_assignment",
 ]);
