@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { auth } from "@/firebase";
+import { CreditCard, LogIn, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,27 @@ export function MentorshipPilotRequestWorkspace() {
   const [requestId, setRequestId] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [access, setAccess] = useState({ status: "checking" });
+
+  useEffect(() => {
+    let active = true;
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        if (active) setAccess({ status: "signed_out" });
+        return;
+      }
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch("/api/auth/verify", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "Account access could not be verified.");
+        if (active) setAccess({ status: result.permissions?.isMember || result.user?.activeMember ? "eligible" : "membership_required" });
+      } catch (error) {
+        if (active) setAccess({ status: "error", message: error.message });
+      }
+    });
+    return () => { active = false; unsubscribe(); };
+  }, []);
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const request = async (mode) => {
@@ -35,6 +57,11 @@ export function MentorshipPilotRequestWorkspace() {
       setMessage(mode === "draft" ? "Draft saved privately. You can return and submit it when ready." : "Request submitted. GO reviews every request manually; a mentor is not guaranteed.");
     } catch (error) { setMessage(error.message); } finally { setBusy(false); }
   };
+
+  if (access.status === "checking") return <AccessCard icon={CreditCard} title="Checking mentorship access" description="We are checking your sign-in and active membership status." />;
+  if (access.status === "signed_out") return <AccessCard icon={LogIn} title="Sign in to request mentorship" description="Create an account or sign in to apply. An active GO subscription is required before you can submit a mentorship request." actions={<><Button asChild><Link href="/signup?redirect=%2Fmatchmaking"><UserPlus className="mr-2 h-4 w-4" />Sign up</Link></Button><Button asChild variant="outline"><Link href="/login?redirect=%2Fmatchmaking"><LogIn className="mr-2 h-4 w-4" />Sign in</Link></Button></>} />;
+  if (access.status === "membership_required") return <AccessCard icon={CreditCard} title="An active subscription is required" description="GO Mentorship is available to signed-in members with any active subscription. Review membership options, then return here to apply." actions={<Button asChild><Link href="/membership"><CreditCard className="mr-2 h-4 w-4" />Review membership</Link></Button>} />;
+  if (access.status === "error") return <AccessCard icon={LogIn} title="We could not verify your access" description={access.message || "Please refresh the page or sign in again before requesting mentorship."} actions={<Button asChild variant="outline"><Link href="/login?redirect=%2Fmatchmaking"><LogIn className="mr-2 h-4 w-4" />Sign in again</Link></Button>} />;
 
   return <div className="space-y-6">
     <Card className="border-primary/25">
@@ -58,6 +85,10 @@ export function MentorshipPilotRequestWorkspace() {
       </CardContent>
     </Card>
   </div>;
+}
+
+function AccessCard({ icon: Icon, title, description, actions }) {
+  return <Card className="border-primary/25"><CardContent className="flex flex-col items-start gap-4 p-8"><Icon aria-hidden="true" className="h-7 w-7 text-primary" /><div><h2 className="text-xl font-semibold">{title}</h2><p className="mt-2 max-w-2xl text-muted-foreground">{description}</p></div>{actions && <div className="flex flex-wrap gap-3">{actions}</div>}</CardContent></Card>;
 }
 
 function Field({ label, value, onChange, placeholder, area = false, help }) { return <label className="block space-y-1 text-sm"><span className="font-medium">{label}</span>{area ? <textarea className="min-h-24 w-full rounded-md border bg-background px-3 py-2" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} /> : <Input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />}{help && <span className="block text-xs text-muted-foreground">{help}</span>}</label>; }

@@ -84,3 +84,12 @@ test("the public application surface opens while pilot matching stays controlled
   assert.match(configSource, /MENTORSHIP_PILOT_ONLY, false/);
   assert.match(pageSource, /Applications are open to eligible GO members/);
 });
+
+test("the request workspace gates the form behind sign-in and active membership", () => {
+  const source = fs.readFileSync("src/components/mentors/MentorshipPilotRequestWorkspace.jsx", "utf8");
+  assert.match(source, /onAuthStateChanged/);
+  assert.match(source, /\/api\/auth\/verify/);
+  assert.match(source, /Sign up/);
+  assert.match(source, /Sign in/);
+  assert.match(source, /membership_required/);
+});
