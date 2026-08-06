@@ -30,7 +30,7 @@ export function MentorshipPilotRequestWorkspace() {
       if (!token) throw new Error("Sign in to request mentorship.");
       const response = await fetch("/api/mentorship/pilot/requests", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...form, requestId, mode, languagePreferences: csv(form.languagePreferences), projectLinks: csv(form.projectLinks) }) });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error === "mentorship_membership_required" ? "An active GO membership is required for the mentorship pilot." : result.error === "pilot_access_required" ? "Mentorship is currently limited to invited pilot participants." : result.error || "Mentorship request could not be saved.");
+      if (!response.ok) throw new Error(result.error === "mentorship_membership_required" ? "An active GO membership is required for the mentorship pilot." : result.error === "pilot_access_required" ? "Mentorship applications are currently limited to the controlled pilot." : result.error || "Mentorship request could not be saved.");
       setRequestId(result.id);
       setMessage(mode === "draft" ? "Draft saved privately. You can return and submit it when ready." : "Request submitted. GO reviews every request manually; a mentor is not guaranteed.");
     } catch (error) { setMessage(error.message); } finally { setBusy(false); }
