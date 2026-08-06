@@ -75,3 +75,12 @@ test("legacy public mentor surfaces also require the pilot browsing gate", () =>
     assert.match(source, /mentorshipSystem/);
   }
 });
+
+test("the public application surface opens while pilot matching stays controlled", () => {
+  const configSource = fs.readFileSync("src/lib/product-config.js", "utf8");
+  const pageSource = fs.readFileSync("src/app/matchmaking/page.js", "utf8");
+  assert.match(configSource, /MENTORSHIP_SYSTEM_ENABLED, true/);
+  assert.match(configSource, /MENTORSHIP_REQUESTS_ENABLED, true/);
+  assert.match(configSource, /MENTORSHIP_PILOT_ONLY, false/);
+  assert.match(pageSource, /Applications are open to eligible GO members/);
+});

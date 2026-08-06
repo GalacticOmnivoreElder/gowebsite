@@ -125,20 +125,20 @@ export function getMentorshipProductConfig(env = process.env) {
 
 /**
  * The approved GO-curated mentorship workflow is separate from the original
- * self-service matchmaking experiment. Keep the pilot opt-in and allowlist
- * controlled so an unfinished operational or safeguarding decision cannot
- * accidentally become a public launch.
+ * self-service matchmaking experiment. The application surface is open to
+ * eligible members, while matching, mentor approval, and engagement support
+ * remain GO-controlled pilot operations.
  */
 export function getMentorshipPilotConfig(env = process.env) {
   const mentorship = getMentorshipProductConfig(env);
   return {
     ...mentorship,
     featureFlags: {
-      mentorshipSystem: parseBooleanEnv(env.MENTORSHIP_SYSTEM_ENABLED, false),
+      mentorshipSystem: parseBooleanEnv(env.MENTORSHIP_SYSTEM_ENABLED, true),
       publicMentorBrowsing: parseBooleanEnv(env.MENTORSHIP_PUBLIC_MENTOR_BROWSING_ENABLED, false),
-      mentorshipRequests: parseBooleanEnv(env.MENTORSHIP_REQUESTS_ENABLED, false),
+      mentorshipRequests: parseBooleanEnv(env.MENTORSHIP_REQUESTS_ENABLED, true),
       mentorApplications: parseBooleanEnv(env.MENTORSHIP_MENTOR_APPLICATIONS_ENABLED, false),
-      pilotOnly: parseBooleanEnv(env.MENTORSHIP_PILOT_ONLY, true),
+      pilotOnly: parseBooleanEnv(env.MENTORSHIP_PILOT_ONLY, false),
     },
   };
 }
