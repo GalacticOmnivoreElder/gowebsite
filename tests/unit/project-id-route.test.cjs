@@ -4,9 +4,11 @@ const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs");
 
 const projectUtils = loadSourceModule("src/lib/project-utils.js", [
+  "APPLICATION_ACCESS_OPTIONS",
   "canEditProject",
   "canViewProject",
   "COMPENSATION_TYPES",
+  "normalizeApplicationAccess",
   "OWNER_MANAGED_STATUSES",
   "PROJECT_STATUSES",
   "PROJECT_TYPES",
@@ -213,6 +215,7 @@ test("public project team responses do not expose member email addresses", async
   const body = plain(response.body);
 
   assert.equal(response.status, 200);
+  assert.equal(body.applicationAccess, "members_only");
   assert.equal(body.ownerDetails.email, undefined);
   assert.equal(body.teamMemberDetails[0].email, undefined);
   assert.doesNotMatch(JSON.stringify(body), /private\.example/);
@@ -275,6 +278,44 @@ test("project owners cannot move projects into admin-only statuses", async () =>
     error:
       "Only platform administrators can change project status. Contact support to request a status update.",
   });
+});
+
+test("project owner can choose who may apply and legacy projects default to members only", async () => {
+  const route = loadRoute({
+    seed: { projects: { "project-1": existingProject() } },
+    user: { uid: "owner-1" },
+  });
+
+  const response = await route.PUT(
+    createRequest({ jsonBody: { applicationAccess: "all_signed_in_users" } }),
+    { params: { id: "project-1" } }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.applicationAccess, "all_signed_in_users");
+  assert.equal(
+    route.adminDb.docs.projects["project-1"].applicationAccess,
+    "all_signed_in_users"
+  );
+});
+
+test("project admins cannot change creator-controlled application access", async () => {
+  const route = loadRoute({
+    seed: {
+      projects: {
+        "project-1": existingProject({ admins: ["owner-1", "admin-1"] }),
+      },
+    },
+    user: { uid: "admin-1" },
+  });
+
+  const response = await route.PUT(
+    createRequest({ jsonBody: { applicationAccess: "all_signed_in_users" } }),
+    { params: { id: "project-1" } }
+  );
+
+  assert.equal(response.status, 403);
+  assert.match(response.body.error, /project creator/i);
 });
 
 test("project owners cannot submit or revert project status", async () => {

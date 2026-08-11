@@ -39,6 +39,11 @@ export const REQUIRED_ROLES = [
 ];
 
 export const VISIBILITY_OPTIONS = ["Public", "Private", "Invite Only"];
+export const APPLICATION_ACCESS_OPTIONS = [
+  "members_only",
+  "all_signed_in_users",
+];
+export const DEFAULT_APPLICATION_ACCESS = "members_only";
 export const PROJECT_STATUSES = [
   "draft",
   "pending",
@@ -74,6 +79,21 @@ export function isProjectMember(project, user) {
 export function isInvitedToProject(project, user) {
   if (!user?.uid || !project) return false;
   return project.invitedUsers?.includes(user.uid);
+}
+
+export function normalizeApplicationAccess(value) {
+  return APPLICATION_ACCESS_OPTIONS.includes(value)
+    ? value
+    : DEFAULT_APPLICATION_ACCESS;
+}
+
+export function canApplyToProject(project, user) {
+  if (!project || !user?.uid) return false;
+  if (isPlatformAdmin(user)) return true;
+  if (normalizeApplicationAccess(project.applicationAccess) === "all_signed_in_users") {
+    return true;
+  }
+  return user.activeMember === true;
 }
 
 export function canViewProject(project, user) {

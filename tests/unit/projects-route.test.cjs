@@ -31,9 +31,12 @@ function deterministicSourceId(userId, key = DEFAULT_IDEMPOTENCY_KEY) {
 }
 
 const projectUtils = loadSourceModule("src/lib/project-utils.js", [
+  "APPLICATION_ACCESS_OPTIONS",
   "canViewProject",
   "COMPENSATION_TYPES",
+  "DEFAULT_APPLICATION_ACCESS",
   "filterAndSortProjectsForDiscovery",
+  "normalizeApplicationAccess",
   "normalizeProjectDiscoveryStatus",
   "PROJECT_DISCOVERY_SORT_OPTIONS",
   "PROJECT_STATUSES",
@@ -259,6 +262,16 @@ test("project creation validates required fields and enum values", async () => {
   );
   assert.equal(response.status, 400);
   assert.deepEqual(plain(response.body), { error: "requiredRoles contains invalid values" });
+
+  response = await route.POST(
+    createRequest({
+      jsonBody: validProject({ applicationAccess: "public_internet" }),
+    })
+  );
+  assert.equal(response.status, 400);
+  assert.deepEqual(plain(response.body), {
+    error: "Invalid application access option",
+  });
 });
 
 test("project creation prevents using someone else's source project", async () => {
@@ -299,6 +312,7 @@ test("project creation writes a draft project, source project, and user project 
     deterministicProjectId("company-1")
   );
   assert.equal(response.body.status, "draft");
+  assert.equal(response.body.applicationAccess, "members_only");
   assert.equal(response.body.owner, "company-1");
   assert.equal(response.body.admins[0], "company-1");
   assert.equal(response.body.teamMembers[0], "company-1");
@@ -316,6 +330,7 @@ test("project creation writes a draft project, source project, and user project 
 
   assert.equal(sourceSet.data.name, "New Game");
   assert.equal(projectSet.data.title, "Puzzle Prototype");
+  assert.equal(projectSet.data.applicationAccess, "members_only");
   assert.equal(
     projectSet.data.sourceProject,
     deterministicSourceId("company-1")

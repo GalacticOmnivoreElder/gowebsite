@@ -53,6 +53,7 @@ import {
 } from "lucide-react";
 import UserLink from "@/components/ui/UserLink";
 import { formatBudget, hasProjectBudget } from "@/utils/formatBudget";
+import { normalizeApplicationAccess } from "@/lib/project-utils";
 
 const UserCard = ({ user, role, onRemove }) => {
   return (
@@ -168,6 +169,10 @@ const ProjectDetailsPage = observer(() => {
 
   const projectId = params.id;
   const userId = MobxStore.user?.uid;
+  const applicationAccess = normalizeApplicationAccess(
+    project?.applicationAccess
+  );
+  const acceptsFreeApplicants = applicationAccess === "all_signed_in_users";
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -439,10 +444,14 @@ const ProjectDetailsPage = observer(() => {
 
     setCheckingApplicationAccess(true);
     try {
-      if (!MobxStore.hasActiveSubscription) {
+      if (
+        !acceptsFreeApplicants &&
+        !MobxStore.hasActiveSubscription &&
+        !MobxStore.isAdmin
+      ) {
         const permissions = await MobxStore.checkPermissions(true);
 
-        if (!MobxStore.hasActiveSubscription) {
+        if (!MobxStore.hasActiveSubscription && !MobxStore.isAdmin) {
           if (!permissions) {
             toast({
               title: "Could not verify membership",
@@ -996,7 +1005,10 @@ const ProjectDetailsPage = observer(() => {
                       </h3>
                       <p className="text-muted-foreground">
                         Review the brief and terms. Apply if the role fits your
-                        skills and availability.
+                        skills and availability. This project accepts applications
+                        from {acceptsFreeApplicants
+                          ? "all signed-in users, including free users"
+                          : "active GO members"}.
                       </p>
                     </div>
                     <Button
@@ -1008,7 +1020,7 @@ const ProjectDetailsPage = observer(() => {
                       {checkingApplicationAccess ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Checking membership
+                          Checking application access
                         </>
                       ) : MobxStore.user ? (
                         <>
@@ -1261,7 +1273,10 @@ const ProjectDetailsPage = observer(() => {
               <DialogTitle>Apply to {project.title}</DialogTitle>
               <DialogDescription>
                 You are applying to join this project with your profile. The
-                project owner and admins will be notified when you apply.
+                project owner and admins will be notified when you apply. This
+                project accepts applications from {acceptsFreeApplicants
+                  ? "all signed-in users, including free users"
+                  : "active GO members"}.
               </DialogDescription>
             </DialogHeader>
 

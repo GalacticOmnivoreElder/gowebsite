@@ -3,9 +3,11 @@ import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import * as admin from "firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
 import {
+  APPLICATION_ACCESS_OPTIONS,
   canEditProject,
   canViewProject,
   COMPENSATION_TYPES,
+  normalizeApplicationAccess,
   PROJECT_STATUSES,
   PROJECT_TYPES,
   REQUIRED_ROLES,
@@ -183,6 +185,9 @@ export async function GET(request, { params }) {
     const project = {
       id: projectDoc.id,
       ...safeProjectData,
+      applicationAccess: normalizeApplicationAccess(
+        projectData.applicationAccess
+      ),
       createdAt: serializeFirestoreDate(projectData.createdAt),
       updatedAt: serializeFirestoreDate(projectData.updatedAt),
       ownerDetails,
@@ -243,6 +248,7 @@ export async function PUT(request, { params }) {
       "type",
       "description",
       "visibility",
+      "applicationAccess",
       "status",
       "goal",
       "duration",
@@ -301,6 +307,30 @@ export async function PUT(request, { params }) {
       return NextResponse.json(
         { error: "categoryTags must include non-empty strings" },
         { status: 400 }
+      );
+    }
+
+    if (
+      filteredUpdateData.applicationAccess !== undefined &&
+      !APPLICATION_ACCESS_OPTIONS.includes(filteredUpdateData.applicationAccess)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid application access option" },
+        { status: 400 }
+      );
+    }
+
+    if (
+      filteredUpdateData.applicationAccess !== undefined &&
+      existingProject.owner !== user.uid &&
+      !isPlatformAdmin
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Only the project creator or a platform administrator can change who may apply.",
+        },
+        { status: 403 }
       );
     }
 

@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
@@ -39,4 +40,21 @@ test("project creation admits verified creators", () => {
     }),
     "/project/create"
   );
+});
+
+test("project forms expose creator-controlled application access", () => {
+  const createPage = fs.readFileSync("src/app/project/create/page.js", "utf8");
+  const editPage = fs.readFileSync(
+    "src/app/project/[id]/edit/page.js",
+    "utf8"
+  );
+  const detailPage = fs.readFileSync(
+    "src/app/project/[id]/page.js",
+    "utf8"
+  );
+
+  assert.match(createPage, /name="applicationAccess"/);
+  assert.match(createPage, /all signed-in users, including free users/i);
+  assert.match(editPage, /Only the project creator or a platform administrator/);
+  assert.match(detailPage, /acceptsFreeApplicants/);
 });

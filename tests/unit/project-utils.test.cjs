@@ -4,22 +4,26 @@ const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
 const {
+  canApplyToProject,
   canEditProject,
   canViewProject,
   filterAndSortProjectsForDiscovery,
   isInvitedToProject,
   isPlatformAdmin,
   isProjectMember,
+  normalizeApplicationAccess,
   normalizeProjectDiscoveryStatus,
   PROJECT_DISCOVERY_SORT_OPTIONS,
   validateArrayValues,
 } = loadSourceModule("src/lib/project-utils.js", [
+  "canApplyToProject",
   "canEditProject",
   "canViewProject",
   "filterAndSortProjectsForDiscovery",
   "isInvitedToProject",
   "isPlatformAdmin",
   "isProjectMember",
+  "normalizeApplicationAccess",
   "normalizeProjectDiscoveryStatus",
   "PROJECT_DISCOVERY_SORT_OPTIONS",
   "validateArrayValues",
@@ -88,6 +92,28 @@ test("edit permissions allow platform admins, owners, and project admins", () =>
   assert.equal(canEditProject(project(), owner), true);
   assert.equal(canEditProject(project(), projectAdmin), true);
   assert.equal(canEditProject(project(), admin), true);
+});
+
+test("application access defaults to members and allows free users only when selected", () => {
+  assert.equal(normalizeApplicationAccess(undefined), "members_only");
+  assert.equal(normalizeApplicationAccess("unknown"), "members_only");
+  assert.equal(
+    canApplyToProject(project(), { uid: "free", activeMember: false }),
+    false
+  );
+  assert.equal(
+    canApplyToProject(
+      project({ applicationAccess: "all_signed_in_users" }),
+      { uid: "free", activeMember: false }
+    ),
+    true
+  );
+  assert.equal(
+    canApplyToProject(project(), { uid: "member", activeMember: true }),
+    true
+  );
+  assert.equal(canApplyToProject(project(), admin), true);
+  assert.equal(canApplyToProject(project(), null), false);
 });
 
 test("validateArrayValues rejects empty, non-array, and unknown values", () => {

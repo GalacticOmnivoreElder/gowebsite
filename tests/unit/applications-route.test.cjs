@@ -3,7 +3,10 @@ const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs");
 
-const { canViewProject } = loadSourceModule("src/lib/project-utils.js", ["canViewProject"]);
+const { canApplyToProject, canViewProject } = loadSourceModule(
+  "src/lib/project-utils.js",
+  ["canApplyToProject", "canViewProject"]
+);
 
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
@@ -116,6 +119,7 @@ function loadRoute({ seed = {}, user = null } = {}) {
           }),
         },
         adminDb,
+        canApplyToProject,
         canViewProject,
         enqueueEmailEvent: async (event) => {
           emailEvents.push(event);
@@ -148,16 +152,33 @@ function project(overrides = {}) {
   };
 }
 
-test("application creation requires auth and active membership", async () => {
+test("application creation requires auth and honors the project application access policy", async () => {
   let route = loadRoute({ user: null });
   let response = await route.POST(createRequest({ jsonBody: { projectId: "project-1" } }));
   assert.equal(response.status, 401);
   assert.deepEqual(plain(response.body), { error: "Authentication required" });
 
-  route = loadRoute({ user: { activeMember: false, admin: false, uid: "member-1" } });
+  route = loadRoute({
+    seed: { projects: { "project-1": project() } },
+    user: { activeMember: false, admin: false, uid: "free-1" },
+  });
   response = await route.POST(createRequest({ jsonBody: { projectId: "project-1" } }));
   assert.equal(response.status, 403);
   assert.equal(response.body.code, "membership_required");
+
+  route = loadRoute({
+    seed: {
+      projects: {
+        "project-1": project({ applicationAccess: "all_signed_in_users" }),
+      },
+    },
+    user: { activeMember: false, email: "free@example.com", uid: "free-1" },
+  });
+  response = await route.POST(
+    createRequest({ jsonBody: { projectId: "project-1" } })
+  );
+  assert.equal(response.status, 200);
+  assert.equal(response.body.userId, "free-1");
 });
 
 test("application creation validates project existence and hiring state", async () => {

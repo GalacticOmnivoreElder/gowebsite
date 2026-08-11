@@ -4,8 +4,11 @@ import { adminDb } from "@/lib/firebase-admin";
 import * as admin from "firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
 import {
+  APPLICATION_ACCESS_OPTIONS,
   COMPENSATION_TYPES,
+  DEFAULT_APPLICATION_ACCESS,
   filterAndSortProjectsForDiscovery,
+  normalizeApplicationAccess,
   normalizeProjectDiscoveryStatus,
   PROJECT_TYPES,
   PUBLIC_PROJECT_STATUSES,
@@ -248,6 +251,16 @@ export async function POST(request) {
       );
     }
 
+    if (
+      projectData.applicationAccess !== undefined &&
+      !APPLICATION_ACCESS_OPTIONS.includes(projectData.applicationAccess)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid application access option" },
+        { status: 400 }
+      );
+    }
+
     if (!COMPENSATION_TYPES.includes(projectData.compensationType)) {
       return NextResponse.json(
         { error: "Invalid compensation type" },
@@ -400,6 +413,9 @@ export async function POST(request) {
       type: projectData.type,
       description: projectData.description,
       visibility: projectData.visibility,
+      applicationAccess: normalizeApplicationAccess(
+        projectData.applicationAccess || DEFAULT_APPLICATION_ACCESS
+      ),
       goal: projectData.goal,
       duration,
       ...(hasBudget ? { budget } : {}),

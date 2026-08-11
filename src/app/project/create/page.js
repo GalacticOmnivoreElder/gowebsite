@@ -14,6 +14,10 @@ import {
   normalizeOptionalProjectNumber,
 } from "@/lib/project-form-utils";
 import { CREATOR_MEMBERSHIP_URL } from "@/lib/project-access";
+import {
+  APPLICATION_ACCESS_OPTIONS,
+  DEFAULT_APPLICATION_ACCESS,
+} from "@/lib/project-utils";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,6 +87,10 @@ const REQUIRED_ROLES = [
 ];
 
 const VISIBILITY_OPTIONS = ["Public", "Private", "Invite Only"];
+const APPLICATION_ACCESS_LABELS = {
+  members_only: "Active GO members only",
+  all_signed_in_users: "All signed-in users, including free users",
+};
 
 const IMAGE_URL_PATTERN =
   /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?.*)?$/i;
@@ -122,6 +130,9 @@ const projectSchema = z
       .min(10, "Description must be at least 10 characters"),
     visibility: z.enum(VISIBILITY_OPTIONS, {
       required_error: "Visibility is required",
+    }),
+    applicationAccess: z.enum(APPLICATION_ACCESS_OPTIONS, {
+      required_error: "Choose who may apply",
     }),
     goal: z.string().min(10, "Goal must be at least 10 characters"),
     duration: z
@@ -201,6 +212,7 @@ const CreateProjectContent = observer(() => {
       type: "",
       description: "",
       visibility: "Public",
+      applicationAccess: DEFAULT_APPLICATION_ACCESS,
       goal: "",
       duration: 90,
       budget: "",
@@ -787,6 +799,38 @@ const CreateProjectContent = observer(() => {
           {errors.visibility && (
             <p className="text-sm text-red-500 mt-1">
               {errors.visibility.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <Label>Who can apply? *</Label>
+          <Controller
+            name="applicationAccess"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger
+                  className={errors.applicationAccess ? "border-red-500" : ""}
+                >
+                  <SelectValue placeholder="Choose applicant access" />
+                </SelectTrigger>
+                <SelectContent>
+                  {APPLICATION_ACCESS_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {APPLICATION_ACCESS_LABELS[option]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          <p className="mt-1 text-sm text-muted-foreground">
+            Free users can apply only when you choose the all signed-in users option.
+          </p>
+          {errors.applicationAccess && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.applicationAccess.message}
             </p>
           )}
         </div>

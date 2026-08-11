@@ -26,6 +26,10 @@ import { toast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { normalizeOptionalProjectNumber } from "@/lib/project-form-utils";
+import {
+  APPLICATION_ACCESS_OPTIONS,
+  DEFAULT_APPLICATION_ACCESS,
+} from "@/lib/project-utils";
 
 const optionalProjectNumber = (schema) =>
   z.preprocess(normalizeOptionalProjectNumber, schema.optional());
@@ -45,6 +49,7 @@ const projectSchema = z.object({
     "Other",
   ]),
   visibility: z.enum(["Public", "Private", "Invite Only"]),
+  applicationAccess: z.enum(APPLICATION_ACCESS_OPTIONS),
   status: z.enum([
     "draft",
     "pending",
@@ -123,6 +128,11 @@ const ROLE_OPTIONS = [
   "Other",
 ];
 
+const APPLICATION_ACCESS_LABELS = {
+  members_only: "Active GO members only",
+  all_signed_in_users: "All signed-in users, including free users",
+};
+
 const EditProjectPage = observer(() => {
   const router = useRouter();
   const params = useParams();
@@ -134,6 +144,7 @@ const EditProjectPage = observer(() => {
     categoryTags: [],
     type: "Game Development",
     visibility: "Public",
+    applicationAccess: DEFAULT_APPLICATION_ACCESS,
     status: "draft",
     thumbnail: "",
     goal: "",
@@ -148,6 +159,9 @@ const EditProjectPage = observer(() => {
   const [saving, setSaving] = useState(false);
   const [project, setProject] = useState(null);
   const [canEdit, setCanEdit] = useState(false);
+  const [isProjectOwner, setIsProjectOwner] = useState(false);
+
+  const canManageApplicationAccess = MobxStore.isAdmin || isProjectOwner;
 
   // Load project data
   useEffect(() => {
@@ -261,6 +275,7 @@ const EditProjectPage = observer(() => {
 
           console.log("✅ [EditProject] Access granted - user can edit");
           setCanEdit(true);
+          setIsProjectOwner(isOwner);
 
           // Populate form with existing data
           setFormData({
@@ -269,6 +284,8 @@ const EditProjectPage = observer(() => {
             categoryTags: projectData.categoryTags || [],
             type: projectData.type || "Game Development",
             visibility: projectData.visibility || "Public",
+            applicationAccess:
+              projectData.applicationAccess || DEFAULT_APPLICATION_ACCESS,
             status: projectData.status || "draft",
             thumbnail: projectData.thumbnail || "",
             goal: projectData.goal || "",
@@ -342,6 +359,9 @@ const EditProjectPage = observer(() => {
       };
       if (!MobxStore.isAdmin) {
         delete requestBody.status;
+      }
+      if (!canManageApplicationAccess) {
+        delete requestBody.applicationAccess;
       }
 
       // Update project
@@ -768,6 +788,42 @@ const EditProjectPage = observer(() => {
                     <SelectItem value="Hybrid">Hybrid</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <Label>Who can apply?</Label>
+                {canManageApplicationAccess ? (
+                  <Select
+                    value={formData.applicationAccess}
+                    onValueChange={(value) =>
+                      handleInputChange("applicationAccess", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {APPLICATION_ACCESS_OPTIONS.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {APPLICATION_ACCESS_LABELS[option]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="mt-2 rounded-md border border-border bg-muted/35 p-3">
+                    <Badge variant="secondary">
+                      {APPLICATION_ACCESS_LABELS[formData.applicationAccess]}
+                    </Badge>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Only the project creator or a platform administrator can
+                      change who may apply.
+                    </p>
+                  </div>
+                )}
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Free users can apply only when all signed-in users are allowed.
+                </p>
               </div>
             </CardContent>
           </Card>

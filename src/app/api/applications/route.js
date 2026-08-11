@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
-import { canViewProject } from "@/lib/project-utils";
+import { canApplyToProject, canViewProject } from "@/lib/project-utils";
 import {
   enqueueEmailEvent,
   enqueueEmailEventForUsers,
@@ -86,19 +86,6 @@ export async function POST(request) {
       );
     }
 
-    // Applying to projects is a membership benefit - require an active
-    // subscription (any tier) or platform admin.
-    if (!user.activeMember && !user.admin) {
-      return NextResponse.json(
-        {
-          error:
-            "An active membership is required to apply to projects. Subscribe to unlock applications.",
-          code: "membership_required",
-        },
-        { status: 403 }
-      );
-    }
-
     const { projectId, roleAppliedFor, motivation, availability } =
       await request.json();
 
@@ -128,6 +115,17 @@ export async function POST(request) {
       return NextResponse.json(
         { error: "This project is not currently accepting applications" },
         { status: 400 }
+      );
+    }
+
+    if (!canApplyToProject(projectData, user)) {
+      return NextResponse.json(
+        {
+          error:
+            "This project accepts applications from active GO members only. Subscribe to apply.",
+          code: "membership_required",
+        },
+        { status: 403 }
       );
     }
 

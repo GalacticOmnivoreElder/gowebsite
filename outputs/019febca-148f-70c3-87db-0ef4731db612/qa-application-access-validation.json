@@ -1,0 +1,10 @@
+{
+  "input": "outputs/019febca-148f-70c3-87db-0ef4731db612/Website Test Suite -  V 1.8 TEST.csv",
+  "previousTestCount": 528,
+  "addedTestCount": 10,
+  "finalTestCount": 538,
+  "updatedTestId": "GO-MAN-050",
+  "firstAddedTestId": "GO-MAN-529",
+  "lastTestId": "GO-MAN-538",
+  "output": "outputs/019febca-148f-70c3-87db-0ef4731db612/Website Test Suite -  V 1.9 TEST.csv"
+}
