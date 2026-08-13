@@ -241,3 +241,15 @@ test("the public Projects status filter does not offer pending approval", () => 
   assert.doesNotMatch(projectsPage, />\s*Pending approval\s*</);
   assert.match(projectsPage, /SelectItem value="all">All statuses/);
 });
+
+test("project filters collapse behind a mobile-only Filters toggle", () => {
+  const projectsPage = fs.readFileSync("src/app/projects/page.js", "utf8");
+
+  assert.match(projectsPage, /aria-controls="project-filters"/);
+  assert.match(projectsPage, /aria-expanded=\{showMobileFilters\}/);
+  assert.match(projectsPage, /className="md:hidden shrink-0"/);
+  assert.match(projectsPage, />\s*Filters\s*/);
+  assert.match(projectsPage, /id="project-filters"/);
+  assert.match(projectsPage, /showMobileFilters \? "grid" : "hidden/);
+  assert.match(projectsPage, /md:grid grid-cols-1 md:grid-cols-2/);
+});

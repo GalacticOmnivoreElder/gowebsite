@@ -198,6 +198,7 @@ const ProjectCard = ({ project }) => {
 
 const ProjectsPage = observer(() => {
   const router = useRouter();
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [localFilters, setLocalFilters] = useState({
     search: "",
     category: "all",
@@ -278,12 +279,39 @@ const ProjectsPage = observer(() => {
     "Other",
   ];
 
+  const activeFilterCount = [
+    localFilters.search,
+    localFilters.category !== "all" ? localFilters.category : "",
+    localFilters.type !== "all" ? localFilters.type : "",
+    localFilters.status !== "all" ? localFilters.status : "",
+    localFilters.sortBy !== "created_desc" ? localFilters.sortBy : "",
+  ].filter(Boolean).length;
+
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-bold mb-2">Projects</h1>
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <h1 className="text-4xl font-bold">Projects</h1>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="md:hidden shrink-0"
+              aria-controls="project-filters"
+              aria-expanded={showMobileFilters}
+              onClick={() => setShowMobileFilters((visible) => !visible)}
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-[10px] leading-none text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              )}
+            </Button>
+          </div>
           <p className="text-xl text-muted-foreground">
             Review approved project briefs, open roles, terms, and current status.
           </p>
@@ -298,7 +326,11 @@ const ProjectsPage = observer(() => {
       </div>
 
       {/* Filters and Search */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+      <div
+        id="project-filters"
+        aria-label="Project filters"
+        className={`${showMobileFilters ? "grid" : "hidden"} md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8`}
+      >
         <div className="relative lg:col-span-2">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
