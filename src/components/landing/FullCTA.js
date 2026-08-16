@@ -1,5 +1,8 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { trackEvent } from "@/lib/analytics/client";
 
 const DISCORD_INVITE_URL = "https://discord.gg/ZbSShxu6K4";
 
@@ -39,6 +42,12 @@ export const FullCTA = () => {
               href={DISCORD_INVITE_URL}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                trackEvent("external_link_clicked", {
+                  destination_category: "discord",
+                  link_context: "final_cta",
+                })
+              }
             >
               Join Our Discord
             </a>
@@ -49,7 +58,18 @@ export const FullCTA = () => {
             variant="secondary"
             className="min-h-11 w-full border border-white/20 bg-white text-neutral-950 hover:bg-neutral-200 focus-visible:ring-white focus-visible:ring-offset-[#090809] sm:w-auto"
           >
-            <Link href="/membership">Review Membership</Link>
+            <Link
+              href="/membership"
+              onClick={() =>
+                trackEvent("navigation_clicked", {
+                  cta_id: "membership_join",
+                  destination_path: "/membership",
+                  navigation_area: "final_cta",
+                })
+              }
+            >
+              Review Membership
+            </Link>
           </Button>
           <Button
             asChild
@@ -57,7 +77,18 @@ export const FullCTA = () => {
             variant="outline"
             className="min-h-11 w-full border-white/45 bg-transparent text-white hover:bg-white/10 hover:text-white focus-visible:ring-white focus-visible:ring-offset-[#090809] sm:w-auto"
           >
-            <Link href="/projects">Explore Projects</Link>
+            <Link
+              href="/projects"
+              onClick={() =>
+                trackEvent("navigation_clicked", {
+                  cta_id: "hero_explore_projects",
+                  destination_path: "/projects",
+                  navigation_area: "final_cta",
+                })
+              }
+            >
+              Explore Projects
+            </Link>
           </Button>
         </div>
       </div>

@@ -19,6 +19,7 @@
     "test:visual:hero": "playwright test --config=playwright.hero.config.js",
     "test:visual:marquee": "playwright test --config=playwright.marquee.config.js",
     "test:visual:newsletter": "playwright test --config=playwright.newsletter.config.js",
+    "test:analytics": "playwright test --config=playwright.analytics.config.js",
     "test:visual:all": "npm run test:visual && npm run test:visual:about && npm run test:visual:hero && npm run test:visual:marquee && npm run test:visual:newsletter",
     "test:all": "npm run lint && npm run test:unit && npm run build"
   },

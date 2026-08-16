@@ -39,6 +39,7 @@ import {
 import { formatBudget, hasProjectBudget } from "@/utils/formatBudget";
 import { getProjectCreationDestination } from "@/lib/project-access";
 import { toast } from "@/components/ui/use-toast";
+import { trackEvent } from "@/lib/analytics/client";
 
 const ProjectCard = ({ project }) => {
   const router = useRouter();
@@ -83,7 +84,15 @@ const ProjectCard = ({ project }) => {
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer">
-      <Link href={`/project/${project.id}`}>
+      <Link
+        href={`/project/${project.id}`}
+        onClick={() =>
+          trackEvent("project_viewed", {
+            project_visibility: project.visibility,
+            project_type: project.type,
+          })
+        }
+      >
         <div className="relative aspect-video overflow-hidden rounded-t-lg">
           <Image
             src={project.thumbnail || "/placeholder.svg"}

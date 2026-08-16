@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { observer } from "mobx-react-lite";
 import MobxStore from "@/mobx";
@@ -34,6 +34,7 @@ import {
   MAX_PROFILE_ABOUT_WORDS,
   MAX_PROFILE_BIO_LENGTH,
 } from "@/utils/validateProfile";
+import { trackEvent } from "@/lib/analytics/client";
 
 const STEP_TITLES = {
   identity: "Your profile",
@@ -73,12 +74,17 @@ const OnboardingContent = observer(() => {
   const currentUserId = MobxStore.user?.uid;
 
   const step = ONBOARDING_STEPS[stepIndex];
+  const analyticsStarted = useRef(false);
 
   useEffect(() => {
     if (!authReady) return;
     if (!currentUserId) {
       router.replace("/login?redirect=/onboarding");
       return;
+    }
+    if (!analyticsStarted.current) {
+      analyticsStarted.current = true;
+      trackEvent("profile_setup_started", { entry_point: "onboarding" });
     }
     (async () => {
       try {
@@ -181,6 +187,11 @@ const OnboardingContent = observer(() => {
       await saveStep(step);
       await authedFetch("/api/onboarding", "PUT");
       await MobxStore.checkAuth?.();
+      trackEvent("profile_setup_completed", { entry_point: "onboarding" });
+      trackEvent("form_completed", {
+        form_id: "onboarding",
+        page_path: "/onboarding",
+      });
       router.push("/profile/cv?welcome=1");
     } catch (e) {
       setError(e.message);

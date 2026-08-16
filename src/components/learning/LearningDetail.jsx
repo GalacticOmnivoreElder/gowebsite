@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, Clock, ExternalLink, Loader2, MapPin, Users } from "lucide-react";
 import { auth } from "@/firebase";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { trackEvent } from "@/lib/analytics/client";
 
 function QuestionField({ question, value, onChange }) {
   if (question.type === "multiple_choice") {
@@ -29,6 +30,7 @@ export function LearningDetail({ slug }) {
   const [submitting, setSubmitting] = useState(false);
   const [answers, setAnswers] = useState({});
   const [message, setMessage] = useState("");
+  const viewTracked = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -38,6 +40,21 @@ export function LearningDetail({ slug }) {
     const response = await fetch(`/api/learning-items/${encodeURIComponent(slug)}`, { headers, cache: "no-store" });
     const result = await response.json().catch(() => ({}));
     setItem(response.ok ? result : { error: result.error || "Learning item unavailable" });
+    if (response.ok && !viewTracked.current) {
+      viewTracked.current = true;
+      const contentType = result.learningType || "learning_item";
+      trackEvent("learning_content_viewed", {
+        content_type: contentType,
+        content_id: result.slug || slug,
+      });
+      const viewEvent =
+        contentType === "course"
+          ? "course_viewed"
+          : contentType === "workshop"
+          ? "workshop_viewed"
+          : null;
+      if (viewEvent) trackEvent(viewEvent, { content_id: result.slug || slug });
+    }
     setLoading(false);
   }, [slug]);
 
@@ -49,8 +66,18 @@ export function LearningDetail({ slug }) {
   const request = async (method, body) => {
     const user = auth.currentUser;
     if (!user) {
+      trackEvent("form_started", {
+        form_id: "learning_enrollment",
+        page_path: `/education/${slug}`,
+      });
       window.location.assign(`/login?redirect=${encodeURIComponent(`/education/${slug}?enroll=1`)}`);
       return;
+    }
+    if (method === "POST") {
+      trackEvent("form_started", {
+        form_id: "learning_enrollment",
+        page_path: `/education/${slug}`,
+      });
     }
     setSubmitting(true);
     setMessage("");
@@ -62,6 +89,12 @@ export function LearningDetail({ slug }) {
     });
     const result = await response.json().catch(() => ({}));
     setMessage(response.ok ? "Your learning enrollment has been updated." : result.error || "The enrollment could not be updated.");
+    if (response.ok && method === "POST") {
+      trackEvent("form_completed", {
+        form_id: "learning_enrollment",
+        page_path: `/education/${slug}`,
+      });
+    }
     setSubmitting(false);
     if (response.ok) await load();
   };

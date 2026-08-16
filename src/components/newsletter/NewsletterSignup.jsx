@@ -8,6 +8,7 @@ import {
   NEWSLETTER_FORM_MESSAGES,
   validateNewsletterSubmission,
 } from "@/lib/newsletter-client";
+import { trackEvent } from "@/lib/analytics/client";
 
 const copyByVariant = {
   section: {
@@ -53,12 +54,21 @@ export function NewsletterSignup({
     setSubmissionError("");
 
     if (validation.emailError || validation.consentError) {
+      trackEvent("form_validation_error", {
+        form_id: "newsletter",
+        field_id: validation.emailError ? "email" : "consent",
+        error_type: "invalid_field",
+      });
       setState("idle");
       return;
     }
 
     inFlight.current = true;
     setState("loading");
+    trackEvent("form_started", {
+      form_id: "newsletter",
+      page_path: typeof window !== "undefined" ? window.location.pathname : "/",
+    });
 
     try {
       const response = await fetch("/api/newsletter/subscribe", {
@@ -78,6 +88,10 @@ export function NewsletterSignup({
       }
 
       setState("success");
+      trackEvent("form_completed", {
+        form_id: "newsletter",
+        page_path: typeof window !== "undefined" ? window.location.pathname : "/",
+      });
       setEmail("");
       setConsent(false);
     } catch {
@@ -130,6 +144,7 @@ export function NewsletterSignup({
         </div>
       ) : (
         <form
+          data-clarity-mask="true"
           onSubmit={submit}
           className={`mt-5 ${isFooter ? "max-w-2xl" : "mx-auto max-w-2xl"}`}
           noValidate
@@ -142,6 +157,7 @@ export function NewsletterSignup({
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="min-w-0 flex-1">
               <Input
+                data-clarity-mask="true"
                 id={emailId}
                 name="email"
                 type="email"

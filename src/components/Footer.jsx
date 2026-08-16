@@ -4,6 +4,8 @@ import { Facebook, Instagram, Linkedin, Youtube, Twitch } from "lucide-react";
 import Image from "next/image";
 import discordImg from "@/assets/discord.png";
 import { NewsletterSignup } from "@/components/newsletter/NewsletterSignup";
+import { CookieSettingsButton } from "@/components/cookies/CookieConsent";
+import { trackEvent } from "@/lib/analytics/client";
 
 // Custom X (Twitter) icon component
 const TwitterIcon = () => (
@@ -97,6 +99,12 @@ export default function Footer() {
                   href={social.src}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() =>
+                    trackEvent("external_link_clicked", {
+                      destination_category: social.name.toLowerCase(),
+                      link_context: "footer_social",
+                    })
+                  }
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={`Link to ${social.name}`}
                 >
@@ -204,18 +212,9 @@ export default function Footer() {
             >
               Cookie Policy
             </Link>
+            <CookieSettingsButton />
           </div>
         </div>
-        {/* disabled-feature */}
-        {/* <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            MobxStore.cookieSettingsOpen = true;
-          }}
-        >
-          Manage Cookies
-        </Button> */}
       </div>
     </footer>
   );

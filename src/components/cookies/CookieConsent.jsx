@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { observer } from "mobx-react";
-import MobxStore from "@/mobx";
+import { useAnalyticsConsent } from "@/components/analytics/AnalyticsProvider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,8 +14,15 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
-const CookieConsent = observer(() => {
+const CookieConsent = () => {
   const [open, setOpen] = useState(false);
+  const {
+    consent,
+    hydrated,
+    saveConsent,
+    settingsOpen,
+    closeSettings,
+  } = useAnalyticsConsent();
   const [preferences, setPreferences] = useState({
     essential: true,
     functional: false,
@@ -25,21 +31,17 @@ const CookieConsent = observer(() => {
 
   // Load existing preferences when dialog opens
   useEffect(() => {
-    if (open && MobxStore.cookieConsent) {
+    if (open && consent) {
       setPreferences({
         essential: true,
-        functional: MobxStore.cookieConsent.functional ?? false,
-        analytics: MobxStore.cookieConsent.analytics ?? false,
+        functional: consent.functional ?? false,
+        analytics: consent.analytics ?? false,
       });
     }
-  }, [open]);
-
-  const saveConsent = (settings) => {
-    MobxStore.setCookieConsent(settings);
-  };
+  }, [open, consent]);
 
   // Show the banner if there's no consent
-  const showBanner = !MobxStore.cookieConsent;
+  const showBanner = hydrated && !consent;
 
   // Always render the Dialog, but only show the banner when needed
   return (
@@ -50,8 +52,8 @@ const CookieConsent = observer(() => {
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex-1">
                 <p className="text-sm">
-                  We use cookies to enhance your experience. By continuing to
-                  visit this site you agree to our use of cookies.{" "}
+                  We use essential cookies to operate GO. Optional analytics
+                  cookies are enabled only if you choose them.{" "}
                   <Link href="/cookies" className="underline">
                     Learn more
                   </Link>
@@ -97,17 +99,18 @@ const CookieConsent = observer(() => {
       )}
 
       <Dialog
-        open={open || MobxStore.cookieSettingsOpen}
+        open={open || settingsOpen}
         onOpenChange={(isOpen) => {
           setOpen(isOpen);
-          MobxStore.cookieSettingsOpen = isOpen;
+          if (!isOpen) closeSettings();
         }}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cookie Preferences</DialogTitle>
             <DialogDescription>
-              Customize your cookie preferences.
+              Essential cookies are always on. Analytics enables Firebase
+              Analytics and Microsoft Clarity on selected public pages.
             </DialogDescription>
           </DialogHeader>
 
@@ -155,6 +158,19 @@ const CookieConsent = observer(() => {
       </Dialog>
     </>
   );
-});
+};
 
 export default CookieConsent;
+
+export function CookieSettingsButton({ className = "" }) {
+  const { openSettings } = useAnalyticsConsent();
+  return (
+    <button
+      type="button"
+      className={`text-sm text-muted-foreground hover:text-foreground transition-colors ${className}`}
+      onClick={openSettings}
+    >
+      Cookie settings
+    </button>
+  );
+}

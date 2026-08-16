@@ -104,6 +104,8 @@ export const metadata = {
 // Create a client component wrapper for ThemeProvider
 import ThemeProviderWrapper from "@/components/ThemeProviderWrapper";
 import { Toaster } from "@/components/ui/toaster";
+import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import CookieConsent from "@/components/cookies/CookieConsent";
 
 export default function RootLayout({ children }) {
   return (
@@ -116,10 +118,12 @@ export default function RootLayout({ children }) {
           }}
         />
         <ThemeProviderWrapper>
-          <ReusableLayout>{children}</ReusableLayout>
-          <Toaster />
+          <AnalyticsProvider>
+            <ReusableLayout>{children}</ReusableLayout>
+            <Toaster />
+            <CookieConsent />
+          </AnalyticsProvider>
         </ThemeProviderWrapper>
-        {/* <CookieConsent /> */}
       </body>
     </html>
   );

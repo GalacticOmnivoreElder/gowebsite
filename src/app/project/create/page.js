@@ -14,6 +14,7 @@ import {
   normalizeOptionalProjectNumber,
 } from "@/lib/project-form-utils";
 import { CREATOR_MEMBERSHIP_URL } from "@/lib/project-access";
+import { trackEvent } from "@/lib/analytics/client";
 import {
   APPLICATION_ACCESS_OPTIONS,
   DEFAULT_APPLICATION_ACCESS,
@@ -191,6 +192,7 @@ const CreateProjectContent = observer(() => {
   const [accessCheckError, setAccessCheckError] = useState("");
   const [accessCheckVersion, setAccessCheckVersion] = useState(0);
   const creationAttemptKey = useRef(null);
+  const formStarted = useRef(false);
 
   const totalSteps = 4;
 
@@ -298,6 +300,14 @@ const CreateProjectContent = observer(() => {
   };
 
   const handleNext = async () => {
+    if (!formStarted.current) {
+      formStarted.current = true;
+      trackEvent("project_creation_started", { entry_point: "projects" });
+      trackEvent("form_started", {
+        form_id: "project_creation",
+        page_path: "/project/create",
+      });
+    }
     const fieldsToValidate = getFieldsForStep(currentStep);
     const isStepValid = await trigger(fieldsToValidate);
 
@@ -416,6 +426,15 @@ const CreateProjectContent = observer(() => {
 
       const newProject = await response.json();
 
+      trackEvent("project_creation_completed", {
+        project_type: formData.type,
+        project_visibility: formData.visibility,
+      });
+      trackEvent("form_completed", {
+        form_id: "project_creation",
+        page_path: "/project/create",
+      });
+
       toast({
         title: "Project created",
         description:
@@ -438,6 +457,11 @@ const CreateProjectContent = observer(() => {
 
   const handleInvalidSubmit = (formErrors) => {
     const firstInvalidField = Object.keys(formErrors)[0];
+    trackEvent("form_validation_error", {
+      form_id: "project_creation",
+      field_id: firstInvalidField || "unknown",
+      error_type: "invalid_field",
+    });
     setCurrentStep(getProjectFormStepForField(firstInvalidField));
     setSubmitError(
       "Please review the highlighted fields before creating the project."

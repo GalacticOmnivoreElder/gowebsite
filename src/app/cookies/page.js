@@ -34,11 +34,12 @@ export default function CookiesPage() {
 
       <h3>Analytics Cookies (Optional)</h3>
       <p>
-        These cookies help us understand how visitors interact with our website:
+        These optional technologies are used only after analytics consent to
+        help us understand how visitors interact with our website:
       </p>
       <ul>
-        <li>Anonymous usage statistics</li>
-        <li>Website performance monitoring</li>
+        <li>Firebase / Google Analytics 4 for page usage, acquisition, events, and funnels</li>
+        <li>Microsoft Clarity for masked session recordings, heatmaps, and UX friction signals on selected public pages</li>
       </ul>
 
       <h2>3. Firebase Authentication Cookies</h2>
@@ -55,7 +56,7 @@ export default function CookiesPage() {
       <h2>4. Managing Your Cookie Preferences</h2>
       <p>You can manage your cookie preferences at any time by:</p>
       <ul>
-        <li>Using the cookie settings in our website footer</li>
+        <li>Using Cookie settings in the website footer</li>
         <li>Adjusting your browser settings</li>
         <li>Contacting our support team</li>
       </ul>

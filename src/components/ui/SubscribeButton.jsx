@@ -9,6 +9,7 @@ import { auth } from "@/firebase";
 import { buildCheckoutAuthUrl } from "@/lib/checkout-navigation";
 import { canChooseMembershipPlan } from "@/lib/membership-ui";
 import { beginSubscriptionConfirmationAttempt } from "@/lib/subscription-confirmation";
+import { trackEvent } from "@/lib/analytics/client";
 
 const SubscribeButton = observer(
   ({
@@ -80,6 +81,11 @@ const SubscribeButton = observer(
     const handleSubscribe = async () => {
       if (!mounted) return;
 
+      trackEvent("membership_tier_selected", {
+        membership_tier: tier,
+        billing_interval: interval,
+      });
+
       if (!useServerCheckout && !checkoutUrl && !productId) {
         if (
           requireAuth &&
@@ -112,6 +118,11 @@ const SubscribeButton = observer(
 
       if (checkoutUrl && !useServerCheckout) {
         setLoading(true);
+        trackEvent("checkout_started", {
+          membership_tier: tier,
+          billing_interval: interval,
+          provider: "polar",
+        });
         beginSubscriptionConfirmationAttempt({
           baselineConfirmationId:
             MobxStore.user?.membershipConfirmationId || null,
@@ -155,6 +166,11 @@ const SubscribeButton = observer(
         // paid members manage upgrades in Polar's portal, so no purchase
         // confirmation marker should exist until Polar records a real change.
         if (data.flow !== "portal") {
+          trackEvent("checkout_started", {
+            membership_tier: tier,
+            billing_interval: interval,
+            provider: "polar",
+          });
           beginSubscriptionConfirmationAttempt({
             baselineConfirmationId:
               MobxStore.user?.membershipConfirmationId || null,

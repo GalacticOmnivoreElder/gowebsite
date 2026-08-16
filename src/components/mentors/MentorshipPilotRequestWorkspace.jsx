@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { trackEvent } from "@/lib/analytics/client";
 
 const initialForm = {
   title: "", goal: "", discipline: "", currentLevel: "beginner", desiredOutcome: "", projectLinks: "",
@@ -25,6 +26,7 @@ export function MentorshipPilotRequestWorkspace() {
   const [access, setAccess] = useState({ status: "checking" });
 
   useEffect(() => {
+    trackEvent("mentorship_viewed", { surface: "mentorship_request" });
     let active = true;
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (!user) {
@@ -46,6 +48,10 @@ export function MentorshipPilotRequestWorkspace() {
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const request = async (mode) => {
+    trackEvent("mentorship_request_started", {
+      flow: "controlled_pilot",
+      entry_point: "matchmaking",
+    });
     setBusy(true); setMessage("");
     try {
       const token = await auth.currentUser?.getIdToken();
@@ -53,6 +59,12 @@ export function MentorshipPilotRequestWorkspace() {
       const response = await fetch("/api/mentorship/pilot/requests", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...form, requestId, mode, languagePreferences: csv(form.languagePreferences), projectLinks: csv(form.projectLinks) }) });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error === "mentorship_membership_required" ? "An active GO membership is required for the mentorship pilot." : result.error === "pilot_access_required" ? "Mentorship applications are currently limited to the controlled pilot." : result.error || "Mentorship request could not be saved.");
+      if (mode !== "draft") {
+        trackEvent("mentorship_request_completed", {
+          flow: "controlled_pilot",
+          request_mode: mode,
+        });
+      }
       setRequestId(result.id);
       setMessage(mode === "draft" ? "Draft saved privately. You can return and submit it when ready." : "Request submitted. GO reviews every request manually; a mentor is not guaranteed.");
     } catch (error) { setMessage(error.message); } finally { setBusy(false); }

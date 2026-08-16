@@ -1,4 +1,5 @@
 require("./admin-data-cache.test.cjs");
+require("./analytics.test.cjs");
 require("./admin-check-route.test.cjs");
 require("./admin-users-route.test.cjs");
 require("./admin-packages-email.test.cjs");

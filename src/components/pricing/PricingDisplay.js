@@ -20,6 +20,7 @@ import { auth } from "@/firebase";
 import { parseCheckoutPlanKey } from "@/lib/checkout-navigation";
 import { canChooseMembershipPlan } from "@/lib/membership-ui";
 import { beginSubscriptionConfirmationAttempt } from "@/lib/subscription-confirmation";
+import { trackEvent } from "@/lib/analytics/client";
 import {
   BILLING_INTERVALS,
   MEMBERSHIP_PLANS,
@@ -73,6 +74,13 @@ export const PricingDisplay = observer(() => {
           pendingMembershipTier: user.pendingMembershipTier,
         }
       : null);
+
+  useEffect(() => {
+    trackEvent("membership_viewed", {
+      page_path:
+        typeof window !== "undefined" ? window.location.pathname : "/membership",
+    });
+  }, []);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -182,7 +190,13 @@ export const PricingDisplay = observer(() => {
                 option.id === "annual" ? "flex-[1.65] gap-2" : "flex-1"
               }`}
               aria-pressed={interval === option.id}
-              onClick={() => setInterval(option.id)}
+              onClick={() => {
+                setInterval(option.id);
+                trackEvent("membership_tier_selected", {
+                  membership_tier: currentTier || "community",
+                  billing_interval: option.id,
+                });
+              }}
             >
               {option.label}
               {option.id === "annual" && (

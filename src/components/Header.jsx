@@ -30,6 +30,7 @@ import {
 } from "@/lib/navigation";
 import MobxStore from "@/mobx";
 import { UserNav } from "@/reusable-ui/ReusableProfileMenu";
+import { trackEvent } from "@/lib/analytics/client";
 import logoImg from "../assets/logo.png";
 
 const Header = observer(() => {
@@ -76,6 +77,14 @@ const Header = observer(() => {
       <Link
         href={item.href}
         aria-current={pathIsActive(item.href) ? "page" : undefined}
+        onClick={() => {
+          handleNavigation();
+          trackEvent("navigation_clicked", {
+            cta_id: `header_${item.label.toLowerCase().replace(/\s+/g, "_")}`,
+            destination_path: item.href,
+            navigation_area: "header",
+          });
+        }}
       >
         {item.label}
       </Link>
@@ -113,6 +122,13 @@ const Header = observer(() => {
                 <Link
                   href="/profile"
                   aria-current={isProfileActive ? "page" : undefined}
+                  onClick={() =>
+                    trackEvent("navigation_clicked", {
+                      cta_id: "header_profile",
+                      destination_path: "/profile",
+                      navigation_area: "header",
+                    })
+                  }
                 >
                   Profile
                 </Link>
@@ -191,14 +207,36 @@ const Header = observer(() => {
                     variant={pathname === "/login" ? "default" : "ghost"}
                     size="sm"
                   >
-                    <Link href="/login">Log in</Link>
+                    <Link
+                      href="/login"
+                      onClick={() =>
+                        trackEvent("navigation_clicked", {
+                          cta_id: "header_login",
+                          destination_path: "/login",
+                          navigation_area: "header",
+                        })
+                      }
+                    >
+                      Log in
+                    </Link>
                   </Button>
                   <Button
                     asChild
                     variant={pathname === "/signup" ? "default" : "ghost"}
                     size="sm"
                   >
-                    <Link href="/signup">Sign up</Link>
+                    <Link
+                      href="/signup"
+                      onClick={() =>
+                        trackEvent("navigation_clicked", {
+                          cta_id: "header_signup",
+                          destination_path: "/signup",
+                          navigation_area: "header",
+                        })
+                      }
+                    >
+                      Sign up
+                    </Link>
                   </Button>
                 </div>
               )}

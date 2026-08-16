@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { trackEvent } from "@/lib/analytics/client";
 
 const levels = ["beginner", "intermediate", "advanced", "professional"];
 const formats = ["online", "gohq", "hybrid"];
@@ -28,6 +29,10 @@ export function MentorshipRequestWorkspace({ initialMentorId = "" }) {
   };
   const payload = () => ({ ...form, availabilityDays: form.availabilityDays.map(Number) });
   const findMentors = async () => {
+    trackEvent("mentorship_request_started", {
+      flow: "self_service_matchmaking",
+      entry_point: "matchmaking",
+    });
     setLoading(true); setStatus("");
     try {
       const response = await authorizedRequest("/api/mentorship/suggestions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload()) });
@@ -39,11 +44,19 @@ export function MentorshipRequestWorkspace({ initialMentorId = "" }) {
   };
   const submit = async (assistanceRequested = false) => {
     if (!assistanceRequested && !selectedMentorId) return setStatus("Choose one mentor or request GO assistance.");
+    trackEvent("mentorship_request_started", {
+      flow: "self_service_matchmaking",
+      entry_point: assistanceRequested ? "go_assistance" : "mentor_selection",
+    });
     setLoading(true); setStatus("");
     try {
       const response = await authorizedRequest("/api/mentorship/requests", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload(), targetMentorId: assistanceRequested ? null : selectedMentorId, assistanceRequested }) });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "Mentorship request could not be submitted");
+      trackEvent("mentorship_request_completed", {
+        flow: "self_service_matchmaking",
+        request_mode: assistanceRequested ? "go_assistance" : "mentor_selection",
+      });
       setStatus("Mentorship request submitted. Track it in your private mentorship dashboard.");
     } catch (error) { setStatus(error.message); } finally { setLoading(false); }
   };

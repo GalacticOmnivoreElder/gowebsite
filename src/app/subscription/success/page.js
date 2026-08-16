@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { observer } from "mobx-react-lite";
@@ -34,6 +34,7 @@ import {
   isMembershipConfirmationAcknowledged,
   shouldShowSubscriptionConfirmation,
 } from "@/lib/subscription-confirmation";
+import { trackEvent } from "@/lib/analytics/client";
 
 const MAX_VERIFICATION_ATTEMPTS = 10;
 const VERIFICATION_DELAY_MS = 3000;
@@ -47,6 +48,7 @@ const SubscriptionSuccessPage = observer(() => {
   const [confirmationId, setConfirmationId] = useState(null);
   const [confirmationMode, setConfirmationMode] = useState("purchase");
   const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const conversionTracked = useRef(false);
 
   useEffect(() => {
     if (window.location.search || window.location.hash) {
@@ -96,6 +98,16 @@ const SubscriptionSuccessPage = observer(() => {
                 setMembershipConfirmed(true);
                 const pendingAttempt =
                   getPendingSubscriptionConfirmationAttempt({ userId });
+                if (!conversionTracked.current) {
+                  conversionTracked.current = true;
+                  trackEvent("checkout_completed", {
+                    membership_tier:
+                      pendingAttempt?.tier || verification.membershipTier || "member",
+                    billing_interval: pendingAttempt?.interval || "unknown",
+                    provider: "polar",
+                    confirmation_source: "trusted_subscription_verification",
+                  });
+                }
                 const nextConfirmationId =
                   verification.membershipConfirmationId || null;
                 const nextConfirmationMode =

@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Check, Download, Loader2, Lock, Play, RotateCcw } from "lucide-react";
 import { auth } from "@/firebase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { trackEvent } from "@/lib/analytics/client";
 
 function OpenButton({ bundleId, targetType, linkIndex = 0, children }) {
   const [opening, setOpening] = useState(false);
@@ -32,12 +33,21 @@ export function VideoBundleDetail({ slug }) {
   const [bundle, setBundle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const viewTracked = useRef(false);
   const load = useCallback(async () => {
     const headers = {};
     if (auth.currentUser) headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
     const response = await fetch(`/api/video-bundles/${encodeURIComponent(slug)}`, { headers, cache: "no-store" });
     const result = await response.json().catch(() => ({}));
     setBundle(response.ok ? result : { error: result.error || "Video bundle unavailable" }); setLoading(false);
+    if (response.ok && !viewTracked.current) {
+      viewTracked.current = true;
+      trackEvent("learning_content_viewed", {
+        content_type: "video_bundle",
+        content_id: result.slug || slug,
+      });
+      trackEvent("video_bundle_viewed", { content_id: result.slug || slug });
+    }
   }, [slug]);
   useEffect(() => { const unsubscribe = auth.onAuthStateChanged(() => load().catch(() => setBundle({ error: "Video bundle unavailable" }))); return unsubscribe; }, [load]);
 

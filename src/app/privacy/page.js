@@ -23,6 +23,11 @@ export default function PrivacyPage() {
         <li>Process your payments</li>
         <li>Send you important updates and notifications</li>
         <li>Improve our services</li>
+        <li>
+          Understand consented public-site usage through Firebase / Google
+          Analytics 4 and investigate public-page UX friction through masked
+          Microsoft Clarity recordings
+        </li>
         <li>Respond to your requests and support needs</li>
         <li>
           Deliver newsletters only when you have given specific consent, and
@@ -42,10 +47,11 @@ export default function PrivacyPage() {
         <li>Third parties with your explicit consent</li>
       </ul>
       <p>
-        These providers include Firebase for authentication and application
-        data, Polar for membership billing, and Resend for transactional and
-        newsletter delivery. Each provider processes only the information
-        needed for its role.
+        These providers include Firebase for authentication, application data,
+        and consented analytics; Microsoft Clarity for consented, masked UX
+        recordings on selected public pages; Polar for membership billing; and
+        Resend for transactional and newsletter delivery. Each provider
+        processes only the information needed for its role.
       </p>
 
       <h2>4. Data Security</h2>

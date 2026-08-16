@@ -35,6 +35,7 @@ import {
   redirectWithPlan,
   safeInternalRedirect,
 } from "@/lib/safe-redirect";
+import { trackEvent } from "@/lib/analytics/client";
 
 const formSchema = z.object({
   password: z.string().min(6, {
@@ -83,6 +84,7 @@ export const LoginForm = observer(() => {
   async function onSubmit(values) {
     const { email, password } = values;
     setIsLoading(true);
+    trackEvent("login_started", { method: "email" });
 
     if (isAuthenticated) {
       setIsLoading(false);
@@ -95,9 +97,14 @@ export const LoginForm = observer(() => {
         email,
         password,
       });
+      trackEvent("login_completed", { method: "email" });
       setIsLoading(false);
       router.push(redirectTo);
     } catch (error) {
+      trackEvent("login_failed", {
+        method: "email",
+        error_category: error?.code || "invalid_credentials",
+      });
       setIsLoading(false);
       // Handle login error
       form.setError("root", {
@@ -190,14 +197,20 @@ const LoginCard = observer(() => {
   }, [searchParams]);
 
   const handleGoogleSignIn = async () => {
+    trackEvent("login_started", { method: "google" });
     try {
       console.log("Starting Google sign-in from login page");
       setIsGoogleLoading(true);
       setGoogleError(null);
       await signInWithGoogle();
+      trackEvent("login_completed", { method: "google" });
       console.log("Google sign-in successful, redirecting to:", redirectTo);
       router.push(redirectTo);
     } catch (error) {
+      trackEvent("login_failed", {
+        method: "google",
+        error_category: error?.code || "google_sign_in_failed",
+      });
       console.error("Google sign-in error:", error);
       setGoogleError(error.message || "Failed to sign in with Google");
     } finally {

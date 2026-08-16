@@ -35,6 +35,7 @@ import {
   redirectWithPlan,
   safeInternalRedirect,
 } from "@/lib/safe-redirect";
+import { trackEvent } from "@/lib/analytics/client";
 
 const formSchema = z.object({
   username: z.string().min(4, {
@@ -84,6 +85,8 @@ export const SignupForm = observer(() => {
   async function onSubmit(values) {
     const { username, email, password } = values;
     setIsLoading(true);
+    const flow = isAuthenticated ? "anonymous_upgrade" : "new_account";
+    trackEvent("signup_started", { method: "email", flow });
 
     try {
       if (isAuthenticated && isUserAnonymous) {
@@ -93,11 +96,17 @@ export const SignupForm = observer(() => {
         // Regular signup
         await signupWithEmail(email, password, username);
       }
+      trackEvent("signup_completed", { method: "email", flow });
       setIsLoading(false);
       router.push(
         `/verify-email?redirect=${encodeURIComponent(redirectTo)}`
       );
     } catch (error) {
+      trackEvent("form_validation_error", {
+        form_id: "signup",
+        field_id: "account",
+        error_type: error?.code || "account_creation_failed",
+      });
       // Handle errors
       setIsLoading(false);
       form.setError("root", {
@@ -201,10 +210,18 @@ const SignupCard = observer(() => {
   }, [searchParams]);
 
   const handleGoogleSignIn = async () => {
+    const flow = isUserAnonymous ? "anonymous_upgrade" : "new_account";
+    trackEvent("signup_started", { method: "google", flow });
     try {
       await signInWithGoogle();
+      trackEvent("signup_completed", { method: "google", flow });
       router.push(redirectTo);
     } catch (error) {
+      trackEvent("form_validation_error", {
+        form_id: "signup",
+        field_id: "account",
+        error_type: error?.code || "google_signup_failed",
+      });
       console.error("Google sign-in error:", error);
     }
   };

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 import heroImg from "@/assets/HERO.png";
+import { trackEvent } from "@/lib/analytics/client";
 
 const discordInviteUrl = "https://discord.gg/ZbSShxu6K4";
 const bookingUrl = "https://calendar.app.google/Ge6GvfiaaaMhAHHf6";
@@ -55,6 +56,12 @@ export const HeroSection = () => (
             href={discordInviteUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              trackEvent("external_link_clicked", {
+                destination_category: "discord",
+                link_context: "hero_join",
+              })
+            }
           >
             <Image
               src="/discord-logo.svg"
@@ -72,7 +79,14 @@ export const HeroSection = () => (
           size="lg"
           className="min-h-12 w-full rounded-sm bg-white px-7 text-black hover:bg-neutral-200 focus-visible:ring-primary focus-visible:ring-offset-black sm:w-auto"
         >
-          <a href={bookingUrl} target="_blank" rel="noopener noreferrer">
+          <a href={bookingUrl} target="_blank" rel="noopener noreferrer"
+            onClick={() =>
+              trackEvent("external_link_clicked", {
+                destination_category: "booking",
+                link_context: "hero_schedule",
+              })
+            }
+          >
             Schedule a Call
           </a>
         </Button>
@@ -81,6 +95,13 @@ export const HeroSection = () => (
           asChild
           variant="outline"
           size="lg"
+          onClick={() =>
+            trackEvent("navigation_clicked", {
+              cta_id: "hero_explore",
+              destination_path: "/about",
+              navigation_area: "hero",
+            })
+          }
           className="min-h-12 w-full rounded-sm border-primary bg-black/20 px-7 text-primary hover:bg-primary/10 hover:text-primary focus-visible:ring-primary focus-visible:ring-offset-black sm:w-auto"
         >
           <Link href="/about">Learn More</Link>

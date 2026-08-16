@@ -168,3 +168,38 @@ Before launch:
 - One production low-value payment is tested end to end.
 - Admin-only pages are inaccessible to non-admins.
 - Dev-only `/test-polar` is removed or locked.
+
+## Analytics & Behaviour Monitoring
+
+Analytics is optional and consent-gated. Run these cases in a browser with
+developer tools open; use a staging Measurement ID/Clarity project only. Local,
+unit, and E2E test runs must keep `NEXT_PUBLIC_ANALYTICS_ENABLED=false`.
+
+| ID | Area | Requirement | Preconditions | Test steps | Expected result | Automated / Manual | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| QA-AN-001 | GA4/Firebase | Initializes with production configuration | Staging/production IDs configured; analytics consent available | Open the site, accept analytics, inspect GA4 DebugView/network | Firebase Analytics initializes once and events are visible | Manual | Not Run |
+| QA-AN-002 | Environment | Missing config is safe | Local environment without analytics IDs | Open public pages and inspect console | No analytics runtime error and site works | Automated + Manual | Not Run |
+| QA-AN-003 | Page tracking | Initial view once | Analytics enabled and consented | Load `/` and inspect event spy/network | Exactly one `page_view` for the initial pathname | Automated | Not Run |
+| QA-AN-004 | Page tracking | SPA navigation once | Analytics enabled and consented | Navigate between two client routes | Exactly one page view per pathname; no duplicate automatic/manual pair | Automated | Not Run |
+| QA-AN-005 | CTA | Hero CTA measurable | Landing page loaded; consent granted | Click hero CTA | Stable CTA/external event is emitted without raw sensitive URL | Automated | Not Run |
+| QA-AN-006 | Signup | Signup start | Signup page available | Submit valid signup start or click provider | `signup_started` includes only provider/flow categories | Automated | Not Run |
+| QA-AN-007 | Signup | Completion only after success | Test account/provider available | Complete signup | `signup_completed` occurs only after account creation succeeds | Automated + Manual | Not Run |
+| QA-AN-008 | Authentication | Failure is safe | Login page available | Submit invalid credentials | `login_failed` has category only; no email/password payload | Automated | Not Run |
+| QA-AN-009 | Profile | Completion milestone | Authenticated test user | Complete onboarding | `profile_setup_completed` occurs after trusted API completion | Automated + Manual | Not Run |
+| QA-AN-010 | Membership | Tier selection measurable | Membership page loaded | Select tier/interval | `membership_tier_selected` has category values only | Automated | Not Run |
+| QA-AN-011 | Checkout | Start measurable | Polar sandbox configured | Start checkout | `checkout_started` occurs after a checkout URL is successfully prepared | Automated + Manual | Not Run |
+| QA-AN-012 | Checkout | Completion trusted | Polar sandbox webhook flow available | Return from checkout and wait for verified activation | `checkout_completed` occurs only after subscription verification; button click alone does not count | Automated + Manual | Not Run |
+| QA-AN-013 | Projects | Creation measurable | Authorized company test user | Open create flow and create a draft | Start/completion events occur; project body is never sent to analytics | Automated + Manual | Not Run |
+| QA-AN-014 | Learning | Engagement measurable | Learning content available | Open content and use enrollment CTA | Typed content event and safe form milestone occur | Automated + Manual | Not Run |
+| QA-AN-015 | Mentorship | Request measurable | Eligible controlled-pilot user | Open mentorship and submit a request | Start/completion events contain no goals, notes, or private text | Automated + Manual | Not Run |
+| QA-AN-016 | Events | External registration readiness | Event surface exists | Click registration CTA | Event is categorized as an outbound action; no sensitive query string is sent | Manual | Not Run |
+| QA-AN-017 | Jobs | External application readiness | Jobs surface exists | Click application CTA | Event is categorized as an outbound action; no sensitive URL data is sent | Manual | Not Run |
+| QA-AN-018 | External links | Categories are stable | Public page with outbound links | Click Discord/social/booking link | `external_link_clicked` uses destination category/context | Automated | Not Run |
+| QA-AN-019 | Clarity | Initializes safely | Clarity ID configured; analytics consent granted | Open eligible public page | Clarity loads after interaction-ready phase without blocking render | Manual | Not Run |
+| QA-AN-020 | Clarity | Sensitive fields masked | Public newsletter form; Clarity enabled | Type into newsletter field and inspect recording | Field/form is masked; private route forms are not recorded | Manual | Not Run |
+| QA-AN-021 | Privacy | Sensitive values excluded | Analytics spy enabled | Exercise login, signup, profile, checkout, project, mentorship forms | No passwords, emails, tokens, payment data, private text, or raw values in payloads | Automated | Not Run |
+| QA-AN-022 | Test isolation | No real telemetry in tests | Unit/E2E environment | Run unit and Playwright suites | No requests to GA4/Clarity; analytics is mockable/no-op | Automated | Not Run |
+| QA-AN-023 | Consent | Granting enables tracking | New browser profile | Accept analytics and navigate | Optional tracking starts after consent | Manual | Not Run |
+| QA-AN-024 | Consent | Rejecting prevents optional tracking | New browser profile | Reject optional cookies and navigate | Firebase/Clarity optional tracking does not initialize | Automated + Manual | Not Run |
+| QA-AN-025 | Reliability | Third-party failure is harmless | Block GA4/Clarity requests | Navigate and use forms | No meaningful console errors or broken workflow | Manual | Not Run |
+| QA-AN-026 | Regression | Existing functionality unaffected | Analytics enabled/disabled | Run public, auth, project, learning, mentorship, and billing smoke flows | All existing workflows remain functional in both states | Automated + Manual | Not Run |

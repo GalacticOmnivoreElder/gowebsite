@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { trackEvent } from "@/lib/analytics/client";
 
 const initialFilters = { search: "", discipline: "", skill: "", level: "", language: "", format: "", availability: "", accepting: "" };
 
@@ -25,6 +26,9 @@ export function MentorDirectory() {
     const result = await response.json().catch(() => []);
     if (!response.ok) throw new Error(result.error || "Mentors could not be loaded");
     setMentors(result);
+  }, []);
+  useEffect(() => {
+    trackEvent("mentorship_viewed", { surface: "mentor_directory" });
   }, []);
   useEffect(() => { load().catch((loadError) => setError(loadError.message)); }, [load]);
 
