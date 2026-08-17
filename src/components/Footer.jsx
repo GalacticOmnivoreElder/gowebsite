@@ -137,6 +137,15 @@ export default function Footer() {
 
               <li>
                 <Link
+                  href="/events"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  GO Events
+                </Link>
+              </li>
+
+              <li>
+                <Link
                   href="/resources"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >

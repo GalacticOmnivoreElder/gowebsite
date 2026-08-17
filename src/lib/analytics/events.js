@@ -7,6 +7,10 @@ export const ANALYTICS_EVENTS = Object.freeze({
   page_view: ["page_path", "page_type"],
   navigation_clicked: ["cta_id", "destination_path", "navigation_area"],
   external_link_clicked: ["destination_category", "link_context"],
+  calendar_embed_opened: ["source"],
+  calendar_external_link_clicked: ["link_context"],
+  event_route_clicked: ["event_route", "destination_path"],
+  schedule_call_clicked: ["link_context"],
   signup_started: ["method", "flow"],
   signup_completed: ["method", "flow"],
   login_started: ["method"],
@@ -99,6 +103,7 @@ export function getPageType(pathname = "/") {
   if (path.startsWith("/project") || path === "/projects") return "projects";
   if (path.startsWith("/membership") || path.startsWith("/pricing") || path.startsWith("/checkout")) return "membership";
   if (path.startsWith("/mentors") || path.startsWith("/matchmaking")) return "mentorship";
+  if (path.startsWith("/events")) return "events";
   if (path.startsWith("/blog")) return "blog";
   if (path.startsWith("/resources")) return "resources";
   if (path.startsWith("/admin")) return "admin";

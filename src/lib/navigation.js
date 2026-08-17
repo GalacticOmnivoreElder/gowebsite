@@ -29,5 +29,6 @@ export const primaryNavigation = Object.freeze([
   { href: "/projects", label: "Projects" },
   { href: "/matchmaking", label: "Matchmaking" },
   { href: "/community", label: "Community" },
+  { href: "/events", label: "Events" },
   { href: "/membership", label: "Membership" },
 ]);

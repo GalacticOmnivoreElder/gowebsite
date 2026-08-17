@@ -2,7 +2,7 @@ const { defineConfig, devices } = require("@playwright/test");
 
 module.exports = defineConfig({
   testDir: "./tests",
-  testMatch: "visual-smoke.spec.js",
+  testMatch: ["visual-smoke.spec.js", "events.spec.js"],
   fullyParallel: false,
   retries: 0,
   reporter: "line",

@@ -43,6 +43,7 @@ import {
   Instagram,
   Linkedin,
   PackageOpen,
+  Radio,
   Search,
   Twitch,
   Twitter,
@@ -51,6 +52,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { ExploreGo } from "@/components/landing/ExploreGo";
+import { trackEvent } from "@/lib/analytics/client";
 
 const orbitRoutes = [
   {
@@ -112,6 +114,18 @@ const orbitRoutes = [
     detail: "Each resource route shows its published availability and any membership or account requirement.",
     href: "/resources",
     cta: "Explore resources",
+  },
+  {
+    title: "GO Events",
+    signal: "Transmit",
+    icon: Radio,
+    description:
+      "Join workshops, meetups, mentorship sessions, and practical conversations for your next stage in game development.",
+    detail:
+      "Follow the live public calendar and choose the event route that fits your current mission.",
+    href: "/events",
+    cta: "Explore GO Events",
+    analyticsId: "events",
   },
 ];
 
@@ -474,7 +488,16 @@ const HomePage = () => {
                     asChild
                     className="mt-3 h-12 w-full rounded-sm border border-white bg-white text-black shadow-[0_10px_28px_rgba(31,3,21,0.28)] hover:bg-neutral-100"
                   >
-                    <Link href={orbit.href}>
+                    <Link
+                      href={orbit.href}
+                      onClick={() => {
+                        if (!orbit.analyticsId) return;
+                        trackEvent("event_route_clicked", {
+                          event_route: orbit.analyticsId,
+                          destination_path: orbit.href,
+                        });
+                      }}
+                    >
                       {orbit.cta}
                       <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                     </Link>
