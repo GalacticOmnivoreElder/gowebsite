@@ -16,10 +16,10 @@ test.describe("GO Events", () => {
     ).toBeVisible();
     await expect(
       page.getByTitle("Galactic Omnivore public events calendar")
-    ).toBeVisible();
+    ).toHaveAttribute("src", /c_88d101e79fcb82feaf12a56b3c6812f93a926230fa9976b6438b8aa54115ec2a/);
     await expect(
       page.getByRole("link", { name: /subscribe to go calendar/i })
-    ).toHaveAttribute("href", /calendar\.google\.com/);
+    ).toHaveAttribute("href", /Y184OGQxMDFlNzlmY2I4MmZlYWYxMmE1NmIzYzY4MTJmOTNhOTI2MjMwZmE5OTc2YjY0MzhiOGFhNTQxMTVlYzJh/);
     await expect(
       page.getByRole("link", { name: /schedule a call/i }).first()
     ).toHaveAttribute("href", "https://calendar.app.google/Ge6GvfiaaaMhAHHf6");

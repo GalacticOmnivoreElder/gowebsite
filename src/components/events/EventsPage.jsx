@@ -331,39 +331,86 @@ export default function EventsPage() {
             </Button>
           </div>
 
-          <div className="relative mt-8 overflow-hidden border border-primary/40 bg-white p-2 shadow-[0_0_60px_rgba(202,34,128,0.1)] sm:p-3">
-            {calendarStatus === "loading" && (
-              <div
-                className="absolute inset-0 z-10 flex min-h-[620px] items-center justify-center bg-[#111014] px-6 text-center sm:min-h-[720px]"
-                aria-live="polite"
-              >
-                <div>
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-primary/50 bg-primary/10 text-primary">
-                    <Radio className="h-5 w-5 animate-pulse" aria-hidden="true" />
+          <div className="relative mt-10 overflow-hidden rounded-2xl border border-primary/35 bg-[#0b090d] p-2 shadow-[0_0_80px_rgba(202,34,128,0.12)] sm:p-3">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(202,34,128,0.2),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.04),transparent_35%)]"
+            />
+            <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#111014]">
+              <div className="flex flex-col gap-4 border-b border-white/10 bg-[#151015] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/45 bg-primary/10 text-primary shadow-[0_0_20px_rgba(202,34,128,0.15)]">
+                    <Radio className="h-5 w-5" aria-hidden="true" />
                   </div>
-                  <p className="mt-4 font-mono text-xs uppercase tracking-[0.24em] text-white/60">
-                    Connecting to the public event channel…
-                  </p>
+                  <div>
+                    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">
+                      GO event control
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-white">
+                      MUGI public calendar channel
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">
+                  <span className="inline-flex items-center gap-2 border border-emerald-400/30 bg-emerald-400/5 px-2.5 py-1.5 text-emerald-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.9)]" />
+                    Live
+                  </span>
+                  <span className="border border-white/10 px-2.5 py-1.5">
+                    Europe / Belgrade
+                  </span>
+                  <span className="border border-white/10 px-2.5 py-1.5">
+                    Month view
+                  </span>
                 </div>
               </div>
-            )}
-            {calendarStatus === "timeout" && (
-              <div
-                className="flex items-center gap-3 bg-[#111014] px-4 py-3 text-sm text-white/65"
-                role="status"
-              >
-                <Radio className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                The live calendar is taking longer than expected. Use the
-                Google Calendar link below if it does not appear.
+
+              <div className="relative bg-[#0a090c] p-2 sm:p-4">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent"
+                />
+                {calendarStatus === "loading" && (
+                  <div
+                    className="absolute inset-0 z-10 flex min-h-[600px] items-center justify-center bg-[#111014] px-6 text-center sm:min-h-[680px]"
+                    aria-live="polite"
+                  >
+                    <div>
+                      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-primary/50 bg-primary/10 text-primary">
+                        <Radio className="h-5 w-5 animate-pulse" aria-hidden="true" />
+                      </div>
+                      <p className="mt-4 font-mono text-xs uppercase tracking-[0.24em] text-white/60">
+                        Connecting to the public event channel…
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {calendarStatus === "timeout" && (
+                  <div
+                    className="mb-3 flex items-center gap-3 border border-primary/25 bg-primary/[0.06] px-4 py-3 text-sm text-white/65"
+                    role="status"
+                  >
+                    <Radio className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                    The live calendar is taking longer than expected. Use the
+                    Google Calendar link below if it does not appear.
+                  </div>
+                )}
+                <iframe
+                  title="Galactic Omnivore public events calendar"
+                  src={GO_EVENTS_CALENDAR_EMBED_URL}
+                  className="h-[600px] w-full border-0 sm:h-[680px] lg:h-[720px]"
+                  loading="lazy"
+                  frameBorder="0"
+                  scrolling="no"
+                  onLoad={handleCalendarLoad}
+                />
               </div>
-            )}
-            <iframe
-              title="Galactic Omnivore public events calendar"
-              src={GO_EVENTS_CALENDAR_EMBED_URL}
-              className="h-[620px] w-full border-0 sm:h-[720px]"
-              loading="lazy"
-              onLoad={handleCalendarLoad}
-            />
+
+              <div className="flex flex-col gap-2 border-t border-white/10 bg-[#0e0c11] px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                <span>Public channel / GO events</span>
+                <span className="text-primary/80">Signal source: Google Calendar</span>
+              </div>
+            </div>
           </div>
 
           <div className="mt-6 flex flex-col gap-4 border border-white/10 bg-black/20 p-5 sm:flex-row sm:items-center sm:justify-between">
