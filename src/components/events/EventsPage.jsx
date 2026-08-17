@@ -360,7 +360,7 @@ export default function EventsPage() {
                     Europe / Belgrade
                   </span>
                   <span className="border border-white/10 px-2.5 py-1.5">
-                    Month view
+                    Week view
                   </span>
                 </div>
               </div>

@@ -3,7 +3,7 @@ export const GO_EVENTS_SCHEDULE_URL =
 
 export const GO_EVENTS_CALENDAR_EMBED_URL =
   process.env.NEXT_PUBLIC_GO_EVENTS_CALENDAR_EMBED_URL ||
-  "https://calendar.google.com/calendar/embed?src=c_88d101e79fcb82feaf12a56b3c6812f93a926230fa9976b6438b8aa54115ec2a%40group.calendar.google.com&ctz=Europe%2FBelgrade&mode=MONTH&showTitle=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&bgcolor=%23111014&color=%23CA2280";
+  "https://calendar.google.com/calendar/embed?src=c_88d101e79fcb82feaf12a56b3c6812f93a926230fa9976b6438b8aa54115ec2a%40group.calendar.google.com&ctz=Europe%2FBelgrade&mode=WEEK&showDate=1&showNav=1&showTitle=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&bgcolor=%23080809&color=%23CA2280";
 
 export const GO_EVENTS_CALENDAR_PUBLIC_URL =
   process.env.NEXT_PUBLIC_GO_EVENTS_CALENDAR_PUBLIC_URL ||
