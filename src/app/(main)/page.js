@@ -123,7 +123,7 @@ const orbitRoutes = [
       "Join workshops, meetups, mentorship sessions, and practical conversations for your next stage in game development.",
     detail:
       "Follow the live public calendar and choose the event route that fits your current mission.",
-    href: "/events",
+    href: "/community#events",
     cta: "Explore GO Events",
     analyticsId: "events",
   },
