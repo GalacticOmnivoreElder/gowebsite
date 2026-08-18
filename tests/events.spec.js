@@ -1,7 +1,7 @@
 const { expect, test } = require("@playwright/test");
 
 test.describe("GO Events", () => {
-  test("renders the public events experience and calendar fallback", async ({
+  test("renders the custom GO events experience without the Google iframe", async ({
     page,
   }) => {
     await page.goto("/events", { waitUntil: "domcontentloaded" });
@@ -14,9 +14,11 @@ test.describe("GO Events", () => {
     await expect(
       page.getByRole("heading", { name: /find your next signal/i })
     ).toBeVisible();
+    await expect(page.locator("iframe")).toHaveCount(0);
     await expect(
-      page.getByTitle("Galactic Omnivore public events calendar")
-    ).toHaveAttribute("src", /c_88d101e79fcb82feaf12a56b3c6812f93a926230fa9976b6438b8aa54115ec2a/);
+      page.getByRole("heading", { name: /your next go checkpoint/i })
+    ).toBeVisible();
+    await expect(page.getByTestId("go-events-calendar-state")).toBeVisible();
     await expect(
       page.getByRole("link", { name: /subscribe to go calendar/i })
     ).toHaveAttribute("href", /Y184OGQxMDFlNzlmY2I4MmZlYWYxMmE1NmIzYzY4MTJmOTNhOTI2MjMwZmE5OTc2YjY0MzhiOGFhNTQxMTVlYzJh/);

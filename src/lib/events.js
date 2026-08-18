@@ -8,3 +8,5 @@ export const GO_EVENTS_CALENDAR_EMBED_URL =
 export const GO_EVENTS_CALENDAR_PUBLIC_URL =
   process.env.NEXT_PUBLIC_GO_EVENTS_CALENDAR_PUBLIC_URL ||
   "https://calendar.google.com/calendar/u/0?cid=Y184OGQxMDFlNzlmY2I4MmZlYWYxMmE1NmIzYzY4MTJmOTNhOTI2MjMwZmE5OTc2YjY0MzhiOGFhNTQxMTVlYzJhQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20";
+
+export const GO_EVENTS_TIMEZONE = "Europe/Belgrade";

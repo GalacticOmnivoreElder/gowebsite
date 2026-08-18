@@ -1,0 +1,59 @@
+const assert = require("node:assert/strict");
+const test = require("node:test");
+const { loadSourceModule } = require("../helpers/load-source-module.cjs");
+
+const {
+  getVideoJoinUrl,
+  normalizeCalendarEvent,
+} = loadSourceModule("src/lib/go-events-core.js", [
+  "getVideoJoinUrl",
+  "normalizeCalendarEvent",
+]);
+
+test("normalizes members-only events without exposing their Meet URL", () => {
+  const event = normalizeCalendarEvent(
+    {
+      id: "community-meeting-1",
+      summary: "GO Community Meeting",
+      description: "GO_ACCESS: members\nGO_TYPE: community\nBring your current challenge.",
+      start: { dateTime: "2026-09-01T18:00:00+02:00" },
+      end: { dateTime: "2026-09-01T19:30:00+02:00" },
+      htmlLink: "https://calendar.google.com/calendar/event?eid=private",
+      conferenceData: {
+        entryPoints: [
+          {
+            entryPointType: "video",
+            uri: "https://meet.google.com/abc-defg-hij",
+          },
+        ],
+      },
+    }
+  );
+
+  assert.equal(event.access, "members");
+  assert.equal(event.category, "community");
+  assert.equal(event.hasJoinLink, true);
+  assert.equal(event.joinAvailable, false);
+  assert.equal("joinUrl" in event, false);
+  assert.equal(event.htmlLink, null);
+  assert.doesNotMatch(event.description, /GO_ACCESS|GO_TYPE/);
+});
+
+test("only accepts Google Meet video entry points", () => {
+  assert.equal(
+    getVideoJoinUrl({
+      conferenceData: {
+        entryPoints: [
+          { entryPointType: "phone", uri: "tel:+123456" },
+          { entryPointType: "video", uri: "https://meet.google.com/abc-defg-hij" },
+        ],
+      },
+    }),
+    "https://meet.google.com/abc-defg-hij"
+  );
+
+  assert.equal(
+    getVideoJoinUrl({ hangoutLink: "https://example.com/not-google-meet" }),
+    null
+  );
+});

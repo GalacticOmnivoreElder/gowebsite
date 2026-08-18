@@ -28,6 +28,8 @@ require("./production-route-lockout.test.cjs");
 require("./password-reset.test.cjs");
 require("./auth-utils.test.cjs");
 require("./auth-profile.test.cjs");
+require("./go-events-core.test.cjs");
+require("./go-events-route.test.cjs");
 require("./billing-orders-route.test.cjs");
 require("./billing-cancel-route.test.cjs");
 require("./billing-portal-route.test.cjs");
