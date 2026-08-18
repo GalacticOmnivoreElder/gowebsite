@@ -128,7 +128,7 @@ async function getCalendarRequestOptions(source) {
 }
 
 function buildFields() {
-  return "items(id,summary,description,start,end,location,htmlLink,status,organizer,conferenceData,hangoutLink,extendedProperties),nextPageToken";
+  return "items(id,recurringEventId,summary,description,start,end,location,htmlLink,status,organizer,conferenceData,hangoutLink,extendedProperties),nextPageToken";
 }
 
 async function googleFetch(url, options = {}) {

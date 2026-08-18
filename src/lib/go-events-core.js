@@ -113,6 +113,7 @@ export function normalizeCalendarEvent(event = {}, { source = "public", timezone
 
   return {
     id: asString(event.id),
+    seriesId: asString(event.recurringEventId) || null,
     title,
     subject: title,
     description,
@@ -140,4 +141,20 @@ export function getEventTimestamp(event) {
   const value = event?.start?.dateTime || event?.start?.date;
   const timestamp = value ? new Date(value).getTime() : Number.POSITIVE_INFINITY;
   return Number.isFinite(timestamp) ? timestamp : Number.POSITIVE_INFINITY;
+}
+
+export function getUniqueEventSeries(events = []) {
+  const series = new Map();
+
+  for (const event of events) {
+    const key = event.seriesId ? `series:${event.seriesId}` : `event:${event.id}`;
+    const existing = series.get(key);
+    if (existing) {
+      existing.occurrenceCount += 1;
+      continue;
+    }
+    series.set(key, { ...event, occurrenceCount: 1 });
+  }
+
+  return [...series.values()];
 }

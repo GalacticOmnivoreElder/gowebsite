@@ -4,9 +4,11 @@ const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
 const {
   getVideoJoinUrl,
+  getUniqueEventSeries,
   normalizeCalendarEvent,
 } = loadSourceModule("src/lib/go-events-core.js", [
   "getVideoJoinUrl",
+  "getUniqueEventSeries",
   "normalizeCalendarEvent",
 ]);
 
@@ -14,6 +16,7 @@ test("normalizes members-only events without exposing their Meet URL", () => {
   const event = normalizeCalendarEvent(
     {
       id: "community-meeting-1",
+      recurringEventId: "community-meeting-series",
       summary: "GO Community Meeting",
       description: "GO_ACCESS: members\nGO_TYPE: community\nBring your current challenge.",
       start: { dateTime: "2026-09-01T18:00:00+02:00" },
@@ -33,6 +36,7 @@ test("normalizes members-only events without exposing their Meet URL", () => {
   assert.equal(event.access, "members");
   assert.equal(event.category, "community");
   assert.equal(event.subject, "GO Community Meeting");
+  assert.equal(event.seriesId, "community-meeting-series");
   assert.equal(event.format, "Google Meet");
   assert.equal(event.durationMinutes, 90);
   assert.equal(event.hasJoinLink, true);
@@ -75,4 +79,18 @@ test("normalizes location and presentation details for physical events", () => {
   assert.equal(event.location, "GOHQ, Skopje");
   assert.equal(event.format, "In person");
   assert.equal(event.durationMinutes, 120);
+});
+
+test("collapses recurring instances while preserving unique events", () => {
+  const events = getUniqueEventSeries([
+    { id: "meeting-1", seriesId: "meeting-series", title: "GO Community Meeting" },
+    { id: "meeting-2", seriesId: "meeting-series", title: "GO Community Meeting" },
+    { id: "exhibition-1", seriesId: null, title: "Opening Exhibition" },
+  ]);
+
+  assert.equal(events.length, 2);
+  assert.equal(events[0].id, "meeting-1");
+  assert.equal(events[0].occurrenceCount, 2);
+  assert.equal(events[1].id, "exhibition-1");
+  assert.equal(events[1].occurrenceCount, 1);
 });

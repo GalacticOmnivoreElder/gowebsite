@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import DOMPurify from "dompurify";
 import { observer } from "mobx-react";
 import {
   ArrowDown,
@@ -32,6 +33,7 @@ import {
   GO_EVENTS_SCHEDULE_URL,
   GO_EVENTS_TIMEZONE,
 } from "@/lib/events";
+import { getUniqueEventSeries } from "@/lib/go-events-core";
 
 const eventRoutes = [
   {
@@ -182,6 +184,29 @@ function formatDuration(event) {
   return `${hours} hr ${minutes} min`;
 }
 
+function sanitizeEventDescription(value = "") {
+  if (!value || typeof window === "undefined") return "";
+  return DOMPurify.sanitize(value, {
+    ALLOWED_TAGS: ["a", "b", "blockquote", "br", "em", "h3", "h4", "i", "li", "ol", "p", "strong", "u", "ul"],
+    ALLOWED_ATTR: ["href"],
+  });
+}
+
+function EventDescription({ event, className = "", fallback = "" }) {
+  const safeHtml = useMemo(() => sanitizeEventDescription(event.description), [event.description]);
+
+  if (!safeHtml) {
+    return fallback ? <p className={className}>{fallback}</p> : null;
+  }
+
+  return (
+    <div
+      className={`${className} break-words [&_a]:text-cyan-200 [&_a]:underline [&_a]:underline-offset-4 [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_h3]:mt-5 [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:mt-4 [&_h4]:font-semibold [&_li+li]:mt-2 [&_ol]:ml-5 [&_ol]:list-decimal [&_p+p]:mt-4 [&_strong]:font-semibold [&_ul]:ml-5 [&_ul]:list-disc`}
+      dangerouslySetInnerHTML={{ __html: safeHtml }}
+    />
+  );
+}
+
 function EventMetaGrid({ event, detail = false }) {
   const items = [
     {
@@ -210,9 +235,7 @@ function EventBriefing({ event, detail = false }) {
   return (
     <div className={`border border-white/10 bg-black/20 ${detail ? "mt-7 p-5" : "mt-5 p-4"}`}>
       <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary">Briefing</p>
-      <p className="mt-3 whitespace-pre-line text-sm leading-7 text-white/70">
-        {event.description || "The organizer has not added a briefing for this event yet."}
-      </p>
+      <EventDescription event={event} className="mt-3 text-sm leading-7 text-white/70" fallback="The organizer has not added a briefing for this event yet." />
     </div>
   );
 }
@@ -245,7 +268,7 @@ function EventCard({ event, compact = false, isMember, joiningId, onSelect, onJo
         <EventMetaGrid event={event} />
       </div>
 
-      {!compact && <p className="mt-4 line-clamp-3 text-sm leading-7 text-white/55">{event.description || "Event briefing will be shared in the event details."}</p>}
+      {!compact && <EventDescription event={event} className="mt-4 line-clamp-3 text-sm leading-7 text-white/55" fallback="Event briefing will be shared in the event details." />}
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         {isMembersOnly ? (
@@ -261,6 +284,7 @@ function EventCard({ event, compact = false, isMember, joiningId, onSelect, onJo
         <button type="button" className="inline-flex items-center text-xs font-semibold text-white/55 underline-offset-4 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" onClick={() => onSelect(event)}>View details<ArrowRight className="ml-2 h-3.5 w-3.5" aria-hidden="true" /></button>
       </div>
 
+      {event.occurrenceCount > 1 && <p className="mt-4 border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.16em] text-cyan-200/65">Repeats · next occurrence shown · {event.occurrenceCount} upcoming</p>}
       <p className="mt-5 border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.16em] text-white/35">{accessLabel(event)}</p>
     </article>
   );
@@ -345,6 +369,7 @@ function EventsPage() {
 
   const selectedDateEvents = activeDate ? eventsByDate.get(activeDate) || [] : [];
   const cells = monthCells(activeMonth);
+  const cardEvents = useMemo(() => getUniqueEventSeries(calendar.events), [calendar.events]);
 
   const handleCalendarExternalClick = () => trackEvent("calendar_external_link_clicked", { link_context: "events_calendar_subscribe" });
   const handleScheduleClick = () => trackEvent("schedule_call_clicked", { link_context: "events_page" });
@@ -422,12 +447,12 @@ function EventsPage() {
         <div className="mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="relative overflow-hidden border border-primary/45 bg-[#160d16] p-6 shadow-[0_0_60px_rgba(202,34,128,0.12)] sm:p-8"><div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full border border-primary/25 shadow-[0_0_80px_rgba(202,34,128,0.14)]" /><div className="relative"><div className="flex items-center justify-between gap-4"><p className="font-mono text-[10px] font-semibold uppercase tracking-[0.3em] text-primary">Next transmission</p><span className="inline-flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.18em] text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.9)]" />Signal live</span></div>{calendar.status === "loading" ? <div className="mt-12 animate-pulse" aria-live="polite"><div className="h-8 w-3/4 bg-white/10" /><div className="mt-5 h-4 w-1/2 bg-white/10" /><div className="mt-3 h-4 w-2/3 bg-white/10" /></div> : calendar.nextEvent ? <><h3 className="mt-8 max-w-lg text-3xl font-bold tracking-tight text-white sm:text-4xl">{calendar.nextEvent.title}</h3><div className="mt-6"><EventMetaGrid event={calendar.nextEvent} /></div><EventBriefing event={calendar.nextEvent} /><div className="mt-8 flex flex-wrap gap-3">{calendar.nextEvent.access === "members" ? <Button className="rounded-sm bg-primary text-white hover:bg-primary/90" onClick={() => handleJoin(calendar.nextEvent)}>{isMember ? "Join community event" : "Review membership"}<ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Button> : calendar.nextEvent.joinUrl ? <a href={calendar.nextEvent.joinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center rounded-sm bg-cyan-300 px-4 text-sm font-semibold text-[#071014] hover:bg-cyan-200"><Video className="mr-2 h-4 w-4" aria-hidden="true" />Join event</a> : null}<button type="button" className="inline-flex h-10 items-center border border-white/20 px-4 text-sm font-semibold text-white/70 hover:border-primary hover:text-white" onClick={() => handleSelectEvent(calendar.nextEvent)}>View briefing<ArrowRight className="ml-4 h-4 w-4" aria-hidden="true" /></button></div></> : <div className="mt-12"><h3 className="text-2xl font-bold text-white">No transmission scheduled yet</h3><p className="mt-4 max-w-md text-sm leading-7 text-white/60">Subscribe to the GO Calendar and check back soon for the next community checkpoint.</p></div>}{joinError && <p className="mt-5 border-l-2 border-amber-300 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100" role="alert">{joinError}</p>}</div></div>
 
-          <div className="border border-white/10 bg-[#0b090d] p-4 sm:p-6" data-testid="go-events-calendar-state" data-state={calendar.status}><div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5"><div><p className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary">Upcoming transmissions</p><p className="mt-2 text-sm text-white/50">{calendar.events.length ? `${calendar.events.length} scheduled event${calendar.events.length === 1 ? "" : "s"}` : "Live schedule"}</p></div><div className="flex items-center gap-2"><button type="button" aria-label="Previous month" className="flex h-9 w-9 items-center justify-center border border-white/15 text-white/60 hover:border-primary hover:text-white" onClick={() => changeMonth(-1)}><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button><span className="min-w-32 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">{monthLabel(activeMonth)}</span><button type="button" aria-label="Next month" className="flex h-9 w-9 items-center justify-center border border-white/15 text-white/60 hover:border-primary hover:text-white" onClick={() => changeMonth(1)}><ChevronRight className="h-4 w-4" aria-hidden="true" /></button></div></div>
+          <div className="border border-white/10 bg-[#0b090d] p-4 sm:p-6" data-testid="go-events-calendar-state" data-state={calendar.status}><div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5"><div><p className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary">Upcoming transmissions</p><p className="mt-2 text-sm text-white/50">{calendar.events.length ? `${cardEvents.length} event series · ${calendar.events.length} scheduled occurrence${calendar.events.length === 1 ? "" : "s"}` : "Live schedule"}</p></div><div className="flex items-center gap-2"><button type="button" aria-label="Previous month" className="flex h-9 w-9 items-center justify-center border border-white/15 text-white/60 hover:border-primary hover:text-white" onClick={() => changeMonth(-1)}><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button><span className="min-w-32 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">{monthLabel(activeMonth)}</span><button type="button" aria-label="Next month" className="flex h-9 w-9 items-center justify-center border border-white/15 text-white/60 hover:border-primary hover:text-white" onClick={() => changeMonth(1)}><ChevronRight className="h-4 w-4" aria-hidden="true" /></button></div></div>
             {calendar.status === "error" ? <div className="flex min-h-[300px] flex-col items-center justify-center px-6 text-center" role="status"><Radio className="h-8 w-8 text-primary" aria-hidden="true" /><h3 className="mt-5 text-xl font-semibold text-white">The GO event signal is being connected</h3><p className="mt-3 max-w-md text-sm leading-6 text-white/55">{calendar.error || "The live schedule is temporarily unavailable."} Subscribe to the calendar below while the connection is restored.</p></div> : calendar.status === "loading" ? <div className="grid grid-cols-7 gap-1 pt-6" aria-label="Loading event calendar">{Array.from({ length: 35 }, (_, index) => <div key={index} className="h-12 animate-pulse bg-white/[0.04]" />)}</div> : <><div className="mt-6 grid grid-cols-7 gap-1 font-mono text-[9px] uppercase tracking-[0.1em] text-white/35"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div className="mt-2 grid grid-cols-7 gap-1">{cells.map((day, index) => { if (!day) return <div key={`empty-${index}`} className="min-h-16 border border-transparent" />; const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`; const dayEvents = eventsByDate.get(key) || []; const isSelected = activeDate === key; const isToday = dateKey(new Date().toISOString()) === key; return <button key={key} type="button" aria-label={`${day.toLocaleDateString("en-US", { month: "long", day: "numeric" })}${dayEvents.length ? `, ${dayEvents.length} event${dayEvents.length === 1 ? "" : "s"}` : ""}`} className={`relative min-h-16 border p-2 text-left transition-colors ${isSelected ? "border-primary bg-primary/15" : "border-white/10 bg-white/[0.025] hover:border-primary/60"}`} onClick={() => setActiveDate(key)}><span className={`font-mono text-xs ${isToday ? "inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white" : "text-white/60"}`}>{day.getDate()}</span>{dayEvents.length > 0 && <span className="absolute bottom-2 left-2 right-2 flex gap-1">{dayEvents.slice(0, 3).map((event) => <span key={event.id} className={`h-1 flex-1 ${event.access === "members" ? "bg-primary" : "bg-cyan-300"}`} />)}</span>}</button>; })}</div>{activeDate && <div className="mt-5 border-t border-white/10 pt-5"><div className="flex items-center justify-between gap-3"><p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">Selected date</p><button type="button" className="text-xs text-white/45 hover:text-white" onClick={() => setActiveDate("")}>Show all</button></div>{selectedDateEvents.length ? <div className="mt-3 space-y-2">{selectedDateEvents.map((event) => <button key={event.id} type="button" className="flex w-full items-center justify-between gap-3 border border-white/10 bg-white/[0.025] p-3 text-left hover:border-primary/60" onClick={() => handleSelectEvent(event)}><span className="min-w-0"><span className="block truncate text-sm font-semibold text-white">{event.title}</span><span className="mt-1 block text-xs text-white/50">{formatTime(event.start, event.allDay)}</span></span>{event.access === "members" ? <LockKeyhole className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" /> : <ArrowRight className="h-4 w-4 shrink-0 text-cyan-300" aria-hidden="true" />}</button>)}</div> : <p className="mt-3 text-sm text-white/50">No events on this date.</p>}</div>}</>}</div>
           </div>
         </div>
 
-        {calendar.events.length > 0 && <div className="mt-8 grid gap-4 md:grid-cols-2">{calendar.events.slice(0, 6).map((event) => <EventCard key={event.id} event={event} isMember={isMember} joiningId={joiningId} onSelect={handleSelectEvent} onJoin={handleJoin} />)}</div>}
+        {cardEvents.length > 0 && <div className="mt-8 grid gap-4 md:grid-cols-2">{cardEvents.slice(0, 6).map((event) => <EventCard key={event.seriesId || event.id} event={event} isMember={isMember} joiningId={joiningId} onSelect={handleSelectEvent} onJoin={handleJoin} />)}</div>}
         <div className="mt-6 flex flex-col gap-4 border border-white/10 bg-black/20 p-5 sm:flex-row sm:items-center sm:justify-between"><div className="flex gap-3"><CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" /><p className="text-sm leading-6 text-white/60">Prefer Google Calendar? Subscribe to the source calendar for updates and reminders.</p></div><a href={GO_EVENTS_CALENDAR_PUBLIC_URL} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" onClick={handleCalendarExternalClick}>Open in Google Calendar<ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" /></a></div>
       </section>
 
