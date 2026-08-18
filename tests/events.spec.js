@@ -21,7 +21,7 @@ test.describe("GO Events", () => {
     await expect(page.getByTestId("go-events-calendar-state")).toBeVisible();
     await expect(
       page.getByRole("link", { name: /subscribe to go calendar/i })
-    ).toHaveAttribute("href", /Y184OGQxMDFlNzlmY2I4MmZlYWYxMmE1NmIzYzY4MTJmOTNhOTI2MjMwZmE5OTc2YjY0MzhiOGFhNTQxMTVlYzJh/);
+    ).toHaveAttribute("href", /ZDg4YWExYzQ3OWEwZWY5OTAxMjhiZGExMWY3NjJiODQ5Njk4ZDU4ZGFmMWNiYjEzNDg3MTA3OWZlY2IzYTUxOEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t/);
     await expect(
       page.getByRole("link", { name: /schedule a call/i }).first()
     ).toHaveAttribute("href", "https://calendar.app.google/Ge6GvfiaaaMhAHHf6");

@@ -9,7 +9,7 @@ import {
 
 const PUBLIC_CALENDAR_ID =
   process.env.GO_EVENTS_PUBLIC_CALENDAR_ID ||
-  "c_88d101e79fcb82feaf12a56b3c6812f93a926230fa9976b6438b8aa54115ec2a@group.calendar.google.com";
+  "d88aa1c479a0ef990128bda11f762b849698d58daf1cbb134871079fecb3a518@group.calendar.google.com";
 const MEMBERS_CALENDAR_ID = process.env.GO_EVENTS_MEMBERS_CALENDAR_ID || "";
 const TIMEZONE = process.env.GO_EVENTS_TIMEZONE || "Europe/Belgrade";
 const GOOGLE_CALENDAR_API = "https://www.googleapis.com/calendar/v3";

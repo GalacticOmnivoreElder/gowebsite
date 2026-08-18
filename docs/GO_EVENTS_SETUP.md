@@ -7,7 +7,7 @@ The `/events` page uses the GO application UI and Google Calendar as its source 
 Set these server-side values in the deployment environment:
 
 ```text
-GO_EVENTS_PUBLIC_CALENDAR_ID=c_88d101e79fcb82feaf12a56b3c6812f93a926230fa9976b6438b8aa54115ec2a@group.calendar.google.com
+GO_EVENTS_PUBLIC_CALENDAR_ID=d88aa1c479a0ef990128bda11f762b849698d58daf1cbb134871079fecb3a518@group.calendar.google.com
 GO_EVENTS_TIMEZONE=Europe/Belgrade
 GOOGLE_CALENDAR_API_KEY=...
 ```
@@ -62,7 +62,12 @@ If a members-only event is found on the public calendar, the protected join rout
 
 The subscription action still points to the public calendar:
 
-https://calendar.google.com/calendar/u/0?cid=Y184OGQxMDFlNzlmY2I4MmZlYWYxMmE1NmIzYzY4MTJmOTNhOTI2MjMwZmE5OTc2YjY0MzhiOGFhNTQxMTVlYzJhQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20
+https://calendar.google.com/calendar/u/0?cid=ZDg4YWExYzQ3OWEwZWY5OTAxMjhiZGExMWY3NjJiODQ5Njk4ZDU4ZGFmMWNiYjEzNDg3MTA3OWZlY2IzYTUxOEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t
+
+If the custom GO event API is temporarily unavailable, the events page offers
+this public Google Calendar view as a backup:
+
+https://calendar.google.com/calendar/embed?src=d88aa1c479a0ef990128bda11f762b849698d58daf1cbb134871079fecb3a518%40group.calendar.google.com&ctz=Europe%2FBelgrade
 
 The GO scheduling CTA still points to:
 
