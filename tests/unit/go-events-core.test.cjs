@@ -32,6 +32,9 @@ test("normalizes members-only events without exposing their Meet URL", () => {
 
   assert.equal(event.access, "members");
   assert.equal(event.category, "community");
+  assert.equal(event.subject, "GO Community Meeting");
+  assert.equal(event.format, "Google Meet");
+  assert.equal(event.durationMinutes, 90);
   assert.equal(event.hasJoinLink, true);
   assert.equal(event.joinAvailable, false);
   assert.equal("joinUrl" in event, false);
@@ -56,4 +59,20 @@ test("only accepts Google Meet video entry points", () => {
     getVideoJoinUrl({ hangoutLink: "https://example.com/not-google-meet" }),
     null
   );
+});
+
+test("normalizes location and presentation details for physical events", () => {
+  const event = normalizeCalendarEvent({
+    id: "workshop-1",
+    summary: "Playable Prototype Workshop",
+    description: "Bring your current build.",
+    location: "GOHQ, Skopje",
+    start: { dateTime: "2026-09-02T17:00:00+02:00" },
+    end: { dateTime: "2026-09-02T19:00:00+02:00" },
+  });
+
+  assert.equal(event.subject, "Playable Prototype Workshop");
+  assert.equal(event.location, "GOHQ, Skopje");
+  assert.equal(event.format, "In person");
+  assert.equal(event.durationMinutes, 120);
 });

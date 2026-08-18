@@ -153,6 +153,70 @@ function accessLabel(event) {
   return event.access === "members" ? "GO Community members" : "Open to everyone";
 }
 
+function eventLocationLabel(event) {
+  if (event.location) return event.location;
+  if (event.format === "Google Meet" || event.hasJoinLink) return "Google Meet";
+  return "Location to be announced";
+}
+
+function eventFormatLabel(event) {
+  if (event.format) return event.format;
+  if (event.location) return "In person";
+  if (event.hasJoinLink) return "Google Meet";
+  return "Online";
+}
+
+function formatTimeRange(event) {
+  const start = formatTime(event.start, event.allDay);
+  if (event.allDay || !event.end || event.end === event.start) return start;
+  const end = formatTime(event.end, event.allDay);
+  return start === end ? start : `${start}–${end}`;
+}
+
+function formatDuration(event) {
+  if (!event.durationMinutes) return "Not specified";
+  const hours = Math.floor(event.durationMinutes / 60);
+  const minutes = event.durationMinutes % 60;
+  if (!hours) return `${minutes} min`;
+  if (!minutes) return `${hours} hr`;
+  return `${hours} hr ${minutes} min`;
+}
+
+function EventMetaGrid({ event, detail = false }) {
+  const items = [
+    {
+      label: "When",
+      value: `${formatDate(event.start, { weekday: "short" })} · ${formatTimeRange(event)} · ${event.timezone || GO_EVENTS_TIMEZONE}`,
+      icon: Clock3,
+    },
+    { label: "Where", value: eventLocationLabel(event), icon: MapPin },
+    { label: "Format", value: eventFormatLabel(event), icon: Radio },
+    { label: "Duration", value: formatDuration(event), icon: Clock3 },
+  ];
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {items.map(({ label, value, icon: Icon }) => (
+        <div key={label} className={`border border-white/10 ${detail ? "bg-black/20 p-4" : "bg-black/10 p-3"}`}>
+          <p className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.18em] text-white/40"><Icon className="h-3.5 w-3.5 text-primary" aria-hidden="true" />{label}</p>
+          <p className="mt-2 text-sm font-semibold text-white/85">{value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EventBriefing({ event, detail = false }) {
+  return (
+    <div className={`border border-white/10 bg-black/20 ${detail ? "mt-7 p-5" : "mt-5 p-4"}`}>
+      <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary">Briefing</p>
+      <p className="mt-3 whitespace-pre-line text-sm leading-7 text-white/70">
+        {event.description || "The organizer has not added a briefing for this event yet."}
+      </p>
+    </div>
+  );
+}
+
 function EventCard({ event, compact = false, isMember, joiningId, onSelect, onJoin }) {
   const isMembersOnly = event.access === "members";
   const isJoining = joiningId === event.id;
@@ -177,12 +241,11 @@ function EventCard({ event, compact = false, isMember, joiningId, onSelect, onJo
         <h3 className={`${compact ? "text-lg" : "text-xl sm:text-2xl"} font-semibold tracking-tight text-white`}>{event.title}</h3>
       </button>
 
-      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-white/60">
-        <span className="inline-flex items-center gap-1.5"><Clock3 className="h-3.5 w-3.5 text-primary" aria-hidden="true" />{formatTime(event.start, event.allDay)}</span>
-        <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-primary" aria-hidden="true" />{event.location || "Online / details inside"}</span>
+      <div className="mt-4">
+        <EventMetaGrid event={event} />
       </div>
 
-      {!compact && event.description && <p className="mt-4 line-clamp-3 text-sm leading-7 text-white/55">{event.description}</p>}
+      {!compact && <p className="mt-4 line-clamp-3 text-sm leading-7 text-white/55">{event.description || "Event briefing will be shared in the event details."}</p>}
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         {isMembersOnly ? (
@@ -215,12 +278,13 @@ function EventDetails({ event, isMember, joiningId, onClose, onJoin }) {
           <button type="button" aria-label="Close event details" className="flex h-9 w-9 shrink-0 items-center justify-center border border-white/15 text-white/55 transition-colors hover:border-primary hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" onClick={onClose}><X className="h-4 w-4" aria-hidden="true" /></button>
         </div>
 
-        <div className="mt-7 grid gap-3 sm:grid-cols-2">
-          <div className="border border-white/10 bg-black/20 p-4"><p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">When</p><p className="mt-2 text-sm font-semibold text-white">{formatDate(event.start, { weekday: "long" })}</p><p className="mt-1 text-sm text-white/60">{formatTime(event.start, event.allDay)} · {event.timezone || GO_EVENTS_TIMEZONE}</p></div>
-          <div className="border border-white/10 bg-black/20 p-4"><p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Access</p><p className="mt-2 text-sm font-semibold text-white">{accessLabel(event)}</p><p className="mt-1 text-sm text-white/60">{isMembersOnly ? "Your membership is checked when you join." : "Open event channel."}</p></div>
-        </div>
+        <div className="mt-7 border border-white/10 bg-black/20 p-4"><p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Subject</p><p className="mt-2 text-base font-semibold text-white">{event.subject || event.title}</p></div>
 
-        {event.description && <p className="mt-7 whitespace-pre-line text-sm leading-7 text-white/70">{event.description}</p>}
+        <div className="mt-3"><EventMetaGrid event={event} detail /></div>
+
+        <div className="mt-3 border border-white/10 bg-black/20 p-4"><p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Access</p><p className="mt-2 text-sm font-semibold text-white">{accessLabel(event)}</p><p className="mt-1 text-sm text-white/60">{isMembersOnly ? "Your membership is checked when you join." : "Open event channel."}</p></div>
+
+        <EventBriefing event={event} detail />
 
         <div className="mt-7 flex flex-wrap items-center gap-3">
           {isMembersOnly ? (
@@ -356,7 +420,7 @@ function EventsPage() {
         <div className="flex flex-col gap-6 border-b border-white/10 pb-8 lg:flex-row lg:items-end lg:justify-between"><div><p className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.3em] text-primary"><CalendarDays className="h-4 w-4" aria-hidden="true" />Live event calendar</p><h2 id="go-events-calendar-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Your next GO checkpoint</h2><p className="mt-4 max-w-2xl text-sm leading-7 text-white/60 sm:text-base">A custom event view powered by the GO calendar. Public sessions are open to everyone; protected community meetings reveal their Google Meet entry only after membership is verified.</p></div><Button asChild variant="outline" className="w-full shrink-0 rounded-sm border-primary/60 bg-transparent text-white hover:bg-primary/10 hover:text-white sm:w-auto"><a href={GO_EVENTS_CALENDAR_PUBLIC_URL} target="_blank" rel="noopener noreferrer" onClick={handleCalendarExternalClick}><CalendarPlus className="mr-2 h-4 w-4" aria-hidden="true" />Subscribe to GO calendar<ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" /></a></Button></div>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="relative overflow-hidden border border-primary/45 bg-[#160d16] p-6 shadow-[0_0_60px_rgba(202,34,128,0.12)] sm:p-8"><div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full border border-primary/25 shadow-[0_0_80px_rgba(202,34,128,0.14)]" /><div className="relative"><div className="flex items-center justify-between gap-4"><p className="font-mono text-[10px] font-semibold uppercase tracking-[0.3em] text-primary">Next transmission</p><span className="inline-flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.18em] text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.9)]" />Signal live</span></div>{calendar.status === "loading" ? <div className="mt-12 animate-pulse" aria-live="polite"><div className="h-8 w-3/4 bg-white/10" /><div className="mt-5 h-4 w-1/2 bg-white/10" /><div className="mt-3 h-4 w-2/3 bg-white/10" /></div> : calendar.nextEvent ? <><h3 className="mt-8 max-w-lg text-3xl font-bold tracking-tight text-white sm:text-4xl">{calendar.nextEvent.title}</h3><div className="mt-6 space-y-3 text-sm text-white/70"><p className="flex items-center gap-3"><CalendarDays className="h-4 w-4 text-primary" aria-hidden="true" />{formatDate(calendar.nextEvent.start, { weekday: "long" })}</p><p className="flex items-center gap-3"><Clock3 className="h-4 w-4 text-primary" aria-hidden="true" />{formatTime(calendar.nextEvent.start, calendar.nextEvent.allDay)} · {calendar.timezone}</p><p className="flex items-center gap-3"><MapPin className="h-4 w-4 text-primary" aria-hidden="true" />{calendar.nextEvent.location || "Online / details inside"}</p></div>{calendar.nextEvent.description && <p className="mt-6 max-w-lg text-sm leading-7 text-white/55">{calendar.nextEvent.description}</p>}<div className="mt-8 flex flex-wrap gap-3">{calendar.nextEvent.access === "members" ? <Button className="rounded-sm bg-primary text-white hover:bg-primary/90" onClick={() => handleJoin(calendar.nextEvent)}>{isMember ? "Join community event" : "Review membership"}<ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Button> : calendar.nextEvent.joinUrl ? <a href={calendar.nextEvent.joinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center rounded-sm bg-cyan-300 px-4 text-sm font-semibold text-[#071014] hover:bg-cyan-200"><Video className="mr-2 h-4 w-4" aria-hidden="true" />Join event</a> : null}<button type="button" className="inline-flex h-10 items-center border border-white/20 px-4 text-sm font-semibold text-white/70 hover:border-primary hover:text-white" onClick={() => handleSelectEvent(calendar.nextEvent)}>View briefing<ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></button></div></> : <div className="mt-12"><h3 className="text-2xl font-bold text-white">No transmission scheduled yet</h3><p className="mt-4 max-w-md text-sm leading-7 text-white/60">Subscribe to the GO Calendar and check back soon for the next community checkpoint.</p></div>}{joinError && <p className="mt-5 border-l-2 border-amber-300 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100" role="alert">{joinError}</p>}</div></div>
+          <div className="relative overflow-hidden border border-primary/45 bg-[#160d16] p-6 shadow-[0_0_60px_rgba(202,34,128,0.12)] sm:p-8"><div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full border border-primary/25 shadow-[0_0_80px_rgba(202,34,128,0.14)]" /><div className="relative"><div className="flex items-center justify-between gap-4"><p className="font-mono text-[10px] font-semibold uppercase tracking-[0.3em] text-primary">Next transmission</p><span className="inline-flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.18em] text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.9)]" />Signal live</span></div>{calendar.status === "loading" ? <div className="mt-12 animate-pulse" aria-live="polite"><div className="h-8 w-3/4 bg-white/10" /><div className="mt-5 h-4 w-1/2 bg-white/10" /><div className="mt-3 h-4 w-2/3 bg-white/10" /></div> : calendar.nextEvent ? <><h3 className="mt-8 max-w-lg text-3xl font-bold tracking-tight text-white sm:text-4xl">{calendar.nextEvent.title}</h3><div className="mt-6"><EventMetaGrid event={calendar.nextEvent} /></div><EventBriefing event={calendar.nextEvent} /><div className="mt-8 flex flex-wrap gap-3">{calendar.nextEvent.access === "members" ? <Button className="rounded-sm bg-primary text-white hover:bg-primary/90" onClick={() => handleJoin(calendar.nextEvent)}>{isMember ? "Join community event" : "Review membership"}<ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Button> : calendar.nextEvent.joinUrl ? <a href={calendar.nextEvent.joinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center rounded-sm bg-cyan-300 px-4 text-sm font-semibold text-[#071014] hover:bg-cyan-200"><Video className="mr-2 h-4 w-4" aria-hidden="true" />Join event</a> : null}<button type="button" className="inline-flex h-10 items-center border border-white/20 px-4 text-sm font-semibold text-white/70 hover:border-primary hover:text-white" onClick={() => handleSelectEvent(calendar.nextEvent)}>View briefing<ArrowRight className="ml-4 h-4 w-4" aria-hidden="true" /></button></div></> : <div className="mt-12"><h3 className="text-2xl font-bold text-white">No transmission scheduled yet</h3><p className="mt-4 max-w-md text-sm leading-7 text-white/60">Subscribe to the GO Calendar and check back soon for the next community checkpoint.</p></div>}{joinError && <p className="mt-5 border-l-2 border-amber-300 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100" role="alert">{joinError}</p>}</div></div>
 
           <div className="border border-white/10 bg-[#0b090d] p-4 sm:p-6" data-testid="go-events-calendar-state" data-state={calendar.status}><div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5"><div><p className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary">Upcoming transmissions</p><p className="mt-2 text-sm text-white/50">{calendar.events.length ? `${calendar.events.length} scheduled event${calendar.events.length === 1 ? "" : "s"}` : "Live schedule"}</p></div><div className="flex items-center gap-2"><button type="button" aria-label="Previous month" className="flex h-9 w-9 items-center justify-center border border-white/15 text-white/60 hover:border-primary hover:text-white" onClick={() => changeMonth(-1)}><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button><span className="min-w-32 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">{monthLabel(activeMonth)}</span><button type="button" aria-label="Next month" className="flex h-9 w-9 items-center justify-center border border-white/15 text-white/60 hover:border-primary hover:text-white" onClick={() => changeMonth(1)}><ChevronRight className="h-4 w-4" aria-hidden="true" /></button></div></div>
             {calendar.status === "error" ? <div className="flex min-h-[300px] flex-col items-center justify-center px-6 text-center" role="status"><Radio className="h-8 w-8 text-primary" aria-hidden="true" /><h3 className="mt-5 text-xl font-semibold text-white">The GO event signal is being connected</h3><p className="mt-3 max-w-md text-sm leading-6 text-white/55">{calendar.error || "The live schedule is temporarily unavailable."} Subscribe to the calendar below while the connection is restored.</p></div> : calendar.status === "loading" ? <div className="grid grid-cols-7 gap-1 pt-6" aria-label="Loading event calendar">{Array.from({ length: 35 }, (_, index) => <div key={index} className="h-12 animate-pulse bg-white/[0.04]" />)}</div> : <><div className="mt-6 grid grid-cols-7 gap-1 font-mono text-[9px] uppercase tracking-[0.1em] text-white/35"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div className="mt-2 grid grid-cols-7 gap-1">{cells.map((day, index) => { if (!day) return <div key={`empty-${index}`} className="min-h-16 border border-transparent" />; const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`; const dayEvents = eventsByDate.get(key) || []; const isSelected = activeDate === key; const isToday = dateKey(new Date().toISOString()) === key; return <button key={key} type="button" aria-label={`${day.toLocaleDateString("en-US", { month: "long", day: "numeric" })}${dayEvents.length ? `, ${dayEvents.length} event${dayEvents.length === 1 ? "" : "s"}` : ""}`} className={`relative min-h-16 border p-2 text-left transition-colors ${isSelected ? "border-primary bg-primary/15" : "border-white/10 bg-white/[0.025] hover:border-primary/60"}`} onClick={() => setActiveDate(key)}><span className={`font-mono text-xs ${isToday ? "inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white" : "text-white/60"}`}>{day.getDate()}</span>{dayEvents.length > 0 && <span className="absolute bottom-2 left-2 right-2 flex gap-1">{dayEvents.slice(0, 3).map((event) => <span key={event.id} className={`h-1 flex-1 ${event.access === "members" ? "bg-primary" : "bg-cyan-300"}`} />)}</span>}</button>; })}</div>{activeDate && <div className="mt-5 border-t border-white/10 pt-5"><div className="flex items-center justify-between gap-3"><p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">Selected date</p><button type="button" className="text-xs text-white/45 hover:text-white" onClick={() => setActiveDate("")}>Show all</button></div>{selectedDateEvents.length ? <div className="mt-3 space-y-2">{selectedDateEvents.map((event) => <button key={event.id} type="button" className="flex w-full items-center justify-between gap-3 border border-white/10 bg-white/[0.025] p-3 text-left hover:border-primary/60" onClick={() => handleSelectEvent(event)}><span className="min-w-0"><span className="block truncate text-sm font-semibold text-white">{event.title}</span><span className="mt-1 block text-xs text-white/50">{formatTime(event.start, event.allDay)}</span></span>{event.access === "members" ? <LockKeyhole className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" /> : <ArrowRight className="h-4 w-4 shrink-0 text-cyan-300" aria-hidden="true" />}</button>)}</div> : <p className="mt-3 text-sm text-white/50">No events on this date.</p>}</div>}</>}</div>

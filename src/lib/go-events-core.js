@@ -6,6 +6,22 @@ function asString(value, fallback = "") {
   return typeof value === "string" ? value.trim() : fallback;
 }
 
+function getEventDurationMinutes(startValue, endValue, allDay) {
+  if (allDay || !startValue || !endValue) return null;
+  const start = new Date(startValue).getTime();
+  const end = new Date(endValue).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
+  return Math.round((end - start) / 60000);
+}
+
+function getEventFormat(event, joinUrl) {
+  if (asString(event.location)) return "In person";
+  if (joinUrl || event.conferenceData?.entryPoints?.some((entry) => entry?.entryPointType === "video" && entry?.uri)) {
+    return "Google Meet";
+  }
+  return "Online";
+}
+
 export function normalizeAccessValue(value) {
   const normalized = asString(value).toLowerCase();
   return ["member", "members", "community", "private"].includes(normalized)
@@ -92,16 +108,21 @@ export function normalizeCalendarEvent(event = {}, { source = "public", timezone
   const joinUrl = getVideoJoinUrl(event);
   const allDay = Boolean(event.start?.date && !event.start?.dateTime);
   const description = stripGoMetadata(event.description);
+  const title = asString(event.summary, "GO Event");
+  const location = asString(event.location) || null;
 
   return {
     id: asString(event.id),
-    title: asString(event.summary, "GO Event"),
+    title,
+    subject: title,
     description,
     start: startValue,
     end: endValue,
     allDay,
     timezone: event.start?.timeZone || timezone,
-    location: asString(event.location) || null,
+    location,
+    format: getEventFormat(event, joinUrl),
+    durationMinutes: getEventDurationMinutes(startValue, endValue, allDay),
     htmlLink: access === "public" && /^https:\/\/calendar\.google\.com\//i.test(asString(event.htmlLink))
       ? event.htmlLink
       : null,

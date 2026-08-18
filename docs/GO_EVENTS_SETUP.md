@@ -29,6 +29,18 @@ GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON={...}
 
 The service account must be granted permission to see all event details on the restricted calendar. Alternatively, provide the service account values through `GOOGLE_CALENDAR_CLIENT_EMAIL` and `GOOGLE_CALENDAR_PRIVATE_KEY`.
 
+## Event content shown on the GO page
+
+The custom GO event view reads the standard Google Calendar event fields:
+
+- Event title becomes the event subject.
+- Description becomes the event briefing.
+- Location becomes the Where field and marks the event as in person.
+- A Google Meet conference becomes the Format field and supplies the join action when access allows it.
+- Start and end times become the When and Duration fields.
+
+For the best presentation, give each event a specific title, add a short description with the agenda or expected outcome, enter the physical location when applicable, and add Google Meet through Google Calendar for online sessions. The page displays a clear fallback when a location or briefing has not been supplied.
+
 Member events are fetched server-side and their Meet URL is never returned by the public `/api/go-events` response. The protected endpoint `/api/go-events/[eventId]/join` checks the Firebase user token and the canonical active Community membership state before returning the URL.
 
 The Google Meet room should also use Google’s own access controls, such as requiring sign-in or host approval. A user who has received a Meet URL may still share it, so the website gate should be treated as one layer of access control.
@@ -55,4 +67,3 @@ https://calendar.google.com/calendar/u/0?cid=Y184OGQxMDFlNzlmY2I4MmZlYWYxMmE1NmI
 The GO scheduling CTA still points to:
 
 https://calendar.app.google/Ge6GvfiaaaMhAHHf6
-
