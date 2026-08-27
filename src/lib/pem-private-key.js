@@ -32,20 +32,6 @@ export function normalizePemPrivateKey(raw) {
   return key.trim();
 }
 
-export function inspectNormalizedPem(raw) {
-  const normalized = normalizePemPrivateKey(raw);
-  const lines = normalized ? normalized.split("\n") : [];
-  return {
-    normalizedLength: normalized.length,
-    lineCount: lines.length,
-    hasBeginPrivateKey: normalized.includes("BEGIN PRIVATE KEY"),
-    hasBeginRsaPrivateKey: normalized.includes("BEGIN RSA PRIVATE KEY"),
-    hasEndPrivateKey: /-----END (RSA )?PRIVATE KEY-----/.test(normalized),
-    firstLine: lines[0] || null,
-    lastLine: lines[lines.length - 1] || null,
-  };
-}
-
 function reflowPem(key) {
   const match = key.match(/-----BEGIN ([A-Z0-9 ]+)-----\s*([\s\S]*?)\s*-----END \1-----/);
   if (!match) return key;

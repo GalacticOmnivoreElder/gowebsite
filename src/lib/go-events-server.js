@@ -7,7 +7,7 @@ import {
   getVideoJoinUrl,
   normalizeCalendarEvent,
 } from "@/lib/go-events-core";
-import { inspectNormalizedPem, normalizePemPrivateKey } from "@/lib/pem-private-key";
+import { normalizePemPrivateKey } from "@/lib/pem-private-key";
 
 const PUBLIC_CALENDAR_ID =
   process.env.GO_EVENTS_PUBLIC_CALENDAR_ID ||
@@ -21,153 +21,6 @@ const EVENT_WINDOW_MS = 180 * 24 * 60 * 60 * 1000;
 
 const eventListCache = new Map();
 let serviceAccountTokenCache = null;
-
-function inspectEnvVar(name) {
-  const raw = process.env[name];
-  if (raw == null) {
-    return { name, set: false, length: 0 };
-  }
-
-  const value = String(raw);
-  const trimmed = value.trim();
-  const wrappedInQuotes =
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"));
-
-  return {
-    name,
-    set: true,
-    length: value.length,
-    trimmedLength: trimmed.length,
-    emptyAfterTrim: trimmed.length === 0,
-    wrappedInQuotes,
-    hasRealNewline: value.includes("\n"),
-    hasEscapedNewline: value.includes("\\n"),
-    startsWithBrace: trimmed.startsWith("{"),
-    looksLikePem: trimmed.includes("BEGIN PRIVATE KEY") || trimmed.includes("BEGIN RSA PRIVATE KEY"),
-  };
-}
-
-function inspectServiceAccountJson() {
-  const json = process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON;
-  const base = inspectEnvVar("GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON");
-  if (!base.set || base.emptyAfterTrim) {
-    return { ...base, jsonParses: false, hasClientEmail: false, hasPrivateKey: false };
-  }
-
-  try {
-    const parsed = JSON.parse(String(json).trim());
-    return {
-      ...base,
-      jsonParses: true,
-      parsedType: parsed && typeof parsed === "object" && !Array.isArray(parsed) ? "object" : typeof parsed,
-      hasClientEmail: Boolean(parsed?.client_email),
-      hasPrivateKey: Boolean(parsed?.private_key),
-      clientEmailLength: typeof parsed?.client_email === "string" ? parsed.client_email.length : 0,
-      privateKeyLength: typeof parsed?.private_key === "string" ? parsed.private_key.length : 0,
-      privateKeyLooksLikePem:
-        typeof parsed?.private_key === "string" &&
-        (parsed.private_key.includes("BEGIN PRIVATE KEY") || parsed.private_key.includes("BEGIN RSA PRIVATE KEY")),
-    };
-  } catch (error) {
-    return {
-      ...base,
-      jsonParses: false,
-      parseError: error instanceof Error ? error.message : "JSON.parse failed",
-      hasClientEmail: false,
-      hasPrivateKey: false,
-    };
-  }
-}
-
-export function getGoEventsEnvDiagnostics() {
-  const serviceAccountJson = inspectServiceAccountJson();
-  const clientEmail = inspectEnvVar("GOOGLE_CALENDAR_CLIENT_EMAIL");
-  const privateKey = inspectEnvVar("GOOGLE_CALENDAR_PRIVATE_KEY");
-  const privateKeyBase64 = inspectEnvVar("GOOGLE_CALENDAR_PRIVATE_KEY_BASE64");
-  const apiKey = inspectEnvVar("GOOGLE_CALENDAR_API_KEY");
-  const publicCalendarId = inspectEnvVar("GO_EVENTS_PUBLIC_CALENDAR_ID");
-  const membersCalendarId = inspectEnvVar("GO_EVENTS_MEMBERS_CALENDAR_ID");
-  const timezone = inspectEnvVar("GO_EVENTS_TIMEZONE");
-  const embedUrl = inspectEnvVar("NEXT_PUBLIC_GO_EVENTS_CALENDAR_EMBED_URL");
-  const publicUrl = inspectEnvVar("NEXT_PUBLIC_GO_EVENTS_CALENDAR_PUBLIC_URL");
-
-  let serviceAccountPath = "none";
-  if (serviceAccountJson.jsonParses && serviceAccountJson.hasClientEmail && serviceAccountJson.hasPrivateKey) {
-    serviceAccountPath = "GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON";
-  } else if (
-    clientEmail.set &&
-    !clientEmail.emptyAfterTrim &&
-    ((privateKey.set && !privateKey.emptyAfterTrim) || (privateKeyBase64.set && !privateKeyBase64.emptyAfterTrim))
-  ) {
-    serviceAccountPath = privateKeyBase64.set && !privateKeyBase64.emptyAfterTrim
-      ? "GOOGLE_CALENDAR_CLIENT_EMAIL + GOOGLE_CALENDAR_PRIVATE_KEY_BASE64"
-      : "GOOGLE_CALENDAR_CLIENT_EMAIL + GOOGLE_CALENDAR_PRIVATE_KEY";
-  }
-
-  const missing = [];
-  if (!publicCalendarId.set || publicCalendarId.emptyAfterTrim) missing.push("GO_EVENTS_PUBLIC_CALENDAR_ID (optional, has code fallback)");
-  if (serviceAccountPath === "none" && (!apiKey.set || apiKey.emptyAfterTrim)) {
-    missing.push("GOOGLE_CALENDAR_API_KEY (required for public calendar if no service account)");
-  }
-  if ((membersCalendarId.set && !membersCalendarId.emptyAfterTrim) && serviceAccountPath === "none") {
-    missing.push("service account credentials (required because GO_EVENTS_MEMBERS_CALENDAR_ID is set)");
-  }
-  if (serviceAccountJson.set && !serviceAccountJson.emptyAfterTrim && !serviceAccountJson.jsonParses) {
-    missing.push("GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON is set but is not valid JSON");
-  }
-  if (privateKey.set && !privateKey.emptyAfterTrim && !privateKey.looksLikePem && !privateKey.hasEscapedNewline && !privateKey.hasRealNewline) {
-    missing.push("GOOGLE_CALENDAR_PRIVATE_KEY does not look like a PEM key");
-  }
-
-  return {
-    vercelEnv: process.env.VERCEL_ENV || null,
-    nodeEnv: process.env.NODE_ENV || null,
-    vars: {
-      GO_EVENTS_PUBLIC_CALENDAR_ID: publicCalendarId,
-      GO_EVENTS_MEMBERS_CALENDAR_ID: membersCalendarId,
-      GO_EVENTS_TIMEZONE: timezone,
-      GOOGLE_CALENDAR_API_KEY: apiKey,
-      GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON: serviceAccountJson,
-      GOOGLE_CALENDAR_CLIENT_EMAIL: clientEmail,
-      GOOGLE_CALENDAR_PRIVATE_KEY: privateKey,
-      GOOGLE_CALENDAR_PRIVATE_KEY_BASE64: privateKeyBase64,
-      NEXT_PUBLIC_GO_EVENTS_CALENDAR_EMBED_URL: embedUrl,
-      NEXT_PUBLIC_GO_EVENTS_CALENDAR_PUBLIC_URL: publicUrl,
-    },
-    derived: {
-      resolvedPublicCalendarIdSet: Boolean(PUBLIC_CALENDAR_ID),
-      resolvedMembersCalendarIdSet: Boolean(MEMBERS_CALENDAR_ID),
-      resolvedTimezone: TIMEZONE,
-      serviceAccountPath,
-      apiKeySet: apiKey.set && !apiKey.emptyAfterTrim,
-      likelyAuthMode:
-        serviceAccountPath !== "none"
-          ? "service-account"
-          : apiKey.set && !apiKey.emptyAfterTrim
-            ? "api-key"
-            : "none",
-      likelyMissingOrMisconfigured: missing,
-      normalizedPrivateKey: inspectResolvedPrivateKey(),
-    },
-  };
-}
-
-function inspectResolvedPrivateKey() {
-  try {
-    const account = getServiceAccount();
-    if (!account?.private_key) return { present: false };
-    return { present: true, ...inspectNormalizedPem(account.private_key) };
-  } catch (error) {
-    return { present: true, inspectError: error instanceof Error ? error.message : "inspect failed" };
-  }
-}
-
-export function logGoEventsEnvDiagnostics(reason = "request") {
-  const diagnostics = getGoEventsEnvDiagnostics();
-  console.log("[GO Events env debug]", reason, JSON.stringify(diagnostics, null, 2));
-  return diagnostics;
-}
 
 function configurationError(message) {
   const error = new Error(message);
@@ -222,16 +75,13 @@ function getServiceAccount() {
 function loadServiceAccountSigningKey(pem) {
   const normalized = normalizePemPrivateKey(pem);
   if (!normalized.includes("BEGIN PRIVATE KEY") && !normalized.includes("BEGIN RSA PRIVATE KEY")) {
-    throw configurationError(
-      "Google Calendar service account private key is invalid. Missing BEGIN PRIVATE KEY header after Vercel/env normalization."
-    );
+    throw configurationError("Google Calendar service account private key is invalid.");
   }
 
   try {
     return createPrivateKey({ key: normalized, format: "pem" });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "unknown crypto error";
-    throw configurationError(`Google Calendar service account private key is invalid. ${message}`);
+  } catch {
+    throw configurationError("Google Calendar service account private key is invalid.");
   }
 }
 
