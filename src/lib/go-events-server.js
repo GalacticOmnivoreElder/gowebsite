@@ -6,10 +6,6 @@ import {
   getVideoJoinUrl,
   normalizeCalendarEvent,
 } from "@/lib/go-events-core";
-import {
-  getSafeGoEventsError,
-  logGoEventsDiagnostic,
-} from "@/lib/go-events-diagnostics";
 
 const PUBLIC_CALENDAR_ID =
   process.env.GO_EVENTS_PUBLIC_CALENDAR_ID ||
@@ -112,10 +108,7 @@ async function getServiceAccountToken() {
 async function getCalendarRequestOptions(source) {
   const serviceToken = await getServiceAccountToken();
   if (serviceToken) {
-    return {
-      authMode: "service_account",
-      headers: { Authorization: `Bearer ${serviceToken}` },
-    };
+    return { headers: { Authorization: `Bearer ${serviceToken}` } };
   }
 
   if (source === "members") {
@@ -131,7 +124,7 @@ async function getCalendarRequestOptions(source) {
     );
   }
 
-  return { authMode: "api_key", searchParams: { key: apiKey } };
+  return { searchParams: { key: apiKey } };
 }
 
 function buildFields() {
@@ -153,57 +146,27 @@ async function googleFetch(url, options = {}) {
 async function fetchCalendarEvents(calendarId, source, { timeMin, timeMax } = {}) {
   const cacheKey = `${calendarId}:${source}:${timeMin}:${timeMax}`;
   const cached = eventListCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) {
-    logGoEventsDiagnostic("info", "go_events.calendar_fetch.cache_hit", {
-      source,
-      itemCount: cached.data.length,
-    });
-    return cached.data;
-  }
+  if (cached && cached.expiresAt > Date.now()) return cached.data;
 
-  const startedAt = Date.now();
-  let authMode = "unresolved";
-  try {
-    const options = await getCalendarRequestOptions(source);
-    authMode = options.authMode;
-    logGoEventsDiagnostic("info", "go_events.calendar_fetch.started", {
-      source,
-      authMode,
-    });
+  const options = await getCalendarRequestOptions(source);
+  const url = new URL(`${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events`);
+  const params = {
+    singleEvents: "true",
+    orderBy: "startTime",
+    showDeleted: "false",
+    maxResults: "2500",
+    timeZone: TIMEZONE,
+    fields: buildFields(),
+  };
+  if (timeMin) params.timeMin = timeMin;
+  if (timeMax) params.timeMax = timeMax;
+  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+  Object.entries(options.searchParams || {}).forEach(([key, value]) => url.searchParams.set(key, value));
 
-    const url = new URL(`${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events`);
-    const params = {
-      singleEvents: "true",
-      orderBy: "startTime",
-      showDeleted: "false",
-      maxResults: "2500",
-      timeZone: TIMEZONE,
-      fields: buildFields(),
-    };
-    if (timeMin) params.timeMin = timeMin;
-    if (timeMax) params.timeMax = timeMax;
-    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
-    Object.entries(options.searchParams || {}).forEach(([key, value]) => url.searchParams.set(key, value));
-
-    const data = await googleFetch(url, { headers: options.headers });
-    const items = Array.isArray(data.items) ? data.items : [];
-    eventListCache.set(cacheKey, { data: items, expiresAt: Date.now() + CACHE_TTL_MS });
-    logGoEventsDiagnostic("info", "go_events.calendar_fetch.completed", {
-      source,
-      authMode,
-      durationMs: Date.now() - startedAt,
-      itemCount: items.length,
-    });
-    return items;
-  } catch (error) {
-    logGoEventsDiagnostic("error", "go_events.calendar_fetch.failed", {
-      source,
-      authMode,
-      durationMs: Date.now() - startedAt,
-      error: getSafeGoEventsError(error),
-    });
-    throw error;
-  }
+  const data = await googleFetch(url, { headers: options.headers });
+  const items = Array.isArray(data.items) ? data.items : [];
+  eventListCache.set(cacheKey, { data: items, expiresAt: Date.now() + CACHE_TTL_MS });
+  return items;
 }
 
 async function fetchCalendarEvent(calendarId, source, eventId) {

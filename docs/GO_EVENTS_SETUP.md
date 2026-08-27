@@ -29,25 +29,6 @@ GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON={...}
 
 The service account must be granted permission to see all event details on the restricted calendar. Alternatively, provide the service account values through `GOOGLE_CALENDAR_CLIENT_EMAIL` and `GOOGLE_CALENDAR_PRIVATE_KEY`.
 
-## Safe configuration diagnostics
-
-Every request to `/api/go-events` writes structured `go_events.*` messages to
-the server console and Vercel Runtime Logs. The configuration summary reports
-only whether each variable is present and whether its JSON, email, and PEM
-format looks valid. It never logs calendar IDs, API keys, email addresses, or
-private-key contents.
-
-Run the site locally, request `/api/go-events`, and inspect the terminal for:
-
-- `go_events.request.started` — environment-variable presence and format checks.
-- `go_events.calendar_fetch.failed` — whether the public or members source failed.
-- `go_events.request.failed` — the final safe error and configuration summary.
-
-On Vercel, open Runtime Logs and filter for `go_events.` after requesting the
-production endpoint once. The `issues` array identifies malformed settings,
-while `credentialRequirement.missingFromSplitCredential` names the missing
-service-account variables without exposing their values.
-
 ## Event content shown on the GO page
 
 The custom GO event view reads the standard Google Calendar event fields:
