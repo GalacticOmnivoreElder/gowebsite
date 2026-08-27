@@ -1,4 +1,5 @@
-import { importPKCS8, SignJWT } from "jose";
+import { createPrivateKey } from "crypto";
+import { SignJWT } from "jose";
 
 import {
   getEventAccess,
@@ -6,6 +7,7 @@ import {
   getVideoJoinUrl,
   normalizeCalendarEvent,
 } from "@/lib/go-events-core";
+import { inspectNormalizedPem, normalizePemPrivateKey } from "@/lib/pem-private-key";
 
 const PUBLIC_CALENDAR_ID =
   process.env.GO_EVENTS_PUBLIC_CALENDAR_ID ||
@@ -82,6 +84,7 @@ export function getGoEventsEnvDiagnostics() {
   const serviceAccountJson = inspectServiceAccountJson();
   const clientEmail = inspectEnvVar("GOOGLE_CALENDAR_CLIENT_EMAIL");
   const privateKey = inspectEnvVar("GOOGLE_CALENDAR_PRIVATE_KEY");
+  const privateKeyBase64 = inspectEnvVar("GOOGLE_CALENDAR_PRIVATE_KEY_BASE64");
   const apiKey = inspectEnvVar("GOOGLE_CALENDAR_API_KEY");
   const publicCalendarId = inspectEnvVar("GO_EVENTS_PUBLIC_CALENDAR_ID");
   const membersCalendarId = inspectEnvVar("GO_EVENTS_MEMBERS_CALENDAR_ID");
@@ -92,8 +95,14 @@ export function getGoEventsEnvDiagnostics() {
   let serviceAccountPath = "none";
   if (serviceAccountJson.jsonParses && serviceAccountJson.hasClientEmail && serviceAccountJson.hasPrivateKey) {
     serviceAccountPath = "GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON";
-  } else if (clientEmail.set && !clientEmail.emptyAfterTrim && privateKey.set && !privateKey.emptyAfterTrim) {
-    serviceAccountPath = "GOOGLE_CALENDAR_CLIENT_EMAIL + GOOGLE_CALENDAR_PRIVATE_KEY";
+  } else if (
+    clientEmail.set &&
+    !clientEmail.emptyAfterTrim &&
+    ((privateKey.set && !privateKey.emptyAfterTrim) || (privateKeyBase64.set && !privateKeyBase64.emptyAfterTrim))
+  ) {
+    serviceAccountPath = privateKeyBase64.set && !privateKeyBase64.emptyAfterTrim
+      ? "GOOGLE_CALENDAR_CLIENT_EMAIL + GOOGLE_CALENDAR_PRIVATE_KEY_BASE64"
+      : "GOOGLE_CALENDAR_CLIENT_EMAIL + GOOGLE_CALENDAR_PRIVATE_KEY";
   }
 
   const missing = [];
@@ -122,6 +131,7 @@ export function getGoEventsEnvDiagnostics() {
       GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON: serviceAccountJson,
       GOOGLE_CALENDAR_CLIENT_EMAIL: clientEmail,
       GOOGLE_CALENDAR_PRIVATE_KEY: privateKey,
+      GOOGLE_CALENDAR_PRIVATE_KEY_BASE64: privateKeyBase64,
       NEXT_PUBLIC_GO_EVENTS_CALENDAR_EMBED_URL: embedUrl,
       NEXT_PUBLIC_GO_EVENTS_CALENDAR_PUBLIC_URL: publicUrl,
     },
@@ -138,8 +148,19 @@ export function getGoEventsEnvDiagnostics() {
             ? "api-key"
             : "none",
       likelyMissingOrMisconfigured: missing,
+      normalizedPrivateKey: inspectResolvedPrivateKey(),
     },
   };
+}
+
+function inspectResolvedPrivateKey() {
+  try {
+    const account = getServiceAccount();
+    if (!account?.private_key) return { present: false };
+    return { present: true, ...inspectNormalizedPem(account.private_key) };
+  } catch (error) {
+    return { present: true, inspectError: error instanceof Error ? error.message : "inspect failed" };
+  }
 }
 
 export function logGoEventsEnvDiagnostics(reason = "request") {
@@ -161,24 +182,57 @@ function calendarApiError(message, status = 502) {
   return error;
 }
 
+function decodePrivateKeyFromEnv() {
+  const b64 = process.env.GOOGLE_CALENDAR_PRIVATE_KEY_BASE64?.trim();
+  if (b64) {
+    try {
+      return Buffer.from(b64, "base64").toString("utf8");
+    } catch {
+      throw configurationError("GOOGLE_CALENDAR_PRIVATE_KEY_BASE64 is not valid base64.");
+    }
+  }
+  return process.env.GOOGLE_CALENDAR_PRIVATE_KEY;
+}
+
 function getServiceAccount() {
   const json = process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON?.trim();
   if (json) {
     try {
       const parsed = JSON.parse(json);
-      if (parsed.client_email && parsed.private_key) return parsed;
+      if (parsed.client_email && parsed.private_key) {
+        return {
+          client_email: String(parsed.client_email).trim(),
+          private_key: normalizePemPrivateKey(parsed.private_key),
+        };
+      }
     } catch {
       throw configurationError("GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON is invalid JSON.");
     }
   }
 
   const clientEmail = process.env.GOOGLE_CALENDAR_CLIENT_EMAIL?.trim();
-  const privateKey = process.env.GOOGLE_CALENDAR_PRIVATE_KEY?.trim();
+  const privateKey = normalizePemPrivateKey(decodePrivateKeyFromEnv());
   if (clientEmail && privateKey) {
-    return { client_email: clientEmail, private_key: privateKey.replace(/\\n/g, "\n") };
+    return { client_email: clientEmail, private_key: privateKey };
   }
 
   return null;
+}
+
+function loadServiceAccountSigningKey(pem) {
+  const normalized = normalizePemPrivateKey(pem);
+  if (!normalized.includes("BEGIN PRIVATE KEY") && !normalized.includes("BEGIN RSA PRIVATE KEY")) {
+    throw configurationError(
+      "Google Calendar service account private key is invalid. Missing BEGIN PRIVATE KEY header after Vercel/env normalization."
+    );
+  }
+
+  try {
+    return createPrivateKey({ key: normalized, format: "pem" });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "unknown crypto error";
+    throw configurationError(`Google Calendar service account private key is invalid. ${message}`);
+  }
 }
 
 async function getServiceAccountToken() {
@@ -190,12 +244,7 @@ async function getServiceAccountToken() {
   const account = getServiceAccount();
   if (!account) return null;
 
-  let privateKey;
-  try {
-    privateKey = await importPKCS8(account.private_key, "RS256");
-  } catch {
-    throw configurationError("Google Calendar service account private key is invalid.");
-  }
+  const privateKey = loadServiceAccountSigningKey(account.private_key);
 
   const assertion = await new SignJWT({
     scope: "https://www.googleapis.com/auth/calendar.readonly",
