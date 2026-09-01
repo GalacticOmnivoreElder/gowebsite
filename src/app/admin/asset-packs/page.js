@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Trash2 } from "lucide-react";
 import { auth } from "@/firebase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ export default function AdminAssetPacksPage() {
     return unsubscribe;
   }, [load]);
 
-  const act = async (body) => {
+  const act = async (body, successMessage = "Asset-pack review updated and audited.") => {
     setBusy(true);
     setMessage("");
     try {
@@ -54,13 +55,23 @@ export default function AdminAssetPacksPage() {
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "Review action failed");
-      setMessage("Asset-pack review updated and audited.");
+      setMessage(successMessage);
       await load();
     } catch (error) {
       setMessage(error.message);
     } finally {
       setBusy(false);
     }
+  };
+
+  const deletePack = (pack) => {
+    const reason = reasons[`pack:${pack.id}`] || "";
+    if (!reason.trim()) {
+      setMessage("Enter a reason before permanently deleting an asset pack.");
+      return;
+    }
+    if (!window.confirm(`Permanently delete “${pack.title || pack.id}”? This removes the pack, all versions, access grants, and active download links.`)) return;
+    return act({ action: "delete_pack", packId: pack.id, reason }, "Asset pack permanently deleted and audited.");
   };
 
   if (!data) return <p className="p-8 text-center">{message || "Loading asset-pack reviews..."}</p>;
@@ -137,6 +148,7 @@ export default function AdminAssetPacksPage() {
 
       <section>
         <h2 className="mb-3 text-xl font-semibold">Published and historical packs</h2>
+        <p className="mb-3 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-muted-foreground"><strong>Remove pack</strong> hides the pack while preserving its history. <strong>Delete permanently</strong> erases the pack, versions, grants, and active protected download links and cannot be undone.</p>
         <div className="space-y-3">
           {data.packs.map((pack) => {
             const reasonKey = `pack:${pack.id}`;
@@ -147,15 +159,17 @@ export default function AdminAssetPacksPage() {
                   <div><p className="font-semibold">{pack.title || pack.id}</p><p className="text-xs text-muted-foreground">{pack.id}</p></div>
                   <Badge>{pack.status}</Badge>
                 </div>
-                <Input aria-label={`Administrative reason for ${pack.title || pack.id}`} placeholder="Reason for access or status change" value={reasons[reasonKey] || ""} onChange={(event) => setReasons((current) => ({ ...current, [reasonKey]: event.target.value }))} />
+                <Input aria-label={`Administrative reason for ${pack.title || pack.id}`} placeholder="Reason for access, removal, or deletion" value={reasons[reasonKey] || ""} onChange={(event) => setReasons((current) => ({ ...current, [reasonKey]: event.target.value }))} />
                 <div className="flex flex-wrap gap-2">
                   <select aria-label={`Current access type for ${pack.title || pack.id}`} className="rounded-md border bg-background px-3 py-2" value={access[accessKey] || pack.accessType || "community"} onChange={(event) => setAccess((current) => ({ ...current, [accessKey]: event.target.value }))}>
                     {accessOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                   </select>
                   <Button disabled={busy || !pack.currentVersionId || !reasons[reasonKey]?.trim()} size="sm" variant="outline" onClick={() => act({ action: "set_access_type", packId: pack.id, accessType: access[accessKey] || pack.accessType || "community", reason: reasons[reasonKey] })}>Save access</Button>
-                  {["published", "legacy", "archived", "removed"].filter((status) => status !== pack.status).map((status) => (
+                  {pack.status !== "removed" ? <Button disabled={busy || !reasons[reasonKey]?.trim()} size="sm" variant="outline" onClick={() => act({ action: "set_pack_status", packId: pack.id, status: "removed", reason: reasons[reasonKey] }, "Asset pack removed and audited; its history was preserved.")}>Remove pack</Button> : null}
+                  {["published", "legacy", "archived"].filter((status) => status !== pack.status).map((status) => (
                     <Button key={status} disabled={busy || !reasons[reasonKey]?.trim()} size="sm" variant="outline" onClick={() => act({ action: "set_pack_status", packId: pack.id, status, reason: reasons[reasonKey] })}>Mark {status}</Button>
                   ))}
+                  <Button disabled={busy || !reasons[reasonKey]?.trim()} size="sm" variant="destructive" onClick={() => deletePack(pack)}><Trash2 className="mr-1.5 h-3.5 w-3.5" />Delete permanently</Button>
                 </div>
               </div>
             );

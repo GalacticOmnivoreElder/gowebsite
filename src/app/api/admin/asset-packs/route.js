@@ -89,6 +89,37 @@ export async function PATCH(request) {
     await batch.commit();
     return Response.json({ id: doc.id, status });
   }
+  if (action === "delete_pack") {
+    const packId = String(body.packId || "").trim();
+    if (!packId) return Response.json({ error: "Asset pack is required" }, { status: 400 });
+    const reason = cleanReason(body.reason);
+    if (!reason) return Response.json({ error: "A reason is required for permanent deletion" }, { status: 400 });
+    const packRef = adminDb.collection("asset_packs").doc(packId);
+    try {
+      const result = await adminDb.runTransaction(async (transaction) => {
+        const packDoc = await transaction.get(packRef);
+        if (!packDoc.exists) throw Object.assign(new Error("Asset pack not found"), { status: 404 });
+        const versionSnapshot = await transaction.get(adminDb.collection("asset_pack_versions").where("packId", "==", packId));
+        const grantSnapshot = await transaction.get(adminDb.collection("asset_pack_grants").where("packId", "==", packId));
+        const ticketSnapshot = await transaction.get(adminDb.collection("protected_link_tickets").where("assetPackId", "==", packId));
+        const ticketDocs = ticketSnapshot.docs.filter((doc) => doc.data().contentType === "asset_pack");
+        const recordsToDelete = 1 + versionSnapshot.size + grantSnapshot.size + ticketDocs.length;
+        if (recordsToDelete > 450) throw Object.assign(new Error("This asset pack has too many linked records for one deletion action; remove it instead"), { status: 409 });
+
+        const auditRef = adminDb.collection("admin_audit_events").doc();
+        transaction.create(auditRef, { actorId: gate.user.uid, action: "asset_pack.deleted", target: { type: "asset_pack", id: packId }, previousValue: { status: packDoc.data().status, title: packDoc.data().title || "", currentVersionId: packDoc.data().currentVersionId || null, versionCount: versionSnapshot.size, grantCount: grantSnapshot.size, ticketCount: ticketDocs.length }, newValue: null, reason, createdAt: now });
+        for (const snapshot of [versionSnapshot, grantSnapshot]) {
+          snapshot.docs.forEach((doc) => transaction.delete(doc.ref));
+        }
+        ticketDocs.forEach((doc) => transaction.delete(doc.ref));
+        transaction.delete(packRef);
+        return { versionCount: versionSnapshot.size, grantCount: grantSnapshot.size, ticketCount: ticketDocs.length };
+      });
+      return Response.json({ id: packId, deleted: true, ...result });
+    } catch (error) {
+      return Response.json({ error: error.status ? error.message : "Asset pack could not be permanently deleted" }, { status: error.status || 500 });
+    }
+  }
   const versionRef = adminDb.collection("asset_pack_versions").doc(String(body.versionId || ""));
   const versionDoc = await versionRef.get();
   if (!versionDoc.exists) return Response.json({ error: "Asset-pack version not found" }, { status: 404 });

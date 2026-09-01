@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Circle, Info } from "lucide-react";
+import { CheckCircle2, Circle, Info, Trash2 } from "lucide-react";
 import { auth } from "@/firebase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -124,6 +124,32 @@ export function AssetPackWorkspace() {
     }
   };
 
+  const deleteDraft = async (version) => {
+    const title = version.title || "Untitled draft";
+    if (!window.confirm(`Delete “${title}”? This draft cannot be recovered.`)) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await request({
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ versionId: version.id }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Draft could not be deleted");
+      if (editingVersionId === version.id) {
+        setEditingVersionId("");
+        setForm(empty);
+      }
+      setMessage("Draft deleted.");
+      await load();
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const editVersion = (version) => {
     setEditingVersionId(version.id);
     setForm({
@@ -233,6 +259,7 @@ export function AssetPackWorkspace() {
                   <div className="flex gap-2">
                     <Badge>{version.status.replaceAll("_", " ")}</Badge>
                     {data.canSubmit && ["draft", "changes_requested"].includes(version.status) ? <Button size="sm" variant="outline" onClick={() => editVersion(version)}>Edit</Button> : null}
+                    {data.canSubmit && version.status === "draft" ? <Button size="sm" variant="destructive" onClick={() => deleteDraft(version)} disabled={busy}><Trash2 className="mr-1.5 h-3.5 w-3.5" />Delete draft</Button> : null}
                   </div>
                 </CardContent>
               </Card>

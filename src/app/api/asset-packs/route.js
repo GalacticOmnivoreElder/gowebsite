@@ -105,3 +105,51 @@ export async function PATCH(request) {
     return Response.json({ error: error.code === "validation_error" || error.status ? error.message : "Asset-pack version could not be updated" }, { status: error.status || (error.code === "validation_error" ? 400 : 500) });
   }
 }
+
+export async function DELETE(request) {
+  if (!getProductConfig().featureFlags.communityAssetSubmissions) return unavailable();
+  const user = await getRequestUser(request);
+  if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
+  if (!hasCommunityContentAccess(user.userData || {}, { admin: user.admin })) return Response.json({ error: "Active Community or Business membership is required" }, { status: 403 });
+  const body = await request.json().catch(() => ({}));
+  const versionId = String(body.versionId || "").trim();
+  if (!versionId) return Response.json({ error: "Asset-pack version is required" }, { status: 400 });
+
+  try {
+    const now = new Date();
+    const result = await adminDb.runTransaction(async (transaction) => {
+      const versionRef = adminDb.collection("asset_pack_versions").doc(versionId);
+      const versionDoc = await transaction.get(versionRef);
+      if (!versionDoc.exists || versionDoc.data().contributorId !== user.uid) throw Object.assign(new Error("Asset-pack version not found"), { status: 404 });
+      if (versionDoc.data().status !== "draft") throw Object.assign(new Error("Only draft versions can be deleted"), { status: 409 });
+
+      const packRef = adminDb.collection("asset_packs").doc(versionDoc.data().packId);
+      const packDoc = await transaction.get(packRef);
+      if (!packDoc.exists || packDoc.data().contributorId !== user.uid) throw Object.assign(new Error("Asset pack not found"), { status: 404 });
+      if (packDoc.data().pendingVersionId !== versionDoc.id) throw Object.assign(new Error("This draft is no longer the active pending version"), { status: 409 });
+
+      const auditRef = adminDb.collection("admin_audit_events").doc();
+      transaction.create(auditRef, {
+        actorId: user.uid,
+        action: "asset_pack_version.deleted",
+        target: { type: "asset_pack_version", id: versionRef.id },
+        previousValue: { packId: versionDoc.data().packId, status: versionDoc.data().status, title: versionDoc.data().title || "" },
+        newValue: null,
+        reason: "Contributor deleted draft",
+        createdAt: now,
+      });
+      transaction.delete(versionRef);
+
+      if (!packDoc.data().currentVersionId && packDoc.data().status === "draft") {
+        transaction.delete(packRef);
+        return { packDeleted: true };
+      }
+
+      transaction.update(packRef, { pendingVersionId: null, updatedAt: now });
+      return { packDeleted: false };
+    });
+    return Response.json({ id: versionId, deleted: true, ...result });
+  } catch (error) {
+    return Response.json({ error: error.status ? error.message : "Asset-pack draft could not be deleted" }, { status: error.status || 500 });
+  }
+}
