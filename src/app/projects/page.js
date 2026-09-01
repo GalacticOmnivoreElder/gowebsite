@@ -180,7 +180,7 @@ const ProjectCard = ({ project }) => {
             {hasProjectBudget(project.budget) && (
               <div className="flex items-center gap-1 text-muted-foreground">
                 <DollarSign className="h-4 w-4" />
-                <span>{formatBudget(project.budget, project.budgetCurrency)}</span>
+                <span>{formatBudget(project.budget)}</span>
               </div>
             )}
             <div className="flex items-center gap-1 text-muted-foreground">
