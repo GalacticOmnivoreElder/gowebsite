@@ -31,7 +31,7 @@ export function getProductConfig(env = process.env) {
     mentorMatchmaking: parseBooleanEnv(env.MENTOR_MATCHMAKING_ENABLED, false),
     mentorFeedback: parseBooleanEnv(env.MENTOR_FEEDBACK_ENABLED, false),
     publicMentorStrengths: parseBooleanEnv(env.PUBLIC_MENTOR_STRENGTHS_ENABLED, false),
-    communityAssetSubmissions: parseBooleanEnv(env.COMMUNITY_ASSET_SUBMISSIONS_ENABLED, false),
+    communityAssetSubmissions: parseBooleanEnv(env.COMMUNITY_ASSET_SUBMISSIONS_ENABLED, env.NODE_ENV === "production"),
     under18Mentorship: parseBooleanEnv(env.UNDER_18_MENTORSHIP_ENABLED, false),
     individuallyPaidCourses: parseBooleanEnv(env.INDIVIDUALLY_PAID_COURSES_ENABLED, false),
   };
