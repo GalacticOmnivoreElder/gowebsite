@@ -61,7 +61,10 @@ export function cleanAssetPackVersion(input = {}, { requireSubmission = false } 
     manifestDeclaredComplete: input.manifestDeclaredComplete === true,
     safeFilesDeclared: input.safeFilesDeclared === true,
   };
-  if (!result.title || !result.description || !result.contributorProfile || !result.version) {
+  if (!requireSubmission && !result.version) {
+    result.version = "draft";
+  }
+  if (requireSubmission && (!result.title || !result.description || !result.contributorProfile || !result.version)) {
     throw validationError("Title, description, contributor profile, and version are required");
   }
   if (requireSubmission && (!result.previewImage || !result.downloadUrl || !result.fileManifest.length || !result.license || (result.license === "Other" && !result.otherLicense) || !result.rightsDeclared || !result.manifestDeclaredComplete || !result.safeFilesDeclared)) {
