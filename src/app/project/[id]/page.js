@@ -1070,7 +1070,7 @@ const ProjectDetailsPage = observer(() => {
                   Project completed
                 </h3>
                 <p className="text-muted-foreground">
-                  This project has been completed and is now archived.
+                  This project has been completed and is preserved in the GO project archive.
                 </p>
               </CardContent>
             </Card>
@@ -1099,7 +1099,7 @@ const ProjectDetailsPage = observer(() => {
             <Card>
               <CardContent className="p-4 text-center">
                 <Coins className="h-6 w-6 mx-auto mb-2 text-primary" />
-                <p className="font-semibold">{formatBudget(project.budget)}</p>
+                <p className="font-semibold">{formatBudget(project.budget, project.budgetCurrency)}</p>
                 <p className="text-sm text-muted-foreground">Budget</p>
               </CardContent>
             </Card>
@@ -1158,6 +1158,60 @@ const ProjectDetailsPage = observer(() => {
             />
           </CardContent>
         </Card>
+
+        {project.legacyDetails && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Project record</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+                {project.legacyDetails.location && (
+                  <div>
+                    <p className="font-medium">Location</p>
+                    <p className="text-muted-foreground">
+                      {project.legacyDetails.location}
+                    </p>
+                  </div>
+                )}
+                {project.legacyDetails.period && (
+                  <div>
+                    <p className="font-medium">Project period</p>
+                    <p className="text-muted-foreground">
+                      {project.legacyDetails.period}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {project.legacyDetails.donors?.length > 0 && (
+                <div>
+                  <p className="mb-2 font-medium">Partners and donors</p>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    {project.legacyDetails.donors.map((donor) => (
+                      <div
+                        key={`${donor.name}-${donor.amount}`}
+                        className="flex flex-wrap justify-between gap-2 border-b pb-2 last:border-b-0 last:pb-0"
+                      >
+                        <span>{donor.name}</span>
+                        <span>{formatBudget(donor.amount, donor.currency)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {project.legacyDetails.results?.length > 0 && (
+                <div>
+                  <p className="mb-2 font-medium">Selected results</p>
+                  <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                    {project.legacyDetails.results.map((result) => (
+                      <li key={result}>{result}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Required Roles */}
         {project.requiredRoles && project.requiredRoles.length > 0 && (

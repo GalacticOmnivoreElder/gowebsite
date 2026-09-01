@@ -1,16 +1,17 @@
-export function formatBudget(budget) {
+export function formatBudget(budget, currency = "MKD") {
   if (budget == null || budget === "" || Number.isNaN(Number(budget))) {
     return "N/A";
   }
 
   const num = Number(budget);
+  const suffix = String(currency || "MKD").toUpperCase();
 
   if (num > Number.MAX_SAFE_INTEGER) {
     return "Budget too large";
   }
 
   if (num >= 1_000_000_000) {
-    return `${Math.round(num / 1_000_000).toLocaleString()}M MKD`;
+    return `${Math.round(num / 1_000_000).toLocaleString()}M ${suffix}`;
   }
 
   if (num >= 1_000_000) {
@@ -19,14 +20,14 @@ export function formatBudget(budget) {
       millions >= 10
         ? Math.round(millions).toLocaleString()
         : millions.toFixed(1).replace(/\.0$/, "");
-    return `${formatted}M MKD`;
+    return `${formatted}M ${suffix}`;
   }
 
   if (num >= 10_000) {
-    return `${Math.round(num / 1_000).toLocaleString()}K MKD`;
+    return `${Math.round(num / 1_000).toLocaleString()}K ${suffix}`;
   }
 
-  return `${num.toLocaleString()} MKD`;
+  return `${num.toLocaleString()} ${suffix}`;
 }
 
 export function hasProjectBudget(budget) {
