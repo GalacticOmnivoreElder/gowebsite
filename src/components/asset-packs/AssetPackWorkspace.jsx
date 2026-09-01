@@ -126,7 +126,7 @@ export function AssetPackWorkspace() {
       {!data.canSubmit ? (
         <Card className="border-primary/30">
           <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div><p className="font-semibold">Community or Business membership required</p><p className="mt-1 text-sm text-muted-foreground">You can continue to review existing submissions, but an active eligible membership is required to create or edit asset-pack versions.</p></div>
+            <div><p className="font-semibold">Active GO membership required</p><p className="mt-1 text-sm text-muted-foreground">You can continue to review existing submissions, but an active Community membership or higher tier is required to create or edit asset-pack versions.</p></div>
             <Button asChild><Link href="/membership">Review membership</Link></Button>
           </CardContent>
         </Card>
