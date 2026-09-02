@@ -55,6 +55,7 @@ export const PROJECT_STATUSES = [
 export const PUBLIC_PROJECT_STATUSES = ["hiring", "live", "completed"];
 export const OWNER_MANAGED_STATUSES = ["draft", "pending"];
 export const PROJECT_DISCOVERY_SORT_OPTIONS = [
+  "status_priority",
   "created_desc",
   "created_asc",
   "budget_desc",
@@ -62,6 +63,8 @@ export const PROJECT_DISCOVERY_SORT_OPTIONS = [
   "duration_desc",
   "duration_asc",
 ];
+
+export const DEFAULT_PROJECT_DISCOVERY_SORT = "status_priority";
 
 export function isPlatformAdmin(user) {
   return !!user?.admin;
@@ -176,8 +179,13 @@ export function filterAndSortProjectsForDiscovery(
   const requestedVisibility = normalizeFilterValue(filters.visibility);
   const sortBy = PROJECT_DISCOVERY_SORT_OPTIONS.includes(filters.sortBy)
     ? filters.sortBy
-    : "created_desc";
+    : DEFAULT_PROJECT_DISCOVERY_SORT;
   const [sortField, sortDirection] = sortBy.split("_");
+  const statusPriority = {
+    hiring: 0,
+    live: 1,
+    completed: 2,
+  };
 
   return (Array.isArray(projects) ? projects : [])
     .filter((project) => {
@@ -231,7 +239,11 @@ export function filterAndSortProjectsForDiscovery(
     .sort((left, right) => {
       let comparison = 0;
 
-      if (sortField === "created") {
+      if (sortBy === "status_priority") {
+        comparison =
+          (statusPriority[left.status] ?? Number.MAX_SAFE_INTEGER) -
+          (statusPriority[right.status] ?? Number.MAX_SAFE_INTEGER);
+      } else if (sortField === "created") {
         comparison = compareOptionalValues(
           toSortableDate(left.createdAt),
           toSortableDate(right.createdAt),

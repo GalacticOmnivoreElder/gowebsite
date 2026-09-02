@@ -67,6 +67,7 @@ class Store {
   cachedProjects = new Map();
   projectsLoading = false;
   projectRequestId = 0;
+  projectRequestController = null;
   projectDetailsLoading = new Map();
   projectFilters = {
     search: "",
@@ -74,7 +75,7 @@ class Store {
     type: "all",
     visibility: "all",
     status: "all",
-    sortBy: "created_desc",
+    sortBy: "status_priority",
   };
   projectPagination = {
     page: 1,
@@ -103,7 +104,9 @@ class Store {
   isReady = false;
 
   constructor() {
-    makeAutoObservable(this);
+    makeAutoObservable(this, {
+      projectRequestController: false,
+    });
 
     this.initializeAuth();
 
@@ -356,8 +359,15 @@ class Store {
   async fetchProjects(filters = {}, reset = false) {
     if (this.projectsLoading && !reset) return;
 
+    if (reset && this.projectRequestController) {
+      this.projectRequestController.abort();
+    }
+
     const requestId = ++this.projectRequestId;
     const requestedPage = reset ? 1 : this.projectPagination.page;
+    const requestController = new AbortController();
+    this.projectRequestController = requestController;
+    const requestTimeout = setTimeout(() => requestController.abort(), 20000);
 
     runInAction(() => {
       this.projectsLoading = true;
@@ -388,6 +398,8 @@ class Store {
 
       const response = await fetch(`/api/projects?${params}`, {
         headers,
+        cache: "no-store",
+        signal: requestController.signal,
       });
       if (!response.ok) throw new Error("Failed to fetch projects");
 
@@ -410,10 +422,14 @@ class Store {
         this.projectPagination.page = data.hasMore ? requestedPage + 1 : requestedPage;
       });
     } catch (error) {
-      if (requestId === this.projectRequestId) {
+      if (requestId === this.projectRequestId && error?.name !== "AbortError") {
         console.error("Error fetching projects:", error);
       }
     } finally {
+      clearTimeout(requestTimeout);
+      if (this.projectRequestController === requestController) {
+        this.projectRequestController = null;
+      }
       if (requestId === this.projectRequestId) {
         runInAction(() => {
           this.projectsLoading = false;

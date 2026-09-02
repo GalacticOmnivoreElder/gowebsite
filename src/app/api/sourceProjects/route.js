@@ -1,34 +1,40 @@
 import { NextResponse } from "next/server";
-import { adminAuth as auth, adminDb as db } from "@/lib/firebase-admin";
+import { adminDb as db } from "@/lib/firebase-admin";
+import { getRequestUser } from "@/lib/auth-utils";
+import { serializeFirestoreDate } from "@/lib/project-utils";
 
 export async function GET(request) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    const user = await getRequestUser(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await auth.verifyIdToken(token);
-    const userId = decodedToken.uid;
-
-    // Get all sourceProjects owned by the user
     const sourceProjectsRef = db.collection("sourceProjects");
-    const snapshot = await sourceProjectsRef
-      .where("sourceOwner", "==", userId)
-      .orderBy("name")
-      .get();
+    const snapshots = user.admin
+      ? [await sourceProjectsRef.get()]
+      : await Promise.all([
+          sourceProjectsRef.where("sourceOwner", "==", user.uid).get(),
+          sourceProjectsRef.where("admins", "array-contains", user.uid).get(),
+        ]);
 
-    const sourceProjects = [];
-    snapshot.forEach((doc) => {
+    const sourceProjectsById = new Map();
+    snapshots.forEach((snapshot) => snapshot.forEach((doc) => {
       const data = doc.data();
-      sourceProjects.push({
+      const publicData = Object.fromEntries(
+        Object.entries(data).filter(([key]) => key !== "admins")
+      );
+      sourceProjectsById.set(doc.id, {
         id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+        ...publicData,
+        createdAt: serializeFirestoreDate(data.createdAt),
+        updatedAt: serializeFirestoreDate(data.updatedAt),
       });
-    });
+    }));
+
+    const sourceProjects = Array.from(sourceProjectsById.values()).sort((a, b) =>
+      String(a.name || "").localeCompare(String(b.name || ""))
+    );
 
     return NextResponse.json({ sourceProjects });
   } catch (error) {
@@ -42,14 +48,10 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    const user = await getRequestUser(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await auth.verifyIdToken(token);
-    const userId = decodedToken.uid;
 
     const { name } = await request.json();
 
@@ -63,7 +65,8 @@ export async function POST(request) {
     // Create new sourceProject
     const sourceProjectData = {
       name: name.trim(),
-      sourceOwner: userId,
+      sourceOwner: user.uid,
+      admins: [],
       projectIds: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

@@ -53,21 +53,31 @@ import { formatFirebaseDate } from "@/utils/date";
 
 const AdminProjectsPage = observer(() => {
   const [projects, setProjects] = useState([]);
+  const [sourceProjects, setSourceProjects] = useState([]);
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [sourceProjectsLoading, setSourceProjectsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedSourceProject, setSelectedSourceProject] = useState(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [showPeopleDialog, setShowPeopleDialog] = useState(false);
+  const [showSourceProjectDialog, setShowSourceProjectDialog] = useState(false);
   const [selectedOwnerId, setSelectedOwnerId] = useState("");
   const [selectedAdminIds, setSelectedAdminIds] = useState([]);
   const [selectedTeamMemberIds, setSelectedTeamMemberIds] = useState([]);
   const [peopleSearch, setPeopleSearch] = useState("");
+  const [sourceProjectName, setSourceProjectName] = useState("");
+  const [sourceProjectOwnerId, setSourceProjectOwnerId] = useState("");
+  const [sourceProjectAdminIds, setSourceProjectAdminIds] = useState([]);
+  const [sourceProjectSearch, setSourceProjectSearch] = useState("");
+  const [sourcePeopleSearch, setSourcePeopleSearch] = useState("");
   const [newStatus, setNewStatus] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [updating, setUpdating] = useState(false);
   const [updatingPeople, setUpdatingPeople] = useState(false);
+  const [updatingSourceProject, setUpdatingSourceProject] = useState(false);
   const [deleteProject, setDeleteProject] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -130,6 +140,35 @@ const AdminProjectsPage = observer(() => {
       });
     } finally {
       setUsersLoading(false);
+    }
+  };
+
+  const fetchSourceProjects = async () => {
+    try {
+      setSourceProjectsLoading(true);
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/sourceProjects", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch source projects");
+      }
+
+      const data = await response.json();
+      setSourceProjects(data.sourceProjects || []);
+    } catch (error) {
+      console.error("Error fetching source projects:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load source projects",
+        variant: "destructive",
+      });
+    } finally {
+      setSourceProjectsLoading(false);
     }
   };
 
@@ -223,6 +262,54 @@ const AdminProjectsPage = observer(() => {
       });
     } finally {
       setUpdatingPeople(false);
+    }
+  };
+
+  const updateSourceProject = async () => {
+    if (!selectedSourceProject || !sourceProjectOwnerId) return;
+
+    try {
+      setUpdatingSourceProject(true);
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(
+        `/api/sourceProjects/${selectedSourceProject.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: sourceProjectName.trim(),
+            sourceOwner: sourceProjectOwnerId,
+            admins: sourceProjectAdminIds,
+          }),
+        }
+      );
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to update source project");
+      }
+
+      toast({
+        title: "Source project updated",
+        description: "The source project owner and admins were updated.",
+      });
+      await fetchSourceProjects();
+      setShowSourceProjectDialog(false);
+      setSelectedSourceProject(null);
+      setSourceProjectSearch("");
+      setSourcePeopleSearch("");
+    } catch (error) {
+      console.error("Error updating source project:", error);
+      toast({
+        title: "Source project update failed",
+        description: error.message || "Failed to update source project",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingSourceProject(false);
     }
   };
 
@@ -322,6 +409,10 @@ const AdminProjectsPage = observer(() => {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    fetchSourceProjects();
+  }, []);
+
   const getStatusColor = (status) => {
     switch (status) {
       case "draft":
@@ -375,6 +466,19 @@ const AdminProjectsPage = observer(() => {
     setShowPeopleDialog(true);
   };
 
+  const handleManageSourceProject = (sourceProject) => {
+    setSelectedSourceProject(sourceProject);
+    setSourceProjectName(sourceProject.name || "");
+    setSourceProjectOwnerId(sourceProject.sourceOwner || "");
+    setSourceProjectAdminIds(
+      (sourceProject.admins || []).filter(
+        (userId) => userId !== sourceProject.sourceOwner
+      )
+    );
+    setSourcePeopleSearch("");
+    setShowSourceProjectDialog(true);
+  };
+
   const toggleProjectAdmin = (userId) => {
     setSelectedAdminIds((currentIds) =>
       currentIds.includes(userId)
@@ -398,6 +502,40 @@ const AdminProjectsPage = observer(() => {
       .filter(Boolean)
       .some((value) => value.toLowerCase().includes(normalizedPeopleSearch));
   });
+
+  const normalizedSourceProjectSearch = sourceProjectSearch.trim().toLowerCase();
+  const getUserById = (userId) => users.find((user) => user.id === userId);
+  const filteredSourceProjects = sourceProjects.filter((sourceProject) =>
+    [
+      sourceProject.name,
+      sourceProject.id,
+      sourceProject.sourceOwner,
+      getUserById(sourceProject.sourceOwner)?.name,
+      getUserById(sourceProject.sourceOwner)?.email,
+    ]
+      .filter(Boolean)
+      .some((value) =>
+        String(value).toLowerCase().includes(normalizedSourceProjectSearch)
+      )
+  );
+
+  const normalizedSourcePeopleSearch = sourcePeopleSearch.trim().toLowerCase();
+  const filteredSourcePeople = users.filter((user) => {
+    if (!normalizedSourcePeopleSearch || user.id === sourceProjectOwnerId) {
+      return true;
+    }
+    return [user.name, user.email, user.id]
+      .filter(Boolean)
+      .some((value) => value.toLowerCase().includes(normalizedSourcePeopleSearch));
+  });
+
+  const toggleSourceProjectAdmin = (userId) => {
+    setSourceProjectAdminIds((currentIds) =>
+      currentIds.includes(userId)
+        ? currentIds.filter((id) => id !== userId)
+        : [...currentIds, userId]
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -632,6 +770,250 @@ const AdminProjectsPage = observer(() => {
           )}
         </CardContent>
       </Card>
+
+      {/* Source Projects Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Source projects ({filteredSourceProjects.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 max-w-md">
+            <Input
+              type="search"
+              value={sourceProjectSearch}
+              onChange={(event) => setSourceProjectSearch(event.target.value)}
+              placeholder="Search source projects"
+              aria-label="Search source projects"
+            />
+          </div>
+
+          {sourceProjectsLoading ? (
+            <div className="space-y-4">
+              {[...Array(2)].map((_, index) => (
+                <div key={index} className="flex items-center space-x-4">
+                  <Skeleton className="h-4 w-[280px] bg-muted" />
+                  <Skeleton className="h-4 w-[180px] bg-muted" />
+                  <Skeleton className="h-8 w-[90px] bg-muted" />
+                </div>
+              ))}
+            </div>
+          ) : filteredSourceProjects.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              No source projects match the search.
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Source project</TableHead>
+                    <TableHead>Owner</TableHead>
+                    <TableHead>Linked projects</TableHead>
+                    <TableHead>Updated</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredSourceProjects.map((sourceProject) => {
+                    const owner = getUserById(sourceProject.sourceOwner);
+                    return (
+                      <TableRow key={sourceProject.id}>
+                        <TableCell>
+                          <Link
+                            href={`/sourceProject/${sourceProject.id}`}
+                            target="_blank"
+                            className="font-medium hover:text-primary hover:underline"
+                          >
+                            {sourceProject.name || "Untitled source project"}
+                          </Link>
+                          <p className="text-xs text-muted-foreground">
+                            {sourceProject.id}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {owner?.name || "Unknown user"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {owner?.email || sourceProject.sourceOwner || "N/A"}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {sourceProject.projectIds?.length || 0}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {formatFirebaseDate(sourceProject.updatedAt, {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleManageSourceProject(sourceProject)}
+                          >
+                            <Edit className="mr-1 h-3 w-3" />
+                            Edit
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Source project owner/admin dialog */}
+      <Dialog
+        open={showSourceProjectDialog}
+        onOpenChange={(open) => {
+          if (!open && !updatingSourceProject) {
+            setShowSourceProjectDialog(false);
+            setSelectedSourceProject(null);
+            setSourceProjectName("");
+            setSourceProjectOwnerId("");
+            setSourceProjectAdminIds([]);
+            setSourcePeopleSearch("");
+          }
+        }}
+      >
+        <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage source project</DialogTitle>
+            <DialogDescription>
+              Update the source project name, owner, and private admins for
+              &quot;{selectedSourceProject?.name}&quot;. Admins are never shown
+              on the public source-project page.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="source-project-name">Source project name</Label>
+              <Input
+                id="source-project-name"
+                value={sourceProjectName}
+                onChange={(event) => setSourceProjectName(event.target.value)}
+                disabled={updatingSourceProject}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="source-project-owner">Source project owner</Label>
+              <Select
+                value={sourceProjectOwnerId}
+                onValueChange={(value) => {
+                  setSourceProjectOwnerId(value);
+                  setSourceProjectAdminIds((currentIds) =>
+                    currentIds.filter((id) => id !== value)
+                  );
+                }}
+                disabled={usersLoading || updatingSourceProject}
+              >
+                <SelectTrigger id="source-project-owner">
+                  <SelectValue placeholder="Select a source project owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name} ({user.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <div>
+                <Label>Additional source project admins</Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  These users can manage the source project, but remain hidden
+                  from the public frontend.
+                </p>
+              </div>
+              <Input
+                type="search"
+                value={sourcePeopleSearch}
+                onChange={(event) => setSourcePeopleSearch(event.target.value)}
+                placeholder="Search by name, email, or user ID"
+                disabled={usersLoading || updatingSourceProject}
+                aria-label="Search source project admins"
+              />
+              <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
+                {usersLoading ? (
+                  <p className="text-sm text-muted-foreground">
+                    Loading users…
+                  </p>
+                ) : filteredSourcePeople.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No users match this search.
+                  </p>
+                ) : (
+                  filteredSourcePeople.map((user) => {
+                    const isOwner = user.id === sourceProjectOwnerId;
+                    return (
+                      <label
+                        key={user.id}
+                        className="flex cursor-pointer items-start gap-3 rounded-md p-2 hover:bg-muted/50"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 accent-primary"
+                          checked={
+                            isOwner || sourceProjectAdminIds.includes(user.id)
+                          }
+                          disabled={isOwner || updatingSourceProject}
+                          onChange={() => toggleSourceProjectAdmin(user.id)}
+                          aria-label={`Make ${user.name} a source project admin`}
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium">
+                            {user.name}
+                            {isOwner ? " (Source project owner)" : ""}
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {user.email}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowSourceProjectDialog(false)}
+              disabled={updatingSourceProject}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={updateSourceProject}
+              disabled={
+                updatingSourceProject ||
+                usersLoading ||
+                !sourceProjectOwnerId ||
+                sourceProjectName.trim().length < 3
+              }
+            >
+              {updatingSourceProject ? "Saving…" : "Save source project"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Product owner and project-admin dialog */}
       <Dialog

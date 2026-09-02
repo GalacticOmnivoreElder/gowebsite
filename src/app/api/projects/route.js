@@ -52,7 +52,7 @@ export async function GET(request) {
     const type = searchParams.get("type") || "all";
     const visibility = searchParams.get("visibility") || "all";
     const requestedStatus = searchParams.get("status") || "all";
-    const sortBy = searchParams.get("sortBy") || "created_desc";
+    const sortBy = searchParams.get("sortBy") || "status_priority";
 
     // Get user to determine what projects they can see
     const user = await getUserFromToken(request);
@@ -361,6 +361,7 @@ export async function POST(request) {
       const sourceProjectData = {
         name: projectData.sourceProjectName.trim(),
         sourceOwner: user.uid,
+        admins: [],
         projectIds: [projectId],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -375,7 +376,7 @@ export async function POST(request) {
       projectData.sourceProjectOption === "existing" &&
       projectData.existingSourceProjectId
     ) {
-      // Validate that the user owns the existing sourceProject
+      // Validate that the user owns or administers the existing sourceProject.
       const sourceProjectDoc = await adminDb
         .collection("sourceProjects")
         .doc(projectData.existingSourceProjectId)
@@ -389,7 +390,13 @@ export async function POST(request) {
       }
 
       const sourceProjectData = sourceProjectDoc.data();
-      if (sourceProjectData.sourceOwner !== user.uid) {
+      const canUseSourceProject =
+        user.admin === true ||
+        sourceProjectData.sourceOwner === user.uid ||
+        (Array.isArray(sourceProjectData.admins) &&
+          sourceProjectData.admins.includes(user.uid));
+
+      if (!canUseSourceProject) {
         return NextResponse.json(
           { error: "You don't have permission to use this source project" },
           { status: 403 }

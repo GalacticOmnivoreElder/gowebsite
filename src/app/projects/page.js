@@ -214,7 +214,7 @@ const ProjectsPage = observer(() => {
     type: "all",
     visibility: "all",
     status: "all",
-    sortBy: "created_desc",
+    sortBy: "status_priority",
   });
 
   // Load projects on component mount and when filters change
@@ -293,7 +293,7 @@ const ProjectsPage = observer(() => {
     localFilters.category !== "all" ? localFilters.category : "",
     localFilters.type !== "all" ? localFilters.type : "",
     localFilters.status !== "all" ? localFilters.status : "",
-    localFilters.sortBy !== "created_desc" ? localFilters.sortBy : "",
+    localFilters.sortBy !== "status_priority" ? localFilters.sortBy : "",
   ].filter(Boolean).length;
 
   return (
@@ -423,6 +423,7 @@ const ProjectsPage = observer(() => {
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="status_priority">Hiring first</SelectItem>
             <SelectItem value="created_desc">Newest first</SelectItem>
             <SelectItem value="created_asc">Oldest first</SelectItem>
             <SelectItem value="budget_desc">Highest budget</SelectItem>

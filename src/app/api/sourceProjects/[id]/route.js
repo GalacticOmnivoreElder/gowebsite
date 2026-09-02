@@ -1,26 +1,13 @@
 import { NextResponse } from "next/server";
-import { adminAuth as auth, adminDb as db } from "@/lib/firebase-admin";
+import { adminDb as db } from "@/lib/firebase-admin";
+import { getRequestUser } from "@/lib/auth-utils";
 import { canViewProject, serializeFirestoreDate } from "@/lib/project-utils";
-
-async function getUserFromToken(request) {
-  try {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return null;
-    }
-
-    const token = authHeader.substring(7);
-    return await auth.verifyIdToken(token);
-  } catch (error) {
-    console.error("Error verifying token:", error);
-    return null;
-  }
-}
+import { canManageSourceProject } from "@/lib/source-project-utils";
 
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
-    const user = await getUserFromToken(request);
+    const user = await getRequestUser(request);
 
     const doc = await db.collection("sourceProjects").doc(id).get();
 
@@ -32,9 +19,13 @@ export async function GET(request, { params }) {
     }
 
     const data = doc.data();
+    const isManager = canManageSourceProject(data, user);
+    const publicData = Object.fromEntries(
+      Object.entries(data).filter(([key]) => key !== "admins")
+    );
     const sourceProjectData = {
       id: doc.id,
-      ...data,
+      ...publicData,
       createdAt: serializeFirestoreDate(data.createdAt),
       updatedAt: serializeFirestoreDate(data.updatedAt),
     };
@@ -74,19 +65,24 @@ export async function GET(request, { params }) {
           const projectData = doc.data();
           return {
             id: doc.id,
-            ...projectData,
+            title: projectData.title,
+            thumbnail: projectData.thumbnail || "",
+            type: projectData.type,
+            status: projectData.status,
+            visibility: projectData.visibility,
+            goal: projectData.goal,
             createdAt: serializeFirestoreDate(projectData.createdAt),
             updatedAt: serializeFirestoreDate(projectData.updatedAt),
           };
         })
-        .filter((project) => canViewProject(project, user));
+        .filter((project) => isManager || canViewProject(project, user));
 
       sourceProjectData.projects = projects;
     } else {
       sourceProjectData.projects = [];
     }
 
-    if (!isOwner && !isPlatformAdmin && sourceProjectData.projects.length === 0) {
+    if (!isManager && sourceProjectData.projects.length === 0) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -102,19 +98,15 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    const user = await getRequestUser(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await auth.verifyIdToken(token);
-    const userId = decodedToken.uid;
-
     const { id } = await params;
-    const { projectIds } = await request.json();
+    const body = (await request.json()) || {};
 
-    // Check if sourceProject exists and user owns it
+    // Check if sourceProject exists before applying manager permissions.
     const doc = await db.collection("sourceProjects").doc(id).get();
     if (!doc.exists) {
       return NextResponse.json(
@@ -124,13 +116,85 @@ export async function PUT(request, { params }) {
     }
 
     const sourceProjectData = doc.data();
-    if (sourceProjectData.sourceOwner !== userId) {
+    if (!canManageSourceProject(sourceProjectData, user)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const safeProjectIds = Array.isArray(projectIds)
-      ? [...new Set(projectIds.filter((projectId) => typeof projectId === "string"))]
-      : [];
+    const hasProjectIds = Object.prototype.hasOwnProperty.call(body, "projectIds");
+    const hasName = Object.prototype.hasOwnProperty.call(body, "name");
+    const hasOwner = Object.prototype.hasOwnProperty.call(body, "sourceOwner");
+    const hasAdmins = Object.prototype.hasOwnProperty.call(body, "admins");
+
+    if (!hasProjectIds && !hasName && !hasOwner && !hasAdmins) {
+      return NextResponse.json(
+        { error: "At least one source project field is required" },
+        { status: 400 }
+      );
+    }
+
+    if (hasOwner && !user.admin) {
+      return NextResponse.json(
+        { error: "Only platform admins can change the source project owner" },
+        { status: 403 }
+      );
+    }
+
+    if (hasAdmins && sourceProjectData.sourceOwner !== user.uid && !user.admin) {
+      return NextResponse.json(
+        { error: "Only the source project owner or a platform admin can manage admins" },
+        { status: 403 }
+      );
+    }
+
+    if (hasProjectIds && sourceProjectData.sourceOwner !== user.uid) {
+      return NextResponse.json(
+        { error: "Only the source project owner can change linked projects" },
+        { status: 403 }
+      );
+    }
+
+    const nextOwner = hasOwner ? body.sourceOwner : sourceProjectData.sourceOwner;
+    const nextOwnerId = typeof nextOwner === "string" ? nextOwner.trim() : "";
+    if (hasOwner && !nextOwnerId) {
+      return NextResponse.json(
+        { error: "A valid source project owner is required" },
+        { status: 400 }
+      );
+    }
+
+    if (hasOwner) {
+      const ownerDoc = await db.collection("users").doc(nextOwnerId).get();
+      if (!ownerDoc.exists) {
+        return NextResponse.json(
+          { error: "The selected source project owner was not found" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (
+      hasName &&
+      (typeof body.name !== "string" ||
+        body.name.trim().length < 3 ||
+        body.name.trim().length > 50)
+    ) {
+      return NextResponse.json(
+        { error: "Name must be between 3 and 50 characters" },
+        { status: 400 }
+      );
+    }
+
+    const safeProjectIds = hasProjectIds
+      ? Array.isArray(body.projectIds)
+        ? [
+            ...new Set(
+              body.projectIds.filter(
+                (projectId) => typeof projectId === "string"
+              )
+            ),
+          ]
+        : []
+      : sourceProjectData.projectIds || [];
 
     if (safeProjectIds.length > 0) {
       const projectDocs = await Promise.all(
@@ -140,7 +204,7 @@ export async function PUT(request, { params }) {
       const invalidProject = projectDocs.some((projectDoc) => {
         if (!projectDoc.exists) return true;
         const projectData = projectDoc.data();
-        return projectData.owner !== userId;
+        return projectData.owner !== sourceProjectData.sourceOwner;
       });
 
       if (invalidProject) {
@@ -151,16 +215,50 @@ export async function PUT(request, { params }) {
       }
     }
 
-    // Update the sourceProject
+    const update = {
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (hasProjectIds) update.projectIds = safeProjectIds;
+    if (hasName) update.name = body.name.trim();
+    if (hasOwner) update.sourceOwner = nextOwnerId;
+    if (hasAdmins) {
+      if (!Array.isArray(body.admins)) {
+        return NextResponse.json(
+          { error: "admins must be an array" },
+          { status: 400 }
+        );
+      }
+      const safeAdminIds = [
+        ...new Set(
+          body.admins.filter(
+            (adminId) => typeof adminId === "string" && adminId.trim()
+          ).map((adminId) => adminId.trim())
+        ),
+      ].filter((adminId) => adminId !== nextOwnerId);
+
+      const adminDocs = await Promise.all(
+        safeAdminIds.map((adminId) => db.collection("users").doc(adminId).get())
+      );
+      if (adminDocs.some((adminDoc) => !adminDoc.exists)) {
+        return NextResponse.json(
+          { error: "Every source project admin must be an existing user" },
+          { status: 400 }
+        );
+      }
+
+      update.admins = safeAdminIds;
+    }
+
     await db
       .collection("sourceProjects")
       .doc(id)
-      .update({
-        projectIds: safeProjectIds,
-        updatedAt: new Date().toISOString(),
-      });
+      .update(update);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      sourceProject: { id, ...sourceProjectData, ...update },
+    });
   } catch (error) {
     console.error("Error updating sourceProject:", error);
     return NextResponse.json(
