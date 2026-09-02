@@ -62,6 +62,8 @@ const AdminProjectsPage = observer(() => {
   const [showPeopleDialog, setShowPeopleDialog] = useState(false);
   const [selectedOwnerId, setSelectedOwnerId] = useState("");
   const [selectedAdminIds, setSelectedAdminIds] = useState([]);
+  const [selectedTeamMemberIds, setSelectedTeamMemberIds] = useState([]);
+  const [peopleSearch, setPeopleSearch] = useState("");
   const [newStatus, setNewStatus] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [updating, setUpdating] = useState(false);
@@ -192,6 +194,7 @@ const AdminProjectsPage = observer(() => {
         body: JSON.stringify({
           owner: selectedOwnerId,
           admins: selectedAdminIds,
+          teamMembers: selectedTeamMemberIds,
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -209,6 +212,8 @@ const AdminProjectsPage = observer(() => {
       setSelectedProject(null);
       setSelectedOwnerId("");
       setSelectedAdminIds([]);
+      setSelectedTeamMemberIds([]);
+      setPeopleSearch("");
     } catch (error) {
       console.error("Error updating project roles:", error);
       toast({
@@ -363,6 +368,10 @@ const AdminProjectsPage = observer(() => {
     setSelectedAdminIds(
       (project.admins || []).filter((uid) => uid !== project.owner)
     );
+    setSelectedTeamMemberIds(
+      (project.teamMembers || []).filter((uid) => uid !== project.owner)
+    );
+    setPeopleSearch("");
     setShowPeopleDialog(true);
   };
 
@@ -373,6 +382,22 @@ const AdminProjectsPage = observer(() => {
         : [...currentIds, userId]
     );
   };
+
+  const toggleTeamMember = (userId) => {
+    setSelectedTeamMemberIds((currentIds) =>
+      currentIds.includes(userId)
+        ? currentIds.filter((id) => id !== userId)
+        : [...currentIds, userId]
+    );
+  };
+
+  const normalizedPeopleSearch = peopleSearch.trim().toLowerCase();
+  const filteredPeople = users.filter((user) => {
+    if (!normalizedPeopleSearch || user.id === selectedOwnerId) return true;
+    return [user.name, user.email, user.id]
+      .filter(Boolean)
+      .some((value) => value.toLowerCase().includes(normalizedPeopleSearch));
+  });
 
   return (
     <div className="space-y-6">
@@ -617,6 +642,8 @@ const AdminProjectsPage = observer(() => {
             setSelectedProject(null);
             setSelectedOwnerId("");
             setSelectedAdminIds([]);
+            setSelectedTeamMemberIds([]);
+            setPeopleSearch("");
           }
         }}
       >
@@ -624,13 +651,30 @@ const AdminProjectsPage = observer(() => {
           <DialogHeader>
             <DialogTitle>Manage project people</DialogTitle>
             <DialogDescription>
-              Assign the product owner and additional project admins for
-              &quot;{selectedProject?.title}&quot;. These roles are private and
-              are not shown on the public project page.
+              Assign the product owner, project admins, and team members for
+              &quot;{selectedProject?.title}&quot;. Owner and admin roles are
+              private and are not shown on the public project page.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="people-search">Search users</Label>
+              <Input
+                id="people-search"
+                type="search"
+                value={peopleSearch}
+                onChange={(event) => setPeopleSearch(event.target.value)}
+                placeholder="Search by name, email, or user ID"
+                disabled={usersLoading || updatingPeople}
+              />
+              {!usersLoading && (
+                <p className="text-xs text-muted-foreground">
+                  Showing {filteredPeople.length} of {users.length} users
+                </p>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="project-owner">Product owner</Label>
               <Select
@@ -640,6 +684,9 @@ const AdminProjectsPage = observer(() => {
                   setSelectedAdminIds((currentIds) =>
                     currentIds.filter((id) => id !== value)
                   );
+                  setSelectedTeamMemberIds((currentIds) =>
+                    currentIds.filter((id) => id !== value)
+                  );
                 }}
                 disabled={usersLoading || updatingPeople}
               >
@@ -647,7 +694,7 @@ const AdminProjectsPage = observer(() => {
                   <SelectValue placeholder="Select a product owner" />
                 </SelectTrigger>
                 <SelectContent>
-                  {users.map((user) => (
+                  {filteredPeople.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.name} ({user.email})
                     </SelectItem>
@@ -674,8 +721,12 @@ const AdminProjectsPage = observer(() => {
                   <p className="text-sm text-muted-foreground">
                     No users available.
                   </p>
+                ) : filteredPeople.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No users match this search.
+                  </p>
                 ) : (
-                  users.map((user) => {
+                  filteredPeople.map((user) => {
                     const isOwner = user.id === selectedOwnerId;
                     return (
                       <label
@@ -691,6 +742,61 @@ const AdminProjectsPage = observer(() => {
                           disabled={isOwner || updatingPeople}
                           onChange={() => toggleProjectAdmin(user.id)}
                           aria-label={`Make ${user.name} a project admin`}
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium">
+                            {user.name}
+                            {isOwner ? " (Product owner)" : ""}
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {user.email}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div>
+                <Label>Team members</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Select the people who should appear as team members on the
+                  project. The product owner is included automatically.
+                </p>
+              </div>
+              <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
+                {usersLoading ? (
+                  <p className="text-sm text-muted-foreground">
+                    Loading users…
+                  </p>
+                ) : users.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No users available.
+                  </p>
+                ) : filteredPeople.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No users match this search.
+                  </p>
+                ) : (
+                  filteredPeople.map((user) => {
+                    const isOwner = user.id === selectedOwnerId;
+                    return (
+                      <label
+                        key={user.id}
+                        className="flex cursor-pointer items-start gap-3 rounded-md p-2 hover:bg-muted/50"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 accent-primary"
+                          checked={
+                            isOwner || selectedTeamMemberIds.includes(user.id)
+                          }
+                          disabled={isOwner || updatingPeople}
+                          onChange={() => toggleTeamMember(user.id)}
+                          aria-label={`Make ${user.name} a team member`}
                         />
                         <span className="min-w-0">
                           <span className="block text-sm font-medium">
