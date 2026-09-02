@@ -31,6 +31,11 @@ const nextConfig = {
         hostname: "firebasestorage.googleapis.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/gho3c66o/image/upload/**",
+      },
       { protocol: "https", hostname: "m.media-amazon.com", pathname: "/**" },
       {
         protocol: "https",
