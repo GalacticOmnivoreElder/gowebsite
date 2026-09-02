@@ -318,7 +318,6 @@ const ProjectDetailsPage = observer(() => {
       project.admins?.includes(MobxStore.user.uid) ||
       project.teamMembers?.includes(MobxStore.user.uid));
 
-  const canViewProjectPeople = Boolean(isProjectMember || MobxStore.isAdmin);
   const displayedTeamMembers =
     project?.teamMemberDetails?.filter(
       (member) =>
@@ -1185,9 +1184,9 @@ const ProjectDetailsPage = observer(() => {
         )}
 
         {/* Team Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="mb-8">
           {/* Project Owner */}
-          {canViewProjectPeople && project.ownerDetails && (
+          {project.ownerDetails && (
             <Card>
               <CardHeader>
                 <CardTitle>Project owner</CardTitle>
@@ -1198,21 +1197,6 @@ const ProjectDetailsPage = observer(() => {
             </Card>
           )}
 
-          {/* Admins */}
-          {canViewProjectPeople &&
-            project.adminDetails &&
-            project.adminDetails.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Project admins</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {project.adminDetails.map((admin) => (
-                  <UserCard key={admin.uid} user={admin} role="Admin" />
-                ))}
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {/* Team Members */}
