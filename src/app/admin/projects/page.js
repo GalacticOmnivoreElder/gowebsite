@@ -46,19 +46,26 @@ import {
   Archive,
   ArchiveRestore,
   Trash2,
+  UserCog,
 } from "lucide-react";
 import Link from "next/link";
 import { formatFirebaseDate } from "@/utils/date";
 
 const AdminProjectsPage = observer(() => {
   const [projects, setProjects] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedProject, setSelectedProject] = useState(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [showPeopleDialog, setShowPeopleDialog] = useState(false);
+  const [selectedOwnerId, setSelectedOwnerId] = useState("");
+  const [selectedAdminIds, setSelectedAdminIds] = useState([]);
   const [newStatus, setNewStatus] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [updatingPeople, setUpdatingPeople] = useState(false);
   const [deleteProject, setDeleteProject] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -93,6 +100,34 @@ const AdminProjectsPage = observer(() => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/users", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+
+      const data = await response.json();
+      setUsers(data.users || []);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load users for project role management",
+        variant: "destructive",
+      });
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -139,6 +174,50 @@ const AdminProjectsPage = observer(() => {
       });
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const updateProjectPeople = async () => {
+    if (!selectedProject || !selectedOwnerId) return;
+
+    try {
+      setUpdatingPeople(true);
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(`/api/projects/${selectedProject.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          owner: selectedOwnerId,
+          admins: selectedAdminIds,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to update project roles");
+      }
+
+      toast({
+        title: "Project roles updated",
+        description: "The product owner and project admins were updated.",
+      });
+      await fetchProjects();
+      setShowPeopleDialog(false);
+      setSelectedProject(null);
+      setSelectedOwnerId("");
+      setSelectedAdminIds([]);
+    } catch (error) {
+      console.error("Error updating project roles:", error);
+      toast({
+        title: "Role update failed",
+        description: error.message || "Failed to update project roles",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingPeople(false);
     }
   };
 
@@ -234,6 +313,10 @@ const AdminProjectsPage = observer(() => {
     fetchProjects();
   }, [statusFilter]);
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   const getStatusColor = (status) => {
     switch (status) {
       case "draft":
@@ -272,6 +355,23 @@ const AdminProjectsPage = observer(() => {
     setNewStatus(project.status);
     setAdminNotes(project.adminNotes || "");
     setShowStatusDialog(true);
+  };
+
+  const handleManagePeople = (project) => {
+    setSelectedProject(project);
+    setSelectedOwnerId(project.owner || "");
+    setSelectedAdminIds(
+      (project.admins || []).filter((uid) => uid !== project.owner)
+    );
+    setShowPeopleDialog(true);
+  };
+
+  const toggleProjectAdmin = (userId) => {
+    setSelectedAdminIds((currentIds) =>
+      currentIds.includes(userId)
+        ? currentIds.filter((id) => id !== userId)
+        : [...currentIds, userId]
+    );
   };
 
   return (
@@ -446,6 +546,15 @@ const AdminProjectsPage = observer(() => {
                             Status
                           </Button>
 
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleManagePeople(project)}
+                          >
+                            <UserCog className="h-3 w-3 mr-1" />
+                            People
+                          </Button>
+
                           <Button variant="outline" size="sm" asChild>
                             <Link
                               href={`/project/${project.id}/edit?admin=true`}
@@ -498,6 +607,125 @@ const AdminProjectsPage = observer(() => {
           )}
         </CardContent>
       </Card>
+
+      {/* Product owner and project-admin dialog */}
+      <Dialog
+        open={showPeopleDialog}
+        onOpenChange={(open) => {
+          if (!open && !updatingPeople) {
+            setShowPeopleDialog(false);
+            setSelectedProject(null);
+            setSelectedOwnerId("");
+            setSelectedAdminIds([]);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage project people</DialogTitle>
+            <DialogDescription>
+              Assign the product owner and additional project admins for
+              &quot;{selectedProject?.title}&quot;. These roles are private and
+              are not shown on the public project page.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="project-owner">Product owner</Label>
+              <Select
+                value={selectedOwnerId}
+                onValueChange={(value) => {
+                  setSelectedOwnerId(value);
+                  setSelectedAdminIds((currentIds) =>
+                    currentIds.filter((id) => id !== value)
+                  );
+                }}
+                disabled={usersLoading || updatingPeople}
+              >
+                <SelectTrigger id="project-owner">
+                  <SelectValue placeholder="Select a product owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name} ({user.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <div>
+                <Label>Additional project admins</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  The selected product owner already has project-management
+                  access. Select any other admins who should manage this
+                  project.
+                </p>
+              </div>
+              <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
+                {usersLoading ? (
+                  <p className="text-sm text-muted-foreground">
+                    Loading users…
+                  </p>
+                ) : users.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No users available.
+                  </p>
+                ) : (
+                  users.map((user) => {
+                    const isOwner = user.id === selectedOwnerId;
+                    return (
+                      <label
+                        key={user.id}
+                        className="flex cursor-pointer items-start gap-3 rounded-md p-2 hover:bg-muted/50"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 accent-primary"
+                          checked={
+                            isOwner || selectedAdminIds.includes(user.id)
+                          }
+                          disabled={isOwner || updatingPeople}
+                          onChange={() => toggleProjectAdmin(user.id)}
+                          aria-label={`Make ${user.name} a project admin`}
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium">
+                            {user.name}
+                            {isOwner ? " (Product owner)" : ""}
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {user.email}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowPeopleDialog(false)}
+              disabled={updatingPeople}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={updateProjectPeople}
+              disabled={updatingPeople || usersLoading || !selectedOwnerId}
+            >
+              {updatingPeople ? "Saving…" : "Save people"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Status Update Dialog */}
       <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>

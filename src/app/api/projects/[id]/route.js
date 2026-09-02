@@ -240,6 +240,7 @@ export async function PUT(request, { params }) {
     const updateData = await request.json();
     const isOwner = existingProject.owner === user.uid;
     const isPlatformAdmin = user.admin || false;
+    const hasOwnerUpdate = updateData.owner !== undefined;
 
     const allowedFields = [
       "title",
@@ -264,6 +265,49 @@ export async function PUT(request, { params }) {
         filteredUpdateData[field] = updateData[field];
       }
     });
+
+    if (hasOwnerUpdate && !isPlatformAdmin) {
+      return NextResponse.json(
+        { error: "Only platform administrators can change the project owner" },
+        { status: 403 }
+      );
+    }
+
+    let nextOwner = existingProject.owner;
+    if (hasOwnerUpdate) {
+      if (
+        typeof updateData.owner !== "string" ||
+        !updateData.owner.trim() ||
+        updateData.owner.trim() !== updateData.owner
+      ) {
+        return NextResponse.json(
+          { error: "owner must be a valid user ID" },
+          { status: 400 }
+        );
+      }
+
+      let ownerExists = false;
+      try {
+        await adminAuth.getUser(updateData.owner);
+        ownerExists = true;
+      } catch {
+        const ownerDoc = await adminDb
+          .collection("users")
+          .doc(updateData.owner)
+          .get();
+        ownerExists = ownerDoc.exists;
+      }
+
+      if (!ownerExists) {
+        return NextResponse.json(
+          { error: "The selected project owner does not exist" },
+          { status: 400 }
+        );
+      }
+
+      nextOwner = updateData.owner;
+      filteredUpdateData.owner = nextOwner;
+    }
 
     if (
       filteredUpdateData.type !== undefined &&
@@ -379,6 +423,7 @@ export async function PUT(request, { params }) {
 
     // Only admins can change certain sensitive fields
     if (
+      hasOwnerUpdate ||
       updateData.admins !== undefined ||
       updateData.teamMembers !== undefined
     ) {
@@ -388,7 +433,7 @@ export async function PUT(request, { params }) {
             return NextResponse.json({ error: "admins must be an array" }, { status: 400 });
           }
           filteredUpdateData.admins = [
-            ...new Set([existingProject.owner, ...updateData.admins]),
+            ...new Set([nextOwner, ...updateData.admins]),
           ];
         }
         if (updateData.teamMembers !== undefined) {
@@ -399,7 +444,30 @@ export async function PUT(request, { params }) {
             );
           }
           filteredUpdateData.teamMembers = [
-            ...new Set([existingProject.owner, ...updateData.teamMembers]),
+            ...new Set([nextOwner, ...updateData.teamMembers]),
+          ];
+        }
+
+        // Transfer the automatic owner entries unless the platform admin sent
+        // explicit role lists in the same request.
+        if (hasOwnerUpdate && updateData.admins === undefined) {
+          filteredUpdateData.admins = [
+            ...new Set([
+              nextOwner,
+              ...(existingProject.admins || []).filter(
+                (uid) => uid !== existingProject.owner
+              ),
+            ]),
+          ];
+        }
+        if (hasOwnerUpdate && updateData.teamMembers === undefined) {
+          filteredUpdateData.teamMembers = [
+            ...new Set([
+              nextOwner,
+              ...(existingProject.teamMembers || []).filter(
+                (uid) => uid !== existingProject.owner
+              ),
+            ]),
           ];
         }
       } else {
@@ -424,6 +492,7 @@ export async function PUT(request, { params }) {
     await adminDb.collection("projects").doc(id).update(filteredUpdateData);
 
     await syncUserProjectArrays(id, existingProject, {
+      owner: filteredUpdateData.owner || existingProject.owner,
       admins: filteredUpdateData.admins || existingProject.admins || [],
       teamMembers:
         filteredUpdateData.teamMembers || existingProject.teamMembers || [],
@@ -628,11 +697,15 @@ export async function DELETE(request, { params }) {
 }
 
 async function syncUserProjectArrays(projectId, previousProject, nextProject) {
+  const previousOwner = previousProject.owner;
+  const nextOwner = nextProject.owner;
   const previousAdmins = new Set(previousProject.admins || []);
   const nextAdmins = new Set(nextProject.admins || []);
   const previousTeamMembers = new Set(previousProject.teamMembers || []);
   const nextTeamMembers = new Set(nextProject.teamMembers || []);
   const touchedUserIds = new Set([
+    previousOwner,
+    nextOwner,
     ...previousAdmins,
     ...nextAdmins,
     ...previousTeamMembers,
@@ -643,7 +716,15 @@ async function syncUserProjectArrays(projectId, previousProject, nextProject) {
 
   const batch = adminDb.batch();
   touchedUserIds.forEach((uid) => {
+    if (!uid) return;
     const updates = { updatedAt: new Date() };
+
+    if (previousOwner !== nextOwner && uid === previousOwner) {
+      updates.ownerOfProjects = admin.firestore.FieldValue.arrayRemove(projectId);
+    }
+    if (previousOwner !== nextOwner && uid === nextOwner) {
+      updates.ownerOfProjects = admin.firestore.FieldValue.arrayUnion(projectId);
+    }
 
     if (!previousAdmins.has(uid) && nextAdmins.has(uid)) {
       updates.adminOfProjects = admin.firestore.FieldValue.arrayUnion(projectId);

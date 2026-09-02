@@ -318,6 +318,13 @@ const ProjectDetailsPage = observer(() => {
       project.admins?.includes(MobxStore.user.uid) ||
       project.teamMembers?.includes(MobxStore.user.uid));
 
+  const canViewProjectPeople = Boolean(isProjectMember || MobxStore.isAdmin);
+  const displayedTeamMembers =
+    project?.teamMemberDetails?.filter(
+      (member) =>
+        member.uid !== project.owner && !project.admins?.includes(member.uid)
+    ) || [];
+
   const handleEdit = () => {
     router.push(`/project/${projectId}/edit`);
   };
@@ -1127,7 +1134,7 @@ const ProjectDetailsPage = observer(() => {
             <CardContent className="p-4 text-center">
               <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
               <p className="font-semibold">
-                {project.teamMemberDetails?.length || 0}
+                {displayedTeamMembers.length}
               </p>
               <p className="text-sm text-muted-foreground">Team members</p>
             </CardContent>
@@ -1180,7 +1187,7 @@ const ProjectDetailsPage = observer(() => {
         {/* Team Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Project Owner */}
-          {project.ownerDetails && (
+          {canViewProjectPeople && project.ownerDetails && (
             <Card>
               <CardHeader>
                 <CardTitle>Project owner</CardTitle>
@@ -1192,7 +1199,9 @@ const ProjectDetailsPage = observer(() => {
           )}
 
           {/* Admins */}
-          {project.adminDetails && project.adminDetails.length > 0 && (
+          {canViewProjectPeople &&
+            project.adminDetails &&
+            project.adminDetails.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Project admins</CardTitle>
@@ -1207,14 +1216,14 @@ const ProjectDetailsPage = observer(() => {
         </div>
 
         {/* Team Members */}
-        {project.teamMemberDetails && project.teamMemberDetails.length > 0 && (
+        {displayedTeamMembers.length > 0 && (
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Team members</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {project.teamMemberDetails.map((member) => (
+                {displayedTeamMembers.map((member) => (
                   <UserCard
                     key={member.uid}
                     user={member}
