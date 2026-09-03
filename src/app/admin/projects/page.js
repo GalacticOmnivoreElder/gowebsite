@@ -529,6 +529,9 @@ const AdminProjectsPage = observer(() => {
       .some((value) => value.toLowerCase().includes(normalizedSourcePeopleSearch));
   });
 
+  const getSourceProjectForProject = (project) =>
+    sourceProjects.find((sourceProject) => sourceProject.id === project.sourceProject);
+
   const toggleSourceProjectAdmin = (userId) => {
     setSourceProjectAdminIds((currentIds) =>
       currentIds.includes(userId)
@@ -617,8 +620,11 @@ const AdminProjectsPage = observer(() => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {projects.map((project) => (
-                    <TableRow key={project.id}>
+                  {projects.map((project) => {
+                    const sourceProject = getSourceProjectForProject(project);
+
+                    return (
+                      <TableRow key={project.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           {project.thumbnail && (
@@ -718,6 +724,19 @@ const AdminProjectsPage = observer(() => {
                             People
                           </Button>
 
+                          {sourceProject && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleManageSourceProject(sourceProject)
+                              }
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Source project
+                            </Button>
+                          )}
+
                           <Button variant="outline" size="sm" asChild>
                             <Link
                               href={`/project/${project.id}/edit?admin=true`}
@@ -762,8 +781,9 @@ const AdminProjectsPage = observer(() => {
                           </Button>
                         </div>
                       </TableCell>
-                    </TableRow>
-                  ))}
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
