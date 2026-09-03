@@ -5,6 +5,7 @@ export const PROJECT_TYPES = [
   "Music & Audio",
   "Writing & Narrative",
   "Marketing",
+  "Community & Industry Development",
   "Other",
 ];
 
@@ -233,6 +234,7 @@ export function filterAndSortProjectsForDiscovery(
         project.title,
         project.description,
         project.goal,
+        project.type,
         ...(project.categoryTags || []),
       ].some((value) => normalizeFilterValue(value).includes(search));
     })

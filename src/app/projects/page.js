@@ -41,6 +41,7 @@ import { getProjectCreationDestination } from "@/lib/project-access";
 import { toast } from "@/components/ui/use-toast";
 import { trackEvent } from "@/lib/analytics/client";
 import { getProjectScheduleLabel } from "@/lib/project-duration";
+import { PROJECT_TYPES } from "@/lib/project-utils";
 
 const ProjectCard = ({ project }) => {
   const router = useRouter();
@@ -269,15 +270,12 @@ const ProjectsPage = observer(() => {
     return Array.from(categories).sort();
   }, [projectList]);
 
-  const uniqueTypes = [
-    "Game Development",
-    "Art & Design",
-    "Programming",
-    "Music & Audio",
-    "Writing & Narrative",
-    "Marketing",
-    "Other",
-  ];
+  const uniqueTypes = Array.from(
+    new Set([
+      ...PROJECT_TYPES,
+      ...projectList.map((project) => project.type).filter(Boolean),
+    ])
+  );
 
   const activeFilterCount = [
     localFilters.search,

@@ -24,6 +24,7 @@ const MAX_PROJECT_REQUIRED_ROLES = 30;
 const MAX_PROJECT_ROLE_LENGTH = 80;
 const MAX_PROJECT_CATEGORIES = 30;
 const MAX_PROJECT_CATEGORY_LENGTH = 80;
+const MAX_PROJECT_TYPE_LENGTH = 80;
 
 function validateProjectRequiredRoles(values) {
   if (!Array.isArray(values) || values.length === 0) {
@@ -88,6 +89,22 @@ function validateProjectCategories(values) {
   );
   if (uniqueCategories.size !== normalizedCategories.length) {
     return "categoryTags cannot contain duplicates";
+  }
+
+  return null;
+}
+
+function normalizeProjectType(value) {
+  return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : value;
+}
+
+function validateProjectType(value) {
+  const normalizedType = normalizeProjectType(value);
+  if (typeof normalizedType !== "string" || normalizedType.length === 0) {
+    return "Project type must be a non-empty string";
+  }
+  if (normalizedType.length > MAX_PROJECT_TYPE_LENGTH) {
+    return `Project type must be ${MAX_PROJECT_TYPE_LENGTH} characters or fewer`;
   }
 
   return null;
@@ -395,13 +412,12 @@ export async function POST(request) {
       }
     }
 
-    // Validate enums
-    if (!PROJECT_TYPES.includes(projectData.type)) {
-      return NextResponse.json(
-        { error: "Invalid project type" },
-        { status: 400 }
-      );
+    // Project types keep the existing suggestions but may also be custom.
+    const projectTypeError = validateProjectType(projectData.type);
+    if (projectTypeError) {
+      return NextResponse.json({ error: projectTypeError }, { status: 400 });
     }
+    const projectType = normalizeProjectType(projectData.type);
 
     if (!VISIBILITY_OPTIONS.includes(projectData.visibility)) {
       return NextResponse.json(
@@ -582,7 +598,7 @@ export async function POST(request) {
       title: projectData.title.trim(),
       thumbnail: projectData.thumbnail || "",
       categoryTags,
-      type: projectData.type,
+      type: projectType,
       description: projectData.description,
       visibility: projectData.visibility,
       applicationAccess: normalizeApplicationAccess(

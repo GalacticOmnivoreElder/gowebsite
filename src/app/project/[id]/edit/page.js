@@ -29,6 +29,7 @@ import { normalizeOptionalProjectNumber } from "@/lib/project-form-utils";
 import {
   APPLICATION_ACCESS_OPTIONS,
   DEFAULT_APPLICATION_ACCESS,
+  PROJECT_TYPES,
 } from "@/lib/project-utils";
 import { normalizeProjectSchedule } from "@/lib/project-duration";
 
@@ -39,6 +40,7 @@ const MAX_PROJECT_REQUIRED_ROLES = 30;
 const MAX_PROJECT_ROLE_LENGTH = 80;
 const MAX_PROJECT_CATEGORIES = 30;
 const MAX_PROJECT_CATEGORY_LENGTH = 80;
+const MAX_PROJECT_TYPE_LENGTH = 80;
 
 // Validation schema
 const projectSchema = z.object({
@@ -66,15 +68,14 @@ const projectSchema = z.object({
         tags.length,
       "Category tags cannot contain duplicates"
     ),
-  type: z.enum([
-    "Game Development",
-    "Art & Design",
-    "Programming",
-    "Music & Audio",
-    "Writing & Narrative",
-    "Marketing",
-    "Other",
-  ]),
+  type: z
+    .string()
+    .trim()
+    .min(1, "Project type is required")
+    .max(
+      MAX_PROJECT_TYPE_LENGTH,
+      `Project type must be ${MAX_PROJECT_TYPE_LENGTH} characters or fewer`
+    ),
   visibility: z.enum(["Public", "Private", "Invite Only"]),
   applicationAccess: z.enum(APPLICATION_ACCESS_OPTIONS),
   status: z.enum([
@@ -210,10 +211,21 @@ const EditProjectPage = observer(() => {
   const [project, setProject] = useState(null);
   const [canEdit, setCanEdit] = useState(false);
   const [isProjectOwner, setIsProjectOwner] = useState(false);
+  const [newProjectType, setNewProjectType] = useState("");
+  const [projectTypeInputError, setProjectTypeInputError] = useState("");
   const [newCategoryTag, setNewCategoryTag] = useState("");
   const [categoryInputError, setCategoryInputError] = useState("");
   const [newRequiredRole, setNewRequiredRole] = useState("");
   const [requiredRoleInputError, setRequiredRoleInputError] = useState("");
+
+  const projectTypeOptions =
+    formData.type &&
+    !PROJECT_TYPES.some(
+      (projectType) =>
+        projectType.toLowerCase() === formData.type.trim().toLowerCase()
+    )
+      ? [...PROJECT_TYPES, formData.type]
+      : PROJECT_TYPES;
 
   const canManageApplicationAccess = MobxStore.isAdmin || isProjectOwner;
 
@@ -431,6 +443,25 @@ const EditProjectPage = observer(() => {
     addTag("categoryTags", category);
     setNewCategoryTag("");
     setCategoryInputError("");
+  };
+
+  const handleAddProjectType = () => {
+    const projectType = newProjectType.trim().replace(/\s+/g, " ");
+
+    if (!projectType) {
+      setProjectTypeInputError("Enter a project type before adding it.");
+      return;
+    }
+    if (projectType.length > MAX_PROJECT_TYPE_LENGTH) {
+      setProjectTypeInputError(
+        `Project types must be ${MAX_PROJECT_TYPE_LENGTH} characters or fewer.`
+      );
+      return;
+    }
+
+    handleInputChange("type", projectType);
+    setNewProjectType("");
+    setProjectTypeInputError("");
   };
 
   const addRequiredRole = (roleValue) => {
@@ -703,27 +734,58 @@ const EditProjectPage = observer(() => {
               <Label>Project type *</Label>
                   <Select
                     value={formData.type}
-                    onValueChange={(value) => handleInputChange("type", value)}
+                    onValueChange={(value) => {
+                      handleInputChange("type", value);
+                      setNewProjectType("");
+                      setProjectTypeInputError("");
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[
-                        "Game Development",
-                        "Art & Design",
-                        "Programming",
-                        "Music & Audio",
-                        "Writing & Narrative",
-                        "Marketing",
-                        "Other",
-                      ].map((type) => (
+                      {projectTypeOptions.map((type) => (
                         <SelectItem key={type} value={type}>
                           {type}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      value={newProjectType}
+                      onChange={(e) => {
+                        setNewProjectType(e.target.value);
+                        if (projectTypeInputError) setProjectTypeInputError("");
+                      }}
+                      placeholder="Type a custom project type"
+                      maxLength={MAX_PROJECT_TYPE_LENGTH}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddProjectType();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddProjectType}
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="sr-only">
+                        Use custom project type
+                      </span>
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Choose a suggested type or enter a new one.
+                  </p>
+                  {projectTypeInputError && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {projectTypeInputError}
+                    </p>
+                  )}
                 </div>
 
                 <div>
