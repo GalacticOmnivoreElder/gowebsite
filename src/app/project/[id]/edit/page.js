@@ -35,6 +35,9 @@ import { normalizeProjectSchedule } from "@/lib/project-duration";
 const optionalProjectNumber = (schema) =>
   z.preprocess(normalizeOptionalProjectNumber, schema.optional());
 
+const MAX_PROJECT_REQUIRED_ROLES = 30;
+const MAX_PROJECT_ROLE_LENGTH = 80;
+
 // Validation schema
 const projectSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title too long"),
@@ -80,8 +83,21 @@ const projectSchema = z.object({
     "Hybrid",
   ]),
   requiredRoles: z
-    .array(z.string())
-    .min(1, "At least one required role is needed"),
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, "Required roles cannot be empty")
+        .max(
+          MAX_PROJECT_ROLE_LENGTH,
+          `Required roles must be ${MAX_PROJECT_ROLE_LENGTH} characters or fewer`
+        )
+    )
+    .min(1, "At least one required role is needed")
+    .max(
+      MAX_PROJECT_REQUIRED_ROLES,
+      `You can add up to ${MAX_PROJECT_REQUIRED_ROLES} required roles`
+    ),
 }).superRefine((data, context) => {
   const schedule = normalizeProjectSchedule(data, { allowLegacy: true });
   if (!schedule.ok) {
@@ -171,6 +187,8 @@ const EditProjectPage = observer(() => {
   const [project, setProject] = useState(null);
   const [canEdit, setCanEdit] = useState(false);
   const [isProjectOwner, setIsProjectOwner] = useState(false);
+  const [newRequiredRole, setNewRequiredRole] = useState("");
+  const [requiredRoleInputError, setRequiredRoleInputError] = useState("");
 
   const canManageApplicationAccess = MobxStore.isAdmin || isProjectOwner;
 
@@ -342,6 +360,61 @@ const EditProjectPage = observer(() => {
         [field]: [...prev[field], value],
       }));
     }
+  };
+
+  const addRequiredRole = (roleValue) => {
+    const role = roleValue.trim().replace(/\s+/g, " ");
+    if (!role) return;
+
+    setFormData((prev) => {
+      if (
+        prev.requiredRoles.some(
+          (selectedRole) =>
+            selectedRole.trim().toLowerCase() === role.toLowerCase()
+        ) ||
+        prev.requiredRoles.length >= MAX_PROJECT_REQUIRED_ROLES
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        requiredRoles: [...prev.requiredRoles, role],
+      };
+    });
+  };
+
+  const handleAddRequiredRole = () => {
+    const role = newRequiredRole.trim().replace(/\s+/g, " ");
+
+    if (!role) {
+      setRequiredRoleInputError("Enter a role before adding it.");
+      return;
+    }
+    if (role.length > MAX_PROJECT_ROLE_LENGTH) {
+      setRequiredRoleInputError(
+        `Roles must be ${MAX_PROJECT_ROLE_LENGTH} characters or fewer.`
+      );
+      return;
+    }
+    if (
+      formData.requiredRoles.some(
+        (selectedRole) => selectedRole.trim().toLowerCase() === role.toLowerCase()
+      )
+    ) {
+      setRequiredRoleInputError("That role has already been added.");
+      return;
+    }
+    if (formData.requiredRoles.length >= MAX_PROJECT_REQUIRED_ROLES) {
+      setRequiredRoleInputError(
+        `You can add up to ${MAX_PROJECT_REQUIRED_ROLES} required roles.`
+      );
+      return;
+    }
+
+    addRequiredRole(role);
+    setNewRequiredRole("");
+    setRequiredRoleInputError("");
   };
 
   const removeTag = (field, value) => {
@@ -916,14 +989,18 @@ const EditProjectPage = observer(() => {
             <CardContent>
               <div className="space-y-4">
                 <Select
-                  onValueChange={(value) => addTag("requiredRoles", value)}
+                  onValueChange={addRequiredRole}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Add a required role" />
                   </SelectTrigger>
                   <SelectContent>
                     {ROLE_OPTIONS.filter(
-                      (role) => !formData.requiredRoles.includes(role)
+                      (role) =>
+                        !formData.requiredRoles.some(
+                          (selectedRole) =>
+                            selectedRole.trim().toLowerCase() === role.toLowerCase()
+                        )
                     ).map((role) => (
                       <SelectItem key={role} value={role}>
                         {role}
@@ -931,6 +1008,41 @@ const EditProjectPage = observer(() => {
                     ))}
                   </SelectContent>
                 </Select>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    value={newRequiredRole}
+                    onChange={(event) => {
+                      setNewRequiredRole(event.target.value);
+                      if (requiredRoleInputError) setRequiredRoleInputError("");
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        handleAddRequiredRole();
+                      }
+                    }}
+                    maxLength={MAX_PROJECT_ROLE_LENGTH}
+                    placeholder="Add a custom role"
+                    aria-label="Add a custom required role"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddRequiredRole}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add role
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Choose a suggested role or type any custom role and add it as a tag.
+                </p>
+                {requiredRoleInputError && (
+                  <p className="text-sm text-red-500">
+                    {requiredRoleInputError}
+                  </p>
+                )}
 
                 <div className="flex flex-wrap gap-2">
                   {formData.requiredRoles.map((role) => (
@@ -940,10 +1052,14 @@ const EditProjectPage = observer(() => {
                       className="flex items-center gap-1"
                     >
                       {role}
-                      <X
-                        className="h-3 w-3 cursor-pointer"
+                      <button
+                        type="button"
+                        className="rounded-sm outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-primary"
                         onClick={() => removeTag("requiredRoles", role)}
-                      />
+                        aria-label={`Remove ${role}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     </Badge>
                   ))}
                 </div>

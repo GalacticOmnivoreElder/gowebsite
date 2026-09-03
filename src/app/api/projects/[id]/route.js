@@ -10,9 +10,7 @@ import {
   normalizeApplicationAccess,
   PROJECT_STATUSES,
   PROJECT_TYPES,
-  REQUIRED_ROLES,
   serializeFirestoreDate,
-  validateArrayValues,
   VISIBILITY_OPTIONS,
 } from "@/lib/project-utils";
 import {
@@ -25,6 +23,38 @@ import {
 
 const PROJECT_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
+const MAX_PROJECT_REQUIRED_ROLES = 30;
+const MAX_PROJECT_ROLE_LENGTH = 80;
+
+function validateProjectRequiredRoles(values) {
+  if (!Array.isArray(values) || values.length === 0) {
+    return "requiredRoles must include at least one role";
+  }
+  if (values.length > MAX_PROJECT_REQUIRED_ROLES) {
+    return `requiredRoles cannot contain more than ${MAX_PROJECT_REQUIRED_ROLES} roles`;
+  }
+
+  const normalizedRoles = values.map((role) =>
+    typeof role === "string" ? role.trim().replace(/\s+/g, " ") : role
+  );
+  if (
+    normalizedRoles.some(
+      (role) => typeof role !== "string" || role.length === 0
+    )
+  ) {
+    return "requiredRoles must include non-empty strings";
+  }
+  if (normalizedRoles.some((role) => role.length > MAX_PROJECT_ROLE_LENGTH)) {
+    return `Each required role must be ${MAX_PROJECT_ROLE_LENGTH} characters or fewer`;
+  }
+
+  const uniqueRoles = new Set(normalizedRoles.map((role) => role.toLowerCase()));
+  if (uniqueRoles.size !== normalizedRoles.length) {
+    return "requiredRoles cannot contain duplicates";
+  }
+
+  return null;
+}
 
 function parseProjectDate(value) {
   if (typeof value !== "string" || !PROJECT_DATE_PATTERN.test(value)) {
@@ -423,14 +453,15 @@ export async function PUT(request, { params }) {
     }
 
     if (filteredUpdateData.requiredRoles !== undefined) {
-      const rolesError = validateArrayValues(
-        filteredUpdateData.requiredRoles,
-        REQUIRED_ROLES,
-        "requiredRoles"
+      const rolesError = validateProjectRequiredRoles(
+        filteredUpdateData.requiredRoles
       );
       if (rolesError) {
         return NextResponse.json({ error: rolesError }, { status: 400 });
       }
+      filteredUpdateData.requiredRoles = filteredUpdateData.requiredRoles.map(
+        (role) => role.trim().replace(/\s+/g, " ")
+      );
     }
 
     if (
