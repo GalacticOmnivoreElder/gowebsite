@@ -30,6 +30,7 @@ import {
   APPLICATION_ACCESS_OPTIONS,
   DEFAULT_APPLICATION_ACCESS,
 } from "@/lib/project-utils";
+import { normalizeProjectSchedule } from "@/lib/project-duration";
 
 const optionalProjectNumber = (schema) =>
   z.preprocess(normalizeOptionalProjectNumber, schema.optional());
@@ -60,12 +61,10 @@ const projectSchema = z.object({
   ]),
   thumbnail: z.string().url().optional().or(z.literal("")),
   goal: z.string().optional(),
-  duration: optionalProjectNumber(
-    z
-      .number()
-      .min(1, "Duration must be at least 1 day")
-      .max(3650, "Duration is too long")
-  ),
+  duration: optionalProjectNumber(z.number().optional()),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  isOngoing: z.boolean(),
   budget: optionalProjectNumber(
     z
       .number()
@@ -83,6 +82,15 @@ const projectSchema = z.object({
   requiredRoles: z
     .array(z.string())
     .min(1, "At least one required role is needed"),
+}).superRefine((data, context) => {
+  const schedule = normalizeProjectSchedule(data, { allowLegacy: true });
+  if (!schedule.ok) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: schedule.error,
+      path: [schedule.field],
+    });
+  }
 });
 
 const CATEGORY_OPTIONS = [
@@ -149,6 +157,9 @@ const EditProjectPage = observer(() => {
     thumbnail: "",
     goal: "",
     duration: "",
+    startDate: "",
+    endDate: "",
+    isOngoing: false,
     budget: "",
     compensationType: "Volunteer",
     requiredRoles: [],
@@ -290,6 +301,9 @@ const EditProjectPage = observer(() => {
             thumbnail: projectData.thumbnail || "",
             goal: projectData.goal || "",
             duration: projectData.duration ?? "",
+            startDate: projectData.startDate || "",
+            endDate: projectData.isOngoing ? "" : projectData.endDate || "",
+            isOngoing: projectData.isOngoing === true,
             budget: projectData.budget ?? "",
             compensationType: projectData.compensationType || "Volunteer",
             requiredRoles: projectData.requiredRoles || [],
@@ -722,27 +736,93 @@ const EditProjectPage = observer(() => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <Label htmlFor="duration">Duration</Label>
+                  <Label htmlFor="startDate">Start date *</Label>
                   <Input
-                    id="duration"
-                    type="number"
-                    min="1"
-                    max="3650"
-                    value={formData.duration}
+                    id="startDate"
+                    type="date"
+                    value={formData.startDate}
                     onChange={(e) =>
-                      handleInputChange("duration", e.target.value)
+                      handleInputChange("startDate", e.target.value)
                     }
-                    placeholder="e.g., 90"
-                    className={errors.duration ? "border-red-500" : ""}
+                    className={errors.startDate ? "border-red-500" : ""}
                   />
-                  {errors.duration && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {errors.duration}
+                  {errors.startDate && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {errors.startDate}
                     </p>
                   )}
                 </div>
+
+                <div>
+                  <Label htmlFor="endDate">End date *</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    disabled={formData.isOngoing}
+                    onChange={(e) =>
+                      handleInputChange("endDate", e.target.value)
+                    }
+                    className={errors.endDate ? "border-red-500" : ""}
+                  />
+                  {errors.endDate && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {errors.endDate}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-start gap-3 md:col-span-2">
+                  <input
+                    id="isOngoing"
+                    type="checkbox"
+                    checked={formData.isOngoing}
+                    onChange={(e) => {
+                      const isOngoing = e.target.checked;
+                      handleInputChange("isOngoing", isOngoing);
+                      if (isOngoing) handleInputChange("endDate", "");
+                    }}
+                    className="mt-1 h-4 w-4 accent-primary"
+                  />
+                  <div>
+                    <Label htmlFor="isOngoing">Ongoing project</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Select this when the project has no planned end date.
+                    </p>
+                  </div>
+                </div>
+
+                {!formData.startDate &&
+                  !formData.endDate &&
+                  !formData.isOngoing &&
+                  formData.duration !== "" &&
+                  formData.duration !== null && (
+                    <div className="md:col-span-2">
+                      <Label htmlFor="duration">Legacy duration (days)</Label>
+                      <Input
+                        id="duration"
+                        type="number"
+                        min="1"
+                        max="3650"
+                        value={formData.duration}
+                        onChange={(e) =>
+                          handleInputChange("duration", e.target.value)
+                        }
+                        className={errors.duration ? "border-red-500" : ""}
+                      />
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        This project uses the older day-based schedule. Add
+                        dates or select Ongoing to replace it.
+                      </p>
+                      {errors.duration && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {errors.duration}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                 <div>
                   <Label htmlFor="budget">Budget</Label>

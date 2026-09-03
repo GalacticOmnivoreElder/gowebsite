@@ -53,6 +53,7 @@ import {
 } from "lucide-react";
 import UserLink from "@/components/ui/UserLink";
 import { formatBudget, hasProjectBudget } from "@/utils/formatBudget";
+import { getProjectScheduleLabel } from "@/lib/project-duration";
 import { normalizeApplicationAccess } from "@/lib/project-utils";
 
 const UserCard = ({ user, role, onRemove }) => {
@@ -236,15 +237,6 @@ const ProjectDetailsPage = observer(() => {
     checkUserApplication();
   }, [userId, projectId]);
 
-  const formatDuration = (days) => {
-    if (days >= 365) {
-      return `${Math.round(days / 365)} year${days >= 730 ? "s" : ""}`;
-    } else if (days >= 30) {
-      return `${Math.round(days / 30)} month${days >= 60 ? "s" : ""}`;
-    } else {
-      return `${days} day${days !== 1 ? "s" : ""}`;
-    }
-  };
 
   const getVisibilityIcon = (visibility) => {
     switch (visibility) {
@@ -1115,9 +1107,9 @@ const ProjectDetailsPage = observer(() => {
             <CardContent className="p-4 text-center">
               <Clock className="h-6 w-6 mx-auto mb-2 text-primary" />
               <p className="font-semibold">
-                {formatDuration(project.duration)}
+                {getProjectScheduleLabel(project)}
               </p>
-              <p className="text-sm text-muted-foreground">Duration</p>
+              <p className="text-sm text-muted-foreground">Schedule</p>
             </CardContent>
           </Card>
 

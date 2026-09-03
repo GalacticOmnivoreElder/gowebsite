@@ -19,6 +19,7 @@ import {
   APPLICATION_ACCESS_OPTIONS,
   DEFAULT_APPLICATION_ACCESS,
 } from "@/lib/project-utils";
+import { normalizeProjectSchedule } from "@/lib/project-duration";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -136,10 +137,10 @@ const projectSchema = z
       required_error: "Choose who may apply",
     }),
     goal: z.string().min(10, "Goal must be at least 10 characters"),
-    duration: z
-      .number()
-      .min(1, "Duration must be at least 1 day")
-      .max(3650, "Duration too long"),
+    duration: z.number().optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    isOngoing: z.boolean(),
     budget: optionalProjectNumber(
       z
         .number()
@@ -158,6 +159,16 @@ const projectSchema = z
     }),
     sourceProjectName: z.string().optional(),
     existingSourceProjectId: z.string().optional(),
+  })
+  .superRefine((data, context) => {
+    const schedule = normalizeProjectSchedule(data, { allowLegacy: false });
+    if (!schedule.ok) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: schedule.error,
+        path: [schedule.field],
+      });
+    }
   })
   .refine(
     (data) => {
@@ -217,6 +228,9 @@ const CreateProjectContent = observer(() => {
       applicationAccess: DEFAULT_APPLICATION_ACCESS,
       goal: "",
       duration: 90,
+      startDate: "",
+      endDate: "",
+      isOngoing: false,
       budget: "",
       compensationType: "",
       requiredRoles: [],
@@ -335,7 +349,14 @@ const CreateProjectContent = observer(() => {
       case 2:
         return ["description", "goal"];
       case 3:
-        return ["visibility", "duration", "budget", "compensationType"];
+        return [
+          "visibility",
+          "startDate",
+          "endDate",
+          "isOngoing",
+          "budget",
+          "compensationType",
+        ];
       case 4:
         return ["requiredRoles"];
       default:
@@ -457,12 +478,17 @@ const CreateProjectContent = observer(() => {
 
   const handleInvalidSubmit = (formErrors) => {
     const firstInvalidField = Object.keys(formErrors)[0];
+    const invalidFieldStep = ["startDate", "endDate", "isOngoing"].includes(
+      firstInvalidField
+    )
+      ? 3
+      : getProjectFormStepForField(firstInvalidField);
     trackEvent("form_validation_error", {
       form_id: "project_creation",
       field_id: firstInvalidField || "unknown",
       error_type: "invalid_field",
     });
-    setCurrentStep(getProjectFormStepForField(firstInvalidField));
+    setCurrentStep(invalidFieldStep);
     setSubmitError(
       "Please review the highlighted fields before creating the project."
     );
@@ -888,28 +914,74 @@ const CreateProjectContent = observer(() => {
           )}
         </div>
 
-        <div>
-          <Label htmlFor="duration">Duration (days) *</Label>
-          <Controller
-            name="duration"
-            control={control}
-            render={({ field }) => (
-              <Input
-                {...field}
-                id="duration"
-                type="number"
-                min="1"
-                max="3650"
-                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                className={errors.duration ? "border-red-500" : ""}
+        <div className="md:col-span-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <Label htmlFor="startDate">Start date *</Label>
+              <Controller
+                name="startDate"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="startDate"
+                    type="date"
+                    className={errors.startDate ? "border-red-500" : ""}
+                  />
+                )}
               />
-            )}
-          />
-          {errors.duration && (
-            <p className="text-sm text-red-500 mt-1">
-              {errors.duration.message}
-            </p>
-          )}
+              {errors.startDate && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.startDate.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="endDate">End date *</Label>
+              <Controller
+                name="endDate"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="endDate"
+                    type="date"
+                    disabled={watchedValues.isOngoing}
+                    className={errors.endDate ? "border-red-500" : ""}
+                  />
+                )}
+              />
+              {errors.endDate && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.endDate.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-start gap-3">
+            <Controller
+              name="isOngoing"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="isOngoing"
+                  checked={field.value}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked === true);
+                    if (checked === true) setValue("endDate", "");
+                  }}
+                />
+              )}
+            />
+            <div>
+              <Label htmlFor="isOngoing">Ongoing project</Label>
+              <p className="text-sm text-muted-foreground">
+                Select this when the project has no planned end date.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div>

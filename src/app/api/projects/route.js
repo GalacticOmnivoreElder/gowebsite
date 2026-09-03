@@ -19,6 +19,95 @@ import {
 } from "@/lib/project-utils";
 import { enqueueEmailEvent } from "@/lib/email";
 
+const PROJECT_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
+
+function parseProjectDate(value) {
+  if (typeof value !== "string" || !PROJECT_DATE_PATTERN.test(value)) {
+    return null;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+    ? date
+    : null;
+}
+
+function normalizeProjectSchedule(input = {}, { allowLegacy = true } = {}) {
+  if (
+    Object.prototype.hasOwnProperty.call(input, "isOngoing") &&
+    typeof input.isOngoing !== "boolean"
+  ) {
+    return { ok: false, error: "isOngoing must be true or false" };
+  }
+
+  const hasStartDate =
+    input.startDate !== undefined &&
+    input.startDate !== null &&
+    input.startDate !== "";
+  const hasEndDate =
+    input.endDate !== undefined && input.endDate !== null && input.endDate !== "";
+  const isOngoing = input.isOngoing === true;
+  const hasSchedule = hasStartDate || hasEndDate || isOngoing;
+
+  if (!hasSchedule) {
+    if (!allowLegacy) {
+      return { ok: false, error: "A start date is required" };
+    }
+    const duration = Number(input.duration);
+    return Number.isFinite(duration) && duration >= 1 && duration <= 3650
+      ? { ok: true, hasSchedule: false, duration }
+      : {
+          ok: false,
+          error: "Duration must be between 1 and 3650 days",
+        };
+  }
+
+  if (!hasStartDate || !parseProjectDate(input.startDate)) {
+    return { ok: false, error: "A valid start date is required" };
+  }
+
+  const startDate = input.startDate.trim();
+  if (isOngoing) {
+    return {
+      ok: true,
+      hasSchedule: true,
+      duration: null,
+      startDate,
+      endDate: null,
+      isOngoing: true,
+    };
+  }
+
+  if (!hasEndDate || !parseProjectDate(input.endDate)) {
+    return { ok: false, error: "A valid end date is required" };
+  }
+
+  const endDate = input.endDate.trim();
+  const start = parseProjectDate(startDate);
+  const end = parseProjectDate(endDate);
+  if (end < start) {
+    return {
+      ok: false,
+      error: "The end date must be on or after the start date",
+    };
+  }
+
+  const duration =
+    Math.floor((end.getTime() - start.getTime()) / DAY_IN_MILLISECONDS) + 1;
+  if (duration > 3650) {
+    return {
+      ok: false,
+      error: "The project schedule cannot be longer than 3650 days",
+    };
+  }
+
+  return { ok: true, hasSchedule: true, duration, startDate, endDate, isOngoing: false };
+}
+
 async function getUserFromToken(request) {
   return getRequestUser(request);
 }
@@ -217,7 +306,6 @@ export async function POST(request) {
       "categoryTags",
       "type",
       "visibility",
-      "duration",
       "compensationType",
       "requiredRoles",
     ];
@@ -287,18 +375,25 @@ export async function POST(request) {
       );
     }
 
-    const duration = Number(projectData.duration);
+    const hasScheduleFields = ["startDate", "endDate", "isOngoing"].some(
+      (field) => Object.prototype.hasOwnProperty.call(projectData, field)
+    );
+    const schedule = normalizeProjectSchedule(projectData, {
+      allowLegacy: !hasScheduleFields,
+    });
+    if (!schedule.ok) {
+      return NextResponse.json(
+        { error: schedule.error },
+        { status: 400 }
+      );
+    }
+
+    const duration = schedule.duration;
     const hasBudget =
       projectData.budget !== undefined &&
       projectData.budget !== null &&
       projectData.budget !== "";
     const budget = hasBudget ? Number(projectData.budget) : undefined;
-    if (!Number.isFinite(duration) || duration < 1 || duration > 3650) {
-      return NextResponse.json(
-        { error: "Duration must be between 1 and 3650 days" },
-        { status: 400 }
-      );
-    }
     if (hasBudget && (!Number.isFinite(budget) || budget < 0)) {
       return NextResponse.json(
         { error: "Budget must be a non-negative number" },
@@ -425,6 +520,13 @@ export async function POST(request) {
       ),
       goal: projectData.goal,
       duration,
+      ...(schedule.hasSchedule
+        ? {
+            startDate: schedule.startDate,
+            endDate: schedule.endDate,
+            isOngoing: schedule.isOngoing,
+          }
+        : {}),
       ...(hasBudget ? { budget } : {}),
       compensationType: projectData.compensationType,
       requiredRoles: projectData.requiredRoles,

@@ -32,6 +32,9 @@ async function fetchProjectsByIds(projectIds) {
             categoryTags: data.categoryTags,
             budget: data.budget,
             duration: data.duration,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            isOngoing: data.isOngoing === true,
             compensationType: data.compensationType,
             requiredRoles: data.requiredRoles,
             createdAt:

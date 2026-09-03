@@ -20,6 +20,7 @@ import { observer } from "mobx-react-lite";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
 import { formatBudget, hasProjectBudget } from "@/utils/formatBudget";
+import { getProjectScheduleLabel } from "@/lib/project-duration";
 import {
   Briefcase,
   Crown,
@@ -214,17 +215,6 @@ const SubscriptionStatusOverview = ({ user }) => {
 };
 
 const ProjectCard = ({ project, role }) => {
-  const formatDuration = (days) => {
-    if (!days || days === 0) return "Not specified";
-    if (days >= 365) {
-      return `${Math.round(days / 365)} year${days >= 730 ? "s" : ""}`;
-    } else if (days >= 30) {
-      return `${Math.round(days / 30)} month${days >= 60 ? "s" : ""}`;
-    } else {
-      return `${days} day${days !== 1 ? "s" : ""}`;
-    }
-  };
-
   const getVisibilityIcon = (visibility) => {
     switch (visibility) {
       case "Public":
@@ -329,7 +319,7 @@ const ProjectCard = ({ project, role }) => {
             )}
             <div className="flex items-center gap-1 text-muted-foreground">
               <Clock className="h-4 w-4" />
-              <span>{formatDuration(project.duration)}</span>
+              <span>{getProjectScheduleLabel(project)}</span>
             </div>
           </div>
 
