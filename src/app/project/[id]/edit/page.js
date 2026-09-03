@@ -37,12 +37,35 @@ const optionalProjectNumber = (schema) =>
 
 const MAX_PROJECT_REQUIRED_ROLES = 30;
 const MAX_PROJECT_ROLE_LENGTH = 80;
+const MAX_PROJECT_CATEGORIES = 30;
+const MAX_PROJECT_CATEGORY_LENGTH = 80;
 
 // Validation schema
 const projectSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title too long"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  categoryTags: z.array(z.string()).min(1, "At least one category is required"),
+  categoryTags: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, "Category tags cannot be empty")
+        .max(
+          MAX_PROJECT_CATEGORY_LENGTH,
+          `Category tags must be ${MAX_PROJECT_CATEGORY_LENGTH} characters or fewer`
+        )
+    )
+    .min(1, "At least one category is required")
+    .max(
+      MAX_PROJECT_CATEGORIES,
+      `You can add up to ${MAX_PROJECT_CATEGORIES} category tags`
+    )
+    .refine(
+      (tags) =>
+        new Set(tags.map((tag) => tag.trim().toLowerCase())).size ===
+        tags.length,
+      "Category tags cannot contain duplicates"
+    ),
   type: z.enum([
     "Game Development",
     "Art & Design",
@@ -187,6 +210,8 @@ const EditProjectPage = observer(() => {
   const [project, setProject] = useState(null);
   const [canEdit, setCanEdit] = useState(false);
   const [isProjectOwner, setIsProjectOwner] = useState(false);
+  const [newCategoryTag, setNewCategoryTag] = useState("");
+  const [categoryInputError, setCategoryInputError] = useState("");
   const [newRequiredRole, setNewRequiredRole] = useState("");
   const [requiredRoleInputError, setRequiredRoleInputError] = useState("");
 
@@ -354,12 +379,58 @@ const EditProjectPage = observer(() => {
   };
 
   const addTag = (field, value) => {
-    if (value && !formData[field].includes(value)) {
+    const normalizedValue =
+      field === "categoryTags"
+        ? value.trim().replace(/\s+/g, " ")
+        : value;
+    const alreadySelected =
+      field === "categoryTags"
+        ? formData[field].some(
+            (item) =>
+              item.trim().toLowerCase() === normalizedValue.toLowerCase()
+          )
+        : formData[field].includes(normalizedValue);
+
+    if (normalizedValue && !alreadySelected) {
       setFormData((prev) => ({
         ...prev,
-        [field]: [...prev[field], value],
+        [field]: [...prev[field], normalizedValue],
       }));
     }
+  };
+
+  const handleAddCategoryTag = () => {
+    const category = newCategoryTag.trim().replace(/\s+/g, " ");
+
+    if (!category) {
+      setCategoryInputError("Enter a category before adding it.");
+      return;
+    }
+    if (category.length > MAX_PROJECT_CATEGORY_LENGTH) {
+      setCategoryInputError(
+        `Categories must be ${MAX_PROJECT_CATEGORY_LENGTH} characters or fewer.`
+      );
+      return;
+    }
+    if (
+      formData.categoryTags.some(
+        (selectedCategory) =>
+          selectedCategory.trim().toLowerCase() === category.toLowerCase()
+      )
+    ) {
+      setCategoryInputError("That category has already been added.");
+      return;
+    }
+    if (formData.categoryTags.length >= MAX_PROJECT_CATEGORIES) {
+      setCategoryInputError(
+        `You can add up to ${MAX_PROJECT_CATEGORIES} category tags.`
+      );
+      return;
+    }
+
+    addTag("categoryTags", category);
+    setNewCategoryTag("");
+    setCategoryInputError("");
   };
 
   const addRequiredRole = (roleValue) => {
@@ -761,7 +832,12 @@ const EditProjectPage = observer(() => {
                   </SelectTrigger>
                   <SelectContent>
                     {CATEGORY_OPTIONS.filter(
-                      (cat) => !formData.categoryTags.includes(cat)
+                      (cat) =>
+                        !formData.categoryTags.some(
+                          (selectedCategory) =>
+                            selectedCategory.trim().toLowerCase() ===
+                            cat.toLowerCase()
+                        )
                     ).map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
@@ -769,6 +845,38 @@ const EditProjectPage = observer(() => {
                     ))}
                   </SelectContent>
                 </Select>
+
+                <div className="flex gap-2">
+                  <Input
+                    value={newCategoryTag}
+                    onChange={(e) => {
+                      setNewCategoryTag(e.target.value);
+                      if (categoryInputError) setCategoryInputError("");
+                    }}
+                    placeholder="Type a custom category"
+                    maxLength={MAX_PROJECT_CATEGORY_LENGTH}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddCategoryTag();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddCategoryTag}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="sr-only">Add category</span>
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Choose a suggestion or type any category and add it as a tag.
+                </p>
+                {categoryInputError && (
+                  <p className="text-sm text-red-500">{categoryInputError}</p>
+                )}
 
                 <div className="flex flex-wrap gap-2">
                   {formData.categoryTags.map((tag) => (
@@ -778,10 +886,14 @@ const EditProjectPage = observer(() => {
                       className="flex items-center gap-1"
                     >
                       {tag}
-                      <X
-                        className="h-3 w-3 cursor-pointer"
+                      <button
+                        type="button"
+                        aria-label={`Remove ${tag}`}
+                        className="ml-1 hover:text-red-500"
                         onClick={() => removeTag("categoryTags", tag)}
-                      />
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     </Badge>
                   ))}
                 </div>

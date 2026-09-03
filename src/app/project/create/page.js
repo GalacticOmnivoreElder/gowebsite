@@ -89,6 +89,8 @@ const REQUIRED_ROLES = [
 ];
 const MAX_PROJECT_REQUIRED_ROLES = 30;
 const MAX_PROJECT_ROLE_LENGTH = 80;
+const MAX_PROJECT_CATEGORIES = 30;
+const MAX_PROJECT_CATEGORY_LENGTH = 80;
 
 const VISIBILITY_OPTIONS = ["Public", "Private", "Invite Only"];
 const APPLICATION_ACCESS_LABELS = {
@@ -126,8 +128,27 @@ const projectSchema = z
         "URL must point to an image file (jpg, png, gif, webp, svg)"
       ),
     categoryTags: z
-      .array(z.string())
-      .min(1, "At least one category tag is required"),
+      .array(
+        z
+          .string()
+          .trim()
+          .min(1, "Category tags cannot be empty")
+          .max(
+            MAX_PROJECT_CATEGORY_LENGTH,
+            `Category tags must be ${MAX_PROJECT_CATEGORY_LENGTH} characters or fewer`
+          )
+      )
+      .min(1, "At least one category tag is required")
+      .max(
+        MAX_PROJECT_CATEGORIES,
+        `You can add up to ${MAX_PROJECT_CATEGORIES} category tags`
+      )
+      .refine(
+        (tags) =>
+          new Set(tags.map((tag) => tag.trim().toLowerCase())).size ===
+          tags.length,
+        "Category tags cannot contain duplicates"
+      ),
     type: z.enum(PROJECT_TYPES, { required_error: "Project type is required" }),
     description: z
       .string()
@@ -212,6 +233,7 @@ const CreateProjectContent = observer(() => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [newCategoryTag, setNewCategoryTag] = useState("");
+  const [categoryInputError, setCategoryInputError] = useState("");
   const [newRequiredRole, setNewRequiredRole] = useState("");
   const [requiredRoleInputError, setRequiredRoleInputError] = useState("");
   const [sourceProjects, setSourceProjects] = useState([]);
@@ -382,17 +404,38 @@ const CreateProjectContent = observer(() => {
   };
 
   const handleAddCategoryTag = () => {
-    if (
-      newCategoryTag.trim() &&
-      !watchedValues.categoryTags.includes(newCategoryTag.trim())
-    ) {
-      setValue("categoryTags", [
-        ...watchedValues.categoryTags,
-        newCategoryTag.trim(),
-      ]);
-      setNewCategoryTag("");
-      trigger("categoryTags");
+    const category = newCategoryTag.trim().replace(/\s+/g, " ");
+
+    if (!category) {
+      setCategoryInputError("Enter a category before adding it.");
+      return;
     }
+    if (category.length > MAX_PROJECT_CATEGORY_LENGTH) {
+      setCategoryInputError(
+        `Categories must be ${MAX_PROJECT_CATEGORY_LENGTH} characters or fewer.`
+      );
+      return;
+    }
+    if (
+      watchedValues.categoryTags.some(
+        (selectedCategory) =>
+          selectedCategory.trim().toLowerCase() === category.toLowerCase()
+      )
+    ) {
+      setCategoryInputError("That category has already been added.");
+      return;
+    }
+    if (watchedValues.categoryTags.length >= MAX_PROJECT_CATEGORIES) {
+      setCategoryInputError(
+        `You can add up to ${MAX_PROJECT_CATEGORIES} category tags.`
+      );
+      return;
+    }
+
+    setValue("categoryTags", [...watchedValues.categoryTags, category]);
+    setNewCategoryTag("");
+    setCategoryInputError("");
+    trigger("categoryTags");
   };
 
   const handleRemoveCategoryTag = (tagToRemove) => {
@@ -631,17 +674,29 @@ const CreateProjectContent = observer(() => {
           <div className="flex gap-2 mb-2">
             <Input
               value={newCategoryTag}
-              onChange={(e) => setNewCategoryTag(e.target.value)}
-              placeholder="Add a category tag"
-              onKeyPress={(e) =>
+              onChange={(e) => {
+                setNewCategoryTag(e.target.value);
+                if (categoryInputError) setCategoryInputError("");
+              }}
+              placeholder="Type a category tag"
+              maxLength={MAX_PROJECT_CATEGORY_LENGTH}
+              onKeyDown={(e) =>
                 e.key === "Enter" &&
                 (e.preventDefault(), handleAddCategoryTag())
               }
             />
             <Button type="button" onClick={handleAddCategoryTag} size="sm">
               <Plus className="h-4 w-4" />
+              <span className="sr-only">Add category</span>
             </Button>
           </div>
+          <p className="text-sm text-muted-foreground mb-2">
+            Add any category that describes your project. Press Enter or use
+            the plus button.
+          </p>
+          {categoryInputError && (
+            <p className="text-sm text-red-500 mt-1">{categoryInputError}</p>
+          )}
           <div className="flex flex-wrap gap-2">
             {watchedValues.categoryTags.map((tag, index) => (
               <Badge

@@ -22,6 +22,8 @@ const PROJECT_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 const MAX_PROJECT_REQUIRED_ROLES = 30;
 const MAX_PROJECT_ROLE_LENGTH = 80;
+const MAX_PROJECT_CATEGORIES = 30;
+const MAX_PROJECT_CATEGORY_LENGTH = 80;
 
 function validateProjectRequiredRoles(values) {
   if (!Array.isArray(values) || values.length === 0) {
@@ -48,6 +50,44 @@ function validateProjectRequiredRoles(values) {
   const uniqueRoles = new Set(normalizedRoles.map((role) => role.toLowerCase()));
   if (uniqueRoles.size !== normalizedRoles.length) {
     return "requiredRoles cannot contain duplicates";
+  }
+
+  return null;
+}
+
+function validateProjectCategories(values) {
+  if (!Array.isArray(values) || values.length === 0) {
+    return "categoryTags must include at least one category";
+  }
+  if (values.length > MAX_PROJECT_CATEGORIES) {
+    return `categoryTags cannot contain more than ${MAX_PROJECT_CATEGORIES} categories`;
+  }
+
+  const normalizedCategories = values.map((category) =>
+    typeof category === "string"
+      ? category.trim().replace(/\s+/g, " ")
+      : category
+  );
+  if (
+    normalizedCategories.some(
+      (category) => typeof category !== "string" || category.length === 0
+    )
+  ) {
+    return "categoryTags must include non-empty strings";
+  }
+  if (
+    normalizedCategories.some(
+      (category) => category.length > MAX_PROJECT_CATEGORY_LENGTH
+    )
+  ) {
+    return `Each category must be ${MAX_PROJECT_CATEGORY_LENGTH} characters or fewer`;
+  }
+
+  const uniqueCategories = new Set(
+    normalizedCategories.map((category) => category.toLowerCase())
+  );
+  if (uniqueCategories.size !== normalizedCategories.length) {
+    return "categoryTags cannot contain duplicates";
   }
 
   return null;
@@ -396,15 +436,14 @@ export async function POST(request) {
       role.trim().replace(/\s+/g, " ")
     );
 
-    if (
-      !Array.isArray(projectData.categoryTags) ||
-      projectData.categoryTags.some((tag) => typeof tag !== "string" || !tag.trim())
-    ) {
-      return NextResponse.json(
-        { error: "categoryTags must include non-empty strings" },
-        { status: 400 }
-      );
+    const categoriesError = validateProjectCategories(projectData.categoryTags);
+    if (categoriesError) {
+      return NextResponse.json({ error: categoriesError }, { status: 400 });
     }
+
+    const categoryTags = projectData.categoryTags.map((category) =>
+      category.trim().replace(/\s+/g, " ")
+    );
 
     const hasScheduleFields = ["startDate", "endDate", "isOngoing"].some(
       (field) => Object.prototype.hasOwnProperty.call(projectData, field)
@@ -542,7 +581,7 @@ export async function POST(request) {
     const newProject = {
       title: projectData.title.trim(),
       thumbnail: projectData.thumbnail || "",
-      categoryTags: projectData.categoryTags.map((tag) => tag.trim()),
+      categoryTags,
       type: projectData.type,
       description: projectData.description,
       visibility: projectData.visibility,
