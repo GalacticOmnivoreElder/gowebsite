@@ -8,13 +8,12 @@ import { auth } from "@/firebase";
 import MobxStore from "@/mobx";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, User, Calendar, Folder, AlertCircle } from "lucide-react";
-import UserLink from "@/components/ui/UserLink";
+import { ArrowLeft, Calendar, Folder, AlertCircle } from "lucide-react";
 
 const SourceProjectDetailsPage = observer(() => {
   const router = useRouter();
@@ -159,39 +158,6 @@ const SourceProjectDetailsPage = observer(() => {
           </div>
         </div>
 
-        {/* Owner Section */}
-        {sourceProject.ownerDetails && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Source Project Owner
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-3">
-                <UserLink
-                  user={sourceProject.ownerDetails}
-                  showUsername={false}
-                  avatarSize="default"
-                />
-                <div className="flex-1 min-w-0">
-                  <UserLink
-                    user={sourceProject.ownerDetails}
-                    showAvatar={false}
-                    className="font-medium truncate block"
-                  />
-                  {sourceProject.ownerDetails.email && (
-                    <p className="text-sm text-muted-foreground truncate">
-                      {sourceProject.ownerDetails.email}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <Separator className="mb-8" />
 
         {/* Projects Section */}
@@ -256,7 +222,7 @@ const SourceProjectDetailsPage = observer(() => {
                   This source project doesn&apos;t have any projects associated
                   with it yet.
                 </p>
-                {sourceProject.ownerDetails?.uid === MobxStore.user?.uid && (
+                {sourceProject.sourceOwner === MobxStore.user?.uid && (
                   <Button asChild>
             <Link href="/project/create">Create a project</Link>
                   </Button>
