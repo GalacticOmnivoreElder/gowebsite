@@ -81,6 +81,10 @@ const AdminProjectsPage = observer(() => {
   const [deleteProject, setDeleteProject] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [deleteSourceProject, setDeleteSourceProject] = useState(null);
+  const [sourceProjectDeleteConfirmation, setSourceProjectDeleteConfirmation] =
+    useState("");
+  const [deletingSourceProject, setDeletingSourceProject] = useState(false);
 
   // Fetch projects
   const fetchProjects = async () => {
@@ -310,6 +314,58 @@ const AdminProjectsPage = observer(() => {
       });
     } finally {
       setUpdatingSourceProject(false);
+    }
+  };
+
+  const permanentlyDeleteSourceProject = async () => {
+    if (
+      !deleteSourceProject ||
+      sourceProjectDeleteConfirmation.trim() !== deleteSourceProject.name
+    ) {
+      return;
+    }
+
+    try {
+      setDeletingSourceProject(true);
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/sourceProjects", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          sourceProjectId: deleteSourceProject.id,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to delete source project");
+      }
+
+      const unlinkedCount = result.unlinkedProjectCount || 0;
+      toast({
+        title: "Source project deleted",
+        description:
+          unlinkedCount === 1
+            ? "The source project was deleted and its linked project was kept without a group."
+            : `The source project was deleted and ${unlinkedCount} linked projects were kept without a group.`,
+      });
+      setDeleteSourceProject(null);
+      setSourceProjectDeleteConfirmation("");
+      await Promise.all([fetchSourceProjects(), fetchProjects()]);
+    } catch (error) {
+      console.error("Error permanently deleting source project:", error);
+      toast({
+        title: "Source project deletion failed",
+        description:
+          error.message ||
+          "The source project was not deleted. Please refresh and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingSourceProject(false);
     }
   };
 
@@ -873,14 +929,30 @@ const AdminProjectsPage = observer(() => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleManageSourceProject(sourceProject)}
-                          >
-                            <Edit className="mr-1 h-3 w-3" />
-                            Edit
-                          </Button>
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleManageSourceProject(sourceProject)
+                              }
+                            >
+                              <Edit className="mr-1 h-3 w-3" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => {
+                                setDeleteSourceProject(sourceProject);
+                                setSourceProjectDeleteConfirmation("");
+                              }}
+                            >
+                              <Trash2 className="mr-1 h-3 w-3" />
+                              Delete
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -1030,6 +1102,69 @@ const AdminProjectsPage = observer(() => {
               }
             >
               {updatingSourceProject ? "Saving…" : "Save source project"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(deleteSourceProject)}
+        onOpenChange={(open) => {
+          if (!open && !deletingSourceProject) {
+            setDeleteSourceProject(null);
+            setSourceProjectDeleteConfirmation("");
+          }
+        }}
+      >
+        <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Permanently delete source project?</DialogTitle>
+            <DialogDescription>
+              This cannot be undone. It removes the source project group but
+              keeps its linked projects and leaves them without a group.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="delete-source-project-confirmation">
+              Type <strong>{deleteSourceProject?.name}</strong> to confirm
+            </Label>
+            <Input
+              id="delete-source-project-confirmation"
+              autoComplete="off"
+              value={sourceProjectDeleteConfirmation}
+              onChange={(event) =>
+                setSourceProjectDeleteConfirmation(event.target.value)
+              }
+              aria-describedby="delete-source-project-warning"
+            />
+            <p
+              id="delete-source-project-warning"
+              className="text-sm text-destructive"
+            >
+              Linked project records will not be deleted.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteSourceProject(null);
+                setSourceProjectDeleteConfirmation("");
+              }}
+              disabled={deletingSourceProject}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={permanentlyDeleteSourceProject}
+              disabled={
+                deletingSourceProject ||
+                sourceProjectDeleteConfirmation.trim() !==
+                  deleteSourceProject?.name
+              }
+            >
+              {deletingSourceProject ? "Deleting…" : "Permanently delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
