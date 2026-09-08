@@ -35,6 +35,7 @@ import {
   MAX_PROFILE_BIO_LENGTH,
 } from "@/utils/validateProfile";
 import { trackEvent } from "@/lib/analytics/client";
+import { normalizePreferredTimeCommitment } from "@/lib/availability";
 
 const STEP_TITLES = {
   identity: "Your profile",
@@ -158,9 +159,18 @@ const OnboardingContent = observer(() => {
     setSaving(true);
     setError("");
     try {
+      const dataToSave =
+        step === "goals"
+          ? {
+              ...stepData,
+              preferred_time_commitment: normalizePreferredTimeCommitment(
+                stepData.preferred_time_commitment
+              ),
+            }
+          : stepData;
       await authedFetch("/api/onboarding", "PATCH", {
         step,
-        data: stepData,
+        data: dataToSave,
         nextStep,
       });
     } catch (e) {
@@ -293,72 +303,90 @@ const OnboardingContent = observer(() => {
             )}
 
             {step === "role-skills" && (
-              <>
-                <SkillTagInput
-                  label="Primary role *"
-                  value={stepData.primary_role || ""}
-                  onChange={(value) => setField("primary_role", value)}
-                />
-                <Field label="Secondary roles (optional)">
-                  <SkillSelector
-                    value={stepData.secondary_roles || []}
-                    onChange={(value) => setField("secondary_roles", value)}
-                    suggestionsLabel="Suggested roles"
-                    suggestionsHelp="Suggestions come from the community skill directory."
-                    customLabel="Add another role"
-                    customPlaceholder="e.g. Technical Artist"
-                    addLabel="Add role"
-                    emptyText="No secondary roles selected."
-                    maxItems={8}
-                    submissionLabel="complete onboarding"
-                  />
-                </Field>
-                <Field label="Skills and experience (optional)">
-                  <SkillSelector
-                    value={
-                      Array.isArray(stepData.skills)
-                        ? stepData.skills
-                        : [
-                            stepData.primary_role,
-                            ...(stepData.secondary_roles || []),
-                            ...(stepData.tools || []),
-                          ].filter(Boolean)
-                    }
-                    onChange={(skills) => setField("skills", skills)}
-                    submissionLabel="complete onboarding"
-                  />
-                </Field>
-                <Field label="Skill level *">
-                  <div className="flex flex-wrap gap-2">
-                    {SKILL_LEVELS.map((level) => (
-                      <button key={level.id} type="button" onClick={() => setField("skill_level", level.id)}
-                        title={level.description}
-                        className={`px-3 py-1 rounded-full border text-sm ${stepData.skill_level === level.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"}`}>
-                        {level.label}
-                      </button>
-                    ))}
+              <div className="space-y-5">
+                <section className="space-y-4 rounded-lg border border-border/70 p-4">
+                  <div>
+                    <h2 className="text-base font-semibold">Roles</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Tell the community what you do and the other roles you can contribute.
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {SKILL_LEVELS.find((level) => level.id === stepData.skill_level)?.description ||
-                      "Choose the description that best matches how you work today."}
-                  </p>
-                </Field>
-                <Field label="Tools used (optional)">
+                  <SkillTagInput
+                    label="Primary role *"
+                    value={stepData.primary_role || ""}
+                    onChange={(value) => setField("primary_role", value)}
+                    required
+                  />
+                  <Field label="Secondary roles (optional)">
+                    <SkillSelector
+                      value={stepData.secondary_roles || []}
+                      onChange={(value) => setField("secondary_roles", value)}
+                      suggestionsLabel="Role suggestions"
+                      suggestionsHelp="Start typing to find a role, or add your own role."
+                      customLabel="Search and add a secondary role"
+                      customPlaceholder="e.g. Technical Artist"
+                      addLabel="Add role"
+                      emptyText="No secondary roles selected."
+                      maxItems={8}
+                      submissionLabel="complete onboarding"
+                    />
+                  </Field>
+                </section>
+
+                <section className="space-y-4 rounded-lg border border-border/70 p-4">
+                  <div>
+                    <h2 className="text-base font-semibold">Skills</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Add the skills you want collaborators to find you for.
+                    </p>
+                  </div>
+                  <SkillSelector
+                    value={Array.isArray(stepData.skills) ? stepData.skills : []}
+                    onChange={(skills) => setField("skills", skills)}
+                    suggestionsLabel="Community skills"
+                    suggestionsHelp="Start typing to autocomplete an existing skill or add a new one."
+                    customLabel="Search and add a skill"
+                    submissionLabel="complete onboarding"
+                  />
+                  <Field label="Skill level *">
+                    <div className="flex flex-wrap gap-2">
+                      {SKILL_LEVELS.map((level) => (
+                        <button key={level.id} type="button" onClick={() => setField("skill_level", level.id)}
+                          title={level.description}
+                          className={`px-3 py-1 rounded-full border text-sm ${stepData.skill_level === level.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"}`}>
+                          {level.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {SKILL_LEVELS.find((level) => level.id === stepData.skill_level)?.description ||
+                        "Choose the description that best matches how you work today."}
+                    </p>
+                  </Field>
+                </section>
+
+                <section className="space-y-4 rounded-lg border border-border/70 p-4">
+                  <div>
+                    <h2 className="text-base font-semibold">Tools</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Add the software, engines, and tools you use.
+                    </p>
+                  </div>
                   <SkillSelector
                     value={stepData.tools || []}
                     onChange={(value) => setField("tools", value)}
                     suggestions={COMMON_TOOLS}
                     loadCatalog={false}
                     suggestionsLabel="Common tools and engines"
-                    suggestionsHelp="Choose a suggestion or add the exact tool name you use."
-                    customLabel="Add another tool or engine"
+                    suggestionsHelp="Start typing to find a common tool or add the exact name you use."
+                    customLabel="Search and add a tool"
                     customPlaceholder="e.g. Visual Studio Code, RPG Maker MZ"
                     addLabel="Add tool"
                     emptyText="No tools or engines selected."
                     submissionLabel="complete onboarding"
                   />
-                </Field>
-              </>
+                </section>
+              </div>
             )}
 
             {step === "portfolio" && (
@@ -421,12 +449,27 @@ const OnboardingContent = observer(() => {
                     <CheckRow checked={!!stepData.looking_for_paid_work} onChange={(v) => setField("looking_for_paid_work", v)} label="Open to paid work" />
                     <Field label="Preferred time commitment (optional)">
                       <Input
-                        placeholder="e.g. 5–10 hours per week"
-                        value={stepData.preferred_time_commitment || ""}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder="e.g. 10 hours per week"
+                        value={normalizePreferredTimeCommitment(
+                          stepData.preferred_time_commitment
+                        )}
                         onChange={(e) =>
-                          setField("preferred_time_commitment", e.target.value)
+                          setField(
+                            "preferred_time_commitment",
+                            normalizePreferredTimeCommitment(e.target.value)
+                          )
                         }
+                        aria-describedby="preferred-time-commitment-help"
                       />
+                      <p
+                        id="preferred-time-commitment-help"
+                        className="text-xs text-muted-foreground"
+                      >
+                        Enter the number of hours per week using digits only.
+                      </p>
                     </Field>
                   </div>
                 ) : null}
@@ -437,38 +480,52 @@ const OnboardingContent = observer(() => {
             )}
 
             {step === "help" && (
-              <>
-                <Field label="What can you help others with?">
+              <div className="space-y-5">
+                <section className="space-y-4 rounded-lg border border-border/70 p-4">
+                  <div>
+                    <h2 className="text-base font-semibold">What can you help others with?</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Add skills you can share with other community members.
+                    </p>
+                  </div>
                   <SkillSelector
                     value={stepData.can_help_with || []}
                     onChange={(value) => setField("can_help_with", value)}
                     catalogMode="all"
-                    allowCustom={false}
-                    suggestionsLabel="Complete community skill directory"
-                    suggestionsHelp="Choose any active skill you can help other members with."
+                    suggestionsLabel="Community skill directory"
+                    suggestionsHelp="Start typing to find an existing skill or add a new one."
+                    customLabel="Search and add a contribution skill"
                     emptyText="No contribution skills selected."
                     submissionLabel="complete onboarding"
                   />
-                </Field>
-                <Field label="What do you need help with?">
+                </section>
+
+                <section className="space-y-4 rounded-lg border border-border/70 p-4">
+                  <div>
+                    <h2 className="text-base font-semibold">What do you need help with?</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Add skills where guidance or collaboration would help you.
+                    </p>
+                  </div>
                   <SkillSelector
                     value={stepData.needs_help_with || []}
                     onChange={(value) => setField("needs_help_with", value)}
                     catalogMode="all"
-                    allowCustom={false}
-                    suggestionsLabel="Complete community skill directory"
-                    suggestionsHelp="Choose any active skill where community support would help."
+                    suggestionsLabel="Community skill directory"
+                    suggestionsHelp="Start typing to find an existing skill or add a new one."
+                    customLabel="Search and add a support skill"
                     emptyText="No support skills selected."
                     submissionLabel="complete onboarding"
                   />
-                </Field>
+                </section>
+
                 <CheckRow checked={!!stepData.is_blocked} onChange={(v) => setField("is_blocked", v)} label="I'm currently blocked on something" />
                 {stepData.is_blocked && (
                   <Field label="Describe your blocker">
                     <Textarea rows={2} value={stepData.blocker_description || ""} onChange={(e) => setField("blocker_description", e.target.value)} />
                   </Field>
                 )}
-              </>
+              </div>
             )}
 
             {step === "consent" && (

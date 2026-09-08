@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
-import { Check, Plus, X } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Plus, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,9 @@ import {
   normalizeSkillName,
 } from "@/lib/skills";
 
+const MAX_AUTOCOMPLETE_RESULTS = 8;
+const EMPTY_SKILLS = [];
+
 export function SkillSelector({
   value = [],
   onChange,
@@ -26,57 +29,102 @@ export function SkillSelector({
   allowCustom = true,
   suggestionsLabel = "Popular community skills",
   suggestionsHelp = "Choose from the skills used most often across community profiles.",
-  customLabel = "Can't find your skill?",
-  customPlaceholder = "Create a skill tag",
+  customLabel = "Search and add a skill",
+  customPlaceholder = "Start typing a skill",
   addLabel = "Add skill",
   emptyText = "Add skills to help collaborators discover your expertise.",
   maxItems = MAX_PROFILE_SKILLS,
 }) {
-  const [popularSkills, setPopularSkills] = useState(suggestions);
-  const [customSkill, setCustomSkill] = useState("");
-  const [catalogSearch, setCatalogSearch] = useState("");
-  const customSkillId = useId();
-  const catalogSearchId = useId();
-  const selectedSkills = Array.isArray(value) ? value : [];
-  const visibleSkills = useMemo(() => {
-    const query = catalogSearch.trim().toLocaleLowerCase();
-    if (!query) return popularSkills;
-    return popularSkills.filter((skill) =>
-      skill.toLocaleLowerCase().includes(query)
-    );
-  }, [catalogSearch, popularSkills]);
+  const [catalogSkills, setCatalogSkills] = useState([]);
+  const [inputValue, setInputValue] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const rootRef = useRef(null);
+  const inputId = useId();
+  const listId = useId();
+  const selectedSkills = useMemo(
+    () => (Array.isArray(value) ? value : EMPTY_SKILLS),
+    [value]
+  );
+
+  const availableSkills = useMemo(() => {
+    const uniqueSkills = new Map();
+
+    [...suggestions, ...catalogSkills].forEach((skill) => {
+      const name = normalizeSkillName(skill);
+      if (!name) return;
+      const key = getSkillKey(name);
+      if (!uniqueSkills.has(key)) uniqueSkills.set(key, name);
+    });
+
+    return [...uniqueSkills.values()];
+  }, [catalogSkills, suggestions]);
+
+  const matchingSkills = useMemo(() => {
+    const query = getSkillKey(inputValue);
+    if (!query) return [];
+
+    return availableSkills
+      .filter(
+        (skill) =>
+          !selectedSkills.some(
+            (selectedSkill) => getSkillKey(selectedSkill) === getSkillKey(skill)
+          ) && getSkillKey(skill).includes(query)
+      )
+      .sort((a, b) => {
+        const aStartsWith = getSkillKey(a).startsWith(query);
+        const bStartsWith = getSkillKey(b).startsWith(query);
+        if (aStartsWith !== bStartsWith) return aStartsWith ? -1 : 1;
+        return a.localeCompare(b);
+      })
+      .slice(0, MAX_AUTOCOMPLETE_RESULTS);
+  }, [availableSkills, inputValue, selectedSkills]);
 
   useEffect(() => {
-    setPopularSkills(suggestions);
-    if (!loadCatalog) return undefined;
+    if (!loadCatalog) {
+      setCatalogSkills([]);
+      return undefined;
+    }
 
     const controller = new AbortController();
+    const endpoint =
+      catalogMode === "all"
+        ? "/api/skills"
+        : "/api/skills?popular=true&limit=20";
 
-    const loadPopularSkills = async () => {
+    const loadSkills = async () => {
       try {
-        const endpoint =
-          catalogMode === "all"
-            ? "/api/skills"
-            : "/api/skills?popular=true&limit=20";
-        const response = await fetch(endpoint, {
-          signal: controller.signal,
-        });
+        const response = await fetch(endpoint, { signal: controller.signal });
         if (!response.ok) return;
 
         const data = await response.json();
-        if (Array.isArray(data.skills) && data.skills.length > 0) {
-          setPopularSkills(data.skills.map((skill) => skill.name));
+        if (Array.isArray(data.skills)) {
+          setCatalogSkills(
+            data.skills.map((skill) => skill?.name).filter(Boolean)
+          );
         }
       } catch (error) {
-        if (error.name === "AbortError") return;
-        console.error("Error loading popular skills:", error);
+        if (error.name !== "AbortError") {
+          console.error("Error loading skills:", error);
+        }
       }
     };
 
-    loadPopularSkills();
-
+    loadSkills();
     return () => controller.abort();
-  }, [catalogMode, loadCatalog, suggestions]);
+  }, [catalogMode, loadCatalog]);
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (!rootRef.current?.contains(event.target)) {
+        setIsOpen(false);
+        setActiveIndex(-1);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, []);
 
   const addSkill = (skill) => {
     const normalizedSkill = normalizeSkillName(skill);
@@ -106,11 +154,19 @@ export function SkillSelector({
           getSkillKey(selectedSkill) === getSkillKey(normalizedSkill)
       )
     ) {
+      setInputValue("");
+      setIsOpen(false);
       return;
     }
 
-    onChange([...selectedSkills, normalizedSkill]);
-    setCustomSkill("");
+    const directoryMatch = availableSkills.find(
+      (availableSkill) =>
+        getSkillKey(availableSkill) === getSkillKey(normalizedSkill)
+    );
+    onChange([...selectedSkills, directoryMatch || normalizedSkill]);
+    setInputValue("");
+    setIsOpen(false);
+    setActiveIndex(-1);
   };
 
   const removeSkill = (skill) => {
@@ -122,107 +178,132 @@ export function SkillSelector({
     );
   };
 
+  const handleInputKeyDown = (event) => {
+    if (event.key === "ArrowDown") {
+      if (matchingSkills.length === 0) return;
+      event.preventDefault();
+      setIsOpen(true);
+      setActiveIndex((index) =>
+        Math.min(index + 1, matchingSkills.length - 1)
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      if (matchingSkills.length === 0) return;
+      event.preventDefault();
+      setActiveIndex((index) => Math.max(index - 1, 0));
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setIsOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const suggestedSkill = matchingSkills[activeIndex];
+      const exactSkill = availableSkills.find(
+        (skill) => getSkillKey(skill) === getSkillKey(inputValue)
+      );
+
+      if (suggestedSkill || exactSkill) {
+        addSkill(suggestedSkill || exactSkill);
+      } else if (allowCustom) {
+        addSkill(inputValue);
+      }
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="space-y-3">
+    <div ref={rootRef} className="space-y-4">
+      <div className="space-y-2">
         <div>
           <p className="text-sm font-medium">{suggestionsLabel}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {suggestionsHelp}
           </p>
         </div>
-        {catalogMode === "all" ? (
-          <div className="space-y-2">
-            <Label htmlFor={catalogSearchId}>Search skills</Label>
-            <Input
-              id={catalogSearchId}
-              type="search"
-              value={catalogSearch}
-              onChange={(event) => setCatalogSearch(event.target.value)}
-              placeholder="Search the complete skill directory"
-              autoComplete="off"
-            />
-          </div>
-        ) : null}
-        <div
-          className={`flex flex-wrap gap-2 ${
-            catalogMode === "all"
-              ? "max-h-64 overflow-y-auto rounded-lg border bg-background/40 p-3"
-              : ""
-          }`}
-          role="group"
-          aria-label={suggestionsLabel}
-        >
-          {visibleSkills.map((skill) => {
-            const selected = selectedSkills.some(
-              (selectedSkill) =>
-                getSkillKey(selectedSkill) === getSkillKey(skill)
-            );
-            const limitReached =
-              selectedSkills.length >= maxItems && !selected;
 
-            return (
-              <button
-                key={skill}
-                type="button"
-                aria-pressed={selected}
-                aria-label={`${selected ? "Remove" : "Add"} ${skill}`}
-                disabled={limitReached}
-                onClick={() =>
-                  selected ? removeSkill(skill) : addSkill(skill)
-                }
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-40 ${
-                  selected
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-muted/40 text-muted-foreground hover:border-primary/60 hover:bg-primary/10 hover:text-foreground"
-                }`}
-              >
-                {selected && <Check className="h-3.5 w-3.5" />}
-                {skill}
-              </button>
-            );
-          })}
-          {visibleSkills.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No skills match your search.
-            </p>
+        <div className="relative">
+          <Label htmlFor={inputId}>{customLabel}</Label>
+          <Input
+            id={inputId}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls={isOpen && matchingSkills.length ? listId : undefined}
+            aria-expanded={isOpen && matchingSkills.length > 0}
+            aria-activedescendant={
+              activeIndex >= 0 ? `${listId}-option-${activeIndex}` : undefined
+            }
+            value={inputValue}
+            onChange={(event) => {
+              setInputValue(event.target.value);
+              setIsOpen(true);
+              setActiveIndex(-1);
+            }}
+            onFocus={() => {
+              if (inputValue.trim()) setIsOpen(true);
+            }}
+            onKeyDown={handleInputKeyDown}
+            placeholder={
+              catalogMode === "all"
+                ? "Start typing to search the skill directory"
+                : customPlaceholder
+            }
+            maxLength={MAX_SKILL_NAME_LENGTH}
+            autoComplete="off"
+          />
+
+          {isOpen && matchingSkills.length > 0 ? (
+            <div
+              id={listId}
+              role="listbox"
+              aria-label={`${suggestionsLabel} autocomplete suggestions`}
+              className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-lg"
+            >
+              {matchingSkills.map((skill, index) => (
+                <button
+                  key={getSkillKey(skill)}
+                  id={`${listId}-option-${index}`}
+                  type="button"
+                  role="option"
+                  aria-selected={activeIndex === index}
+                  className={`flex w-full items-center rounded-sm px-3 py-2 text-left text-sm transition-colors ${
+                    activeIndex === index
+                      ? "bg-accent text-accent-foreground"
+                      : "text-foreground hover:bg-accent/60"
+                  }`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => addSkill(skill)}
+                >
+                  {skill}
+                </button>
+              ))}
+            </div>
           ) : null}
         </div>
-      </div>
 
-      {allowCustom ? (
-        <div className="space-y-2">
-          <Label htmlFor={customSkillId}>{customLabel}</Label>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              id={customSkillId}
-              value={customSkill}
-              onChange={(event) => setCustomSkill(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  addSkill(customSkill);
-                }
-              }}
-              placeholder={customPlaceholder}
-              maxLength={MAX_SKILL_NAME_LENGTH}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => addSkill(customSkill)}
-              disabled={!normalizeSkillName(customSkill)}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {addLabel}
-            </Button>
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">
-            New tags join the master directory for admin review when you{" "}
-            {submissionLabel}.
+            {allowCustom
+              ? `Select an existing match or press Enter to add a new skill. New tags join the master directory for admin review when you ${submissionLabel}.`
+              : "Select a matching skill from the directory."}
           </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => addSkill(inputValue)}
+            disabled={!allowCustom || !normalizeSkillName(inputValue)}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {addLabel}
+          </Button>
         </div>
-      ) : null}
+      </div>
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>Your selected skills</span>
@@ -250,9 +331,7 @@ export function SkillSelector({
           </Badge>
         ))}
         {selectedSkills.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            {emptyText}
-          </p>
+          <p className="text-sm text-muted-foreground">{emptyText}</p>
         )}
       </div>
     </div>
@@ -263,51 +342,26 @@ export function SkillTagInput({
   value = "",
   onChange,
   label = "Primary role",
-  placeholder = "Start typing a role or skill",
+  placeholder = "Enter your primary role",
+  required = false,
 }) {
-  const [suggestions, setSuggestions] = useState(LANDING_FALLBACK_SKILLS);
   const inputId = useId();
-  const listId = useId();
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/skills", { signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (Array.isArray(data?.skills) && data.skills.length > 0) {
-          setSuggestions(data.skills.map((skill) => skill.name));
-        }
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          console.error("Error loading role suggestions:", error);
-        }
-      });
-
-    return () => controller.abort();
-  }, []);
 
   return (
     <div className="space-y-2">
       <Label htmlFor={inputId}>{label}</Label>
       <Input
         id={inputId}
-        list={listId}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onBlur={(event) => onChange(normalizeSkillName(event.target.value))}
         placeholder={placeholder}
         maxLength={MAX_SKILL_NAME_LENGTH}
         autoComplete="off"
+        required={required}
       />
-      <datalist id={listId}>
-        {suggestions.map((suggestion) => (
-          <option key={suggestion} value={suggestion} />
-        ))}
-      </datalist>
       <p className="text-xs text-muted-foreground">
-        Choose any skill from the complete community directory or enter your
-        own role tag.
+        Enter the role that best describes your primary contribution.
       </p>
     </div>
   );

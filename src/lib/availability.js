@@ -1,5 +1,14 @@
 export const AVAILABILITY_STATUSES = ["available", "unavailable"];
 
+export function normalizePreferredTimeCommitment(value) {
+  return String(value ?? "").replace(/\D+/gu, "");
+}
+
+export function isValidPreferredTimeCommitment(value) {
+  const normalized = String(value ?? "").trim();
+  return normalized === "" || /^\d+$/u.test(normalized);
+}
+
 function hasOwn(value, key) {
   return Boolean(
     value &&
@@ -9,7 +18,7 @@ function hasOwn(value, key) {
 }
 
 function cleanText(value) {
-  return typeof value === "string" ? value.trim() : "";
+  return value === null || value === undefined ? "" : String(value).trim();
 }
 
 function normalizeStatus(value) {

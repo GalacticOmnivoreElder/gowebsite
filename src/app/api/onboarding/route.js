@@ -10,6 +10,7 @@ import {
 import { buildCvFromProfile } from "@/lib/cv-generator";
 import { sanitizeSkills } from "@/lib/skills";
 import { syncUserSkillUsage } from "@/lib/skill-catalog";
+import { isValidPreferredTimeCommitment } from "@/lib/availability";
 import {
   cancelPendingEmailEvents,
   enqueueEmailEvent,
@@ -125,6 +126,18 @@ export async function PATCH(request) {
     return NextResponse.json({ error: "Invalid onboarding step" }, { status: 400 });
   }
 
+  if (
+    step === "goals" &&
+    data &&
+    data.preferred_time_commitment !== undefined &&
+    !isValidPreferredTimeCommitment(data.preferred_time_commitment)
+  ) {
+    return NextResponse.json(
+      { error: "Preferred time commitment must contain numbers only." },
+      { status: 400 }
+    );
+  }
+
   const ref = adminDb.collection("onboarding_sessions").doc(user.uid);
   const snap = await ref.get();
   const draft = snap.exists ? snap.data().draft_data_json || {} : {};
@@ -168,6 +181,9 @@ export async function PUT(request) {
   const help = draft.help || {};
   const consent = draft.consent || {};
   const portfolio = draft.portfolio || {};
+  const rawPreferredTimeCommitment = String(
+    goals.preferred_time_commitment ?? ""
+  ).trim();
 
   // Data storage and admin sharing are required to operate the member profile.
   if (
@@ -205,6 +221,16 @@ export async function PUT(request) {
   if (aboutWordCount > 10000) {
     return NextResponse.json(
       { error: "About Me must be 10,000 words or less." },
+      { status: 400 }
+    );
+  }
+  if (
+    rawPreferredTimeCommitment &&
+    goals.availability_status !== "unavailable" &&
+    !isValidPreferredTimeCommitment(rawPreferredTimeCommitment)
+  ) {
+    return NextResponse.json(
+      { error: "Preferred time commitment must contain numbers only." },
       { status: 400 }
     );
   }
@@ -296,8 +322,7 @@ export async function PUT(request) {
     looking_for_projects: isAvailable && !!goals.looking_for_projects,
     looking_for_paid_work: isAvailable && !!goals.looking_for_paid_work,
     preferred_time_commitment: isAvailable
-      ? String(goals.preferred_time_commitment || "").trim().slice(0, 100) ||
-        null
+      ? rawPreferredTimeCommitment || null
       : null,
     looking_for_team: !!goals.looking_for_team,
     looking_for_mentorship: !!goals.looking_for_mentorship,
@@ -377,11 +402,18 @@ export async function PUT(request) {
   await batch.commit();
   await syncUserSkillUsage({
     previousSkills: existingUserSnap.exists
-      ? existingUserSnap.data().profileTags ||
-        existingUserSnap.data().skills ||
-        []
-      : [],
-    nextSkills: profileTags,
+      ? [
+          ...(existingUserSnap.data().profileTags ||
+            existingUserSnap.data().skills ||
+            []),
+          ...(existingProfile.can_help_with || []),
+          ...(existingProfile.needs_help_with || []),
+        ]
+      : [
+          ...(existingProfile.can_help_with || []),
+          ...(existingProfile.needs_help_with || []),
+        ],
+    nextSkills: [...profileTags, ...canHelpWith, ...needsHelpWith],
     userId: user.uid,
   });
   await cancelPendingEmailEvents({
