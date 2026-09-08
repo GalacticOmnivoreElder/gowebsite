@@ -15,8 +15,6 @@ import { createMetadata } from "@/lib/seo";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { MentorApplicationButton } from "@/components/pricing/MentorApplicationButton";
-import { getMentorApplicationState } from "@/lib/product-settings";
 import { getMentorCheckoutStatus } from "@/lib/mentor-checkout";
 
 export const dynamic = "force-dynamic";
@@ -49,8 +47,7 @@ const checkoutNotes = [
 export default async function MembershipPage({ searchParams }) {
   const params = await searchParams;
   const creatorMembershipRequired = params?.reason === "creator";
-  const [mentorState, mentorMonthly, mentorAnnual] = await Promise.all([
-    getMentorApplicationState(),
+  const [mentorMonthly, mentorAnnual] = await Promise.all([
     getMentorCheckoutStatus("monthly"),
     getMentorCheckoutStatus("annual"),
   ]);
@@ -78,7 +75,7 @@ export default async function MembershipPage({ searchParams }) {
       icon: Users,
       description: "Join as a mentor or educator. An interview with GO and verification are required before you can produce content or offer mentorship.",
       benefits: ["Produce courses, workshops, video bundles, and assets after interview and GO verification", "Connect with community members requesting mentorship after interview and GO verification", "Direct reviews shared only with author consent and mentor selection; GO approval required"],
-      footer: <div className="w-full space-y-3"><Button asChild variant="outline" className="w-full"><Link href="#mentor-plan">See Mentor pricing</Link></Button><MentorApplicationButton applicationsOpen={mentorState.open} /></div>,
+      footer: <div className="w-full space-y-3"><Button asChild variant="outline" className="w-full"><Link href="#mentor-plan">See Mentor pricing</Link></Button><Button asChild className="w-full"><Link href="/profile?tab=mentor">Apply to become a mentor</Link></Button></div>,
     },
     {
       id: "business",
@@ -128,7 +125,6 @@ export default async function MembershipPage({ searchParams }) {
                 </CardHeader>
                 <CardContent className="flex-1">
                   <ul className="space-y-3">{benefits.map((benefit) => <li key={benefit} className="flex gap-2 text-sm"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>{benefit}</span></li>)}</ul>
-                  {id === "mentor-programme" && !mentorState.open && <p className="mt-5 text-sm text-muted-foreground">Mentor applications are currently closed. The application form will become available when the next mentor intake opens.</p>}
                 </CardContent>
                 <CardFooter>{footer}</CardFooter>
               </Card>

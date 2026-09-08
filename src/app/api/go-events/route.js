@@ -19,7 +19,7 @@ export async function GET() {
         code: error?.code || "GO_EVENTS_UNAVAILABLE",
         events: [],
         nextEvent: null,
-        timezone: "Europe/Belgrade",
+        timezone: "Europe/Skopje",
         configured: false,
       },
       { status, headers: { "Cache-Control": "no-store" } }

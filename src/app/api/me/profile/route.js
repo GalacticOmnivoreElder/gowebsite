@@ -82,6 +82,16 @@ export async function PATCH(request) {
       { status: 400 }
     );
   }
+  if (body.timezone !== undefined) {
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: String(body.timezone || "") }).format();
+    } catch {
+      return NextResponse.json(
+        { error: "Time zone must be selected from the supported time zone list." },
+        { status: 400 }
+      );
+    }
+  }
   const update = {};
   for (const field of EDITABLE_FIELDS) {
     if (body[field] !== undefined) update[field] = body[field];

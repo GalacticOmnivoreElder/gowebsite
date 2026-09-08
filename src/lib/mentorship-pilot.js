@@ -63,7 +63,7 @@ function optionalHttpsUrl(value, label) {
 }
 
 function validTimeZone(value) {
-  const zone = text(value, 100) || "Europe/Warsaw";
+  const zone = text(value, 100) || "Europe/Skopje";
   try {
     new Intl.DateTimeFormat("en", { timeZone: zone }).format();
     return zone;
@@ -215,7 +215,7 @@ export function serializeMentorPilotProfile(id, data = {}, { admin = false } = {
     experienceYears: data.experienceYears || 0,
     evidenceLinks: data.evidenceLinks || [],
     languages: data.languages || [],
-    timeZone: data.timeZone || "Europe/Warsaw",
+    timeZone: data.timeZone || "Europe/Skopje",
     availableFormats: data.availableFormats || [],
     generalAvailability: data.generalAvailability || "",
     preferredMenteeLevels: data.preferredMenteeLevels || [],

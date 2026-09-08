@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { observer } from "mobx-react-lite";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
+import { TimeZoneSelect } from "@/components/forms/TimeZoneSelect";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -554,8 +555,7 @@ function CvSectionEditor({ section, onChange }) {
             onChange={(location) => setContent({ location })}
           />
           <div className="md:col-span-2">
-            <Field
-              label="Time zone"
+            <TimeZoneSelect
               value={content.timezone}
               onChange={(timezone) => setContent({ timezone })}
             />

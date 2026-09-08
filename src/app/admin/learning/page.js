@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { auth } from "@/firebase";
+import { TimeZoneSelect } from "@/components/forms/TimeZoneSelect";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,7 +69,9 @@ export default function AdminLearningPage() {
     } catch (error) { setMessage(error.message); } finally { setSaving(false); }
   };
 
-  const field = (name, label, type = "text") => <div><label className="mb-1 block text-sm font-medium">{label}</label><Input type={type} value={form[name] ?? ""} onChange={(event) => setForm((current) => ({ ...current, [name]: event.target.value }))} /></div>;
+  const field = (name, label, type = "text") => name === "timeZone"
+    ? <TimeZoneSelect label={label} value={form[name]} onChange={(value) => setForm((current) => ({ ...current, [name]: value }))} />
+    : <div><label className="mb-1 block text-sm font-medium">{label}</label><Input type={type} value={form[name] ?? ""} onChange={(event) => setForm((current) => ({ ...current, [name]: event.target.value }))} /></div>;
 
   return (
     <div className="space-y-8">

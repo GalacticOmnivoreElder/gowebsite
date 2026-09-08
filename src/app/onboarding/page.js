@@ -36,6 +36,7 @@ import {
 } from "@/utils/validateProfile";
 import { trackEvent } from "@/lib/analytics/client";
 import { normalizePreferredTimeCommitment } from "@/lib/availability";
+import { TimeZoneSelect } from "@/components/forms/TimeZoneSelect";
 
 const STEP_TITLES = {
   identity: "Your profile",
@@ -269,9 +270,12 @@ const OnboardingContent = observer(() => {
                 <Field label="Location (optional)">
                   <Input value={stepData.location || ""} onChange={(e) => setField("location", e.target.value)} />
                 </Field>
-                <Field label="Time zone *">
-                  <Input placeholder="e.g. GMT+1 / CET" value={stepData.timezone || ""} onChange={(e) => setField("timezone", e.target.value)} />
-                </Field>
+                <TimeZoneSelect
+                  label="Time zone"
+                  required
+                  value={stepData.timezone || "Europe/Skopje"}
+                  onChange={(value) => setField("timezone", value)}
+                />
               </>
             )}
 

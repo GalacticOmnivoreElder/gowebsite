@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { auth } from "@/firebase";
+import { TimeZoneSelect } from "@/components/forms/TimeZoneSelect";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,7 +75,7 @@ export function MentorshipRequestWorkspace({ initialMentorId = "" }) {
             <Select label="Current skill level" value={form.skillLevel} options={levels} onChange={(value) => setForm((current) => ({ ...current, skillLevel: value }))} />
             <Select label="Preferred format" value={form.preferredFormat} options={formats} onChange={(value) => setForm((current) => ({ ...current, preferredFormat: value }))} />
             <Select label="Expected duration" value={form.expectedDuration} options={["single_session", "two_to_four_weeks", "one_to_three_months"]} onChange={(value) => setForm((current) => ({ ...current, expectedDuration: value }))} />
-            <Field label="Time zone" value={form.timeZone} onChange={(value) => setForm((current) => ({ ...current, timeZone: value }))} />
+            <TimeZoneSelect value={form.timeZone} onChange={(value) => setForm((current) => ({ ...current, timeZone: value }))} />
             <Field label="Portfolio or project link (optional)" type="url" value={form.portfolioUrl} onChange={(value) => setForm((current) => ({ ...current, portfolioUrl: value }))} />
             <Field label="Availability note" value={form.generalAvailability} onChange={(value) => setForm((current) => ({ ...current, generalAvailability: value }))} />
           </div>

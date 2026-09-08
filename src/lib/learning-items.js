@@ -124,6 +124,14 @@ export function cleanLearningItem(input = {}) {
   if (capacityValue !== null && (!Number.isInteger(capacityValue) || capacityValue < 1)) {
     throw validationError("Capacity must be a positive whole number or left empty");
   }
+  const requestedTimeZone = cleanText(input.timeZone, 100);
+  if (requestedTimeZone) {
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: requestedTimeZone }).format();
+    } catch {
+      throw validationError("Time zone is not recognized");
+    }
+  }
 
   const item = {
     slug: cleanText(input.slug, 160).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
@@ -137,7 +145,7 @@ export function cleanLearningItem(input = {}) {
     language: cleanText(input.language, 100),
     startsAt: cleanOptionalDate(input.startsAt, "Start date"),
     endsAt: cleanOptionalDate(input.endsAt, "End date"),
-    timeZone: cleanText(input.timeZone, 100) || "Europe/Skopje",
+    timeZone: requestedTimeZone || "Europe/Skopje",
     durationMinutes: Math.max(0, Math.floor(Number(input.durationMinutes) || 0)),
     format: cleanText(input.format, 100),
     location: cleanText(input.location, 500),

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarClock, Loader2, Save, ShieldCheck } from "lucide-react";
 import { auth } from "@/firebase";
+import { TimeZoneSelect } from "@/components/forms/TimeZoneSelect";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ function CheckboxGroup({ label, values, options, onChange }) {
 }
 
 function TextField({ label, value, onChange, type = "text", help }) {
+  if (label === "Time zone") return <TimeZoneSelect value={value} onChange={onChange} />;
   return <label className="block space-y-1 text-sm"><span className="font-medium">{label}</span><Input type={type} value={value ?? ""} onChange={(event) => onChange(event.target.value)} />{help && <span className="block text-xs text-muted-foreground">{help}</span>}</label>;
 }
 

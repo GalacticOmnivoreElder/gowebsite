@@ -13,7 +13,7 @@ const PUBLIC_CALENDAR_ID =
   process.env.GO_EVENTS_PUBLIC_CALENDAR_ID ||
   "d88aa1c479a0ef990128bda11f762b849698d58daf1cbb134871079fecb3a518@group.calendar.google.com";
 const MEMBERS_CALENDAR_ID = process.env.GO_EVENTS_MEMBERS_CALENDAR_ID || "";
-const TIMEZONE = process.env.GO_EVENTS_TIMEZONE || "Europe/Belgrade";
+const TIMEZONE = process.env.GO_EVENTS_TIMEZONE || "Europe/Skopje";
 const GOOGLE_CALENDAR_API = "https://www.googleapis.com/calendar/v3";
 const GOOGLE_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const CACHE_TTL_MS = 5 * 60 * 1000;

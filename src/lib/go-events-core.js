@@ -99,7 +99,7 @@ export function getVideoJoinUrl(event = {}) {
   }
 }
 
-export function normalizeCalendarEvent(event = {}, { source = "public", timezone = "Europe/Belgrade" } = {}) {
+export function normalizeCalendarEvent(event = {}, { source = "public", timezone = "Europe/Skopje" } = {}) {
   const startValue = event.start?.dateTime || event.start?.date || null;
   const endValue = event.end?.dateTime || event.end?.date || startValue;
   if (!event.id || !startValue) return null;

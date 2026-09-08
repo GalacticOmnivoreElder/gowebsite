@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trackEvent } from "@/lib/analytics/client";
+import { formatDateTimeInTimeZone } from "@/lib/timezones";
 
 function QuestionField({ question, value, onChange }) {
   if (question.type === "multiple_choice") {
@@ -121,7 +122,7 @@ export function LearningDetail({ slug }) {
           <CardHeader><CardTitle>Enrollment</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {item.trainingAssigned && <Badge variant="secondary">Assigned mentor preparation</Badge>}
-            {item.startsAt && <p className="flex gap-2 text-sm"><CalendarDays className="h-4 w-4 shrink-0 text-primary" />{new Date(item.startsAt).toLocaleString()} ({item.timeZone})</p>}
+            {item.startsAt && <p className="flex gap-2 text-sm"><CalendarDays className="h-4 w-4 shrink-0 text-primary" />{formatDateTimeInTimeZone(item.startsAt, item.timeZone)} ({item.timeZone})</p>}
             {item.durationMinutes > 0 && <p className="flex gap-2 text-sm"><Clock className="h-4 w-4 shrink-0 text-primary" />{item.durationMinutes} minutes</p>}
             {item.location && <p className="flex gap-2 text-sm"><MapPin className="h-4 w-4 shrink-0 text-primary" />{item.location}</p>}
             {item.placesRemaining !== null && <p className="flex gap-2 text-sm"><Users className="h-4 w-4 shrink-0 text-primary" />{item.placesRemaining} places remaining</p>}
