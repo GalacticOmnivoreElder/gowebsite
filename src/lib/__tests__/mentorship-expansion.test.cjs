@@ -16,6 +16,8 @@ const subscriptionState = loadSourceModule("src/lib/subscription-state.js", [
 ], { stripImports: true });
 
 const authUtils = loadSourceModule("src/lib/auth-utils.js", [
+  "getEffectiveMembership",
+  "getSubscriptionAccessEnd",
   "hasActiveSubscription",
 ], { stripImports: true });
 
@@ -230,6 +232,49 @@ test("a canceled subscription retains membership access through its future perio
   assert.equal(transition.activeMember, true);
   assert.equal(authUtils.hasActiveSubscription({ ...transition, subscriptionEndsAt }, now), true);
   assert.equal(authUtils.hasActiveSubscription({ ...transition, subscriptionEndsAt }, new Date("2026-10-09T12:00:00.000Z")), false);
+});
+
+test("paid-through fallback grants every membership tier even when the cached flag is stale", () => {
+  const now = new Date("2026-09-08T12:00:00.000Z");
+  const billingIntervals = ["month", "year"];
+  const tiers = ["member", "mentor", "company"];
+
+  for (const membershipTier of tiers) {
+    for (const subscriptionInterval of billingIntervals) {
+      const membership = authUtils.getEffectiveMembership(
+        {
+          activeMember: false,
+          membershipTier,
+          subscriptionEndsAt: "2026-10-08T12:00:00.000Z",
+          subscriptionInterval,
+          subscriptionStatus: "canceled",
+        },
+        { now }
+      );
+
+      assert.equal(membership.activeMember, true, `${membershipTier}/${subscriptionInterval}`);
+      assert.equal(membership.membershipTier, membershipTier);
+      assert.equal(membership.canAccessPackages, true);
+      assert.equal(membership.canCreateProjects, membershipTier === "company");
+    }
+  }
+});
+
+test("refunds and revocations override a future paid-through date", () => {
+  const now = new Date("2026-09-08T12:00:00.000Z");
+  for (const subscriptionStatus of ["refunded", "revoked"]) {
+    assert.equal(
+      authUtils.hasActiveSubscription(
+        {
+          activeMember: true,
+          subscriptionEndsAt: "2026-10-08T12:00:00.000Z",
+          subscriptionStatus,
+        },
+        now
+      ),
+      false
+    );
+  }
 });
 
 test("selected mentor requests keep the public snapshot and remove staff notes", () => {

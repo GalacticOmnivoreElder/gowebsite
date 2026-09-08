@@ -95,7 +95,7 @@ export async function POST(request) {
   batch.set(ref, session, { merge: true });
   await batch.commit();
   const userData = userSnap.exists ? userSnap.data() : {};
-  if (user.email && userData.activeMember === true) {
+  if (user.email && user.activeMember === true) {
     await enqueueEmailEvent({
       type: "onboarding.incomplete_reminder",
       eventId: `${user.uid}-membership-onboarding`,

@@ -334,7 +334,7 @@ function EventsPage() {
   const [activeMonth, setActiveMonth] = useState(() => new Date());
   const [activeDate, setActiveDate] = useState("");
 
-  const isMember = !MobxStore.isUserAnonymous && Boolean(MobxStore.isMember || MobxStore.user?.activeMember === true);
+  const isMember = !MobxStore.isUserAnonymous && MobxStore.hasActiveSubscription;
 
   useEffect(() => {
     let active = true;

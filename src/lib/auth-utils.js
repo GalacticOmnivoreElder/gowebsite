@@ -18,20 +18,38 @@ export async function verifyToken(token) {
   }
 }
 
+const NON_ENTITLED_SUBSCRIPTION_STATUSES = new Set([
+  "incomplete",
+  "incomplete_expired",
+  "refunded",
+  "revoked",
+  "unpaid",
+]);
+
+export function getSubscriptionAccessEnd(userData = {}) {
+  const value = userData?.subscriptionEndsAt;
+  if (!value) return null;
+
+  const date = typeof value?.toDate === "function" ? value.toDate() : new Date(value);
+  return date instanceof Date && Number.isFinite(date.getTime()) ? date : null;
+}
+
 export function hasActiveSubscription(userData = {}, now = new Date()) {
-  if (userData?.activeMember !== true) return false;
+  const status = String(userData?.subscriptionStatus || "")
+    .trim()
+    .toLowerCase();
+  if (NON_ENTITLED_SUBSCRIPTION_STATUSES.has(status)) return false;
 
-  if (userData.subscriptionEndsAt) {
-    const endsAt = userData.subscriptionEndsAt.toDate
-      ? userData.subscriptionEndsAt.toDate()
-      : new Date(userData.subscriptionEndsAt);
-
-    if (endsAt && now > endsAt) {
-      return false;
-    }
+  // Polar's paid-through date is authoritative whenever it is present. This
+  // protects monthly and annual Community, Mentor, and Business subscribers
+  // from a stale activeMember flag, especially after cancel-at-period-end.
+  const endsAt = getSubscriptionAccessEnd(userData);
+  if (endsAt) {
+    const currentTime = now instanceof Date ? now.getTime() : new Date(now).getTime();
+    return Number.isFinite(currentTime) && currentTime < endsAt.getTime();
   }
 
-  return true;
+  return userData?.activeMember === true;
 }
 
 export function getMembershipConfirmationId(userData = {}) {
@@ -73,8 +91,8 @@ export function getEffectiveMembership(userData = {}, { admin = false, now = new
  *    users/{uid}.admin field is set. Platform-admin (superadmin) powers depend
  *    on this being Firestore-aware - many admins are flagged only in Firestore.
  *  - activeMember / membershipTier: derived from the Polar subscription model
- *    (users/{uid}.activeMember + subscriptionEndsAt), with lapsed windows
- *    treated as inactive.
+ *    (users/{uid}.activeMember + subscriptionEndsAt), with paid-through
+ *    windows treated as active even when a delayed event left the flag stale.
  *  - canCreateProjects: admin, or a "company" tier member.
  *
  * Returns null when there is no valid token.

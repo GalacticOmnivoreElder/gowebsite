@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
-import { getRequestUser } from "@/lib/auth-utils";
+import { getRequestUser, hasActiveSubscription } from "@/lib/auth-utils";
 import { serializeFirestoreDate } from "@/lib/project-utils";
 
 async function verifyAdmin(request) {
@@ -36,7 +36,7 @@ export async function GET(request) {
           userId: doc.id,
           username: data.username || data.name || "Unknown",
           email: data.email || "",
-          activeMember: !!data.activeMember,
+          activeMember: hasActiveSubscription(data),
           subscriptionStatus: data.subscriptionStatus || "unknown",
           willRenew: !!data.willRenew,
           polarCustomerId: data.polarCustomerId || null,

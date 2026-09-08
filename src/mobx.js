@@ -243,7 +243,7 @@ class Store {
   }
 
   get hasActiveSubscription() {
-    return this.isMember || this.user?.activeMember === true;
+    return this.isMember;
   }
 
   async checkAuth() {

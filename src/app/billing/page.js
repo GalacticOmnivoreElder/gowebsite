@@ -237,7 +237,7 @@ const BillingPage = observer(() => {
   const getSubscriptionStatusInfo = () => {
     const user = MobxStore.user;
 
-    if (!user?.activeMember) {
+    if (!MobxStore.hasActiveSubscription) {
       return {
         status: "inactive",
         title: "No active membership",
@@ -448,7 +448,7 @@ const BillingPage = observer(() => {
               </Alert>
             )}
 
-            {user?.activeMember && (
+            {MobxStore.hasActiveSubscription && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -493,7 +493,7 @@ const BillingPage = observer(() => {
             )}
           </CardContent>
           <CardFooter className="flex gap-2">
-            {user?.activeMember ? (
+            {MobxStore.hasActiveSubscription ? (
               <Button
                 onClick={handleManageSubscription}
                 disabled={loading}

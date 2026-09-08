@@ -8,6 +8,7 @@ import {
 import {
   getEffectiveMembership,
   getMembershipConfirmationId,
+  getSubscriptionAccessEnd,
   hasActiveSubscription,
 } from "@/lib/auth-utils";
 
@@ -67,41 +68,40 @@ export async function GET(request) {
       );
     }
 
-    // Membership now derives from the Polar subscription model written by the
-    // webhook: users/{uid}.activeMember + subscriptionEndsAt (see /api/subscription/webhook).
-    // Platform admins receive an effective company-tier membership so they can
-    // exercise all member/company benefits without creating fake billing data.
+    // Membership derives from the Polar subscription model written by the
+    // webhook. The paid-through date remains authoritative if a cancellation
+    // event and the cached activeMember flag arrive out of order.
     const now = new Date();
-    let subscriptionData = null;
+    const hasPaidSubscription = hasActiveSubscription(userData, now);
+    const endsAt = getSubscriptionAccessEnd(userData);
 
-    if (userData?.activeMember) {
-      const endsAtRaw = userData.subscriptionEndsAt;
-      const endsAt = endsAtRaw?.toDate
-        ? endsAtRaw.toDate()
-        : endsAtRaw
-        ? new Date(endsAtRaw)
-        : null;
-
-      if (endsAt && now > endsAt) {
-        // Access window has lapsed - flip the flag so gating is accurate.
-        try {
-          await adminDb.collection("users").doc(uid).update({
-            activeMember: false,
-            updatedAt: new Date(),
-          });
-        } catch (e) {
-          console.error("Failed to expire membership for", uid, e);
-        }
-      } else {
-        subscriptionData = {
-          subscriptionId: userData.subscriptionId || null,
-          subscriptionStatus: userData.subscriptionStatus || null,
-          subscriptionEndsAt: endsAt,
-          willRenew: userData.willRenew ?? null,
-          polarCustomerId: userData.polarCustomerId || null,
-        };
+    if (
+      userDoc.exists &&
+      typeof userData?.activeMember === "boolean" &&
+      userData.activeMember !== hasPaidSubscription
+    ) {
+      // Repair stale cached state without changing the source subscription
+      // status. Every authorization decision still uses the shared resolver.
+      try {
+        await adminDb.collection("users").doc(uid).update({
+          activeMember: hasPaidSubscription,
+          updatedAt: now,
+        });
+        userData = { ...userData, activeMember: hasPaidSubscription };
+      } catch (e) {
+        console.error("Failed to reconcile membership for", uid, e);
       }
     }
+
+    const subscriptionData = hasPaidSubscription
+      ? {
+          subscriptionId: userData?.subscriptionId || null,
+          subscriptionStatus: userData?.subscriptionStatus || null,
+          subscriptionEndsAt: endsAt,
+          willRenew: userData?.willRenew ?? null,
+          polarCustomerId: userData?.polarCustomerId || null,
+        }
+      : null;
 
     // Admin can be set via Auth custom claims (decodedToken.admin) OR Firestore users/{uid}.admin
     const isAdmin = !!(decodedToken.admin === true || userData?.admin === true);
@@ -120,7 +120,7 @@ export async function GET(request) {
       membershipTier,
       canCreateProjects,
       canAccessPackages: membership.canAccessPackages,
-      hasPaidSubscription: hasActiveSubscription(userData, now),
+      hasPaidSubscription,
     };
 
     return Response.json({

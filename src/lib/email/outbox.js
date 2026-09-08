@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebase-admin";
+import { hasActiveSubscription } from "@/lib/auth-utils";
 import { getEmailPreferenceDecision } from "./preferences";
 import { sendEmailJob } from "./send-email";
 import {
@@ -390,7 +391,7 @@ export async function processEmailOutbox({ limit = 25 } = {}) {
       }
       if (
         job.eventType === "onboarding.incomplete_reminder" &&
-        context.userData?.activeMember !== true
+        !hasActiveSubscription(context.userData)
       ) {
         await finishJob(candidate.ref, {
           status: "suppressed",

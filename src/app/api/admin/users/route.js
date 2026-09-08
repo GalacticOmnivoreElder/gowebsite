@@ -2,6 +2,14 @@ import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
 import { MENTOR_STATUSES } from "@/lib/mentor-profiles";
 
+const NON_ENTITLED_SUBSCRIPTION_STATUSES = new Set([
+  "incomplete",
+  "incomplete_expired",
+  "refunded",
+  "revoked",
+  "unpaid",
+]);
+
 function toIso(value) {
   if (!value) return null;
   if (typeof value?.toDate === "function") return value.toDate().toISOString();
@@ -9,15 +17,21 @@ function toIso(value) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
-// Membership is expired if the access window has lapsed (Polar model).
+// Keep the admin list aligned with the server entitlement rule. This route is
+// loaded in isolation by its unit tests, so the small pure check stays local.
 function isActiveMember(userData) {
-  if (userData?.activeMember !== true) return false;
-  const endsAt = userData.subscriptionEndsAt;
+  const status = String(userData?.subscriptionStatus || "")
+    .trim()
+    .toLowerCase();
+  if (NON_ENTITLED_SUBSCRIPTION_STATUSES.has(status)) return false;
+
+  const endsAt = userData?.subscriptionEndsAt;
   if (endsAt) {
     const date = typeof endsAt?.toDate === "function" ? endsAt.toDate() : new Date(endsAt);
-    if (!Number.isNaN(date.getTime()) && new Date() > date) return false;
+    if (!Number.isNaN(date.getTime())) return Date.now() < date.getTime();
   }
-  return true;
+
+  return userData?.activeMember === true;
 }
 
 async function requireAdmin(request) {
@@ -129,8 +143,9 @@ export async function PUT(request) {
 
     if (hasActiveMember) {
       update.activeMember = activeMember;
-      update.subscriptionStatus = activeMember ? "active" : "canceled";
+      update.subscriptionStatus = activeMember ? "active" : "revoked";
       update.willRenew = activeMember;
+      update.subscriptionEndsAt = activeMember ? null : now;
     }
     if (hasMembershipTier) {
       update.membershipTier = membershipTier;
