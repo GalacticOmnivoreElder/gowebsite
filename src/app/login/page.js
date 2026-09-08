@@ -187,6 +187,7 @@ const LoginCard = observer(() => {
   const [googleError, setGoogleError] = useState(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const isCheckoutContinuation = Boolean(searchParams.get("plan"));
+  const wasVerified = searchParams.get("verified") === "1";
 
   // Get redirect path and plan from query params
   useEffect(() => {
@@ -227,6 +228,11 @@ const LoginCard = observer(() => {
             ? "Sign in to continue to secure membership checkout."
             : "Use your GO account to continue."}
         </CardDescription>
+        {wasVerified && (
+          <p className="text-sm text-primary" role="status">
+            Your email address is verified. Sign in to continue.
+          </p>
+        )}
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="grid grid-cols-1 gap-6">

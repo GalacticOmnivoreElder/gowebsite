@@ -89,17 +89,25 @@ export const SignupForm = observer(() => {
     trackEvent("signup_started", { method: "email", flow });
 
     try {
+      let result;
       if (isAuthenticated && isUserAnonymous) {
         // Upgrade the anonymous account
-        await upgradeAccount(email, password, username);
+        result = await upgradeAccount(email, password, username, {
+          redirect: redirectTo,
+        });
       } else {
         // Regular signup
-        await signupWithEmail(email, password, username);
+        result = await signupWithEmail(email, password, username, {
+          redirect: redirectTo,
+        });
       }
       trackEvent("signup_completed", { method: "email", flow });
       setIsLoading(false);
+      const delivery = result?.verification?.sent === false
+        ? "&delivery=unavailable"
+        : "";
       router.push(
-        `/verify-email?redirect=${encodeURIComponent(redirectTo)}`
+        `/verify-email?redirect=${encodeURIComponent(redirectTo)}${delivery}`
       );
     } catch (error) {
       trackEvent("form_validation_error", {

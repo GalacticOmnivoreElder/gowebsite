@@ -12,8 +12,13 @@ import { safeInternalRedirect } from "@/lib/safe-redirect";
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const redirect = safeInternalRedirect(searchParams.get("redirect"));
+  const deliveryUnavailable = searchParams.get("delivery") === "unavailable";
   const [state, setState] = useState("idle");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(
+    deliveryUnavailable
+      ? "Your account was created, but the verification email could not be delivered yet. Try sending it again below."
+      : ""
+  );
   const cooldownTimer = useRef(null);
 
   useEffect(
@@ -28,7 +33,7 @@ function VerifyEmailContent() {
     setState("sending");
     setMessage("");
     try {
-      const result = await MobxStore.sendVerificationEmail();
+      const result = await MobxStore.sendVerificationEmail({ redirect });
       setMessage(
         result.skipped
           ? "This account is already verified."
@@ -39,9 +44,10 @@ function VerifyEmailContent() {
         () => setState("idle"),
         60_000
       );
-    } catch {
+    } catch (error) {
       setMessage(
-        "A verification email could not be sent yet. Please wait and try again."
+        error?.message ||
+          "A verification email could not be sent yet. Please wait and try again."
       );
       setState("idle");
     }
@@ -55,8 +61,9 @@ function VerifyEmailContent() {
       </CardHeader>
       <CardContent className="space-y-5 text-center">
         <p className="text-muted-foreground">
-          We sent a verification link to your account email. Open it to confirm
-          your address, then continue to Galactic Omnivore.
+          {deliveryUnavailable
+            ? "Use the resend button to request a fresh verification link."
+            : "We sent a verification link to your account email. Open it to confirm your address, then continue to Galactic Omnivore."}
         </p>
         {message && <p className="text-sm" role="status">{message}</p>}
         <div className="flex flex-col sm:flex-row justify-center gap-3">

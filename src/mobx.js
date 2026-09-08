@@ -12,7 +12,6 @@ import {
   signInWithPopup,
   signOut,
   sendPasswordResetEmail,
-  sendEmailVerification,
 } from "firebase/auth";
 import {
   doc,
@@ -621,7 +620,7 @@ class Store {
   //
   //
   // AUTH FUNCTIONS
-  async upgradeAccount(email, password, username) {
+  async upgradeAccount(email, password, username, options = {}) {
     try {
       const normalizedUsername = normalizeUsername(
         username,
@@ -649,10 +648,9 @@ class Store {
       );
 
       await sendWelcomeEmail(userCredential.user, normalizedUsername);
-      await sendEmailVerification(userCredential.user, {
-        url: `${window.location.origin}/login?verified=1`,
-      }).catch((error) => {
-        console.error("Could not send verification email:", error);
+      const verification = await this.sendVerificationEmail({
+        redirect: options.redirect,
+        bestEffort: true,
       });
 
       runInAction(() => {
@@ -666,6 +664,7 @@ class Store {
         };
       });
       this.checkPermissions(true);
+      return { verification };
     } catch (error) {
       console.error("Error upgrading account:", error);
       throw error;
@@ -715,7 +714,7 @@ class Store {
     }
   }
 
-  async signupWithEmail(email, password, username) {
+  async signupWithEmail(email, password, username, options = {}) {
     try {
       this.loading = true;
       const normalizedUsername = normalizeUsername(
@@ -746,10 +745,9 @@ class Store {
       await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
 
       await sendWelcomeEmail(userCredential.user, normalizedUsername);
-      await sendEmailVerification(userCredential.user, {
-        url: `${window.location.origin}/login?verified=1`,
-      }).catch((error) => {
-        console.error("Could not send verification email:", error);
+      const verification = await this.sendVerificationEmail({
+        redirect: options.redirect,
+        bestEffort: true,
       });
 
       runInAction(() => {
@@ -758,6 +756,7 @@ class Store {
         this.loading = false;
       });
       this.checkPermissions(true);
+      return { verification };
     } catch (error) {
       console.error("Error signing up:", error);
       runInAction(() => {
@@ -853,26 +852,39 @@ class Store {
     });
   }
 
-  async sendVerificationEmail() {
+  async sendVerificationEmail({ redirect = "/profile", bestEffort = false } = {}) {
     if (!auth.currentUser || auth.currentUser.emailVerified) {
       return { skipped: true };
     }
-    const idToken = await auth.currentUser.getIdToken();
-    const gate = await fetch("/api/auth/verification-resend", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${idToken}` },
-    });
-    const gateResult = await gate.json().catch(() => ({}));
-    if (gateResult.alreadyVerified) return { skipped: true };
-    if (!gate.ok || gateResult.allowed !== true) {
-      const error = new Error("Please wait before requesting another email.");
-      error.code = "verification_rate_limited";
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/auth/verification-resend", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ redirect }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (result.alreadyVerified) return { skipped: true };
+      if (!response.ok || result.allowed !== true) {
+        const error = new Error(
+          result.error || "Please wait before requesting another email."
+        );
+        error.code = result.code || "verification_delivery_failed";
+        throw error;
+      }
+      return result;
+    } catch (error) {
+      if (bestEffort) {
+        console.error("Could not send verification email:", {
+          code: error?.code || "verification_delivery_failed",
+        });
+        return { sent: false, deliveryFailed: true };
+      }
       throw error;
     }
-    await sendEmailVerification(auth.currentUser, {
-      url: `${window.location.origin}/login?verified=1`,
-    });
-    return { sent: true };
   }
 
   get isUserAnonymous() {

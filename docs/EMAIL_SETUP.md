@@ -43,7 +43,7 @@ persisted in job data or logs.
 | Category | Events | Preference |
 | --- | --- | --- |
 | Essential | `account.welcome`, `onboarding.incomplete_reminder`, `newsletter.confirm`, `billing.membership_activated`, `billing.renewal_paid`, `billing.plan_changed`, `billing.payment_failed`, `billing.cancellation_scheduled`, `billing.reactivated`, `billing.access_revoked`, `billing.refund_processed` | Always allowed; not affected by marketing opt-out |
-| Firebase security | email verification and password reset | Firebase Authentication templates and throttling |
+| Firebase security | email verification and password reset | Firebase security tokens; verification delivery through the transactional sender and Firebase password-reset templates |
 | Product/project | `onboarding.completed`, all `project.*`, all `application.*` | `settings.emailNotifications !== false` |
 | Subscription reminders | `billing.renewal_reminder`, `billing.access_expiring` | `settings.subscriptionReminders !== false`; worker also rechecks renewal/cancellation state |
 | Package | `package.published` | Active member and `settings.newPackageAlerts !== false` |
@@ -51,9 +51,11 @@ persisted in job data or logs.
 | Admin | `admin.project_review_required`, membership/cancellation/refund/payment-failure events, failure digest, onboarding note | Configured server-side recipients |
 
 Email verification and password reset deliberately remain on Firebase's
-security-token implementation. The application adds a protected resend gate
-for verification and generic password-reset behavior, but does not create a
-competing token system.
+security-token implementation. The application generates verification links
+with Firebase Admin and delivers them through the configured transactional
+sender, with a protected resend gate. Password reset continues to use the
+Firebase client template flow. The application does not create a competing
+token system.
 
 `project.invitation` has a template and event definition but is not triggered.
 The current repository does not have a secure accept/decline invitation action;
@@ -132,7 +134,8 @@ In Firebase Console, open Authentication > Templates:
 
 1. Set the public sender/application name to Galactic Omnivore.
 2. Configure and verify the Firebase custom sending domain.
-3. Review the email-verification and password-reset copy and localization.
+3. Review the password-reset copy and localization. Verification copy is
+   rendered by the platform's transactional email template.
 4. Authorize the production domain and the continue URLs used by the app:
    `/login?verified=1` and `/login?reset=1`.
 5. Test both flows against a non-production Firebase project.
