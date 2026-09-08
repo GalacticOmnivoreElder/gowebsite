@@ -29,6 +29,7 @@ test("pilot access fails closed and does not imply public browsing", () => {
   assert.equal(pilot.authorizeMentorshipAction({ uid: "other", userData: { activeMember: true } }, "create_request", config).reason, "pilot_access_required");
   assert.equal(pilot.authorizeMentorshipAction({ uid: "pilot", userData: { activeMember: true } }, "browse_mentors", config).reason, "public_browsing_disabled");
   assert.equal(pilot.authorizeMentorshipAction({ uid: "pilot", userData: { activeMember: true } }, "create_request", config).allowed, true);
+  assert.equal(pilot.authorizeMentorshipAction({ uid: "pilot", userData: {} }, "apply_mentor", config).allowed, true);
   assert.equal(pilot.authorizeMentorshipAction({ uid: "admin", admin: true, userData: {} }, "create_request", config).allowed, true);
 });
 
@@ -81,6 +82,7 @@ test("the public application surface opens while pilot matching stays controlled
   const pageSource = fs.readFileSync("src/app/matchmaking/page.js", "utf8");
   assert.match(configSource, /MENTORSHIP_SYSTEM_ENABLED, true/);
   assert.match(configSource, /MENTORSHIP_REQUESTS_ENABLED, true/);
+  assert.match(configSource, /MENTORSHIP_MENTOR_APPLICATIONS_ENABLED, true/);
   assert.match(configSource, /MENTORSHIP_PILOT_ONLY, false/);
   assert.match(pageSource, /Applications are open to eligible GO members/);
 });

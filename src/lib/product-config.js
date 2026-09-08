@@ -137,7 +137,7 @@ export function getMentorshipPilotConfig(env = process.env) {
       mentorshipSystem: parseBooleanEnv(env.MENTORSHIP_SYSTEM_ENABLED, true),
       publicMentorBrowsing: parseBooleanEnv(env.MENTORSHIP_PUBLIC_MENTOR_BROWSING_ENABLED, false),
       mentorshipRequests: parseBooleanEnv(env.MENTORSHIP_REQUESTS_ENABLED, true),
-      mentorApplications: parseBooleanEnv(env.MENTORSHIP_MENTOR_APPLICATIONS_ENABLED, false),
+      mentorApplications: parseBooleanEnv(env.MENTORSHIP_MENTOR_APPLICATIONS_ENABLED, true),
       pilotOnly: parseBooleanEnv(env.MENTORSHIP_PILOT_ONLY, false),
     },
   };

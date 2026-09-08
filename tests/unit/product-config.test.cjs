@@ -5,6 +5,7 @@ const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 const configModule = loadSourceModule("src/lib/product-config.js", [
   "areMentorApplicationsOpen",
   "getProductConfig",
+  "getMentorshipPilotConfig",
   "getMentorshipFeedbackConfig",
   "getSafeProductConfig",
   "isValidHttpsUrl",
@@ -35,4 +36,17 @@ test("mentor applications require environment configuration and the admin overri
   assert.equal(configModule.getSafeProductConfig({ MENTOR_APPLICATIONS_OPEN: "true", MENTOR_APPLICATION_URL: "https://forms.test/mentor" }).mentorApplicationUrl, undefined);
   assert.equal(configModule.getProductConfig({ MENTOR_APPLICATIONS_OPEN: "true", MENTOR_APPLICATION_URL: "http://forms.test/mentor" }).mentorApplicationsConfigured, false);
   assert.equal(configModule.isValidHttpsUrl("javascript:alert(1)"), false);
+});
+
+test("the internal mentor application intake is open by default and can be paused explicitly", () => {
+  assert.equal(
+    configModule.getMentorshipPilotConfig({}).featureFlags.mentorApplications,
+    true
+  );
+  assert.equal(
+    configModule.getMentorshipPilotConfig({
+      MENTORSHIP_MENTOR_APPLICATIONS_ENABLED: "false",
+    }).featureFlags.mentorApplications,
+    false
+  );
 });
