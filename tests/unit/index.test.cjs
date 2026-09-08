@@ -74,6 +74,7 @@ require("./membership-ui.test.cjs");
 require("./newsletter.test.cjs");
 require("./newsletter-ui.test.cjs");
 require("./checkout-navigation.test.cjs");
+require("./mentor-checkout.test.cjs");
 require("./me-cv-route.test.cjs");
 require("./me-profile-route.test.cjs");
 require("./onboarding-route.test.cjs");

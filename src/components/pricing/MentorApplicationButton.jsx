@@ -39,11 +39,13 @@ export function MentorApplicationButton({ applicationsOpen }) {
     }
   };
 
+  if (!applicationsOpen) return null;
+
   return (
     <div className="space-y-2">
-      <Button type="button" variant="outline" className="w-full" disabled={!applicationsOpen || loading} onClick={apply}>
+      <Button type="button" variant="outline" className="w-full" disabled={loading} onClick={apply}>
         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ExternalLink className="mr-2 h-4 w-4" />}
-        {applicationsOpen ? "Apply to become a mentor" : "Applications closed"}
+        Apply to become a mentor
       </Button>
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
     </div>

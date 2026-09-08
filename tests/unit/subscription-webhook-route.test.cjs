@@ -173,6 +173,8 @@ function loadRoute({
         resolvePolarProductTier: (productId) =>
           productId === "company-product"
             ? "company"
+            : ["1d213038-ac43-4c83-87a4-56a5d79ee2df", "b6838dca-edaf-4fc7-bfdf-d2ceed0ba1f9", "7963bdf5-be68-4d72-82ef-d86da4558b37"].includes(productId)
+            ? "mentor"
             : productId === "member-product"
             ? "member"
             : null,
@@ -613,4 +615,35 @@ test("full refunds revoke access while partial refunds only update the order", a
     "partially_refunded"
   );
   assert.equal(route.adminDb.docs.orders.order_2.refundedAmount, 250);
+});
+
+test("Mentor purchases activate the correct membership without approving the buyer as a mentor", async () => {
+  for (const productId of ["1d213038-ac43-4c83-87a4-56a5d79ee2df", "b6838dca-edaf-4fc7-bfdf-d2ceed0ba1f9", "7963bdf5-be68-4d72-82ef-d86da4558b37"]) {
+    const route = loadRoute({ seed: { users: { "mentor-buyer": {
+      email: "mentor@example.com", mentorStatus: "applicant", activeMember: false,
+    } } } });
+    await route.captured.onOrderPaid({
+      id: "evt-mentor-paid",
+      type: "order.paid",
+      data: {
+        id: "order-mentor",
+        customer: { email: "mentor@example.com", id: "cus-mentor", external_id: "mentor-buyer" },
+        product_id: productId,
+        metadata: { tier: "company" },
+        status: "paid",
+        subscription_id: "sub-mentor",
+      },
+    });
+    const buyer = route.adminDb.docs.users["mentor-buyer"];
+    assert.equal(buyer.activeMember, true);
+    assert.equal(buyer.membershipTier, "mentor");
+    assert.equal(buyer.mentorStatus, "applicant");
+    assert.equal(route.emailEvents.find((event) => event.type === "billing.membership_activated").data.tier, "mentor");
+    await route.captured.onSubscriptionRevoked({
+      id: "evt-mentor-revoked",
+      type: "subscription.revoked",
+      data: { id: "sub-mentor", customer_id: "cus-mentor", product_id: productId, status: "canceled" },
+    });
+    assert.equal(route.adminDb.docs.users["mentor-buyer"].activeMember, false);
+  }
 });

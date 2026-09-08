@@ -1,4 +1,4 @@
-const VALID_TIERS = new Set(["member", "company"]);
+const VALID_TIERS = new Set(["member", "mentor", "company"]);
 const VALID_INTERVALS = new Set(["monthly", "annual"]);
 
 export function getCheckoutPlanKey(tier, interval) {

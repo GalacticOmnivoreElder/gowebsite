@@ -46,6 +46,7 @@ const templates = loadSourceModule(
 const tierCases = [
   { tier: "member", name: "GO Community" },
   { tier: "company", name: "GO Business" },
+  { tier: "mentor", name: "GO Mentor" },
 ];
 const intervalCases = [
   { value: "month", label: "Monthly" },
@@ -138,4 +139,16 @@ test("membership templates escape user-controlled names", () => {
     rendered.html,
     /&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt;/
   );
+});
+
+test("Mentor welcome and activation emails explain interview verification before production and mentorship connections", () => {
+  for (const type of ["account.welcome", "billing.membership_activated"]) {
+    const rendered = templates.renderEmailEventTemplate(type, { tier: "mentor", firstName: "Ada" });
+    for (const body of [rendered.text, rendered.html]) {
+      assert.match(body, /interview with GO and be verified/);
+      assert.match(body, /courses, workshops, video bundles, or assets/);
+      assert.match(body, /community members requesting mentorship/);
+      assert.match(body, /does not automatically verify you/);
+    }
+  }
 });

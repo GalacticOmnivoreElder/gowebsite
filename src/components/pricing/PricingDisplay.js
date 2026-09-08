@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react-lite";
-import { ArrowRight, Building2, Check, User } from "lucide-react";
+import { ArrowRight, Building2, Check, User, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +28,7 @@ import {
 
 const planIcons = {
   community: User,
+  mentor: Users,
   business: Building2,
 };
 
@@ -46,7 +47,7 @@ const formatPendingDate = (value) => {
   return new Intl.DateTimeFormat("en", { dateStyle: "long" }).format(date);
 };
 
-export const PricingDisplay = observer(() => {
+export const PricingDisplay = observer(({ mentorAvailability = {} }) => {
   const [interval, setInterval] = useState("monthly");
   const [upgradeInterval, setUpgradeInterval] = useState("monthly");
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
@@ -252,7 +253,7 @@ export const PricingDisplay = observer(() => {
         </div>
       )}
 
-      <div className="mx-auto grid min-w-0 max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="mx-auto grid min-w-0 max-w-7xl grid-cols-1 gap-6 lg:grid-cols-3">
         {MEMBERSHIP_PLANS.map((plan) => {
           const Icon = planIcons[plan.id];
           const price = plan.pricing[interval];
@@ -272,7 +273,8 @@ export const PricingDisplay = observer(() => {
           return (
             <Card
               key={plan.id}
-              className={`relative min-w-0 max-w-full flex h-full flex-col overflow-hidden ${
+              id={`${plan.id}-plan`}
+              className={`scroll-mt-24 relative min-w-0 max-w-full flex h-full flex-col overflow-hidden ${
                 isHighlighted ? "border-primary" : ""
               }`}
             >
@@ -333,6 +335,12 @@ export const PricingDisplay = observer(() => {
                     </li>
                   ))}
                 </ul>
+                {plan.verificationNotice && (
+                  <div className="mt-5 rounded-md border border-primary/30 bg-primary/5 p-4">
+                    <p className="text-sm font-semibold">Interview and verification required</p>
+                    <p className="mt-2 text-sm text-muted-foreground">{plan.verificationNotice}</p>
+                  </div>
+                )}
               </CardContent>
 
               <CardFooter className="min-w-0 px-4 pt-6 sm:px-6">
@@ -378,6 +386,28 @@ export const PricingDisplay = observer(() => {
                   >
                     Review Business upgrade
                     <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : plan.tier === "mentor" && !mentorAvailability[interval] ? (
+                  <div className="w-full space-y-2">
+                    <Button className="w-full" size="lg" variant="outline" disabled>
+                      {interval === "annual" ? "Annual" : "Monthly"} temporarily unavailable
+                    </Button>
+                    <p className="text-sm text-muted-foreground">
+                      {interval === "annual" && mentorAvailability.monthly
+                        ? "Monthly Mentor membership is available."
+                        : "Please contact support for help joining."}
+                    </p>
+                  </div>
+                ) : hasActiveSubscription && !canChooseMembershipPlan({
+                    hasActiveSubscription,
+                    currentTier,
+                    targetTier: plan.tier,
+                    pendingTier: user?.pendingMembershipTier,
+                    subscriptionStatus: user?.subscriptionStatus,
+                    willRenew: user?.willRenew,
+                  }) ? (
+                  <Button variant="outline" size="lg" className="w-full" asChild>
+                    <Link href="/billing">Manage membership</Link>
                   </Button>
                 ) : (
                   <SubscribeButton

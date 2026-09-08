@@ -42,7 +42,7 @@ export async function GET(request) {
     const users = snapshot.docs.map((doc) => {
       const data = doc.data();
       const isMember = isActiveMember(data);
-      const membershipTier = ["member", "company"].includes(
+      const membershipTier = ["member", "mentor", "company"].includes(
         data.membershipTier
       )
         ? data.membershipTier
@@ -95,10 +95,10 @@ export async function PUT(request) {
 
     if (
       hasMembershipTier &&
-      !["member", "company"].includes(membershipTier)
+      !["member", "mentor", "company"].includes(membershipTier)
     ) {
       return Response.json(
-        { error: "membershipTier must be member or company" },
+        { error: "membershipTier must be member, mentor or company" },
         { status: 400 }
       );
     }

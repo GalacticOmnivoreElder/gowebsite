@@ -149,7 +149,7 @@ const SubscriptionStatusOverview = ({ user }) => {
       status: "active",
       title: "Active membership",
       description: `${
-        user?.membershipTier === "company" ? "GO Business" : "GO Community"
+        user?.membershipTier === "company" ? "GO Business" : user?.membershipTier === "mentor" ? "GO Mentor Membership" : "GO Community"
       } is your current active membership`,
       icon: <CheckCircle className="h-5 w-5 text-green-500" />,
       variant: "default",

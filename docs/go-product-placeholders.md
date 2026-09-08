@@ -76,3 +76,7 @@ Phase 6 completes the community asset-pack workflow. The rollout flag is enabled
 Asset-pack downloads remain behind server-authorized, short-lived, single-use redirects. Administrators can configure public, Community/Business, or individually granted access independently of publication, and access grants can be revoked or restored. Review, publication, access, and pack-status changes write reasoned audit events containing the actor, action, target, previous value, new value, and timestamp.
 
 A resource may be marked Legacy only after an administrator clears every review checklist item and records a reason. `APRIL_2025_RESOURCE_ID` remains empty and unused: Phase 6 performs no lookup, migration, fixture creation, production-data mutation, or deployment. Before production rollout, verify real review operations, content, authorization tests, and protected-link behavior in staging with `COMMUNITY_ASSET_SUBMISSIONS_ENABLED=true`.
+
+## Mentor checkout implementation (September 2026)
+
+The historical reserved mentor checkout rows above are superseded by [Mentor checkout](mentor-checkout.md). Monthly and annual products are integrated with authenticated checkout and membership activation. Annual availability is guarded until the Polar product has yearly billing. Mentor applications and approval remain separate.

@@ -41,7 +41,7 @@ export function getProductConfig(env = process.env) {
     mentorApplicationUrl,
     mentorApplicationsConfigured:
       featureFlags.mentorApplications && isValidHttpsUrl(mentorApplicationUrl),
-    mentorCheckoutEnabled: parseBooleanEnv(env.MENTOR_CHECKOUT_ENABLED, false),
+    mentorCheckoutEnabled: parseBooleanEnv(env.MENTOR_CHECKOUT_ENABLED, true),
   };
 }
 

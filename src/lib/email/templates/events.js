@@ -108,6 +108,8 @@ function eventCopy(type, data) {
         const planParagraph =
           data.tier === "company"
             ? "With GO Business, you have every Community benefit plus tools to create and publish projects, review applicants, and build project teams."
+            : data.tier === "mentor"
+              ? `With GO Mentor, you can use member resources and learning activities. ${plan.verificationNotice}`
             : data.tier === "member"
               ? "With GO Community, you can apply to open community projects, access periodic resource drops, and use member learning resources."
               : "Your account is ready. You can browse public projects now and choose a membership whenever you are ready to apply or create a project.";
@@ -223,7 +225,9 @@ function eventCopy(type, data) {
         const accessCopy =
           data.tier === "company"
             ? "You can use your member and project tools right away."
-            : "You can use your member access right away.";
+            : data.tier === "mentor"
+              ? `You can use your member resources now. ${plan.verificationNotice}`
+              : "You can use your member access right away.";
         return {
           subject: `Your ${membershipName} membership is active`,
           heading: "Your membership is active",

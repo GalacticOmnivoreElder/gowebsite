@@ -14,6 +14,11 @@ export function hasResourceAccess(resourceId, userData = {}, options = {}) {
   );
 }
 
+export function hasAssetContributionAccess(userData = {}, options = {}) {
+  if (!hasCommunityContentAccess(userData, options)) return false;
+  return options.admin === true || userData.membershipTier !== "mentor" || hasMentorToolAccess(userData);
+}
+
 export function hasMentorToolAccess(userData = {}) {
   return userData.mentorStatus === "approved";
 }

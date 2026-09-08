@@ -165,11 +165,7 @@ function getMetadataTier(data) {
     data?.subscription?.metadata?.tier ||
     data?.checkout?.metadata?.tier ||
     null;
-  return metadataTier === "company"
-    ? "company"
-    : metadataTier === "member"
-    ? "member"
-    : null;
+  return ["member", "mentor", "company"].includes(metadataTier) ? metadataTier : null;
 }
 
 function parsePolarDate(value) {

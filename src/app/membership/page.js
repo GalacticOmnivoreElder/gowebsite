@@ -17,11 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MentorApplicationButton } from "@/components/pricing/MentorApplicationButton";
 import { getMentorApplicationState } from "@/lib/product-settings";
+import { getMentorCheckoutStatus } from "@/lib/mentor-checkout";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = createMetadata({
   title: "GO Membership",
   description:
-    "Compare current GO Community and GO Business membership, pricing, billing, and access.",
+    "Compare GO Community, GO Mentor, and GO Business membership, pricing, billing, and access.",
   path: "/membership",
 });
 
@@ -46,7 +49,11 @@ const checkoutNotes = [
 export default async function MembershipPage({ searchParams }) {
   const params = await searchParams;
   const creatorMembershipRequired = params?.reason === "creator";
-  const mentorState = await getMentorApplicationState();
+  const [mentorState, mentorMonthly, mentorAnnual] = await Promise.all([
+    getMentorApplicationState(),
+    getMentorCheckoutStatus("monthly"),
+    getMentorCheckoutStatus("annual"),
+  ]);
 
   const membershipCategories = [
     {
@@ -67,12 +74,11 @@ export default async function MembershipPage({ searchParams }) {
     },
     {
       id: "mentor-programme",
-      title: "Mentor Programme",
+      title: "GO Mentor Membership",
       icon: Users,
-      description: "An application-based route for approved mentors who support game creators.",
-      benefits: ["Approved public mentor profile and preparation", "Availability and matching tools when enabled", "Direct reviews shared only with author consent and mentor selection; GO approval required"],
-      badge: "Coming Soon",
-      footer: <div className="space-y-3"><Button className="w-full" disabled>Coming Soon</Button><MentorApplicationButton applicationsOpen={mentorState.open} /></div>,
+      description: "Join as a mentor or educator. An interview with GO and verification are required before you can produce content or offer mentorship.",
+      benefits: ["Produce courses, workshops, video bundles, and assets after interview and GO verification", "Connect with community members requesting mentorship after interview and GO verification", "Direct reviews shared only with author consent and mentor selection; GO approval required"],
+      footer: <div className="w-full space-y-3"><Button asChild variant="outline" className="w-full"><Link href="#mentor-plan">See Mentor pricing</Link></Button><MentorApplicationButton applicationsOpen={mentorState.open} /></div>,
     },
     {
       id: "business",
@@ -96,8 +102,8 @@ export default async function MembershipPage({ searchParams }) {
               Four ways to take part in GO
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-              Start with public access, choose Community or Business when their
-              current benefits fit, or review the coming Mentor Programme.
+              Start with public access or choose Community, Mentor, or Business
+              membership when their benefits fit.
             </p>
           </div>
         </section>
@@ -131,7 +137,7 @@ export default async function MembershipPage({ searchParams }) {
 
           <div id="paid-plans" className="scroll-mt-24 pt-14">
             <h2 className="mb-7 text-center text-3xl font-bold">Current paid membership pricing</h2>
-            <PricingDisplay />
+            <PricingDisplay mentorAvailability={{ monthly: mentorMonthly.available, annual: mentorAnnual.available }} />
           </div>
         </section>
 

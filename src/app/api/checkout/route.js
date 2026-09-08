@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Polar } from "@polar-sh/sdk";
 import { getRequestUser } from "@/lib/auth-utils";
+import { getMentorCheckoutStatus } from "@/lib/mentor-checkout";
 import {
   getPolarServer,
   resolvePolarProductId,
@@ -39,7 +40,7 @@ export async function POST(request) {
     );
   }
 
-  const tier = body?.tier === "company" ? "company" : "member";
+  const tier = ["member", "mentor", "company"].includes(body?.tier) ? body.tier : "member";
   const interval = body?.interval === "annual" ? "annual" : "monthly";
   // Product selection is server-owned. Accepting an arbitrary productId from
   // the browser could pair a Community price with Business tier metadata.
@@ -90,6 +91,19 @@ export async function POST(request) {
       },
       { status: 409 }
     );
+  }
+
+  if (tier === "mentor") {
+    const status = await getMentorCheckoutStatus(interval);
+    if (!status.available) {
+      return NextResponse.json(
+        {
+          error: `GO Mentor ${interval} checkout is temporarily unavailable. Please choose another billing option or contact support.`,
+          code: "mentor_checkout_unavailable",
+        },
+        { status: 503 }
+      );
+    }
   }
 
   const polar = new Polar({

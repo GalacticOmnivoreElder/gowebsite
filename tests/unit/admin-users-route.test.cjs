@@ -126,7 +126,7 @@ test("admin users rejects invalid membership tiers", async () => {
   );
 
   assert.equal(response.status, 400);
-  assert.equal(response.body.error, "membershipTier must be member or company");
+  assert.equal(response.body.error, "membershipTier must be member, mentor or company");
 });
 
 test("admin controls mentor status and prevents public profiles before approval", async () => {

@@ -8,7 +8,7 @@ test("contributors need an active Community benefit and can mutate only their cu
   const route = read("src/app/api/asset-packs/route.js");
   const workspace = read("src/components/asset-packs/AssetPackWorkspace.jsx");
 
-  assert.match(route, /canSubmit: hasCommunityContentAccess/);
+  assert.match(route, /canSubmit: hasAssetContributionAccess/);
   assert.match(route, /Active Community or Business membership is required/);
   assert.match(route, /runTransaction/);
   assert.match(route, /ACTIVE_ASSET_PACK_VERSION_STATUSES\.includes/);

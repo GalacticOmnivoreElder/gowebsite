@@ -183,6 +183,7 @@ export default function UsersPage() {
                         Unassigned
                       </SelectItem>
                       <SelectItem value="member">Community Member</SelectItem>
+                      <SelectItem value="mentor">Mentor Member</SelectItem>
                       <SelectItem value="company">Business Creator</SelectItem>
                     </SelectContent>
                   </Select>
@@ -202,13 +203,14 @@ export default function UsersPage() {
                     <SelectContent>
                       <SelectItem value="none">Not a mentor</SelectItem>
                       <SelectItem value="applicant">Mentor applicant</SelectItem>
-                      <SelectItem value="approved">Approved mentor</SelectItem>
+                      <SelectItem value="approved">Verified after interview</SelectItem>
                       <SelectItem value="temporarily_unavailable">Temporarily unavailable</SelectItem>
                       <SelectItem value="suspended">Suspended</SelectItem>
                       <SelectItem value="inactive">No longer active</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="mt-2 max-w-xs text-sm text-muted-foreground">Verify mentors only after completing the GO interview. This approval is required before content production and mentorship connections.</p>
                 </TableCell>
                 <TableCell>
                   <label className="flex items-center gap-2 text-sm">

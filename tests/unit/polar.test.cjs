@@ -22,6 +22,8 @@ const polarEnvKeys = [
   "POLAR_SERVER",
   "POLAR_ACCESS_TOKEN",
   "POLAR_ORGANIZATION_SLUG",
+  "NEXT_PUBLIC_POLAR_MENTOR_MONTHLY_PRODUCT_ID",
+  "NEXT_PUBLIC_POLAR_MENTOR_ANNUAL_PRODUCT_ID",
   "NEXT_PUBLIC_POLAR_PRODUCT_ID",
   "NEXT_PUBLIC_POLAR_COMPANY_PRODUCT_ID",
   "NEXT_PUBLIC_POLAR_MEMBER_MONTHLY_PRODUCT_ID",
@@ -196,5 +198,27 @@ test("scheduled product changes always use next_period on the server", async () 
   assert.deepEqual(JSON.parse(calls[0].options.body), {
     product_id: "business-product",
     proration_behavior: "next_period",
+  });
+});
+
+test("Mentor production checkout IDs never fall back to Community or leak into sandbox checkout", () => {
+  withEnv({ POLAR_SERVER: "production" }, () => {
+    assert.equal(resolvePolarProductId("mentor", "monthly"), "1d213038-ac43-4c83-87a4-56a5d79ee2df");
+    assert.equal(resolvePolarProductId("mentor", "annual"), "b6838dca-edaf-4fc7-bfdf-d2ceed0ba1f9");
+    assert.equal(resolvePolarProductTier("1d213038-ac43-4c83-87a4-56a5d79ee2df"), "mentor");
+    assert.equal(resolvePolarProductTier("b6838dca-edaf-4fc7-bfdf-d2ceed0ba1f9"), "mentor");
+    assert.equal(resolvePolarProductTier("7963bdf5-be68-4d72-82ef-d86da4558b37"), "mentor");
+  });
+  withEnv({}, () => {
+    assert.equal(resolvePolarProductId("mentor", "monthly"), null);
+    assert.equal(resolvePolarProductId("mentor", "annual"), null);
+  });
+  withEnv({
+    NEXT_PUBLIC_POLAR_MENTOR_MONTHLY_PRODUCT_ID: "sandbox-mentor-monthly",
+    NEXT_PUBLIC_POLAR_MENTOR_ANNUAL_PRODUCT_ID: "sandbox-mentor-annual",
+  }, () => {
+    assert.equal(resolvePolarProductId("mentor", "monthly"), "sandbox-mentor-monthly");
+    assert.equal(resolvePolarProductId("mentor", "annual"), "sandbox-mentor-annual");
+    assert.equal(resolvePolarProductTier("sandbox-mentor-annual"), "mentor");
   });
 });

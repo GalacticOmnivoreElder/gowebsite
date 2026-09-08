@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { getRequestUser } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
 import { getProductConfig } from "@/lib/product-config";
-import { hasCommunityContentAccess } from "@/lib/content-entitlements";
+import { hasAssetContributionAccess, hasCommunityContentAccess } from "@/lib/content-entitlements";
 import { ACTIVE_ASSET_PACK_VERSION_STATUSES, assetPackId, assetPackVersionId, cleanAssetPackVersion, isPublicAssetPack, serializeAssetPackVersion, toPublicAssetPackDto } from "@/lib/asset-packs";
 
 function unavailable() {
@@ -22,7 +22,10 @@ export async function GET(request) {
   ]);
   return Response.json({
     publicPacks,
-    canSubmit: hasCommunityContentAccess(user.userData || {}, { admin: user.admin }),
+    canSubmit: hasAssetContributionAccess(user.userData || {}, { admin: user.admin }),
+    submissionBlockReason: !user.admin && user.userData?.membershipTier === "mentor" && user.userData?.mentorStatus !== "approved"
+      ? "Complete your interview with GO and receive mentor verification before creating or submitting assets."
+      : null,
     ownedPacks: ownedPacks.docs.map((doc) => ({ id: doc.id, title: doc.data().title, status: doc.data().status, currentVersionId: doc.data().currentVersionId || null, pendingVersionId: doc.data().pendingVersionId || null, createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || null })),
     ownedVersions: ownedVersions.docs.map((doc) => ({ ...serializeAssetPackVersion(doc.id, doc.data()), downloadUrl: doc.data().downloadUrl || "" })),
   }, { headers: { "Cache-Control": "no-store" } });
@@ -33,6 +36,7 @@ export async function POST(request) {
   const user = await getRequestUser(request);
   if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
   if (!hasCommunityContentAccess(user.userData || {}, { admin: user.admin })) return Response.json({ error: "Active Community or Business membership is required" }, { status: 403 });
+  if (!hasAssetContributionAccess(user.userData || {}, { admin: user.admin })) return Response.json({ error: "Complete your interview with GO and receive mentor verification before creating or submitting assets.", code: "mentor_verification_required" }, { status: 403 });
   const body = await request.json().catch(() => ({}));
   const submit = body.submit === true;
   try {
@@ -75,6 +79,7 @@ export async function PATCH(request) {
   const user = await getRequestUser(request);
   if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
   if (!hasCommunityContentAccess(user.userData || {}, { admin: user.admin })) return Response.json({ error: "Active Community or Business membership is required" }, { status: 403 });
+  if (!hasAssetContributionAccess(user.userData || {}, { admin: user.admin })) return Response.json({ error: "Complete your interview with GO and receive mentor verification before creating or submitting assets.", code: "mentor_verification_required" }, { status: 403 });
   const body = await request.json().catch(() => ({}));
   const versionId = String(body.versionId || "").trim();
   if (!versionId) return Response.json({ error: "Asset-pack version is required" }, { status: 400 });

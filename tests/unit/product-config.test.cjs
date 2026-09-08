@@ -18,7 +18,8 @@ test("Phase 1 product flags fail closed except navigation", () => {
     if (name !== "productNavigation") assert.equal(enabled, false, name);
   }
   assert.equal(config.mentorApplicationsConfigured, false);
-  assert.equal(config.mentorCheckoutEnabled, false);
+  assert.equal(config.mentorCheckoutEnabled, true);
+  assert.equal(configModule.getProductConfig({ MENTOR_CHECKOUT_ENABLED: "false" }).mentorCheckoutEnabled, false);
 });
 
 test("Phase 5 feedback deadline defaults safely", () => {

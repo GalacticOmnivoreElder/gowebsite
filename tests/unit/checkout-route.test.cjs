@@ -34,6 +34,7 @@ function loadRoute({
   user,
   productId = "prod_member_monthly",
   polarCreate,
+  mentorAvailable = true,
 } = {}) {
   const polarCalls = [];
   class Polar {
@@ -72,6 +73,7 @@ function loadRoute({
         NextResponse,
         Polar,
         getPolarServer: () => "sandbox",
+        getMentorCheckoutStatus: async () => ({ available: mentorAvailable }),
         getRequestUser: async () => user || null,
         resolvePolarProductId: () => productId,
       },
@@ -326,4 +328,51 @@ test("checkout route surfaces useful Polar config hints in development", async (
       }
     }
   );
+});
+
+test("Mentor checkout uses authenticated identity and server-owned plan metadata for each interval", async () => {
+  await withEnv({ POLAR_ACCESS_TOKEN: "test-token" }, async () => {
+    for (const interval of ["monthly", "annual"]) {
+      const { POST, polarCalls } = loadRoute({
+        user: { uid: "mentor-buyer", email: "mentor@example.com" },
+        productId: `mentor-${interval}`,
+      });
+      const response = await POST(createRequest({
+        url: "https://go.test/api/checkout",
+        jsonBody: { tier: "mentor", interval, productId: "forged-cheap-product", uid: "other-buyer" },
+      }));
+      assert.equal(response.status, 200);
+      assert.deepEqual(plain(polarCalls[0].input.products), [`mentor-${interval}`]);
+      assert.deepEqual(plain(polarCalls[0].input.metadata), { uid: "mentor-buyer", tier: "mentor", interval });
+      assert.equal(polarCalls[0].input.externalCustomerId, "mentor-buyer");
+      assert.equal(polarCalls[0].input.successUrl, "https://go.test/subscription/success");
+    }
+  });
+});
+
+test("unavailable annual Mentor checkout cannot bypass the guard through a direct API call", async () => {
+  await withEnv({ POLAR_ACCESS_TOKEN: "test-token" }, async () => {
+    const { POST, polarCalls } = loadRoute({
+      user: { uid: "mentor-buyer" },
+      mentorAvailable: false,
+    });
+    const response = await POST(createRequest({ jsonBody: { tier: "mentor", interval: "annual" } }));
+    assert.equal(response.status, 503);
+    assert.equal(response.body.code, "mentor_checkout_unavailable");
+    assert.deepEqual(polarCalls, []);
+  });
+});
+
+test("existing members cannot accidentally create a second Mentor subscription", async () => {
+  await withEnv({ POLAR_ACCESS_TOKEN: "test-token" }, async () => {
+    for (const membershipTier of ["member", "mentor", "company"]) {
+      const { POST, polarCalls } = loadRoute({
+        user: { uid: "existing-buyer", activeMember: true, membershipTier },
+      });
+      const response = await POST(createRequest({ jsonBody: { tier: "mentor", interval: "monthly" } }));
+      assert.equal(response.status, 409);
+      assert.equal(response.body.code, "active_membership");
+      assert.deepEqual(polarCalls, []);
+    }
+  });
 });

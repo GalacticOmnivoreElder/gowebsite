@@ -26,15 +26,13 @@ export function createSubscriptionConfirmationAttempt({
         ? baselineConfirmationId
         : null,
     baselineMembershipTier:
-      baselineMembershipTier === "company"
-        ? "company"
-        : baselineMembershipTier === "member"
-        ? "member"
+      ["member", "mentor", "company"].includes(baselineMembershipTier)
+        ? baselineMembershipTier
         : null,
     interval: interval === "annual" ? "annual" : "monthly",
     mode: mode === "upgrade" ? "upgrade" : "purchase",
     startedAt: now,
-    tier: tier === "company" ? "company" : "member",
+    tier: ["member", "mentor", "company"].includes(tier) ? tier : "member",
     userId,
   };
 }

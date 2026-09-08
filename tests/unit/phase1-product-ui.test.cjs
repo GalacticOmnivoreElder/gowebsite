@@ -5,6 +5,7 @@ const test = require("node:test");
 const header = fs.readFileSync("src/components/Header.jsx", "utf8");
 const navigation = fs.readFileSync("src/lib/navigation.js", "utf8");
 const membership = fs.readFileSync("src/app/membership/page.js", "utf8");
+const mentorApplicationButton = fs.readFileSync("src/components/pricing/MentorApplicationButton.jsx", "utf8");
 
 test("global navigation groups every learning destination under Learn", () => {
   for (const label of ["Courses", "Workshops", "Video Bundles", "Resources"]) {
@@ -19,10 +20,14 @@ test("global navigation groups every learning destination under Learn", () => {
   assert.ok(header.indexOf("<NavigationMenu") < header.indexOf("primaryNavigation.slice(2)"));
 });
 
-test("membership presents four categories while mentor stays unpriced and closed", () => {
-  for (const title of ["Public / Free", "GO Community", "Mentor Programme", "GO Business"]) assert.match(membership, new RegExp(`title: "${title}"`));
-  assert.match(membership, /title: "Mentor Programme"[\s\S]*badge: "Coming Soon"/);
+test("membership presents four categories with Mentor pricing and separate applications", () => {
+  for (const title of ["Public / Free", "GO Community", "GO Mentor Membership", "GO Business"]) assert.match(membership, new RegExp(`title: "${title}"`));
+  assert.doesNotMatch(membership, /badge: "Coming Soon"/);
+  assert.match(membership, /getMentorCheckoutStatus\("annual"\)/);
   const mentorBlock = membership.split('id: "mentor-programme"')[1].split('id: "business"')[0];
-  assert.doesNotMatch(mentorBlock, /pricing|checkoutUrl|MKD/);
+  assert.match(mentorBlock, /href="#mentor-plan"/);
+  assert.match(mentorBlock, /MentorApplicationButton/);
   assert.match(mentorBlock, /Direct reviews shared only with author consent and mentor selection/);
+  assert.match(mentorApplicationButton, /if \(!applicationsOpen\) return null/);
+  assert.doesNotMatch(mentorApplicationButton, /Applications closed/);
 });

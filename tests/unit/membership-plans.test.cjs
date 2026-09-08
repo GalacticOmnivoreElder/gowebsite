@@ -26,6 +26,7 @@ test("membership catalogue matches the MKD launch prices", () => {
   assert.deepEqual(JSON.parse(JSON.stringify(prices)), {
     company: { annual: 29000, monthly: 2999 },
     member: { annual: 4800, monthly: 500 },
+    mentor: { annual: 14999, monthly: 1499 },
   });
 
   const checkoutUrls = Object.fromEntries(
@@ -38,6 +39,10 @@ test("membership catalogue matches the MKD launch prices", () => {
   );
 
   assert.deepEqual(JSON.parse(JSON.stringify(checkoutUrls)), {
+    mentor_annual:
+      "https://buy.polar.sh/polar_cl_qMaoqwArF92Nt3LxzvMy1oHVV14K2PT7YleYz1EaS5D",
+    mentor_monthly:
+      "https://buy.polar.sh/polar_cl_F7jYBdfopsZYvauWl8TbQjAoXTLOAh9MVIXid0Tyfpt",
     company_annual:
       "https://buy.polar.sh/polar_cl_UtMDVEYWTIf2MyIECvoclfxLXrXvXjwEcJZAO3i0SeK",
     company_monthly:

@@ -74,7 +74,7 @@ export function schedulePolarProductChange(subscriptionId, productId) {
   );
 }
 
-// Product IDs exposed by the four production Checkout Links currently used on
+// Product IDs exposed by the production Checkout Links currently used on
 // /membership. Product IDs are public identifiers (the checkout pages expose
 // them); keeping them here lets webhooks recover the entitlement when an older
 // static Checkout Link does not include tier metadata.
@@ -86,6 +86,13 @@ const CHECKOUT_LINK_PRODUCT_IDS = {
   company: [
     "126bbba8-f3c7-4fcd-b2a1-0b3ab86032f6",
     "dd316098-f962-456e-a14a-080464b670b5",
+  ],
+  mentor: [
+    "1d213038-ac43-4c83-87a4-56a5d79ee2df",
+    "b6838dca-edaf-4fc7-bfdf-d2ceed0ba1f9",
+    // Legacy product whose billing interval was incorrectly monthly. Keep it
+    // mapped so historical webhook events still resolve to Mentor membership.
+    "7963bdf5-be68-4d72-82ef-d86da4558b37",
   ],
 };
 
@@ -106,6 +113,11 @@ export function resolvePolarProductTier(productId) {
       env.NEXT_PUBLIC_POLAR_COMPANY_MONTHLY_PRODUCT_ID,
       env.NEXT_PUBLIC_POLAR_COMPANY_ANNUAL_PRODUCT_ID,
     ].filter(Boolean)),
+    mentor: new Set([
+      ...CHECKOUT_LINK_PRODUCT_IDS.mentor,
+      env.NEXT_PUBLIC_POLAR_MENTOR_MONTHLY_PRODUCT_ID,
+      env.NEXT_PUBLIC_POLAR_MENTOR_ANNUAL_PRODUCT_ID,
+    ].filter(Boolean)),
   };
 
   const matches = Object.entries(productIdsByTier)
@@ -119,14 +131,14 @@ export function resolvePolarProductTier(productId) {
  * Resolve the Polar product id for a (tier, interval) pair.
  *
  * Polar products each have a single recurring interval, so monthly and annual
- * are separate products - hence four env vars. The legacy single-interval vars
+ * are separate products. The legacy single-interval vars
  * (NEXT_PUBLIC_POLAR_PRODUCT_ID / NEXT_PUBLIC_POLAR_COMPANY_PRODUCT_ID) are used
  * as the MONTHLY fallback so existing config keeps working.
  *
- * tier: "member" | "company"   interval: "monthly" | "annual"
+ * tier: "member" | "mentor" | "company"   interval: "monthly" | "annual"
  */
 export function resolvePolarProductId(tier, interval) {
-  const t = tier === "company" ? "company" : "member";
+  const t = ["member", "mentor", "company"].includes(tier) ? tier : "member";
   const i = interval === "annual" ? "annual" : "monthly";
   const env = process.env;
 
@@ -142,6 +154,14 @@ export function resolvePolarProductId(tier, interval) {
         env.NEXT_PUBLIC_POLAR_COMPANY_MONTHLY_PRODUCT_ID ||
         env.NEXT_PUBLIC_POLAR_COMPANY_PRODUCT_ID,
       annual: env.NEXT_PUBLIC_POLAR_COMPANY_ANNUAL_PRODUCT_ID,
+    },
+    mentor: {
+      monthly:
+        env.NEXT_PUBLIC_POLAR_MENTOR_MONTHLY_PRODUCT_ID ||
+        (getPolarServer() === "production" ? CHECKOUT_LINK_PRODUCT_IDS.mentor[0] : null),
+      annual:
+        env.NEXT_PUBLIC_POLAR_MENTOR_ANNUAL_PRODUCT_ID ||
+        (getPolarServer() === "production" ? CHECKOUT_LINK_PRODUCT_IDS.mentor[1] : null),
     },
   };
 
