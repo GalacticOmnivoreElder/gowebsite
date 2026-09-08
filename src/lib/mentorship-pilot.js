@@ -127,6 +127,7 @@ export function cleanMentorshipPilotRequest(input = {}, { submitting = false } =
     availability: text(input.availability || input.generalAvailability, 1000),
     preferredFormat: allowedFormats.includes(input.preferredFormat) ? input.preferredFormat : "",
     accessibilityRequest: text(input.accessibilityRequest, 1000),
+    requestedMentorId: text(input.requestedMentorId, 160) || null,
     consentVersion: text(input.consentVersion || MENTORSHIP_CONSENT_VERSION, 80),
     dataSharingConsent: input.dataSharingConsent === true,
     expectationsAcknowledged: input.expectationsAcknowledged === true,
@@ -208,18 +209,18 @@ export function serializeMentorPilotProfile(id, data = {}, { admin = false } = {
     displayName: data.displayName || "GO mentor",
     professionalHeadline: data.professionalHeadline || "",
     biography: data.biography || "",
-    areasOfExpertise: data.areasOfExpertise || [],
-    supportedDisciplines: data.supportedDisciplines || [],
-    toolsAndTechnologies: data.toolsAndTechnologies || [],
+    areasOfExpertise: data.areasOfExpertise?.length ? data.areasOfExpertise : data.disciplines || [],
+    supportedDisciplines: data.supportedDisciplines?.length ? data.supportedDisciplines : data.disciplines || [],
+    toolsAndTechnologies: data.toolsAndTechnologies?.length ? data.toolsAndTechnologies : data.skills || [],
     experienceLevel: data.experienceLevel || "",
     experienceYears: data.experienceYears || 0,
-    evidenceLinks: data.evidenceLinks || [],
+    evidenceLinks: data.evidenceLinks?.length ? data.evidenceLinks : data.portfolioLinks || [],
     languages: data.languages || [],
     timeZone: data.timeZone || "Europe/Skopje",
-    availableFormats: data.availableFormats || [],
+    availableFormats: data.availableFormats?.length ? data.availableFormats : data.mentorshipFormats || [],
     generalAvailability: data.generalAvailability || "",
-    preferredMenteeLevels: data.preferredMenteeLevels || [],
-    maximumActiveMentees: data.maximumActiveMentees || 1,
+    preferredMenteeLevels: data.preferredMenteeLevels?.length ? data.preferredMenteeLevels : data.supportedStudentLevels || [],
+    maximumActiveMentees: data.maximumActiveMentees || data.maximumActiveStudents || 1,
     mentorshipTopics: data.mentorshipTopics || [],
     status: data.status || "draft",
     customerMessage: data.customerMessage || "",
@@ -229,6 +230,32 @@ export function serializeMentorPilotProfile(id, data = {}, { admin = false } = {
     updatedAt: iso(data.updatedAt),
   };
   return admin ? { ...publicFields, accessibilityInformation: data.accessibilityInformation || "", conflictOfInterestDeclaration: data.conflictOfInterestDeclaration || "", conductVersion: data.conductVersion || "", termsVersion: data.termsVersion || "", internalReviewNotes: data.internalReviewNotes || "", reviewedBy: data.reviewedBy || null, reviewedAt: iso(data.reviewedAt) } : publicFields;
+}
+
+export function mentorApplicationNextAction(status) {
+  const actions = {
+    draft: "Complete the application and submit it when you are ready.",
+    submitted: "GO is reviewing your application and will contact you about the interview.",
+    needs_information: "Open the Mentor section, add the requested information, and submit again.",
+    approved: "Set up your public mentor profile and availability in the Mentor section.",
+    paused: "Your mentor activity is paused. Contact GO when you are ready to continue.",
+    rejected: "This application is closed. Contact GO if you need clarification.",
+    suspended: "Mentor access is suspended. Contact GO for support.",
+    archived: "This application has been archived. Contact GO if you want to apply again.",
+  };
+  return actions[status] || actions.draft;
+}
+
+export function serializeMentorApplicationSummary(id, application = {}, profile = {}) {
+  const status = application.status || profile.status || "draft";
+  return {
+    id,
+    status,
+    submittedAt: iso(application.submittedAt || profile.submittedAt),
+    updatedAt: iso(application.updatedAt || profile.updatedAt),
+    customerMessage: application.customerMessage || profile.customerMessage || profile.informationRequest || "",
+    nextAction: mentorApplicationNextAction(status),
+  };
 }
 
 export function serializePilotRequest(id, data = {}, { includeInternal = false } = {}) {
@@ -248,7 +275,10 @@ export function serializePilotRequest(id, data = {}, { includeInternal = false }
     availability: data.availability || "",
     preferredFormat: data.preferredFormat || "",
     accessibilityRequest: data.accessibilityRequest || "",
+    requestedMentorId: data.requestedMentorId || null,
+    requestedMentorProfile: data.requestedMentorProfile || null,
     status: data.status || "draft",
+    customerMessage: data.customerMessage || "",
     reviewDueAt: iso(data.reviewDueAt),
     createdAt: iso(data.createdAt),
     updatedAt: iso(data.updatedAt),

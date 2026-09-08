@@ -22,6 +22,7 @@ import {
   cleanMentorshipAgreement,
   cleanMentorshipPilotRequest,
   serializeMentorPilotProfile,
+  serializeMentorApplicationSummary,
   serializePilotApplication,
   serializePilotCheckIn,
   serializePilotEngagement,
@@ -29,6 +30,13 @@ import {
   serializeSuggestion,
   stableId,
 } from "@/lib/mentorship-pilot";
+import {
+  canonicalMentorProfileFields,
+  getMentorCapacity,
+  isMentorProfileComplete,
+  normalizeMentorProfile,
+  toPublicMentorProfileDto,
+} from "@/lib/mentor-profiles";
 
 function workflowError(message, code = "invalid_request", status = 400) {
   return Object.assign(new Error(message), { code, status });
@@ -91,6 +99,28 @@ function participant(engagement, user) {
   return Boolean(user?.admin || user?.uid === engagement.mentorId || user?.uid === engagement.menteeUserId);
 }
 
+async function getAvailablePublicMentor(mentorId, db = adminDb) {
+  const cleanId = String(mentorId || "").trim();
+  if (!cleanId) return null;
+  const [userDoc, profileDoc] = await Promise.all([
+    db.collection("users").doc(cleanId).get(),
+    db.collection("mentor_profiles").doc(cleanId).get(),
+  ]);
+  if (
+    !userDoc.exists ||
+    !profileDoc.exists ||
+    userDoc.data().mentorStatus !== "approved" ||
+    userDoc.data().mentorPublicProfileEnabled !== true
+  ) {
+    throw workflowError("The selected mentor is no longer available", "mentor_unavailable", 409);
+  }
+  const profile = normalizeMentorProfile(profileDoc.data());
+  if (!isMentorProfileComplete(profile) || !getMentorCapacity(profile).accepting) {
+    throw workflowError("The selected mentor has no available mentorship slots", "mentor_capacity_full", 409);
+  }
+  return toPublicMentorProfileDto(cleanId, profile);
+}
+
 function lockRef(db, userId) {
   return db.collection("mentorship_pilot_active_requests").doc(userId);
 }
@@ -148,7 +178,7 @@ export async function saveMentorPilotApplication({ user, input = {}, action = "s
   return { profile: serializeMentorPilotProfile(user.uid, result.profile, { admin: false }), status: result.profile.status };
 }
 
-export async function reviewMentorPilotApplication({ actor, userId, decision, internalNotes = "", db = adminDb, now = new Date() }) {
+export async function reviewMentorPilotApplication({ actor, userId, decision, internalNotes = "", customerMessage = "", db = adminDb, now = new Date() }) {
   if (!actor?.admin) throw workflowError("Platform admin access required", "staff_required", 403);
   if (!MENTOR_PROFILE_STATUSES.includes(decision) || !["approved", "needs_information", "rejected", "paused", "suspended", "archived"].includes(decision)) throw workflowError("Unsupported mentor review decision");
   const profileRef = db.collection("mentor_profiles").doc(userId);
@@ -156,16 +186,99 @@ export async function reviewMentorPilotApplication({ actor, userId, decision, in
   const result = await db.runTransaction(async (transaction) => {
     const [profileDoc, userDoc, applicationDoc] = await Promise.all([transaction.get(profileRef), transaction.get(db.collection("users").doc(userId)), transaction.get(applicationRef)]);
     if (!profileDoc.exists || !userDoc.exists) throw workflowError("Mentor application not found", "not_found", 404);
-    const previousStatus = profileDoc.data().status || "draft";
+    const previousProfile = profileDoc.data();
+    const previousStatus = previousProfile.status || "draft";
     const mappedUserStatus = decision === "approved" ? "approved" : decision === "paused" ? "temporarily_unavailable" : decision === "suspended" ? "suspended" : decision === "rejected" ? "rejected" : "applicant";
-    transaction.set(profileRef, { status: decision, internalReviewNotes: cleanReason(internalNotes, 4000), reviewedBy: actor.uid, reviewedAt: now, updatedAt: now, ...(decision === "paused" ? { pausedAt: now } : {}), ...(decision === "archived" ? { archivedAt: now } : {}) }, { merge: true });
-    transaction.set(applicationRef, { status: decision, internalReviewNotes: cleanReason(internalNotes, 4000), reviewedBy: actor.uid, reviewedAt: now, updatedAt: now }, { merge: true });
+    const customerCopy = cleanReason(customerMessage, 1200);
+    const canonicalProfile = decision === "approved" ? canonicalMentorProfileFields(previousProfile) : {};
+    transaction.set(profileRef, { ...canonicalProfile, status: decision, customerMessage: customerCopy, internalReviewNotes: cleanReason(internalNotes, 4000), reviewedBy: actor.uid, reviewedAt: now, updatedAt: now, ...(decision === "paused" ? { pausedAt: now } : {}), ...(decision === "archived" ? { archivedAt: now } : {}) }, { merge: true });
+    transaction.set(applicationRef, { status: decision, customerMessage: customerCopy, internalReviewNotes: cleanReason(internalNotes, 4000), reviewedBy: actor.uid, reviewedAt: now, updatedAt: now }, { merge: true });
     transaction.set(db.collection("users").doc(userId), { mentorStatus: mappedUserStatus, mentorStatusUpdatedBy: actor.uid, mentorStatusUpdatedAt: now, mentorPublicProfileEnabled: decision === "approved" && userDoc.data().mentorPublicProfileEnabled === true }, { merge: true });
     audit(transaction, db, { actor, action: `mentor_application.${decision}`, entityType: "mentor_profile", entityId: userId, previousStatus, newStatus: decision });
     return { userId, previousStatus, decision, applicationExists: applicationDoc.exists };
   });
-  await notify({ recipientUserId: userId, type: "mentorship_review", title: `Mentor application ${decision.replaceAll("_", " ")}`, message: decision === "approved" ? "Your mentor application was approved. Review your profile and availability in Profile → Mentor." : decision === "needs_information" ? "GO needs more information before it can finish reviewing your mentor application." : `Your mentor application was ${decision.replaceAll("_", " ")}.`, eventId: `mentor-application-review:${userId}:${decision}:${now.toISOString()}`, actionUrl: "/profile?tab=mentor" });
+  await notify({ recipientUserId: userId, type: "mentorship_review", title: `Mentor application ${decision.replaceAll("_", " ")}`, message: cleanReason(customerMessage, 1200) || (decision === "approved" ? "Your mentor application was approved. Review your profile and availability in Profile → Mentor." : decision === "needs_information" ? "GO needs more information before it can finish reviewing your mentor application." : `Your mentor application was ${decision.replaceAll("_", " ")}.`), eventId: `mentor-application-review:${userId}:${decision}:${now.toISOString()}`, actionUrl: "/profile?tab=mentor" });
   return result;
+}
+
+const DELETABLE_MENTOR_APPLICATION_STATUSES = new Set([
+  "draft",
+  "submitted",
+  "needs_information",
+  "rejected",
+  "archived",
+]);
+
+export async function deleteMentorPilotApplication({ actor, userId, reason = "", db = adminDb, now = new Date() }) {
+  if (!actor?.admin) throw workflowError("Platform admin access required", "staff_required", 403);
+  const cleanUserId = String(userId || "").trim();
+  const cleanDeletionReason = cleanReason(reason, 1200);
+  if (!cleanUserId) throw workflowError("Mentor applicant is required");
+  if (!cleanDeletionReason) throw workflowError("A deletion reason is required");
+
+  const [relatedApplications, relatedEngagements, legacyRequests, legacyEngagements, learningItems, assetPacks] = await Promise.all([
+    db.collection("mentorship_applications").where("mentorId", "==", cleanUserId).limit(1).get(),
+    db.collection("mentorship_pilot_engagements").where("mentorId", "==", cleanUserId).limit(1).get(),
+    db.collection("mentorship_requests").where("targetMentorId", "==", cleanUserId).limit(1).get(),
+    db.collection("mentorship_engagements").where("mentorId", "==", cleanUserId).limit(1).get(),
+    db.collection("learning_items").where("instructorUserId", "==", cleanUserId).limit(100).get(),
+    db.collection("asset_packs").where("contributorId", "==", cleanUserId).limit(100).get(),
+  ]);
+  const hasPublishedLearning = learningItems.docs.some((doc) =>
+    ["enrollment_open", "enrollment_closed", "full", "waitlist_available", "in_progress", "completed"].includes(doc.data().status)
+  );
+  const hasPublishedAssets = assetPacks.docs.some((doc) =>
+    ["published", "legacy"].includes(doc.data().status)
+  );
+  if (!relatedApplications.empty || !relatedEngagements.empty || !legacyRequests.empty || !legacyEngagements.empty || hasPublishedLearning || hasPublishedAssets) {
+    throw workflowError(
+      "This mentor submission is connected to mentorship or published content. Archive or suspend the mentor instead.",
+      "mentor_application_in_use",
+      409
+    );
+  }
+
+  const applicationRef = db.collection("mentor_applications").doc(cleanUserId);
+  const profileRef = db.collection("mentor_profiles").doc(cleanUserId);
+  const userRef = db.collection("users").doc(cleanUserId);
+  return db.runTransaction(async (transaction) => {
+    const [applicationDoc, profileDoc, userDoc] = await Promise.all([
+      transaction.get(applicationRef),
+      transaction.get(profileRef),
+      transaction.get(userRef),
+    ]);
+    if (!applicationDoc.exists && !profileDoc.exists) {
+      throw workflowError("Mentor application not found", "not_found", 404);
+    }
+    const previousStatus = applicationDoc.data()?.status || profileDoc.data()?.status || "draft";
+    if (!DELETABLE_MENTOR_APPLICATION_STATUSES.has(previousStatus)) {
+      throw workflowError(
+        "Approved, paused, or suspended mentors must be archived or suspended instead of deleted.",
+        "mentor_application_in_use",
+        409
+      );
+    }
+    if (applicationDoc.exists) transaction.delete(applicationRef);
+    if (profileDoc.exists) transaction.delete(profileRef);
+    if (userDoc.exists) {
+      transaction.set(userRef, {
+        mentorStatus: "none",
+        mentorPublicProfileEnabled: false,
+        mentorStatusUpdatedBy: actor.uid,
+        mentorStatusUpdatedAt: now,
+      }, { merge: true });
+    }
+    audit(transaction, db, {
+      actor,
+      action: "mentor_application.deleted",
+      entityType: "mentor_application",
+      entityId: cleanUserId,
+      previousStatus,
+      newStatus: "deleted",
+      metadata: { affectedUserId: cleanUserId, reason: cleanDeletionReason },
+    });
+    return { id: cleanUserId, deleted: true, previousStatus };
+  });
 }
 
 export async function saveMentorshipPilotRequest({ user, requestId = "", input = {}, mode = "submit", db = adminDb, now = new Date() }) {
@@ -173,6 +286,9 @@ export async function saveMentorshipPilotRequest({ user, requestId = "", input =
   actorAllowed(user, config, "create_request");
   if (!config.under18MentorshipEnabled && input.isAdult !== true) throw workflowError("Mentorship pilot access is limited to members aged 18 or older", "adult_confirmation_required", 403);
   const submitting = mode === "submit";
+  const requestedMentor = input.requestedMentorId
+    ? await getAvailablePublicMentor(input.requestedMentorId, db)
+    : null;
   const requestRef = requestId ? db.collection("mentorship_pilot_requests").doc(requestId) : db.collection("mentorship_pilot_requests").doc(stableId("request", user.uid, crypto.randomUUID()));
   const result = await db.runTransaction(async (transaction) => {
     const lock = lockRef(db, user.uid);
@@ -184,7 +300,7 @@ export async function saveMentorshipPilotRequest({ user, requestId = "", input =
     if (requestDoc.exists && !REQUEST_ACTIVE_STATUSES.includes(previous.status) && previous.status !== "draft") throw workflowError("This mentorship request can no longer be edited", "request_not_editable", 409);
     const clean = cleanMentorshipPilotRequest({ ...previous, ...input }, { submitting });
     const status = submitting ? "submitted" : previous.status || "draft";
-    const data = { ...clean, menteeUserId: user.uid, menteeDisplayName: displayName(user.userData), status, createdAt: previous.createdAt || now, updatedAt: now, reviewDueAt: submitting ? addDays(now, config.requestReviewTargetWorkingDays) : previous.reviewDueAt || null, ...(submitting ? { submittedAt: now } : {}) };
+    const data = { ...clean, requestedMentorProfile: clean.requestedMentorId ? requestedMentor || previous.requestedMentorProfile || null : null, menteeUserId: user.uid, menteeDisplayName: displayName(user.userData), status, createdAt: previous.createdAt || now, updatedAt: now, reviewDueAt: submitting ? addDays(now, config.requestReviewTargetWorkingDays) : previous.reviewDueAt || null, ...(submitting ? { submittedAt: now } : {}) };
     transaction.set(requestRef, data, { merge: true });
     if (!ids.includes(requestRef.id)) transaction.set(lock, { userId: user.uid, requestIds: [...ids, requestRef.id], createdAt: lockDoc.data()?.createdAt || now, updatedAt: now }, { merge: true });
     audit(transaction, db, { actor: user, action: submitting ? "mentorship_request.submitted" : "mentorship_request.saved", entityType: "mentorship_request", entityId: requestRef.id, previousStatus: previous.status || null, newStatus: status, metadata: { discipline: data.discipline } });
@@ -266,12 +382,13 @@ export async function sendMentorSuggestions({ actor, requestId, suggestions = []
     if (!["ready_for_suggestions", "suggestions_sent", "application_submitted"].includes(request.status)) throw workflowError("This request is not ready for mentor suggestions", "invalid_status", 409);
     const created = [];
     for (const [index, item] of mentorDocs.entries()) {
-      const profile = item.profileDoc.data() || {};
+      const profile = normalizeMentorProfile({
+        ...(item.profileDoc.data() || {}),
+        ...(item.availabilityDoc.exists ? item.availabilityDoc.data() : {}),
+      });
       const user = item.userDoc.data() || {};
-      const accepting = profile.currentlyAcceptingStudents !== false && profile.temporaryPause !== true && user.mentorStatus === "approved" && (profile.publicProfileConsent === true || user.mentorPublicProfileEnabled === true);
-      const capacity = Number(profile.pilotActiveEngagementCount || profile.activeEngagementCount || 0);
-      const max = Math.max(1, Number(profile.maximumActiveMentees || profile.maximumActiveStudents) || config.maxActiveMentorshipsPerMentor);
-      if (!item.userDoc.exists || !item.profileDoc.exists || !accepting || capacity >= max) throw workflowError(`Mentor ${item.mentorId} is not currently available`, "mentor_unavailable", 409);
+      const accepting = user.mentorStatus === "approved" && (profile.publicProfileConsent === true || user.mentorPublicProfileEnabled === true) && getMentorCapacity(profile).accepting;
+      if (!item.userDoc.exists || !item.profileDoc.exists || !accepting) throw workflowError(`Mentor ${item.mentorId} is not currently available`, "mentor_unavailable", 409);
       const suggestionId = stableId("suggestion", requestId, item.mentorId);
       const ref = db.collection("mentorship_suggestions").doc(suggestionId);
       const data = { id: suggestionId, requestId, mentorId: item.mentorId, createdBy: actor.uid, mentorProfile: serializeMentorPilotProfile(item.mentorId, profile), reasonSummary: cleanReason(suggestions[index]?.reasonSummary, 500), privateStaffNotes: cleanReason(suggestions[index]?.privateStaffNotes, 3000), status: "visible", shownAt: now, expiresAt: addDays(now, config.applicationResponseTargetWorkingDays * 2), createdAt: now, updatedAt: now };
@@ -285,6 +402,131 @@ export async function sendMentorSuggestions({ actor, requestId, suggestions = []
     return { menteeUserId: request.menteeUserId, created };
   });
   await notify({ recipientUserId: result.menteeUserId, type: "mentorship_suggestion", title: "Mentor suggestions are ready", message: "GO reviewed your request and prepared mentor suggestions for you to review.", eventId: `suggestions-sent:${requestId}` });
+  return result;
+}
+
+export async function forwardRequestToRequestedMentor({ actor, requestId, customerMessage = "", db = adminDb, now = new Date() }) {
+  if (!actor?.admin) throw workflowError("Platform admin access required", "staff_required", 403);
+  const requestRef = db.collection("mentorship_pilot_requests").doc(requestId);
+  const result = await db.runTransaction(async (transaction) => {
+    const requestDoc = await transaction.get(requestRef);
+    if (!requestDoc.exists) throw workflowError("Mentorship request not found", "not_found", 404);
+    const request = requestDoc.data();
+    if (!["submitted", "under_review", "ready_for_suggestions", "application_submitted"].includes(request.status)) {
+      throw workflowError("This request cannot be forwarded in its current state", "invalid_status", 409);
+    }
+    if (!request.requestedMentorId || request.dataSharingConsent !== true) {
+      throw workflowError("This request does not include a consented selected mentor", "invalid_request", 409);
+    }
+
+    const mentorId = request.requestedMentorId;
+    const suggestionId = stableId("suggestion", requestId, mentorId);
+    const applicationId = stableId("mentorship-application", suggestionId);
+    const mentorUserRef = db.collection("users").doc(mentorId);
+    const mentorProfileRef = db.collection("mentor_profiles").doc(mentorId);
+    const mentorAvailabilityRef = db.collection("mentor_availability").doc(mentorId);
+    const suggestionRef = db.collection("mentorship_suggestions").doc(suggestionId);
+    const applicationRef = db.collection("mentorship_applications").doc(applicationId);
+    const [mentorUserDoc, mentorProfileDoc, mentorAvailabilityDoc, suggestionDoc, applicationDoc] = await Promise.all([
+      transaction.get(mentorUserRef),
+      transaction.get(mentorProfileRef),
+      transaction.get(mentorAvailabilityRef),
+      transaction.get(suggestionRef),
+      transaction.get(applicationRef),
+    ]);
+    if (applicationDoc.exists) {
+      return {
+        id: applicationId,
+        mentorId,
+        menteeUserId: request.menteeUserId,
+        status: applicationDoc.data().status,
+        idempotent: true,
+      };
+    }
+    if (
+      !mentorUserDoc.exists ||
+      !mentorProfileDoc.exists ||
+      mentorUserDoc.data().mentorStatus !== "approved" ||
+      mentorUserDoc.data().mentorPublicProfileEnabled !== true
+    ) {
+      throw workflowError("The requested mentor is no longer available", "mentor_unavailable", 409);
+    }
+    const profile = normalizeMentorProfile({
+      ...mentorProfileDoc.data(),
+      ...(mentorAvailabilityDoc.exists ? mentorAvailabilityDoc.data() : {}),
+    });
+    if (!isMentorProfileComplete(profile) || !getMentorCapacity(profile).accepting) {
+      throw workflowError("The requested mentor has no available mentorship slots", "mentor_capacity_full", 409);
+    }
+
+    const mentorProfile = serializeMentorPilotProfile(mentorId, profile);
+    const suggestion = {
+      id: suggestionId,
+      requestId,
+      mentorId,
+      createdBy: actor.uid,
+      mentorProfile,
+      reasonSummary: cleanReason(customerMessage, 500) || "You selected this official GO mentor from the Mentorship directory.",
+      privateStaffNotes: "",
+      status: "selected",
+      shownAt: now,
+      selectedAt: now,
+      expiresAt: addDays(now, getMentorshipPilotConfig().applicationResponseTargetWorkingDays),
+      createdAt: suggestionDoc.data()?.createdAt || now,
+      updatedAt: now,
+    };
+    const sharedRequest = {
+      title: request.title,
+      goal: request.goal,
+      discipline: request.discipline,
+      currentLevel: request.currentLevel,
+      desiredOutcome: request.desiredOutcome,
+      projectLinks: request.projectLinks || [],
+      preferredTimeframe: request.preferredTimeframe,
+      timeframeDetails: request.timeframeDetails,
+      languagePreferences: request.languagePreferences,
+      timeZone: request.timeZone,
+      availability: request.availability,
+      preferredFormat: request.preferredFormat,
+    };
+    const application = {
+      requestId,
+      suggestionId,
+      mentorId,
+      menteeUserId: request.menteeUserId,
+      message: "",
+      sharedRequest,
+      consentVersion: request.consentVersion,
+      dataSharingConsent: true,
+      relevantProfileSnapshot: {
+        displayName: request.menteeDisplayName || "GO member",
+        publicProfileId: request.menteeUserId,
+      },
+      status: "pending",
+      submittedAt: now,
+      expiresAt: addDays(now, getMentorshipPilotConfig().applicationResponseTargetWorkingDays),
+      createdAt: now,
+      updatedAt: now,
+    };
+    transaction.set(suggestionRef, suggestion, { merge: true });
+    transaction.create(applicationRef, application);
+    transaction.update(requestRef, {
+      status: "application_submitted",
+      requestedMentorForwardedAt: now,
+      customerMessage: cleanReason(customerMessage, 1200),
+      updatedAt: now,
+    });
+    audit(transaction, db, { actor, action: "mentorship_request.forwarded_to_requested_mentor", entityType: "mentorship_request", entityId: requestId, previousStatus: request.status, newStatus: "application_submitted", metadata: { mentorId, applicationId } });
+    audit(transaction, db, { actor, action: "mentor_application.submitted", entityType: "mentor_application", entityId: applicationId, newStatus: "pending", metadata: { suggestionId, requestedByMentee: true } });
+    return { id: applicationId, mentorId, menteeUserId: request.menteeUserId, status: "pending", idempotent: false };
+  });
+
+  if (!result.idempotent) {
+    await Promise.all([
+      notify({ recipientUserId: result.mentorId, type: "mentorship_application", title: "A mentorship application is ready", message: "GO reviewed a member request for your mentorship. Review it in your profile.", eventId: `requested-mentor-application:${result.id}:mentor`, actionUrl: "/profile?tab=mentorships" }),
+      notify({ recipientUserId: result.menteeUserId, type: "mentorship_review", title: "Your request was sent to the mentor", message: "GO reviewed your request. The mentor can now accept or decline it from their private workspace.", eventId: `requested-mentor-application:${result.id}:mentee`, actionUrl: "/profile?tab=mentorships" }),
+    ]);
+  }
   return result;
 }
 
@@ -374,10 +616,9 @@ export async function respondToMentorApplication({ user, applicationId, action, 
     const profileRef = db.collection("mentor_profiles").doc(application.mentorId);
     const profileDoc = await transaction.get(profileRef);
     if (!profileDoc.exists) throw workflowError("Mentor profile not found", "mentor_unavailable", 409);
-    const profile = profileDoc.data();
-    const currentCount = Math.max(0, Number(profile.pilotActiveEngagementCount || profile.activeEngagementCount) || 0);
-    const max = Math.max(1, Number(profile.maximumActiveMentees || profile.maximumActiveStudents) || getMentorshipPilotConfig().maxActiveMentorshipsPerMentor);
-    if (currentCount >= max) throw workflowError("Mentor capacity is full", "mentor_capacity_full", 409);
+    const profile = normalizeMentorProfile(profileDoc.data());
+    const capacity = getMentorCapacity(profile);
+    if (!capacity.accepting) throw workflowError("Mentor capacity is full", "mentor_capacity_full", 409);
     const engagementId = stableId("engagement", applicationId);
     const engagementRef = db.collection("mentorship_pilot_engagements").doc(engagementId);
     const engagementDoc = await transaction.get(engagementRef);
@@ -387,7 +628,7 @@ export async function respondToMentorApplication({ user, applicationId, action, 
     transaction.create(engagementRef, engagement);
     transaction.update(applicationRef, { status: "accepted", mentorResponse: cleanReason(response), respondedAt: now, engagementId, updatedAt: now });
     transaction.update(requestRef, { status: "matched", engagementId, updatedAt: now });
-    transaction.update(profileRef, { pilotActiveEngagementCount: currentCount + 1, updatedAt: now });
+    transaction.update(profileRef, { pilotActiveEngagementCount: Math.max(0, Number(profileDoc.data().pilotActiveEngagementCount) || 0) + 1, updatedAt: now });
     audit(transaction, db, { actor: user, action: "mentor_application.accepted", entityType: "mentor_application", entityId: applicationId, previousStatus: "pending", newStatus: "accepted" });
     return { status: "accepted", engagementId, engagement, menteeUserId: application.menteeUserId, mentorId: application.mentorId, idempotent: false };
   });
@@ -398,7 +639,7 @@ export async function respondToMentorApplication({ user, applicationId, action, 
 async function releaseMentorCapacity(transaction, db, engagement, now) {
   const profileRef = db.collection("mentor_profiles").doc(engagement.mentorId);
   const profileDoc = await transaction.get(profileRef);
-  if (profileDoc.exists) transaction.update(profileRef, { pilotActiveEngagementCount: Math.max(0, Number(profileDoc.data().pilotActiveEngagementCount || profileDoc.data().activeEngagementCount || 0) - 1), updatedAt: now });
+  if (profileDoc.exists) transaction.update(profileRef, { pilotActiveEngagementCount: Math.max(0, (Number(profileDoc.data().pilotActiveEngagementCount) || 0) - 1), updatedAt: now });
 }
 
 export async function updateMentorshipPilotEngagement({ user, engagementId, action, payload = {}, db = adminDb, now = new Date() }) {
@@ -516,7 +757,7 @@ export async function getMentorshipPilotDashboard(user, { db = adminDb } = {}) {
   const appDocs = new Map([...menteeApplications.docs, ...mentorApplications.docs].map((doc) => [doc.id, doc]));
   const engagementDocs = new Map([...menteeEngagements.docs, ...mentorEngagements.docs].map((doc) => [doc.id, doc]));
   const checkIns = (await Promise.all([...engagementDocs.keys()].map((id) => db.collection("mentorship_checkins").where("engagementId", "==", id).limit(20).get()))).flatMap((snapshots) => snapshots.docs.map((doc) => serializePilotCheckIn(doc.id, doc.data())));
-  return { mentorProfile: mentorProfile.exists ? serializeMentorPilotProfile(user.uid, mentorProfile.data()) : null, mentorApplication: mentorApplication.exists ? { id: mentorApplication.id, status: mentorApplication.data().status } : null, requests: requestDtos, suggestions, applications: [...appDocs.values()].map((doc) => serializePilotApplication(doc.id, doc.data())), engagements: [...engagementDocs.values()].map((doc) => serializePilotEngagement(doc.id, doc.data())), checkIns };
+  return { mentorProfile: mentorProfile.exists ? serializeMentorPilotProfile(user.uid, mentorProfile.data()) : null, mentorApplication: mentorApplication.exists ? serializeMentorApplicationSummary(mentorApplication.id, mentorApplication.data(), mentorProfile.exists ? mentorProfile.data() : {}) : mentorProfile.exists ? serializeMentorApplicationSummary(user.uid, {}, mentorProfile.data()) : null, requests: requestDtos, suggestions, applications: [...appDocs.values()].map((doc) => serializePilotApplication(doc.id, doc.data())), engagements: [...engagementDocs.values()].map((doc) => serializePilotEngagement(doc.id, doc.data())), checkIns };
 }
 
 export async function getMentorshipPilotAdminDashboard({ actor, db = adminDb }) {
@@ -532,7 +773,7 @@ export async function getMentorshipPilotAdminDashboard({ actor, db = adminDb }) 
     db.collection("mentorship_audit_events").limit(1000).get(),
   ]);
   const profiles = await Promise.all(mentorApplications.docs.map((doc) => db.collection("mentor_profiles").doc(doc.id).get()));
-  const mentorRows = mentorApplications.docs.map((doc, index) => ({ id: doc.id, application: { id: doc.id, status: doc.data().status, submittedAt: asDate(doc.data().submittedAt)?.toISOString() || null }, profile: profiles[index].exists ? serializeMentorPilotProfile(doc.id, profiles[index].data(), { admin: true }) : null }));
+  const mentorRows = mentorApplications.docs.map((doc, index) => ({ id: doc.id, application: serializeMentorApplicationSummary(doc.id, doc.data(), profiles[index].exists ? profiles[index].data() : {}), profile: profiles[index].exists ? serializeMentorPilotProfile(doc.id, profiles[index].data(), { admin: true }) : null }));
   const config = getMentorshipPilotConfig();
   const counts = { approvedMentors: mentorRows.filter((row) => row.profile?.status === "approved").length, availableMentors: mentorRows.filter((row) => row.profile?.status === "approved" && row.profile?.publicProfileConsent).length, totalMentorCapacity: mentorRows.reduce((sum, row) => sum + (Number(row.profile?.maximumActiveMentees) || 0), 0), activeMentorships: engagements.docs.filter((doc) => ENGAGEMENT_CAPACITY_STATUSES.includes(doc.data().status)).length, openRequests: requests.docs.filter((doc) => REQUEST_ACTIVE_STATUSES.includes(doc.data().status)).length, requestsAwaitingReview: requests.docs.filter((doc) => ["submitted", "under_review", "needs_information"].includes(doc.data().status)).length, applicationsAwaitingResponse: applications.docs.filter((doc) => doc.data().status === "pending").length, engagementsRequiringAttention: engagements.docs.filter((doc) => ["paused", "completion_pending", "under_review"].includes(doc.data().status)).length };
   return { config: { ...config, pilotUserIds: config.pilotUserIds.length }, counts, mentorApplications: mentorRows, requests: requests.docs.map((doc) => serializePilotRequest(doc.id, doc.data(), { includeInternal: true })), suggestions: suggestions.docs.map((doc) => ({ ...serializeSuggestion(doc.id, doc.data()), privateStaffNotes: doc.data().privateStaffNotes || "" })), applications: applications.docs.map((doc) => serializePilotApplication(doc.id, doc.data(), { includePrivate: true })), engagements: engagements.docs.map((doc) => serializePilotEngagement(doc.id, doc.data(), { includePrivate: true })), reports: reports.docs.map((doc) => ({ id: doc.id, engagementId: doc.data().engagementId, category: doc.data().category, details: doc.data().details, status: doc.data().status, createdAt: asDate(doc.data().createdAt)?.toISOString() || null })), alerts: alerts.docs.map((doc) => ({ id: doc.id, ...doc.data(), createdAt: asDate(doc.data().createdAt)?.toISOString() || null })), audit: auditEvents.docs.map((doc) => ({ id: doc.id, ...doc.data(), createdAt: asDate(doc.data().createdAt)?.toISOString() || null })).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")) };

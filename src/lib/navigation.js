@@ -27,7 +27,7 @@ export const learningNavigation = Object.freeze([
 
 export const primaryNavigation = Object.freeze([
   { href: "/projects", label: "Projects" },
-  { href: "/matchmaking", label: "Matchmaking" },
+  { href: "/matchmaking", label: "Mentorship" },
   { href: "/community", label: "Community" },
   { href: "/membership", label: "Membership" },
 ]);

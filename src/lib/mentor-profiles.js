@@ -61,6 +61,20 @@ function validTimeZone(value) {
   }
 }
 
+function preferredArray(...values) {
+  return values.find((value) => Array.isArray(value) && value.length > 0) || [];
+}
+
+function positiveInteger(...values) {
+  const value = values.find((item) => Number.isFinite(Number(item)) && Number(item) > 0);
+  return Math.max(1, Math.floor(Number(value) || 1));
+}
+
+function nonNegativeInteger(...values) {
+  const value = values.find((item) => Number.isFinite(Number(item)) && Number(item) >= 0);
+  return Math.max(0, Math.floor(Number(value) || 0));
+}
+
 function validClock(value, label) {
   const clock = text(value, 5);
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(clock)) {
@@ -81,36 +95,148 @@ export function cleanMentorProfile(input = {}) {
   return {
     displayName: text(input.displayName, 160),
     profileImage: httpsUrl(input.profileImage, "Profile image"),
+    professionalHeadline: text(input.professionalHeadline || input.headline, 180),
     biography: text(input.biography, 8000),
-    disciplines: stringArray(input.disciplines, 30, 100),
-    skills: stringArray(input.skills, 60, 100),
-    supportedStudentLevels: enumArray(input.supportedStudentLevels, MENTOR_LEVELS),
+    disciplines: stringArray(preferredArray(input.disciplines, input.supportedDisciplines, input.areasOfExpertise), 30, 100),
+    skills: stringArray(preferredArray(input.skills, input.toolsAndTechnologies, input.areasOfExpertise), 60, 100),
+    supportedStudentLevels: enumArray(preferredArray(input.supportedStudentLevels, input.preferredMenteeLevels), MENTOR_LEVELS),
     languages: stringArray(input.languages, 20, 80),
-    mentorshipFormats: enumArray(input.mentorshipFormats, MENTOR_FORMATS),
+    mentorshipFormats: enumArray(preferredArray(input.mentorshipFormats, input.availableFormats), MENTOR_FORMATS),
     locationPreference: MENTOR_FORMATS.includes(input.locationPreference)
       ? input.locationPreference
       : "online",
     timeZone: validTimeZone(input.timeZone),
-    portfolioLinks: portfolioLinks(input.portfolioLinks),
+    portfolioLinks: portfolioLinks(preferredArray(input.portfolioLinks, input.evidenceLinks)),
+    mentorshipTopics: stringArray(input.mentorshipTopics, 30, 120),
     relatedLearningSlugs: stringArray(input.relatedLearningSlugs, 30, 160),
     relatedVideoBundleSlugs: stringArray(input.relatedVideoBundleSlugs, 30, 160),
     availabilitySummary: AVAILABILITY_STATUSES.includes(input.availabilitySummary)
       ? input.availabilitySummary
       : "unavailable",
     currentlyAcceptingStudents: input.currentlyAcceptingStudents === true,
-    maximumActiveStudents: Math.min(100, Math.max(1, Math.floor(Number(input.maximumActiveStudents) || 1))),
+    maximumActiveStudents: Math.min(100, positiveInteger(input.maximumActiveStudents, input.maximumActiveMentees)),
+  };
+}
+
+/**
+ * Read both mentor profile shapes that have existed in the platform. Canonical
+ * fields win when they contain data, while pilot application fields remain a
+ * fallback for records created before the public profile editor was available.
+ */
+export function normalizeMentorProfile(profile = {}) {
+  const maximumActiveStudents = Math.min(
+    100,
+    positiveInteger(profile.maximumActiveStudents, profile.maximumActiveMentees)
+  );
+  const canonicalActiveEngagementCount = nonNegativeInteger(
+    profile.canonicalActiveEngagementCount,
+    profile.activeEngagementCount
+  );
+  const activeEngagementCount =
+    nonNegativeInteger(profile.pilotActiveEngagementCount) +
+    canonicalActiveEngagementCount;
+  const availableSlots = Math.max(0, maximumActiveStudents - activeEngagementCount);
+  const currentlyAcceptingStudents =
+    profile.currentlyAcceptingStudents === true &&
+    profile.temporaryPause !== true &&
+    availableSlots > 0;
+  const requestedAvailability = AVAILABILITY_STATUSES.includes(profile.availabilitySummary)
+    ? profile.availabilitySummary
+    : profile.availabilityStatus === "limited"
+      ? "limited"
+      : currentlyAcceptingStudents
+        ? "accepting"
+        : "unavailable";
+
+  return {
+    ...profile,
+    displayName: text(profile.displayName, 160),
+    profileImage: profile.profileImage || null,
+    professionalHeadline: text(profile.professionalHeadline || profile.headline, 180),
+    biography: text(profile.biography, 8000),
+    disciplines: stringArray(
+      preferredArray(profile.disciplines, profile.supportedDisciplines, profile.areasOfExpertise),
+      30,
+      100
+    ),
+    skills: stringArray(
+      preferredArray(profile.skills, profile.toolsAndTechnologies, profile.areasOfExpertise),
+      60,
+      100
+    ),
+    supportedStudentLevels: enumArray(
+      preferredArray(profile.supportedStudentLevels, profile.preferredMenteeLevels),
+      MENTOR_LEVELS
+    ),
+    languages: stringArray(profile.languages, 20, 80),
+    mentorshipFormats: enumArray(
+      preferredArray(profile.mentorshipFormats, profile.availableFormats),
+      MENTOR_FORMATS
+    ),
+    locationPreference: MENTOR_FORMATS.includes(profile.locationPreference)
+      ? profile.locationPreference
+      : preferredArray(profile.mentorshipFormats, profile.availableFormats)[0] || "online",
+    timeZone: text(profile.timeZone, 100) || "Europe/Skopje",
+    portfolioLinks: preferredArray(profile.portfolioLinks, profile.evidenceLinks),
+    mentorshipTopics: stringArray(profile.mentorshipTopics, 30, 120),
+    relatedLearningSlugs: stringArray(profile.relatedLearningSlugs, 30, 160),
+    relatedVideoBundleSlugs: stringArray(profile.relatedVideoBundleSlugs, 30, 160),
+    availabilitySummary: currentlyAcceptingStudents ? requestedAvailability : "unavailable",
+    currentlyAcceptingStudents,
+    maximumActiveStudents,
+    canonicalActiveEngagementCount,
+    activeEngagementCount,
+    availableSlots,
+  };
+}
+
+export function canonicalMentorProfileFields(profile = {}) {
+  const normalized = normalizeMentorProfile(profile);
+  return {
+    displayName: normalized.displayName,
+    profileImage: normalized.profileImage,
+    professionalHeadline: normalized.professionalHeadline,
+    biography: normalized.biography,
+    disciplines: normalized.disciplines,
+    skills: normalized.skills,
+    supportedStudentLevels: normalized.supportedStudentLevels,
+    languages: normalized.languages,
+    mentorshipFormats: normalized.mentorshipFormats,
+    locationPreference: normalized.locationPreference,
+    timeZone: normalized.timeZone,
+    portfolioLinks: normalized.portfolioLinks,
+    mentorshipTopics: normalized.mentorshipTopics,
+    relatedLearningSlugs: normalized.relatedLearningSlugs,
+    relatedVideoBundleSlugs: normalized.relatedVideoBundleSlugs,
+    availabilitySummary: normalized.availabilitySummary,
+    currentlyAcceptingStudents: normalized.currentlyAcceptingStudents,
+    maximumActiveStudents: normalized.maximumActiveStudents,
+  };
+}
+
+export function getMentorCapacity(profile = {}) {
+  const normalized = normalizeMentorProfile(profile);
+  return {
+    maximum: normalized.maximumActiveStudents,
+    active: normalized.activeEngagementCount,
+    availableSlots: normalized.availableSlots,
+    accepting:
+      normalized.currentlyAcceptingStudents === true &&
+      normalized.availabilitySummary !== "unavailable" &&
+      normalized.availableSlots > 0,
   };
 }
 
 export function isMentorProfileComplete(profile = {}) {
+  const normalized = normalizeMentorProfile(profile);
   return Boolean(
-    profile.displayName &&
-    profile.biography &&
-    profile.disciplines?.length &&
-    profile.skills?.length &&
-    profile.supportedStudentLevels?.length &&
-    profile.languages?.length &&
-    profile.mentorshipFormats?.length
+    normalized.displayName &&
+    normalized.biography &&
+    normalized.disciplines?.length &&
+    normalized.skills?.length &&
+    normalized.supportedStudentLevels?.length &&
+    normalized.languages?.length &&
+    normalized.mentorshipFormats?.length
   );
 }
 
@@ -178,25 +304,31 @@ export function availabilityLabel(status) {
 }
 
 export function toPublicMentorProfileDto(id, profile = {}) {
+  const normalized = normalizeMentorProfile(profile);
+  const capacity = getMentorCapacity(normalized);
   return {
     id,
-    displayName: profile.displayName,
-    profileImage: profile.profileImage || null,
-    biography: profile.biography,
-    disciplines: profile.disciplines || [],
-    skills: profile.skills || [],
-    supportedStudentLevels: profile.supportedStudentLevels || [],
-    languages: profile.languages || [],
-    mentorshipFormats: profile.mentorshipFormats || [],
-    locationPreference: profile.locationPreference || "online",
-    generalAvailability: profile.availabilitySummary || "unavailable",
-    generalAvailabilityLabel: availabilityLabel(profile.availabilitySummary),
-    timeZone: profile.timeZone || "Europe/Skopje",
-    maximumActiveStudents: Math.max(1, Number(profile.maximumActiveStudents) || 1),
-    currentlyAcceptingStudents: profile.currentlyAcceptingStudents === true,
-    portfolioLinks: profile.portfolioLinks || [],
-    relatedLearningSlugs: profile.relatedLearningSlugs || [],
-    relatedVideoBundleSlugs: profile.relatedVideoBundleSlugs || [],
+    displayName: normalized.displayName,
+    profileImage: normalized.profileImage || null,
+    professionalHeadline: normalized.professionalHeadline,
+    biography: normalized.biography,
+    disciplines: normalized.disciplines,
+    skills: normalized.skills,
+    mentorshipTopics: normalized.mentorshipTopics,
+    supportedStudentLevels: normalized.supportedStudentLevels,
+    languages: normalized.languages,
+    mentorshipFormats: normalized.mentorshipFormats,
+    locationPreference: normalized.locationPreference,
+    generalAvailability: capacity.accepting ? normalized.availabilitySummary : "unavailable",
+    generalAvailabilityLabel: availabilityLabel(capacity.accepting ? normalized.availabilitySummary : "unavailable"),
+    timeZone: normalized.timeZone,
+    maximumActiveStudents: capacity.maximum,
+    availableSlots: capacity.availableSlots,
+    hasAvailableSlots: capacity.accepting,
+    currentlyAcceptingStudents: capacity.accepting,
+    portfolioLinks: normalized.portfolioLinks,
+    relatedLearningSlugs: normalized.relatedLearningSlugs,
+    relatedVideoBundleSlugs: normalized.relatedVideoBundleSlugs,
   };
 }
 

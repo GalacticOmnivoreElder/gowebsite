@@ -46,6 +46,7 @@ import { LearningDashboard } from "@/components/learning/LearningDashboard";
 import { NotificationsPanel } from "@/components/notifications/NotificationsPanel";
 import { MentorshipPilotMentorWorkspace } from "@/components/mentors/MentorshipPilotMentorWorkspace";
 import { MentorshipPilotDashboard } from "@/components/mentors/MentorshipPilotDashboard";
+import { MentorApplicationOverview } from "@/components/profile/MentorApplicationOverview";
 import { AssetPackWorkspace } from "@/components/asset-packs/AssetPackWorkspace";
 
 // Helper function to safely convert Firestore timestamp to Date
@@ -383,7 +384,8 @@ const ProfileContent = observer(() => {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (authReady && !currentUser) {
-      router.push("/login");
+      const returnPath = `${window.location.pathname}${window.location.search}`;
+      router.push(`/login?redirect=${encodeURIComponent(returnPath)}`);
     }
   }, [authReady, currentUser, router]);
 
@@ -727,6 +729,9 @@ const ProfileContent = observer(() => {
         </TabsContent>
 
         <TabsContent value="applications">
+          <div className="space-y-6">
+            <MentorApplicationOverview />
+            <div>
           {MobxStore.applicationsLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
@@ -834,7 +839,7 @@ const ProfileContent = observer(() => {
               <CardContent className="p-8 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">
-                  No Applications Yet
+                  No project applications yet
                 </h3>
                 <p className="text-muted-foreground mb-4">
                   You haven&apos;t applied to any projects yet. Browse projects
@@ -846,6 +851,8 @@ const ProfileContent = observer(() => {
               </CardContent>
             </Card>
           )}
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="downloads">

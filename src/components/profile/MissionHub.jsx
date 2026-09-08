@@ -297,6 +297,46 @@ function MentorReferences({ items = [] }) {
   return <MissionPanel title="Mentor references" eyebrow="Verified direct reviews" icon={MessageSquare}><p className="mb-4 text-sm text-muted-foreground">Author-consented excerpts approved by GO and selected by this mentor for their GameDev Passport.</p><div className="grid gap-4 md:grid-cols-2">{items.map((reference, index) => <blockquote key={`${reference.sharedAt || "reference"}-${index}`} className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4"><p className="whitespace-pre-wrap text-sm leading-6">“{reference.text}”</p><div className="mt-3 flex flex-wrap gap-2">{(reference.qualities || []).map((quality) => <Badge key={quality} variant="outline">{readableStatus(quality)}</Badge>)}</div><footer className="mt-3 text-xs text-muted-foreground">{reference.attribution}</footer></blockquote>)}</div></MissionPanel>;
 }
 
+function OfficialMentorPanel({ mentor, programme, isOwner }) {
+  if (!mentor) {
+    if (!isOwner || !programme || programme.status === "none") return null;
+    return (
+      <MissionPanel title="Mentor programme" eyebrow="Private status" icon={ShieldCheck}>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <Badge variant="outline">{readableStatus(programme.status)}</Badge>
+            <p className="mt-3 text-sm text-muted-foreground">Your mentor programme status is visible only to you and GO staff.</p>
+          </div>
+          <Button asChild variant="outline"><Link href="/profile?tab=mentor">View mentor workspace</Link></Button>
+        </div>
+      </MissionPanel>
+    );
+  }
+
+  return (
+    <MissionPanel title="Official GO mentor" eyebrow="Verified mentorship" icon={BadgeCheck}>
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            {mentor.professionalHeadline ? <p className="font-semibold">{mentor.professionalHeadline}</p> : null}
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{mentor.biography}</p>
+          </div>
+          <Badge>{mentor.availableSlots} available slot{mentor.availableSlots === 1 ? "" : "s"}</Badge>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div><h3 className="mb-2 text-sm font-semibold">Mentors in</h3><TagCluster items={[...(mentor.disciplines || []), ...(mentor.mentorshipTopics || [])]} emptyText="Mentorship topics have not been listed." /></div>
+          <div><h3 className="mb-2 text-sm font-semibold">Skills</h3><TagCluster items={mentor.skills || []} emptyText="Skills have not been listed." /></div>
+        </div>
+        <p className="text-sm"><span className="font-semibold">General availability:</span> <span className="text-muted-foreground">{mentor.generalAvailabilityLabel} · {mentor.availableSlots} remaining slot{mentor.availableSlots === 1 ? "" : "s"}</span></p>
+        <div className="flex flex-wrap gap-3">
+          <Button asChild variant="outline"><Link href={`/mentors/${mentor.id}`}>View mentor profile</Link></Button>
+          {mentor.hasAvailableSlots ? <Button asChild><Link href={`/profile?tab=mentorships&view=request&mentor=${encodeURIComponent(mentor.id)}`}>Apply for mentorship</Link></Button> : <Button disabled>Currently unavailable</Button>}
+        </div>
+      </div>
+    </MissionPanel>
+  );
+}
+
 function SelectedProjects({ projects, loading }) {
   if (loading) {
     return (
@@ -790,6 +830,8 @@ export default function MissionHub({
         </MissionPanel>
 
         <EducationList items={model.education} />
+
+        <OfficialMentorPanel mentor={profile?.mentorSummary} programme={profile?.mentorProgramme} isOwner={isOwner} />
 
         <MentorReferences items={profile?.mentorReferences} />
 

@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { MentorApplicationStatusCard } from "@/components/mentors/MentorApplicationStatusCard";
+import { MentorWorkspace } from "@/components/mentors/MentorWorkspace";
 
 const MENTOR_CONDUCT_VERSION = "go-code-of-conduct-v1";
 const MENTOR_TERMS_VERSION = "mentor-terms-pilot-v1";
@@ -156,8 +158,18 @@ export function MentorshipPilotMentorWorkspace() {
   const status = data.application?.status || "draft";
   const locked = ["approved", "paused", "rejected", "suspended", "archived"].includes(status);
 
+  if (status === "approved") {
+    return (
+      <div className="space-y-6">
+        <MentorApplicationStatusCard application={data.application} />
+        <MentorWorkspace />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      <MentorApplicationStatusCard application={data.application || { status: "draft", nextAction: "Complete the application and submit it when you are ready." }} />
       <Card className="border-primary/25">
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -178,6 +190,7 @@ export function MentorshipPilotMentorWorkspace() {
             </div>
           ) : null}
 
+          <fieldset disabled={locked} className="contents">
           <section className="space-y-4">
             <SectionHeading title="About you" description="Help members understand your background and the perspective you bring." />
             <div className="grid gap-4 md:grid-cols-2">
@@ -231,6 +244,7 @@ export function MentorshipPilotMentorWorkspace() {
               </CheckField>
             </div>
           </section>
+          </fieldset>
 
           <div className="flex flex-wrap items-center gap-3 border-t pt-5">
             <Button variant="outline" onClick={() => save("save")} disabled={busy || locked}>{busy ? "Saving…" : "Save private draft"}</Button>

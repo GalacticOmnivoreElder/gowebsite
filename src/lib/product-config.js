@@ -20,14 +20,15 @@ export function isValidHttpsUrl(value) {
 
 export function getProductConfig(env = process.env) {
   const mentorApplicationUrl = String(env.MENTOR_APPLICATION_URL || "").trim();
+  const runtimeDefaults = env === process.env;
   const featureFlags = {
     productNavigation: parseBooleanEnv(env.PRODUCT_NAVIGATION_ENABLED, true),
     courseEnrollment: parseBooleanEnv(env.COURSE_ENROLLMENT_ENABLED, false),
     userNotifications: parseBooleanEnv(env.USER_NOTIFICATIONS_ENABLED, false),
     videoBundles: parseBooleanEnv(env.VIDEO_BUNDLES_ENABLED, false),
     mentorApplications: parseBooleanEnv(env.MENTOR_APPLICATIONS_OPEN, false),
-    mentorDirectory: parseBooleanEnv(env.MENTOR_DIRECTORY_ENABLED, false),
-    mentorAvailability: parseBooleanEnv(env.MENTOR_AVAILABILITY_ENABLED, false),
+    mentorDirectory: parseBooleanEnv(env.MENTOR_DIRECTORY_ENABLED, runtimeDefaults),
+    mentorAvailability: parseBooleanEnv(env.MENTOR_AVAILABILITY_ENABLED, runtimeDefaults),
     mentorMatchmaking: parseBooleanEnv(env.MENTOR_MATCHMAKING_ENABLED, false),
     mentorFeedback: parseBooleanEnv(env.MENTOR_FEEDBACK_ENABLED, false),
     publicMentorStrengths: parseBooleanEnv(env.PUBLIC_MENTOR_STRENGTHS_ENABLED, false),
@@ -135,7 +136,7 @@ export function getMentorshipPilotConfig(env = process.env) {
     ...mentorship,
     featureFlags: {
       mentorshipSystem: parseBooleanEnv(env.MENTORSHIP_SYSTEM_ENABLED, true),
-      publicMentorBrowsing: parseBooleanEnv(env.MENTORSHIP_PUBLIC_MENTOR_BROWSING_ENABLED, false),
+      publicMentorBrowsing: parseBooleanEnv(env.MENTORSHIP_PUBLIC_MENTOR_BROWSING_ENABLED, true),
       mentorshipRequests: parseBooleanEnv(env.MENTORSHIP_REQUESTS_ENABLED, true),
       mentorApplications: parseBooleanEnv(env.MENTORSHIP_MENTOR_APPLICATIONS_ENABLED, true),
       pilotOnly: parseBooleanEnv(env.MENTORSHIP_PILOT_ONLY, false),

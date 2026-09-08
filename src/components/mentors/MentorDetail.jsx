@@ -25,20 +25,21 @@ export function MentorDetail({ mentorId }) {
 
   return (
     <main className="container mx-auto max-w-5xl px-4 py-12">
-      <Button asChild variant="ghost"><Link href="/mentors">Back to mentors</Link></Button>
+      <Button asChild variant="ghost"><Link href="/matchmaking">Back to mentorship</Link></Button>
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_300px]">
         <div>
           <div className="flex items-center gap-5">
             {mentor.profileImage
               ? <Image unoptimized src={mentor.profileImage} alt="" width={96} height={96} className="h-24 w-24 rounded-full object-cover" />
               : <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-3xl font-bold text-primary">{mentor.displayName.slice(0, 1)}</div>}
-            <div><h1 className="text-4xl font-bold">{mentor.displayName}</h1><Badge className="mt-3">Approved mentor</Badge></div>
+            <div><h1 className="text-4xl font-bold">{mentor.displayName}</h1>{mentor.professionalHeadline ? <p className="mt-2 text-muted-foreground">{mentor.professionalHeadline}</p> : null}<Badge className="mt-3">Official GO mentor</Badge></div>
           </div>
           <p className="mt-8 whitespace-pre-wrap leading-7 text-muted-foreground">{mentor.biography}</p>
           <section className="mt-8">
             <h2 className="text-xl font-semibold">Disciplines and skills</h2>
             <div className="mt-3 flex flex-wrap gap-2">{[...mentor.disciplines, ...mentor.skills].map((value) => <Badge key={value} variant="outline">{value}</Badge>)}</div>
           </section>
+          {mentor.mentorshipTopics?.length > 0 ? <section className="mt-8"><h2 className="text-xl font-semibold">Mentorship topics</h2><div className="mt-3 flex flex-wrap gap-2">{mentor.mentorshipTopics.map((value) => <Badge key={value} variant="outline">{value}</Badge>)}</div></section> : null}
           {mentor.portfolioLinks.length > 0 && (
             <section className="mt-8">
               <h2 className="text-xl font-semibold">Portfolio</h2>
@@ -51,12 +52,13 @@ export function MentorDetail({ mentorId }) {
           <CardHeader><CardTitle>Mentorship profile</CardTitle></CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div><p className="font-medium">General availability</p><p className="text-muted-foreground">{mentor.generalAvailabilityLabel}</p></div>
+            <div><p className="font-medium">Available slots</p><p className="text-muted-foreground">{mentor.availableSlots} of {mentor.maximumActiveStudents}</p></div>
             <div><p className="font-medium">Formats</p><p className="capitalize text-muted-foreground">{mentor.mentorshipFormats.join(", ")}</p></div>
             <div><p className="font-medium">Supported levels</p><p className="capitalize text-muted-foreground">{mentor.supportedStudentLevels.map((value) => value.replaceAll("_", " ")).join(", ")}</p></div>
             <div><p className="font-medium">Languages</p><p className="text-muted-foreground">{mentor.languages.join(", ")}</p></div>
             <div><p className="font-medium">Time zone</p><p className="text-muted-foreground">{mentor.timeZone}</p></div>
             <p className="rounded-md bg-muted/30 p-3 text-xs text-muted-foreground">Exact availability and private contact information are shared only inside an authorized mentorship engagement.</p>
-            <Button asChild className="w-full"><Link href={`/matchmaking?mentor=${encodeURIComponent(mentor.id || mentorId)}`}>Request mentorship</Link></Button>
+            {mentor.hasAvailableSlots ? <Button asChild className="w-full"><Link href={`/profile?tab=mentorships&view=request&mentor=${encodeURIComponent(mentor.id || mentorId)}`}>Apply for mentorship</Link></Button> : <Button className="w-full" disabled>Currently unavailable</Button>}
           </CardContent>
         </Card>
       </div>

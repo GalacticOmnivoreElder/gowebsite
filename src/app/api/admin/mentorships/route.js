@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getRequestUser } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
+import { getMentorCapacity, normalizeMentorProfile } from "@/lib/mentor-profiles";
 import { addWorkingDays, serializeMentorshipEngagement, serializeMentorshipRequest } from "@/lib/mentorship";
 import { getMentorshipProductConfig } from "@/lib/product-config";
 import { createProductNotification } from "@/lib/product-notifications";
@@ -78,7 +79,10 @@ export async function PATCH(request) {
       adminDb.collection("mentor_availability").doc(mentorId).get(),
     ]);
     if (!requestDoc.exists || requestDoc.data().status !== "assistance_requested") return Response.json({ error: "Assistance request not found" }, { status: 404 });
-    if (!mentorDoc.exists || mentorDoc.data().mentorStatus !== "approved" || !profileDoc.exists || !availabilityDoc.exists || availabilityDoc.data().currentlyAcceptingStudents !== true || availabilityDoc.data().temporaryPause === true || (Number(profileDoc.data().activeEngagementCount) || 0) >= Math.max(1, Number(profileDoc.data().maximumActiveStudents) || 1)) return Response.json({ error: "Selected mentor is not available" }, { status: 409 });
+    const mentorProfile = profileDoc.exists && availabilityDoc.exists
+      ? normalizeMentorProfile({ ...profileDoc.data(), ...availabilityDoc.data() })
+      : null;
+    if (!mentorDoc.exists || mentorDoc.data().mentorStatus !== "approved" || !mentorProfile || !getMentorCapacity(mentorProfile).accepting) return Response.json({ error: "Selected mentor is not available" }, { status: 409 });
     const deadline = addWorkingDays(now, getMentorshipProductConfig().responseDeadlineWorkingDays);
     await requestRef.update({ targetMentorId: mentorId, mentorDisplayName: profileDoc.data().displayName, assistanceRequested: false, status: "awaiting_mentor_response", responseDeadline: deadline, assignedBy: gate.user.uid, assignedAt: now, updatedAt: now });
     await Promise.allSettled([

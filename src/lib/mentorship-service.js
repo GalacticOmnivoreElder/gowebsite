@@ -3,7 +3,7 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { createProductNotification } from "@/lib/product-notifications";
 import { enqueueEmailEventForUsers } from "@/lib/email";
-import { isMentorProfileComplete, toPublicMentorProfileDto } from "@/lib/mentor-profiles";
+import { getMentorCapacity, isMentorProfileComplete, normalizeMentorProfile, toPublicMentorProfileDto } from "@/lib/mentor-profiles";
 import { getFeedbackEligibility } from "@/lib/mentorship-feedback";
 import { listParticipantFeedback } from "@/lib/mentorship-feedback-service";
 import {
@@ -87,10 +87,12 @@ export async function suggestCompatibleMentors(requestInput, { db = adminDb } = 
       db.collection("mentor_profiles").doc(userDoc.id).get(),
       db.collection("mentor_availability").doc(userDoc.id).get(),
     ]);
-    if (!profileDoc.exists || !availabilityDoc.exists || !isMentorProfileComplete(profileDoc.data())) return null;
-    const compatibility = scoreMentorCompatibility(request, profileDoc.data(), availabilityDoc.data(), counts.get(userDoc.id) || 0);
+    if (!profileDoc.exists || !availabilityDoc.exists) return null;
+    const profile = normalizeMentorProfile({ ...profileDoc.data(), ...availabilityDoc.data(), activeEngagementCount: counts.get(userDoc.id) || profileDoc.data().activeEngagementCount || 0 });
+    if (!isMentorProfileComplete(profile)) return null;
+    const compatibility = scoreMentorCompatibility(request, profile, availabilityDoc.data(), getMentorCapacity(profile).active);
     if (!compatibility || compatibility.score <= 0) return null;
-    return { mentor: toPublicMentorProfileDto(userDoc.id, profileDoc.data()), ...compatibility };
+    return { mentor: toPublicMentorProfileDto(userDoc.id, profile), ...compatibility };
   }));
   return suggestions.filter(Boolean).sort((left, right) => right.score - left.score || left.mentor.displayName.localeCompare(right.mentor.displayName)).slice(0, 20);
 }
@@ -140,7 +142,8 @@ export async function createMentorshipRequest({
       if (!mentorUser.exists || mentorUser.data().mentorStatus !== "approved" || mentorUser.data().mentorPublicProfileEnabled !== true || !profile.exists || !availability.exists) {
         throw workflowError("The selected mentor is not available", "mentor_unavailable", 409);
       }
-      const capacity = scoreMentorCompatibility(clean, profile.data(), availability.data(), Number(profile.data().activeEngagementCount) || 0);
+      const normalizedProfile = normalizeMentorProfile({ ...profile.data(), ...availability.data() });
+      const capacity = scoreMentorCompatibility(clean, normalizedProfile, availability.data(), getMentorCapacity(normalizedProfile).active);
       if (!capacity) throw workflowError("The selected mentor is not accepting requests", "mentor_unavailable", 409);
       mentorDisplayName = profile.data().displayName;
     }
@@ -213,10 +216,10 @@ export async function respondToMentorshipRequest({ requestId, mentor, action, me
     const studentLock = engagementLockRef(db, request.studentId);
     const [profileDoc, activeEngagement] = await Promise.all([transaction.get(profileRef), transaction.get(studentLock)]);
     if (!profileDoc.exists) throw workflowError("Mentor profile unavailable", "mentor_unavailable", 409);
-    const profile = profileDoc.data();
-    const activeCount = Math.max(0, Number(profile.activeEngagementCount) || 0);
-    const maximum = Math.max(1, Number(profile.maximumActiveStudents) || 1);
-    if (activeCount >= maximum) throw workflowError("Mentor capacity is full", "mentor_capacity_full", 409);
+    const profile = normalizeMentorProfile(profileDoc.data());
+    const capacity = getMentorCapacity(profile);
+    const activeCount = Math.max(0, Number(profileDoc.data().activeEngagementCount) || 0);
+    if (!capacity.accepting) throw workflowError("Mentor capacity is full", "mentor_capacity_full", 409);
     if (activeEngagement.exists) throw workflowError("The student already has an active engagement", "active_engagement_exists", 409);
     const engagementId = mentorshipEngagementId(requestId);
     const engagementRef = db.collection("mentorship_engagements").doc(engagementId);

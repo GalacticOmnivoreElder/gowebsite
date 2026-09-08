@@ -19,12 +19,31 @@ const initialForm = {
 
 function csv(value) { return String(value || "").split(",").map((item) => item.trim()).filter(Boolean); }
 
-export function MentorshipPilotRequestWorkspace() {
+export function MentorshipPilotRequestWorkspace({ requestedMentorId = "" }) {
   const [form, setForm] = useState(initialForm);
   const [requestId, setRequestId] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [access, setAccess] = useState({ status: "checking" });
+  const [selectedMentor, setSelectedMentor] = useState(requestedMentorId ? { loading: true } : null);
+  const authRedirect = encodeURIComponent(`/profile?tab=mentorships&view=request${requestedMentorId ? `&mentor=${requestedMentorId}` : ""}`);
+
+  useEffect(() => {
+    let active = true;
+    if (!requestedMentorId) {
+      setSelectedMentor(null);
+      return () => { active = false; };
+    }
+    setSelectedMentor({ loading: true });
+    fetch(`/api/mentors/${encodeURIComponent(requestedMentorId)}`, { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "The selected mentor is unavailable.");
+        if (active) setSelectedMentor(result);
+      })
+      .catch((error) => { if (active) setSelectedMentor({ error: error.message }); });
+    return () => { active = false; };
+  }, [requestedMentorId]);
 
   useEffect(() => {
     trackEvent("mentorship_viewed", { surface: "mentorship_request" });
@@ -51,13 +70,13 @@ export function MentorshipPilotRequestWorkspace() {
   const request = async (mode) => {
     trackEvent("mentorship_request_started", {
       flow: "controlled_pilot",
-      entry_point: "matchmaking",
+      entry_point: "profile",
     });
     setBusy(true); setMessage("");
     try {
       const token = await auth.currentUser?.getIdToken();
       if (!token) throw new Error("Sign in to request mentorship.");
-      const response = await fetch("/api/mentorship/pilot/requests", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...form, requestId, mode, languagePreferences: csv(form.languagePreferences), projectLinks: csv(form.projectLinks) }) });
+      const response = await fetch("/api/mentorship/pilot/requests", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...form, requestId, mode, requestedMentorId: requestedMentorId || null, languagePreferences: csv(form.languagePreferences), projectLinks: csv(form.projectLinks) }) });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error === "mentorship_membership_required" ? "An active GO membership is required for the mentorship pilot." : result.error === "pilot_access_required" ? "Mentorship applications are currently limited to the controlled pilot." : result.error || "Mentorship request could not be saved.");
       if (mode !== "draft") {
@@ -67,18 +86,19 @@ export function MentorshipPilotRequestWorkspace() {
         });
       }
       setRequestId(result.id);
-      setMessage(mode === "draft" ? "Draft saved privately. You can return and submit it when ready." : "Request submitted. GO reviews every request manually; a mentor is not guaranteed.");
+      setMessage(mode === "draft" ? "Draft saved privately. You can return and submit it when ready." : requestedMentorId ? "Application submitted to GO. Staff will review it and check the selected mentor's capacity before forwarding it." : "Request submitted. GO reviews every request manually; a mentor is not guaranteed.");
     } catch (error) { setMessage(error.message); } finally { setBusy(false); }
   };
 
   if (access.status === "checking") return <AccessCard icon={CreditCard} title="Checking mentorship access" description="We are checking your sign-in and active membership status." />;
-  if (access.status === "signed_out") return <AccessCard icon={LogIn} title="Sign in to request mentorship" description="Create an account or sign in to apply. An active GO subscription is required before you can submit a mentorship request." actions={<><Button asChild><Link href="/signup?redirect=%2Fmatchmaking"><UserPlus className="mr-2 h-4 w-4" />Sign up</Link></Button><Button asChild variant="outline"><Link href="/login?redirect=%2Fmatchmaking"><LogIn className="mr-2 h-4 w-4" />Sign in</Link></Button></>} />;
+  if (access.status === "signed_out") return <AccessCard icon={LogIn} title="Sign in to request mentorship" description="Create an account or sign in to apply. An active GO subscription is required before you can submit a mentorship request." actions={<><Button asChild><Link href={`/signup?redirect=${authRedirect}`}><UserPlus className="mr-2 h-4 w-4" />Sign up</Link></Button><Button asChild variant="outline"><Link href={`/login?redirect=${authRedirect}`}><LogIn className="mr-2 h-4 w-4" />Sign in</Link></Button></>} />;
   if (access.status === "membership_required") return <AccessCard icon={CreditCard} title="An active subscription is required" description="GO Mentorship is available to signed-in members with any active subscription. Review membership options, then return here to apply." actions={<Button asChild><Link href="/membership"><CreditCard className="mr-2 h-4 w-4" />Review membership</Link></Button>} />;
-  if (access.status === "error") return <AccessCard icon={LogIn} title="We could not verify your access" description={access.message || "Please refresh the page or sign in again before requesting mentorship."} actions={<Button asChild variant="outline"><Link href="/login?redirect=%2Fmatchmaking"><LogIn className="mr-2 h-4 w-4" />Sign in again</Link></Button>} />;
+  if (access.status === "error") return <AccessCard icon={LogIn} title="We could not verify your access" description={access.message || "Please refresh the page or sign in again before requesting mentorship."} actions={<Button asChild variant="outline"><Link href={`/login?redirect=${authRedirect}`}><LogIn className="mr-2 h-4 w-4" />Sign in again</Link></Button>} />;
 
   return <div className="space-y-6">
+    {requestedMentorId ? <Card className="border-primary/30 bg-primary/5"><CardContent className="p-5">{selectedMentor?.loading ? <p className="text-sm text-muted-foreground">Loading selected mentor…</p> : selectedMentor?.error ? <div className="flex flex-wrap items-center justify-between gap-3"><p role="alert" className="text-sm text-destructive">{selectedMentor.error}</p><Button asChild variant="outline" size="sm"><Link href="/matchmaking">Choose another mentor</Link></Button></div> : <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-semibold uppercase text-primary">Applying to</p><p className="mt-1 text-lg font-semibold">{selectedMentor?.displayName}</p>{selectedMentor?.professionalHeadline ? <p className="text-sm text-muted-foreground">{selectedMentor.professionalHeadline}</p> : null}<p className="mt-2 text-sm">{selectedMentor?.availableSlots || 0} available slot{selectedMentor?.availableSlots === 1 ? "" : "s"}</p></div><Button asChild variant="outline" size="sm"><Link href="/matchmaking">Choose another mentor</Link></Button></div>}</CardContent></Card> : null}
     <Card className="border-primary/25">
-      <CardHeader><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle>Request mentorship</CardTitle><p className="mt-2 text-sm text-muted-foreground">Describe one concrete game-development goal. GO reviews requests manually and may suggest an approved mentor when fit and availability allow.</p></div><Badge variant="outline">Controlled pilot</Badge></div></CardHeader>
+      <CardHeader><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle>{requestedMentorId ? "Apply to this mentor" : "Request mentorship"}</CardTitle><p className="mt-2 text-sm text-muted-foreground">Describe one concrete game-development goal. GO reviews the request before any information is shared with a mentor.</p></div><Badge variant="outline">GO reviewed</Badge></div></CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Request title" value={form.title} onChange={(value) => update("title", value)} placeholder="e.g. Finish my combat prototype" />
@@ -92,8 +112,8 @@ export function MentorshipPilotRequestWorkspace() {
         <div className="grid gap-4 md:grid-cols-2"><Field label="Project or portfolio links (optional)" value={form.projectLinks} onChange={(value) => update("projectLinks", value)} placeholder="https://… (comma separated)" /><Field label="Preferred timeframe" value={form.timeframeDetails} onChange={(value) => update("timeframeDetails", value)} placeholder="e.g. evenings in September" /><Select label="Timeframe" value={form.preferredTimeframe} onChange={(value) => update("preferredTimeframe", value)} options={["single_session", "two_to_four_weeks", "one_to_three_months", "custom"]} /><Field label="Language preferences" value={form.languagePreferences} onChange={(value) => update("languagePreferences", value)} placeholder="English, Polish" /><TimeZoneSelect value={form.timeZone} onChange={(value) => update("timeZone", value)} /><Select label="Preferred format" value={form.preferredFormat} onChange={(value) => update("preferredFormat", value)} options={["online", "gohq", "hybrid"]} /></div>
         <Field label="Availability" value={form.availability} onChange={(value) => update("availability", value)} area help="Share a general pattern, not private contact details. Exact schedules are agreed only after acceptance." />
         <Field label="Accessibility or accommodation request (optional)" value={form.accessibilityRequest} onChange={(value) => update("accessibilityRequest", value)} area help="This is visible to authorized GO reviewers. It is not shared with a mentor by default." />
-        <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm"><p className="font-medium">Before you submit</p><ul className="list-disc space-y-1 pl-5 text-muted-foreground"><li>GO reviews requests manually; a mentor is not guaranteed.</li><li>Only authorized GO reviewers see the request first.</li><li>If you apply to a suggestion, you will see exactly which structured details are shared with that mentor.</li><li>Mentorship is not therapy, legal or financial advice, recruitment, or a promise of employment or project outcomes.</li></ul><label className="flex items-start gap-2"><input className="mt-1" type="checkbox" checked={form.isAdult} onChange={(event) => update("isAdult", event.target.checked)} /><span>I confirm that I am 18 or older. The pilot does not support under-18 mentorship.</span></label><label className="flex items-start gap-2"><input className="mt-1" type="checkbox" checked={form.dataSharingConsent} onChange={(event) => update("dataSharingConsent", event.target.checked)} /><span>I understand the mentorship privacy notice and consent to GO processing this request.</span></label><label className="flex items-start gap-2"><input className="mt-1" type="checkbox" checked={form.expectationsAcknowledged} onChange={(event) => update("expectationsAcknowledged", event.target.checked)} /><span>I understand that the mentor makes the final decision and that GO provides limited facilitation.</span></label></div>
-        <div className="flex flex-wrap gap-3"><Button variant="outline" onClick={() => request("draft")} disabled={busy}>{busy ? "Saving…" : "Save private draft"}</Button><Button onClick={() => request("submit")} disabled={busy || !form.isAdult || !form.dataSharingConsent || !form.expectationsAcknowledged}>{busy ? "Submitting…" : "Submit for GO review"}</Button></div>
+        <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm"><p className="font-medium">Before you submit</p><ul className="list-disc space-y-1 pl-5 text-muted-foreground"><li>Only authorized GO reviewers see the request first.</li><li>After GO approves it, the mentor receives your display name, goal, discipline, current level, desired result, project links, timeframe, language preferences, time zone, general availability, and preferred format.</li><li>Your accessibility request and GO staff notes are not shared with the mentor.</li><li>The mentor makes the final decision; approval and a mentor are not guaranteed.</li><li>Mentorship is not therapy, legal or financial advice, recruitment, or a promise of employment or project outcomes.</li></ul><label className="flex items-start gap-2"><input className="mt-1" type="checkbox" checked={form.isAdult} onChange={(event) => update("isAdult", event.target.checked)} /><span>I confirm that I am 18 or older. The pilot does not support under-18 mentorship.</span></label><label className="flex items-start gap-2"><input className="mt-1" type="checkbox" checked={form.dataSharingConsent} onChange={(event) => update("dataSharingConsent", event.target.checked)} /><span>I understand the mentorship privacy notice and consent to GO processing this request and sharing the listed fields only after GO approval.</span></label><label className="flex items-start gap-2"><input className="mt-1" type="checkbox" checked={form.expectationsAcknowledged} onChange={(event) => update("expectationsAcknowledged", event.target.checked)} /><span>I understand that the mentor makes the final decision and that GO provides limited facilitation.</span></label></div>
+        <div className="flex flex-wrap gap-3"><Button variant="outline" onClick={() => request("draft")} disabled={busy || selectedMentor?.loading || Boolean(selectedMentor?.error)}>{busy ? "Saving…" : "Save private draft"}</Button><Button onClick={() => request("submit")} disabled={busy || selectedMentor?.loading || Boolean(selectedMentor?.error) || (requestedMentorId && !selectedMentor?.hasAvailableSlots) || !form.isAdult || !form.dataSharingConsent || !form.expectationsAcknowledged}>{busy ? "Submitting…" : "Submit for GO review"}</Button></div>
         {message && <p role="status" className="rounded-md border bg-card p-3 text-sm">{message} {message.startsWith("Request submitted") && <Link className="ml-1 text-primary underline" href="/profile?tab=mentorships">Open mentorships</Link>}</p>}
       </CardContent>
     </Card>

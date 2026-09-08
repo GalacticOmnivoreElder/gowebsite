@@ -6,8 +6,9 @@ import { normalizeUsername } from "@/lib/auth-profile";
 import { sanitizeSkills } from "@/lib/skills";
 import { syncUserSkillUsage } from "@/lib/skill-catalog";
 import { redactCvContact } from "@/lib/profile-mission";
-import { getProductConfig } from "@/lib/product-config";
+import { getMentorshipPilotConfig, getProductConfig } from "@/lib/product-config";
 import { listPublicMentorReferences } from "@/lib/mentorship-feedback-service";
+import { getPublicMentor } from "@/lib/mentor-directory";
 
 export const dynamic = "force-dynamic";
 
@@ -163,11 +164,19 @@ export async function GET(request, { params }) {
       publicProfile.ownerOfProjects = userData.ownerOfProjects || [];
       publicProfile.adminOfProjects = userData.adminOfProjects || [];
       publicProfile.teamMemberOfProjects = userData.teamMemberOfProjects || [];
+      publicProfile.mentorProgramme = {
+        status: userData.mentorStatus || "none",
+        publicProfileEnabled: userData.mentorPublicProfileEnabled === true,
+      };
     }
 
     publicProfile.mentorReferences = [];
     if (userData.mentorStatus === "approved" && userData.mentorPublicProfileEnabled === true) {
       const product = getProductConfig();
+      const pilot = getMentorshipPilotConfig();
+      if (product.featureFlags.mentorDirectory && pilot.featureFlags.mentorshipSystem && pilot.featureFlags.publicMentorBrowsing) {
+        publicProfile.mentorSummary = await getPublicMentor(userId);
+      }
       if (product.featureFlags.mentorFeedback && product.featureFlags.publicMentorStrengths) {
         publicProfile.mentorReferences = await listPublicMentorReferences(userId);
       }

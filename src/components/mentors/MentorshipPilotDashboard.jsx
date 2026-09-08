@@ -2,17 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { auth } from "@/firebase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { MentorshipPilotRequestWorkspace } from "@/components/mentors/MentorshipPilotRequestWorkspace";
 
 const blankAgreement = { goal: "", scope: "", outOfScope: "", format: "online", communicationChannel: "Platform-mediated contact after mutual agreement", frequency: "", startDate: "", targetEndDate: "", responseExpectations: "", confidentiality: true, boundaries: "", cancellation: "Either participant may ask GO to end or pause the engagement.", reporting: "Use the private report action in this workspace.", facilitationRoleAcknowledged: true };
 const blankCheckin = { statusCategory: "on_track", progressCategory: "on_track", supportNeededCategory: "on_track", nextAction: "" };
 const statuses = (value) => String(value || "").replaceAll("_", " ");
 
 export function MentorshipPilotDashboard() {
+  const searchParams = useSearchParams();
   const [data, setData] = useState(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -25,7 +28,7 @@ export function MentorshipPilotDashboard() {
 
   const call = useCallback(async (url = "/api/mentorship/pilot/dashboard", options = {}) => { const token = await auth.currentUser?.getIdToken(); if (!token) throw new Error("Sign in to view mentorship activity."); return fetch(url, { ...options, headers: { ...(options.headers || {}), Authorization: `Bearer ${token}` }, cache: "no-store" }); }, []);
   const load = useCallback(async () => { const response = await call(); const result = await response.json().catch(() => ({})); if (!response.ok) throw new Error(result.error || "Mentorship dashboard could not be loaded."); setData(result); }, [call]);
-  useEffect(() => { let active = true; auth.onAuthStateChanged(() => load().catch((error) => active && setData({ error: error.message }))); return () => { active = false; }; }, [load]);
+  useEffect(() => { let active = true; const unsubscribe = auth.onAuthStateChanged(() => load().catch((error) => active && setData({ error: error.message }))); return () => { active = false; unsubscribe?.(); }; }, [load]);
   const mutate = async (url, body, success) => { setBusy(true); setMessage(""); try { const response = await call(url, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); const result = await response.json().catch(() => ({})); if (!response.ok) throw new Error(result.error || "Mentorship update could not be saved."); setMessage(success); await load(); } catch (error) { setMessage(error.message); } finally { setBusy(false); } };
   const submitSuggestion = async (suggestion, action) => { if (action === "decline") return mutate("/api/mentorship/pilot/suggestions", { action, suggestionId: suggestion.id }, "Suggestion declined."); setBusy(true); setMessage(""); try { const response = await call("/api/mentorship/pilot/suggestions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ suggestionId: suggestion.id, message: applicationNotes[suggestion.id] || "", dataSharingConsent: consents[suggestion.id] === true }) }); const result = await response.json().catch(() => ({})); if (!response.ok) throw new Error(result.error || "Mentor application could not be submitted."); setMessage("Application sent to the mentor."); await load(); } catch (error) { setMessage(error.message); } finally { setBusy(false); } };
   const respondApplication = (application, action) => mutate(`/api/mentorship/pilot/applications/${application.id}`, { action, response: applicationNotes[application.id] || "" }, action === "accept" ? "Application accepted. An agreement is now required." : action === "withdraw" ? "Application withdrawn." : "Application declined.");
@@ -36,9 +39,13 @@ export function MentorshipPilotDashboard() {
   if (!data) return <p className="py-10 text-center text-muted-foreground">Loading mentorship workspace…</p>;
   if (data.error) return <Card><CardContent className="space-y-3 p-8 text-center"><Badge>Controlled pilot</Badge><p role="status">{data.error}</p><p className="text-sm text-muted-foreground">The GO-curated mentorship pilot is opened only to approved participants and is not an instant marketplace.</p><Button asChild variant="outline"><Link href="/matchmaking">Review how mentorship works</Link></Button></CardContent></Card>;
   const uid = auth.currentUser?.uid;
+  const selectedMentorId = searchParams.get("mentor") || "";
+  const showRequestForm = searchParams.get("view") === "request";
   const incoming = data.applications.filter((item) => item.mentorId === uid && item.status === "pending");
   const mine = data.applications.filter((item) => item.menteeUserId === uid);
-  return <div className="space-y-8"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-2xl font-bold">Mentorship workspace</h2><p className="mt-2 text-sm text-muted-foreground">Track the next action without exposing private GO notes or participant contact details.</p></div><Button asChild variant="outline"><Link href="/matchmaking">New request</Link></Button></div>{message && <p role="status" className="rounded-md border bg-card p-3 text-sm">{message}</p>}
+  return <div className="space-y-8"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-2xl font-bold">Mentorship workspace</h2><p className="mt-2 text-sm text-muted-foreground">Track requests, applications, and active mentorships without exposing private GO notes or participant contact details.</p></div><div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href="/matchmaking">Browse official mentors</Link></Button><Button asChild><Link href={showRequestForm ? "/profile?tab=mentorships" : "/profile?tab=mentorships&view=request"}>{showRequestForm ? "Close application form" : "New request"}</Link></Button></div></div>{message && <p role="status" className="rounded-md border bg-card p-3 text-sm">{message}</p>}
+
+    {showRequestForm ? <section aria-label="Mentorship application form"><MentorshipPilotRequestWorkspace requestedMentorId={selectedMentorId} /></section> : null}
 
     <section><h3 className="mb-3 text-lg font-semibold">Your requests</h3><div className="space-y-3">{data.requests.length ? data.requests.map((item) => <Card key={item.id}><CardContent className="space-y-2 p-5"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold">{item.title}</p><Badge variant="outline">{statuses(item.status)}</Badge></div><p className="text-sm text-muted-foreground">{item.discipline} · {item.currentLevel} · {item.preferredTimeframe.replaceAll("_", " ")}</p><p className="text-sm">Next action: <strong>{nextAction(item.status)}</strong></p>{item.customerMessage && <p className="rounded-md bg-muted p-3 text-sm">GO: {item.customerMessage}</p>}{item.status === "needs_information" && <div className="flex flex-col gap-2 sm:flex-row"><Input aria-label="Information for GO" value={applicationNotes[item.id] || ""} onChange={(event) => setApplicationNotes((current) => ({ ...current, [item.id]: event.target.value }))} placeholder="Add the requested information" /><Button disabled={busy} onClick={() => mutate(`/api/mentorship/pilot/requests/${item.id}`, { action: "respond_to_information", message: applicationNotes[item.id] || "" }, "Information sent to GO.")}>Send information</Button></div>}{["draft", "submitted", "under_review", "needs_information", "ready_for_suggestions", "suggestions_sent", "application_submitted"].includes(item.status) && <Button variant="ghost" size="sm" onClick={() => mutate(`/api/mentorship/pilot/requests/${item.id}`, { action: "withdraw" }, "Request withdrawn.")}>Withdraw request</Button>}</CardContent></Card>) : <Card><CardContent className="p-8 text-center text-muted-foreground">No mentorship requests yet. GO reviews clear, bounded goals through the controlled pilot.</CardContent></Card>}</div></section>
 
