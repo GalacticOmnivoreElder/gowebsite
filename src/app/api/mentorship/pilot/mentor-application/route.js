@@ -6,6 +6,20 @@ import { getRequestUser } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
 import { serializeMentorApplicationSummary, serializeMentorPilotProfile } from "@/lib/mentorship-pilot";
 
+function resolveMentorApplicationStatus(userStatus, applicationData, profileData) {
+  const authoritativeStatuses = {
+    approved: "approved",
+    temporarily_unavailable: "paused",
+    suspended: "suspended",
+    rejected: "rejected",
+    inactive: "archived",
+  };
+  return authoritativeStatuses[userStatus]
+    || applicationData?.status
+    || profileData?.status
+    || (userStatus === "applicant" ? "submitted" : null);
+}
+
 export async function GET(request) {
   const user = await getRequestUser(request);
   if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
@@ -14,22 +28,24 @@ export async function GET(request) {
     const applicationDoc = await adminDb.collection("mentor_applications").doc(user.uid).get();
     const profileData = profileDoc.exists ? profileDoc.data() : null;
     const applicationData = applicationDoc.exists ? applicationDoc.data() : null;
+    const effectiveStatus = resolveMentorApplicationStatus(user.userData?.mentorStatus, applicationData, profileData);
+    const effectiveProfile = profileData && effectiveStatus ? { ...profileData, status: effectiveStatus } : profileData;
+    const effectiveApplication = effectiveStatus ? { ...(applicationData || {}), status: effectiveStatus } : applicationData;
     return Response.json({
-      profile: profileData ? serializeMentorPilotProfile(gate.user.uid, profileData, { admin: false }) : null,
-      application: applicationData
-        ? serializeMentorApplicationSummary(applicationDoc.id, applicationData, profileData || {})
-        : profileData
-          ? serializeMentorApplicationSummary(user.uid, {}, profileData)
-          : null,
+      mentorStatus: user.userData?.mentorStatus || "none",
+      profile: effectiveProfile ? serializeMentorPilotProfile(user.uid, effectiveProfile, { admin: false }) : null,
+      application: effectiveStatus
+        ? serializeMentorApplicationSummary(user.uid, effectiveApplication || {}, effectiveProfile || {})
+        : null,
       versions: { conduct: "go-code-of-conduct-v1", terms: "mentor-terms-pilot-v1" },
       consent: {
         conductAccepted: profileData?.conductVersion === "go-code-of-conduct-v1",
         termsAccepted: profileData?.termsVersion === "mentor-terms-pilot-v1",
       },
-      privateProfile: profileData ? {
-        topicsNotOffered: profileData.topicsNotOffered || [],
-        accessibilityInformation: profileData.accessibilityInformation || "",
-        conflictOfInterestDeclaration: profileData.conflictOfInterestDeclaration || "",
+      privateProfile: effectiveProfile ? {
+        topicsNotOffered: effectiveProfile.topicsNotOffered || [],
+        accessibilityInformation: effectiveProfile.accessibilityInformation || "",
+        conflictOfInterestDeclaration: effectiveProfile.conflictOfInterestDeclaration || "",
       } : null,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

@@ -11,6 +11,14 @@ const profiles = loadSourceModule("src/lib/mentor-profiles.js", [
   "toPublicMentorProfileDto",
 ], { stripImports: true });
 
+const subscriptionState = loadSourceModule("src/lib/subscription-state.js", [
+  "normalizeSubscriptionTransition",
+], { stripImports: true });
+
+const authUtils = loadSourceModule("src/lib/auth-utils.js", [
+  "hasActiveSubscription",
+], { stripImports: true });
+
 const pilot = loadSourceModule("src/lib/mentorship-pilot.js", [
   "mentorApplicationNextAction",
   "serializeMentorPilotProfile",
@@ -35,6 +43,31 @@ const service = loadSourceModule("src/lib/mentorship-pilot-service.js", [
     normalizeMentorProfile: profiles.normalizeMentorProfile,
     serializeMentorPilotProfile: pilot.serializeMentorPilotProfile,
     stableId: pilot.stableId,
+  },
+});
+
+const mentorApplicationRoute = loadSourceModule("src/app/api/mentorship/pilot/mentor-application/route.js", ["GET"], {
+  stripImports: true,
+  sandbox: {
+    Response,
+    getRequestUser: async () => ({ uid: "mentor-1", userData: { mentorStatus: "approved" } }),
+    adminDb: {
+      collection(name) {
+        return {
+          doc(id) {
+            const records = {
+              mentor_profiles: { "mentor-1": availableMentorProfile({ status: "submitted" }) },
+              mentor_applications: { "mentor-1": { status: "submitted" } },
+            };
+            const data = records[name]?.[id];
+            return { get: async () => ({ id, exists: data !== undefined, data: () => data }) };
+          },
+        };
+      },
+    },
+    serializeMentorApplicationSummary: pilot.serializeMentorApplicationSummary,
+    serializeMentorPilotProfile: pilot.serializeMentorPilotProfile,
+    routeError: (error, fallback) => Response.json({ error: error?.message || fallback }, { status: 500 }),
   },
 });
 
@@ -174,6 +207,29 @@ test("mentor application summaries expose customer guidance without private note
   assert.equal(summary.customerMessage, "Please add one relevant portfolio link.");
   assert.match(summary.nextAction, /requested information/i);
   assert.doesNotMatch(JSON.stringify(summary), /Do not expose/);
+});
+
+test("approved mentor application status loads through the authenticated GET route", async () => {
+  const response = await mentorApplicationRoute.GET(new Request("https://example.com/api/mentorship/pilot/mentor-application"));
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(body.profile.id, "mentor-1");
+  assert.equal(body.application.status, "approved");
+  assert.equal(body.profile.status, "approved");
+});
+
+test("a canceled subscription retains membership access through its future period end", () => {
+  const now = new Date("2026-09-08T12:00:00.000Z");
+  const subscriptionEndsAt = new Date("2026-10-08T12:00:00.000Z");
+  const transition = subscriptionState.normalizeSubscriptionTransition({
+    eventType: "subscription.canceled",
+    status: "canceled",
+    currentPeriodEnd: subscriptionEndsAt,
+    now,
+  });
+  assert.equal(transition.activeMember, true);
+  assert.equal(authUtils.hasActiveSubscription({ ...transition, subscriptionEndsAt }, now), true);
+  assert.equal(authUtils.hasActiveSubscription({ ...transition, subscriptionEndsAt }, new Date("2026-10-09T12:00:00.000Z")), false);
 });
 
 test("selected mentor requests keep the public snapshot and remove staff notes", () => {
