@@ -14,6 +14,7 @@ import {
   toPublicResourceDto,
 } from "@/lib/content-visibility";
 import { LearningCategoryNav } from "@/components/learning/LearningCategoryNav";
+import { LearningPageHeader } from "@/components/learning/LearningPageHeader";
 import FeaturedPackageCardWrapper from "@/components/packages/FeaturedPackageCardWrapper";
 import PackageList from "@/components/packages/PackageList";
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
@@ -71,18 +72,12 @@ export default async function ResourcesPage() {
     : [];
 
   return (
-    <div className="container mx-auto px-4 py-12 md:py-16">
-      <header className="mx-auto max-w-4xl text-center">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">
-          Learn / Resources
-        </p>
-        <h1 className="mt-3 text-4xl font-bold md:text-5xl">Resources</h1>
-        <p className="mx-auto mt-4 max-w-3xl text-lg leading-8 text-muted-foreground md:text-xl">
-          Explore practical game-development material shared or selected by
-          Galactic Omnivore. Review each resource for its format, access
-          requirements, usage terms, and supporting details.
-        </p>
-      </header>
+    <main className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
+      <LearningPageHeader
+        icon={FileText}
+        title="Resources"
+        description="Explore practical game-development material shared or selected by Galactic Omnivore. Review each resource for its format, access requirements, usage terms, and supporting details."
+      />
 
       <LearningCategoryNav activeItem="Resources" className="mt-10" />
 
@@ -213,6 +208,6 @@ export default async function ResourcesPage() {
 
       <LandingTestimonials />
       <FullCTA />
-    </div>
+    </main>
   );
 }

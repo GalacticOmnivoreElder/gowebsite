@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LearningCategoryNav } from "@/components/learning/LearningCategoryNav";
+import { LearningPageHeader } from "@/components/learning/LearningPageHeader";
 
 const STREAMS = Object.freeze({
   course: "Courses",
@@ -61,40 +62,27 @@ function EducationContent() {
   );
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <header className="mb-8">
-        <div className="mb-4 flex items-center gap-3">
-          <BookOpen className="h-9 w-9 text-primary" aria-hidden="true" />
-          <h1 className="text-4xl font-bold">Education</h1>
-        </div>
-        <div className="max-w-3xl space-y-4 text-muted-foreground">
+    <main className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
+      <LearningPageHeader
+        icon={BookOpen}
+        title="Education"
+        description={(
+          <div className="space-y-3">
           <p>Build practical skills through GO courses and workshops.</p>
           <p>
             Open an activity to review its topic, level, schedule, eligibility,
             available places, and application requirements. Enrollment and
             application status are managed directly in your GO account.
           </p>
-        </div>
-      </header>
+          </div>
+        )}
+      />
 
-      <LearningCategoryNav activeItem={STREAMS[activeFormat]} className="mb-8" />
+      <LearningCategoryNav activeItem={STREAMS[activeFormat]} className="mt-10" />
 
-      <nav className="mb-8 grid grid-cols-2 gap-2" aria-label="Education type">
-        {Object.entries(STREAMS).map(([format, label]) => (
-          <Button
-            key={format}
-            asChild
-            variant={activeFormat === format ? "default" : "outline"}
-          >
-            <Link href={`/education?format=${format}`}>{label}</Link>
-          </Button>
-        ))}
-      </nav>
-
-      <section aria-labelledby="learning-list-heading">
+      <section className="mt-10" aria-labelledby="learning-list-heading">
         <div className="mb-5">
-          <p className="text-sm font-semibold uppercase text-primary">GO Learning</p>
-          <h2 id="learning-list-heading" className="mt-1 text-2xl font-bold">
+          <h2 id="learning-list-heading" className="text-2xl font-bold">
             Available {STREAMS[activeFormat].toLowerCase()}
           </h2>
         </div>
