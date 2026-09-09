@@ -281,17 +281,18 @@ export async function PUT(request) {
   )
     ? goals.availability_status
     : null;
-  const hasLegacyAvailabilitySelection = Boolean(
+  const hasPriorAvailabilitySelection = Boolean(
     goals.looking_for_projects ||
       goals.looking_for_paid_work ||
       String(goals.preferred_time_commitment || "").trim()
   );
   const availabilityStatus =
     requestedAvailabilityStatus ||
-    (hasLegacyAvailabilitySelection ? "available" : null);
+    (hasPriorAvailabilitySelection ? "available" : null);
   const availabilityAnswered = Boolean(availabilityStatus);
   const isAvailable = availabilityStatus === "available";
   const profile = {
+    schemaVersion: 2,
     user_id: user.uid,
     display_name: identity.display_name,
     full_name: identity.full_name,

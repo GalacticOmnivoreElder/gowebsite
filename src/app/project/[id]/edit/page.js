@@ -123,7 +123,7 @@ const projectSchema = z.object({
       `You can add up to ${MAX_PROJECT_REQUIRED_ROLES} required roles`
     ),
 }).superRefine((data, context) => {
-  const schedule = normalizeProjectSchedule(data, { allowLegacy: true });
+  const schedule = normalizeProjectSchedule(data, { allowPrevious: true });
   if (!schedule.ok) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
@@ -1047,7 +1047,7 @@ const EditProjectPage = observer(() => {
                   formData.duration !== "" &&
                   formData.duration !== null && (
                     <div className="md:col-span-2">
-                      <Label htmlFor="duration">Legacy duration (days)</Label>
+                      <Label htmlFor="duration">Previous duration (days)</Label>
                       <Input
                         id="duration"
                         type="number"

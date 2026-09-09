@@ -2,36 +2,20 @@
 
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
 
-export const MENTOR_APPLICATIONS_CLOSED_MESSAGE =
-  "Mentor applications are currently closed. The application form will become available when the next mentor intake opens.";
-
 export function parseBooleanEnv(value, fallback = false) {
   if (typeof value !== "string" || !value.trim()) return fallback;
   return TRUE_VALUES.has(value.trim().toLowerCase());
 }
 
-export function isValidHttpsUrl(value) {
-  try {
-    return new URL(value).protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
 export function getProductConfig(env = process.env) {
-  const mentorApplicationUrl = String(env.MENTOR_APPLICATION_URL || "").trim();
   const runtimeDefaults = env === process.env;
   const featureFlags = {
     productNavigation: parseBooleanEnv(env.PRODUCT_NAVIGATION_ENABLED, true),
     courseEnrollment: parseBooleanEnv(env.COURSE_ENROLLMENT_ENABLED, false),
     userNotifications: parseBooleanEnv(env.USER_NOTIFICATIONS_ENABLED, false),
     videoBundles: parseBooleanEnv(env.VIDEO_BUNDLES_ENABLED, false),
-    mentorApplications: parseBooleanEnv(env.MENTOR_APPLICATIONS_OPEN, false),
     mentorDirectory: parseBooleanEnv(env.MENTOR_DIRECTORY_ENABLED, runtimeDefaults),
     mentorAvailability: parseBooleanEnv(env.MENTOR_AVAILABILITY_ENABLED, runtimeDefaults),
-    mentorMatchmaking: parseBooleanEnv(env.MENTOR_MATCHMAKING_ENABLED, false),
-    mentorFeedback: parseBooleanEnv(env.MENTOR_FEEDBACK_ENABLED, false),
-    publicMentorStrengths: parseBooleanEnv(env.PUBLIC_MENTOR_STRENGTHS_ENABLED, false),
     communityAssetSubmissions: parseBooleanEnv(env.COMMUNITY_ASSET_SUBMISSIONS_ENABLED, env.NODE_ENV === "production"),
     under18Mentorship: parseBooleanEnv(env.UNDER_18_MENTORSHIP_ENABLED, false),
     individuallyPaidCourses: parseBooleanEnv(env.INDIVIDUALLY_PAID_COURSES_ENABLED, false),
@@ -39,9 +23,6 @@ export function getProductConfig(env = process.env) {
 
   return {
     featureFlags,
-    mentorApplicationUrl,
-    mentorApplicationsConfigured:
-      featureFlags.mentorApplications && isValidHttpsUrl(mentorApplicationUrl),
     mentorCheckoutEnabled: parseBooleanEnv(env.MENTOR_CHECKOUT_ENABLED, true),
   };
 }
@@ -50,16 +31,8 @@ export function getSafeProductConfig(env = process.env) {
   const config = getProductConfig(env);
   return {
     featureFlags: config.featureFlags,
-    mentorApplicationsConfigured: config.mentorApplicationsConfigured,
     mentorCheckoutEnabled: config.mentorCheckoutEnabled,
   };
-}
-
-export function areMentorApplicationsOpen(config, settings = {}) {
-  return (
-    config.mentorApplicationsConfigured === true &&
-    settings.mentorApplicationsOpen === true
-  );
 }
 
 export function getLearningProductConfig(env = process.env) {
@@ -82,10 +55,6 @@ export function getMentorshipProductConfig(env = process.env) {
   const suggestionsAllowed = Number.parseInt(env.MENTORSHIP_SUGGESTIONS_PER_REQUEST || "3", 10);
   const defaultDurationWeeks = Number.parseInt(env.MENTORSHIP_DEFAULT_DURATION_WEEKS || "8", 10);
   const checkInFrequencyDays = Number.parseInt(env.MENTORSHIP_CHECKIN_FREQUENCY_DAYS || "14", 10);
-  const pilotUserIds = String(env.MENTORSHIP_PILOT_USER_IDS || "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
   return {
     responseDeadlineWorkingDays:
       Number.isInteger(responseDays) && responseDays >= 1 && responseDays <= 20
@@ -120,17 +89,10 @@ export function getMentorshipProductConfig(env = process.env) {
         ? checkInFrequencyDays
         : 14,
     under18MentorshipEnabled: parseBooleanEnv(env.UNDER_18_MENTORSHIP_ENABLED, false),
-    pilotUserIds,
   };
 }
 
-/**
- * The approved GO-curated mentorship workflow is separate from the original
- * self-service matchmaking experiment. The application surface is open to
- * eligible members, while matching, mentor approval, and engagement support
- * remain GO-controlled pilot operations.
- */
-export function getMentorshipPilotConfig(env = process.env) {
+export function getMentorshipConfig(env = process.env) {
   const mentorship = getMentorshipProductConfig(env);
   return {
     ...mentorship,
@@ -139,7 +101,6 @@ export function getMentorshipPilotConfig(env = process.env) {
       publicMentorBrowsing: parseBooleanEnv(env.MENTORSHIP_PUBLIC_MENTOR_BROWSING_ENABLED, true),
       mentorshipRequests: parseBooleanEnv(env.MENTORSHIP_REQUESTS_ENABLED, true),
       mentorApplications: parseBooleanEnv(env.MENTORSHIP_MENTOR_APPLICATIONS_ENABLED, true),
-      pilotOnly: parseBooleanEnv(env.MENTORSHIP_PILOT_ONLY, false),
     },
   };
 }

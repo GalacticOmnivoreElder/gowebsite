@@ -57,7 +57,7 @@ export async function POST(request) {
       }
       const packDoc = await transaction.get(packRef);
       if (!packDoc.exists || packDoc.data().contributorId !== user.uid) throw Object.assign(new Error("Asset pack not found"), { code: "not_found", status: 404 });
-      if (!["published", "legacy"].includes(packDoc.data().status)) throw Object.assign(new Error("A new version is not available for this pack state"), { code: "invalid_pack_state", status: 409 });
+      if (packDoc.data().status !== "published") throw Object.assign(new Error("A new version is not available for this pack state"), { code: "invalid_pack_state", status: 409 });
       const pendingVersionId = packDoc.data().pendingVersionId;
       if (pendingVersionId) {
         const pendingDoc = await transaction.get(adminDb.collection("asset_pack_versions").doc(pendingVersionId));

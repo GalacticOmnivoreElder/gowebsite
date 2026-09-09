@@ -58,16 +58,6 @@ function resourceDate(resource) {
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
-function isApril2025Resource(resource) {
-  const month = String(resource.month || "").trim().toLowerCase();
-  const year = String(resource.year || "").trim();
-  return (
-    (month === "april" && year === "2025") ||
-    month === "april 2025" ||
-    /april\s+2025/i.test(resource.title || "")
-  );
-}
-
 export default async function ResourcesPage() {
   const resources = await getResources();
   const assetPacksEnabled =
@@ -75,8 +65,7 @@ export default async function ResourcesPage() {
   const sortedResources = [...resources].sort(
     (left, right) => resourceDate(right) - resourceDate(left)
   );
-  const april2025Resource = sortedResources.find(isApril2025Resource);
-  const featuredResource = april2025Resource || sortedResources[0] || null;
+  const featuredResource = sortedResources[0] || null;
   const otherResources = featuredResource
     ? sortedResources.filter((resource) => resource.id !== featuredResource.id)
     : [];
@@ -111,12 +100,9 @@ export default async function ResourcesPage() {
                 id="featured-resource-heading"
                 className="mt-1 text-3xl font-semibold"
               >
-                {april2025Resource
-                  ? "April 2025 resource"
-                  : "Latest listed resource"}
+                Latest published resource
               </h2>
             </div>
-            {april2025Resource && <Badge variant="outline">April 2025</Badge>}
           </div>
           <FeaturedPackageCardWrapper package={featuredResource} />
         </section>

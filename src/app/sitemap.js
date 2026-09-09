@@ -1,4 +1,4 @@
-import { SITE_URL, getWordPressPostsForSitemap } from "@/lib/seo";
+import { SITE_URL, getWordPressBlogPostsForSitemap } from "@/lib/seo";
 import { getProductConfig } from "@/lib/product-config";
 
 const staticRoutes = [
@@ -10,7 +10,7 @@ const staticRoutes = [
   { path: "/faq", priority: 0.6, changeFrequency: "monthly" },
   { path: "/games", priority: 0.7, changeFrequency: "weekly" },
   { path: "/membership", priority: 0.8, changeFrequency: "monthly" },
-  { path: "/matchmaking", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/mentorship", priority: 0.8, changeFrequency: "weekly" },
   { path: "/projects", priority: 0.8, changeFrequency: "daily" },
   { path: "/resources", priority: 0.8, changeFrequency: "weekly" },
   { path: "/community", priority: 0.7, changeFrequency: "weekly" },
@@ -19,11 +19,9 @@ const staticRoutes = [
 
 export default async function sitemap() {
   const now = new Date();
-  const posts = await getWordPressPostsForSitemap();
+  const posts = await getWordPressBlogPostsForSitemap();
   const config = getProductConfig();
-  let routes = config.featureFlags.mentorDirectory
-    ? [...staticRoutes, { path: "/mentors", priority: 0.7, changeFrequency: "weekly" }]
-    : staticRoutes;
+  let routes = staticRoutes;
   if (config.featureFlags.communityAssetSubmissions) {
     routes = [...routes, { path: "/asset-packs", priority: 0.6, changeFrequency: "weekly" }];
   }

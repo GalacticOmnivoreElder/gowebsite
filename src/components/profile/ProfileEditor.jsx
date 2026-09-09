@@ -74,15 +74,15 @@ const ProfileEditor = observer(({ onSave }) => {
 
         if (response.ok) {
           const profileData = await response.json();
-          const legacyLongBio =
+          const priorLongBio =
             !profileData.aboutMe &&
             String(profileData.bio || "").length > MAX_PROFILE_BIO_LENGTH
               ? String(profileData.bio)
               : "";
           setFormData({
             username: profileData.username || "",
-            bio: legacyLongBio ? "" : profileData.bio || "",
-            aboutMe: profileData.aboutMe || legacyLongBio,
+            bio: priorLongBio ? "" : profileData.bio || "",
+            aboutMe: profileData.aboutMe || priorLongBio,
             skills: profileData.skills || [],
             socialLinks: profileData.socialLinks || {},
             socialVisibility: profileData.socialVisibility || {},

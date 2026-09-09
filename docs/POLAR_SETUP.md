@@ -39,7 +39,7 @@ NEXT_PUBLIC_POLAR_COMPANY_ANNUAL_PRODUCT_ID=
 ADMIN_BOOTSTRAP_SECRET=
 ```
 
-> ⚠️ The `.env` currently holds a **legacy production** `POLAR_ACCESS_TOKEN`
+> ⚠️ Do not use a production `POLAR_ACCESS_TOKEN` for local or sandbox testing.
 > (`polar_oat_…`). For local sandbox testing, replace it with a **sandbox** token,
 > and keep `POLAR_SERVER=sandbox`. A sandbox token used with `POLAR_SERVER=production`
 > (or vice-versa) will fail.

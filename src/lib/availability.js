@@ -64,7 +64,7 @@ export function normalizeAvailability({
   const availableForPaidWork = hasOwn(section, "available_for_paid_work")
     ? section.available_for_paid_work === true
     : sourceProfile.looking_for_paid_work === true;
-  const hasLegacyStructuredSelection = Boolean(
+  const hasPriorStructuredSelection = Boolean(
     availableForProjects ||
       availableForPaidWork ||
       preferredTimeCommitment
@@ -72,7 +72,7 @@ export function normalizeAvailability({
   const hasExplicitSelection =
     typeof answeredMarker === "boolean"
       ? answeredMarker
-      : Boolean(normalizedStatus || hasLegacyStructuredSelection);
+      : Boolean(normalizedStatus || hasPriorStructuredSelection);
 
   if (!hasExplicitSelection) {
     return {

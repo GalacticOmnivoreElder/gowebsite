@@ -52,7 +52,7 @@ const eventRoutes = [
   {
     label: "Find mentorship",
     description: "Connect your current challenge with a clearer next step.",
-    href: "/matchmaking",
+    href: "/mentorship",
     icon: ArrowRight,
   },
   {

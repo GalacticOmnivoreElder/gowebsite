@@ -6,10 +6,8 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  CalendarIcon,
   PackageIcon,
   ClockIcon,
-  TrophyIcon,
   CreditCardIcon,
   ArrowRight,
 } from "lucide-react";
@@ -145,36 +143,6 @@ const MemberDashboard = observer(() => {
           </CardContent>
         </Card>
 
-        {/* Placeholder Stats - Can be implemented later */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Events Attended
-            </CardTitle>
-            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="text-2xl font-bold">0</p>
-              <p className="text-xs text-muted-foreground">Coming soon</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Approved Submissions
-            </CardTitle>
-            <TrophyIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="text-2xl font-bold">0</p>
-              <p className="text-xs text-muted-foreground">Coming soon</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Recent Packages Section */}

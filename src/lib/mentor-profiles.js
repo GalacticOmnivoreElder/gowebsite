@@ -118,23 +118,13 @@ export function cleanMentorProfile(input = {}) {
   };
 }
 
-/**
- * Read both mentor profile shapes that have existed in the platform. Canonical
- * fields win when they contain data, while pilot application fields remain a
- * fallback for records created before the public profile editor was available.
- */
+/** Normalize the stored mentor profile for public and private workspaces. */
 export function normalizeMentorProfile(profile = {}) {
   const maximumActiveStudents = Math.min(
     100,
     positiveInteger(profile.maximumActiveStudents, profile.maximumActiveMentees)
   );
-  const canonicalActiveEngagementCount = nonNegativeInteger(
-    profile.canonicalActiveEngagementCount,
-    profile.activeEngagementCount
-  );
-  const activeEngagementCount =
-    nonNegativeInteger(profile.pilotActiveEngagementCount) +
-    canonicalActiveEngagementCount;
+  const activeEngagementCount = nonNegativeInteger(profile.activeEngagementCount);
   const availableSlots = Math.max(0, maximumActiveStudents - activeEngagementCount);
   const currentlyAcceptingStudents =
     profile.currentlyAcceptingStudents === true &&
@@ -182,9 +172,9 @@ export function normalizeMentorProfile(profile = {}) {
     relatedLearningSlugs: stringArray(profile.relatedLearningSlugs, 30, 160),
     relatedVideoBundleSlugs: stringArray(profile.relatedVideoBundleSlugs, 30, 160),
     availabilitySummary: currentlyAcceptingStudents ? requestedAvailability : "unavailable",
+    publicProfileConsent: profile.publicProfileConsent === true,
     currentlyAcceptingStudents,
     maximumActiveStudents,
-    canonicalActiveEngagementCount,
     activeEngagementCount,
     availableSlots,
   };

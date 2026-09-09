@@ -8,8 +8,6 @@ const ALLOWED_REDIRECT_ROOTS = new Set([
   "/education",
   "/games",
   "/membership",
-  "/matchmaking",
-  "/mentors",
   "/mentorship",
   "/onboarding",
   "/package",

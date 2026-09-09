@@ -132,6 +132,7 @@ test("PATCH /api/me/profile only saves editable fields", async () => {
   assert.deepEqual(plain(route.adminDb.docs.user_profiles["user-1"]), {
     display_name: "Ada",
     primary_role: "Programmer",
+    schemaVersion: 2,
     updated_at: "2026-07-14T12:00:00.000Z",
     user_id: "user-1",
     visibility_public: true,

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getRequestUser } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
-import { getProductConfig } from "@/lib/product-config";
+import { getMentorshipConfig } from "@/lib/product-config";
 
 async function requireAdmin(request) {
   const user = await getRequestUser(request);
@@ -15,12 +15,14 @@ export async function GET(request) {
   const gate = await requireAdmin(request);
   if (gate.response) return gate.response;
 
-  const config = getProductConfig();
+  const config = getMentorshipConfig();
   const doc = await adminDb.collection("site_settings").doc("product").get();
   const settings = doc.exists ? doc.data() : {};
   return Response.json({
-    mentorApplicationsConfigured: config.mentorApplicationsConfigured,
-    mentorApplicationsOpen: settings.mentorApplicationsOpen === true,
+    mentorApplicationsConfigured: config.featureFlags.mentorApplications,
+    mentorApplicationsOpen:
+      config.featureFlags.mentorApplications &&
+      settings.mentorApplicationsOpen !== false,
   });
 }
 
@@ -49,9 +51,10 @@ export async function PUT(request) {
     value: body.mentorApplicationsOpen,
   });
 
-  const config = getProductConfig();
+  const config = getMentorshipConfig();
   return Response.json({
-    mentorApplicationsConfigured: config.mentorApplicationsConfigured,
-    mentorApplicationsOpen: body.mentorApplicationsOpen,
+    mentorApplicationsConfigured: config.featureFlags.mentorApplications,
+    mentorApplicationsOpen:
+      config.featureFlags.mentorApplications && body.mentorApplicationsOpen,
   });
 }

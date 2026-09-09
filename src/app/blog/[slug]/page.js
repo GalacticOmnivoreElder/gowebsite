@@ -176,7 +176,7 @@ const BlogPost = observer(() => {
             <div
               className="wordpress-content"
               dangerouslySetInnerHTML={{
-                __html: post.content,
+                __html: formatContent(post.content),
               }}
             />
 

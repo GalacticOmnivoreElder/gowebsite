@@ -69,7 +69,7 @@ const DYNAMIC_PAGE_PATHS = [
   ["/education/", "/education/[slug]"],
   ["/video-bundles/", "/video-bundles/[slug]"],
   ["/resources/", "/resources/[slug]"],
-  ["/mentors/", "/mentors/[id]"],
+  ["/mentorship/", "/mentorship/[id]"],
 ];
 
 function cleanValue(key, value) {
@@ -108,7 +108,7 @@ export function getPageType(pathname = "/") {
   if (path.startsWith("/education") || path.startsWith("/video-bundles")) return "learning";
   if (path.startsWith("/project") || path === "/projects") return "projects";
   if (path.startsWith("/membership") || path.startsWith("/pricing") || path.startsWith("/checkout")) return "membership";
-  if (path.startsWith("/mentors") || path.startsWith("/matchmaking")) return "mentorship";
+  if (path.startsWith("/mentorship")) return "mentorship";
   if (path.startsWith("/events")) return "events";
   if (path.startsWith("/blog")) return "blog";
   if (path.startsWith("/resources")) return "resources";

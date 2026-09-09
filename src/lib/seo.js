@@ -158,14 +158,27 @@ export const seoJsonLd = {
   "@graph": [organizationJsonLd, websiteJsonLd],
 };
 
-export async function getWordPressPostBySlug(slug) {
+async function getWordPressBlogCategoryId() {
+  if (!process.env.WORDPRESS_API_URL) return null;
+  const response = await fetch(
+    `${process.env.WORDPRESS_API_URL}/categories?slug=blog&_fields=id`,
+    { next: { revalidate: 3600 } },
+  );
+  if (!response.ok) return null;
+  const categories = await response.json();
+  return Array.isArray(categories) ? categories[0]?.id || null : null;
+}
+
+export async function getWordPressBlogPostBySlug(slug) {
   if (!slug || !process.env.WORDPRESS_API_URL) return null;
 
   try {
+    const categoryId = await getWordPressBlogCategoryId();
+    if (!categoryId) return null;
     const response = await fetch(
       `${process.env.WORDPRESS_API_URL}/posts?_embed&slug=${encodeURIComponent(
         slug
-      )}`,
+      )}&categories=${categoryId}`,
       { next: { revalidate: 3600 } }
     );
 
@@ -192,12 +205,14 @@ export async function getWordPressPostBySlug(slug) {
   }
 }
 
-export async function getWordPressPostsForSitemap() {
+export async function getWordPressBlogPostsForSitemap() {
   if (!process.env.WORDPRESS_API_URL) return [];
 
   try {
+    const categoryId = await getWordPressBlogCategoryId();
+    if (!categoryId) return [];
     const response = await fetch(
-      `${process.env.WORDPRESS_API_URL}/posts?per_page=100&_fields=slug,modified_gmt,date_gmt`,
+      `${process.env.WORDPRESS_API_URL}/posts?per_page=100&categories=${categoryId}&_fields=slug,modified_gmt,date_gmt`,
       { next: { revalidate: 3600 } }
     );
 

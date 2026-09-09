@@ -97,6 +97,7 @@ export async function PATCH(request) {
     if (body[field] !== undefined) update[field] = body[field];
   }
   update.updated_at = new Date();
+  update.schemaVersion = 2;
 
   await adminDb
     .collection("user_profiles")

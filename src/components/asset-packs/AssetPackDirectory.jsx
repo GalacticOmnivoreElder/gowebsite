@@ -49,7 +49,7 @@ export function AssetPackDirectory() {
             <Card key={pack.id} className="overflow-hidden">
               {pack.previewImage ? <div className="relative aspect-video"><Image unoptimized fill sizes="(max-width: 768px) 100vw, 33vw" src={pack.previewImage} alt={`${pack.title} preview`} className="object-cover" /></div> : null}
               <CardHeader>
-                <div className="flex items-start justify-between gap-3"><CardTitle>{pack.title}</CardTitle>{pack.status === "legacy" ? <Badge variant="secondary">Legacy</Badge> : null}</div>
+                <div className="flex items-start justify-between gap-3"><CardTitle>{pack.title}</CardTitle></div>
                 <p className="text-sm text-muted-foreground">Version {pack.version} - {pack.contributorDisplayName}</p>
               </CardHeader>
               <CardContent className="space-y-4">

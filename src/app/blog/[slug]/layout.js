@@ -1,8 +1,8 @@
-import { createMetadata, getWordPressPostBySlug } from "@/lib/seo";
+import { createMetadata, getWordPressBlogPostBySlug } from "@/lib/seo";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const post = await getWordPressPostBySlug(slug);
+  const post = await getWordPressBlogPostBySlug(slug);
 
   if (!post) {
     return createMetadata({

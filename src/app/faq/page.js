@@ -63,7 +63,7 @@ const faqs = [
   {
     question: "Are all announced benefits available now?",
     answer:
-      "Only benefits shown in the current Membership configuration should be treated as active. Pilots or planned features are labelled separately and are not included as current paid benefits.",
+      "Your Membership page shows the current benefits for each plan. Access follows the active or paid-through period shown in Billing.",
   },
   {
     question: "Will I always keep access to downloaded resources?",

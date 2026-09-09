@@ -33,12 +33,12 @@ export async function PATCH(request) {
   const gate = await requireAdmin(request);
   if (gate.response) return gate.response;
   const body = await request.json().catch(() => ({}));
-  if (!["save_review", "mark_legacy"].includes(body.action)) return Response.json({ error: "Unsupported resource-review action" }, { status: 400 });
+  if (!["save_review", "publish", "archive"].includes(body.action)) return Response.json({ error: "Unsupported resource-review action" }, { status: 400 });
   const ref = adminDb.collection("packages").doc(String(body.resourceId || ""));
   const doc = await ref.get();
   if (!doc.exists) return Response.json({ error: "Resource not found" }, { status: 404 });
   const now = new Date();
-  const update = { updatedAt: now, legacyReviewedBy: gate.user.uid };
+  const update = { updatedAt: now, lifecycleReviewedBy: gate.user.uid };
   if (body.reviewState !== undefined) {
     if (!REVIEW_STATES.includes(body.reviewState)) return Response.json({ error: "Unsupported review state" }, { status: 400 });
     update.reviewState = body.reviewState;
@@ -49,15 +49,16 @@ export async function PATCH(request) {
   const resultingChecklist = update.reviewChecklist || doc.data().reviewChecklist || {};
   const reason = String(body.reason || "").trim().slice(0, 2000);
   if (!reason) return Response.json({ error: "A reason is required for resource review changes" }, { status: 400 });
-  if (body.action === "mark_legacy") {
-    if (resultingState !== "cleared" || !CHECKLIST_KEYS.every((key) => resultingChecklist[key] === true)) return Response.json({ error: "Clear the review and complete every checklist item before marking this resource Legacy" }, { status: 409 });
-    update.status = "legacy";
+  if (body.action === "publish") {
+    if (resultingState !== "cleared" || !CHECKLIST_KEYS.every((key) => resultingChecklist[key] === true)) return Response.json({ error: "Clear the review and complete every checklist item before publishing this resource" }, { status: 409 });
+    update.status = "published";
   }
+  if (body.action === "archive") update.status = "archived";
   const auditRef = adminDb.collection("admin_audit_events").doc();
   const batch = adminDb.batch();
   batch.update(ref, update);
   batch.create(auditRef, {
-    action: body.action === "mark_legacy" ? "resource.marked_legacy" : "resource.legacy_review_updated",
+    action: body.action === "publish" ? "resource.published" : body.action === "archive" ? "resource.archived" : "resource.lifecycle_review_updated",
     actorId: gate.user.uid,
     target: { type: "resource", id: doc.id },
     previousValue: { status: doc.data().status || "draft", reviewState: doc.data().reviewState || "pending", reviewChecklist: doc.data().reviewChecklist || {}, currentSupportStatus: doc.data().currentSupportStatus || "" },

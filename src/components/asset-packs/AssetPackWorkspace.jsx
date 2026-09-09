@@ -171,9 +171,9 @@ export function AssetPackWorkspace() {
   };
 
   if (!data && !message) return <p className="py-12 text-center text-muted-foreground">Loading asset-pack workspace...</p>;
-  if (!data) return <Card><CardContent className="p-8 text-center"><p>{message}</p><Badge className="mt-3">Coming Soon</Badge></CardContent></Card>;
+  if (!data) return <Card><CardContent className="p-8 text-center"><p role="alert">{message || "The asset-pack workspace could not be loaded."}</p></CardContent></Card>;
 
-  const versionablePacks = data.ownedPacks.filter((pack) => ["published", "legacy"].includes(pack.status) && !pack.pendingVersionId);
+  const versionablePacks = data.ownedPacks.filter((pack) => pack.status === "published" && !pack.pendingVersionId);
   const submissionChecklist = getSubmissionChecklist(form);
   const completedRequirements = submissionChecklist.filter((item) => item.complete).length;
   const submissionReady = completedRequirements === submissionChecklist.length;

@@ -3,10 +3,10 @@
 import crypto from "crypto";
 import { hasCommunityContentAccess } from "@/lib/content-entitlements";
 
-export const ASSET_PACK_STATUSES = Object.freeze(["draft", "submitted", "changes_requested", "approved", "published", "legacy", "archived", "removed"]);
+export const ASSET_PACK_STATUSES = Object.freeze(["draft", "submitted", "changes_requested", "approved", "published", "archived", "removed"]);
 export const ASSET_PACK_LICENSES = Object.freeze(["CC0", "CC BY", "CC BY-SA", "MIT", "Other"]);
 export const ASSET_PACK_ACCESS_TYPES = Object.freeze(["public", "community", "individual"]);
-export const PUBLIC_ASSET_PACK_STATUSES = Object.freeze(["published", "legacy"]);
+export const PUBLIC_ASSET_PACK_STATUSES = Object.freeze(["published"]);
 export const ACTIVE_ASSET_PACK_VERSION_STATUSES = Object.freeze(["draft", "submitted", "changes_requested", "approved"]);
 
 function validationError(message) {

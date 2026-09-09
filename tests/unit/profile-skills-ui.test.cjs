@@ -27,21 +27,20 @@ const pricingSource = fs.readFileSync(
 test("profile and onboarding share the accessible community skill selector", () => {
   assert.match(profileSource, /<SkillSelector/);
   assert.match(onboardingSource, /<SkillSelector/);
-  assert.match(onboardingSource, /Skills and experience \(optional\)/);
+  assert.match(onboardingSource, /<h2 className="text-base font-semibold">Skills<\/h2>/);
   assert.match(selectorSource, /\/api\/skills\?popular=true&limit=20/);
   assert.match(selectorSource, /Popular community skills/);
-  assert.match(selectorSource, /aria-pressed=\{selected\}/);
+  assert.match(selectorSource, /role="combobox"/);
+  assert.match(selectorSource, /aria-selected=\{activeIndex === index\}/);
   assert.match(selectorSource, /MAX_PROFILE_SKILLS/);
   assert.doesNotMatch(selectorSource, /Choose from the skill directory/);
 });
 
 test("onboarding accepts directory-backed roles, custom tools, and optional Discord", () => {
   assert.match(onboardingSource, /<SkillTagInput/);
-  assert.match(selectorSource, /fetch\("\/api\/skills"/);
-  assert.match(
-    selectorSource,
-    /Choose any skill from the complete community directory/
-  );
+  assert.match(selectorSource, /const endpoint =/);
+  assert.match(selectorSource, /fetch\(endpoint, \{ signal: controller\.signal \}\)/);
+  assert.match(selectorSource, /catalogMode === "all"/);
   assert.match(onboardingSource, /Secondary roles \(optional\)/);
   assert.match(onboardingSource, /Common tools and engines/);
   assert.match(onboardingSource, /Discord username \(optional\)/);
@@ -59,15 +58,13 @@ test("onboarding accepts directory-backed roles, custom tools, and optional Disc
 test("help and contribution uses the full backend skill directory", () => {
   assert.match(selectorSource, /catalogMode === "all"/);
   assert.match(selectorSource, /\? "\/api\/skills"/);
-  assert.match(selectorSource, /Search the complete skill directory/);
+  assert.match(selectorSource, /Start typing to search the skill directory/);
   assert.equal(
     (onboardingSource.match(/catalogMode="all"/g) || []).length,
     2
   );
-  assert.equal(
-    (onboardingSource.match(/allowCustom=\{false\}/g) || []).length,
-    2
-  );
+  assert.doesNotMatch(onboardingSource, /allowCustom=\{false\}/);
+  assert.match(selectorSource, /allowCustom = true/);
   assert.doesNotMatch(onboardingSource, /HELP_TOPICS/);
 });
 

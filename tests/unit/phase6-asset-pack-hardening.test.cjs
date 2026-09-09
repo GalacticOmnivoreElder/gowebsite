@@ -32,7 +32,7 @@ test("asset-pack administration supports independently audited access, review, p
   assert.match(page, /Reason required for approval or publication/);
 });
 
-test("Legacy publication requires a cleared complete checklist and records a reasoned before-and-after audit", () => {
+test("resource publication requires a cleared complete checklist and records a reasoned audit", () => {
   const route = read("src/app/api/admin/resources-review/route.js");
   const page = read("src/app/admin/resources-review/page.js");
   const env = read(".env.example");
@@ -41,10 +41,9 @@ test("Legacy publication requires a cleared complete checklist and records a rea
   assert.match(route, /resultingState !== "cleared"/);
   assert.match(route, /CHECKLIST_KEYS\.every/);
   for (const field of ["actorId", "action", "target", "previousValue", "newValue", "reason", "createdAt"]) assert.match(route, new RegExp(field));
-  assert.match(page, /readyForLegacy/);
-  assert.match(page, /disabled=\{busy \|\| !readyForLegacy\}/);
-  assert.match(env, /^APRIL_2025_RESOURCE_ID=$/m);
-  assert.doesNotMatch(route, /APRIL_2025_RESOURCE_ID|April 2025/i);
+  assert.match(page, /readyForPublication/);
+  assert.match(page, /disabled={busy \|\| !readyForPublication}/);
+  assert.doesNotMatch(env, /APRIL_2025_RESOURCE_ID/);
 });
 
 test("asset-pack access failures lead to sign-in or Membership without exposing protected destinations", () => {
@@ -68,7 +67,7 @@ test("final product presentation includes approved asset packs without overstati
   assert.match(home, /approved community asset packs/i);
   assert.match(membership, /approved asset packs/i);
   assert.match(membership, /Contribute asset packs when community submissions are enabled/);
-  assert.match(assetPage, /Coming Soon/);
+  assert.doesNotMatch(assetPage, /Coming Soon/i);
 });
 
 test("sensitive controls from every phase retain complete administrator audit fields", () => {

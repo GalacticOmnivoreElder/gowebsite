@@ -21,6 +21,7 @@ export const PRODUCT_NOTIFICATION_TYPES = Object.freeze([
   "mentorship_report",
   "asset_pack_update",
   "training_assignment",
+  "support_update",
 ]);
 
 function validationError(message) {

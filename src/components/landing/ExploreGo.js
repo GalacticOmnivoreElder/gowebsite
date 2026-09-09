@@ -123,7 +123,7 @@ export const ExploreGo = () => {
 
     const loadLatestPost = async () => {
       try {
-        const response = await fetch("/api/wordpress?category=blog", {
+        const response = await fetch("/api/blog", {
           signal: controller.signal,
         });
 

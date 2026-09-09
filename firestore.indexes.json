@@ -70,14 +70,6 @@
       "collectionGroup": "mentorship_requests",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "responseDeadline", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "mentorship_pilot_requests",
-      "queryScope": "COLLECTION",
-      "fields": [
         { "fieldPath": "menteeUserId", "order": "ASCENDING" },
         { "fieldPath": "updatedAt", "order": "DESCENDING" }
       ]
@@ -107,7 +99,7 @@
       ]
     },
     {
-      "collectionGroup": "mentorship_pilot_engagements",
+      "collectionGroup": "mentorship_engagements",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "menteeUserId", "order": "ASCENDING" },
@@ -115,11 +107,27 @@
       ]
     },
     {
-      "collectionGroup": "mentorship_pilot_engagements",
+      "collectionGroup": "mentorship_engagements",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "mentorId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "support_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "requesterId", "order": "ASCENDING" },
+        { "fieldPath": "lastMessageAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "support_request_messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ticketId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
     }
   ],

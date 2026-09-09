@@ -12,7 +12,7 @@ const PRIVATE_ROUTE_PREFIXES = [
   "/subscription",
   "/project/",
   "/project/create",
-  "/matchmaking",
+  "/mentorship",
   "/education/",
   "/video-bundles/",
   "/resources/",

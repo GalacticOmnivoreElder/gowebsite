@@ -117,13 +117,13 @@ const OnboardingContent = observer(() => {
   const stepData = draft[step] || {};
   const setField = (key, val) =>
     setDraft((d) => ({ ...d, [step]: { ...(d[step] || {}), [key]: val } }));
-  const legacyAvailabilitySelected =
+  const priorAvailabilitySelected =
     stepData.looking_for_projects ||
     stepData.looking_for_paid_work ||
     String(stepData.preferred_time_commitment || "").trim();
   const availabilityStatus =
     stepData.availability_status ||
-    (legacyAvailabilitySelected ? "available" : "");
+    (priorAvailabilitySelected ? "available" : "");
   const setAvailabilityStatus = (status) =>
     setDraft((currentDraft) => ({
       ...currentDraft,
@@ -396,7 +396,7 @@ const OnboardingContent = observer(() => {
             {step === "portfolio" && (
               <>
                 <PortfolioLinksEditor
-                  value={stepData.links || legacyPortfolioLinks(stepData)}
+                  value={stepData.links || priorPortfolioLinks(stepData)}
                   onChange={(value) => setField("links", value)}
                 />
                 <PastProjectsEditor
@@ -566,7 +566,7 @@ const OnboardingContent = observer(() => {
   );
 });
 
-function legacyPortfolioLinks(data = {}) {
+function priorPortfolioLinks(data = {}) {
   return [
     data.portfolio ? { type: "portfolio", url: data.portfolio } : null,
     data.github ? { type: "github", url: data.github } : null,

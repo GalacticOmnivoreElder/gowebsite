@@ -1,86 +1,107 @@
 "use client";
 
-import { observer } from "mobx-react-lite";
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { Gamepad2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
-import { BlogCard } from "../blog/page";
 
-const GamesPage = observer(() => {
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+function isGameProject(project) {
+  const values = [
+    project.type,
+    project.title,
+    ...(Array.isArray(project.categoryTags) ? project.categoryTags : []),
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
+  return values.some((value) => value.includes("game"));
+}
+
+export default function GamesPage() {
+  const [projects, setProjects] = useState([]);
+  const [status, setStatus] = useState("loading");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchGames = async () => {
+    let active = true;
+    async function load() {
       try {
-        setLoading(true);
-        const response = await fetch("/api/wordpress?category=game");
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch games");
+        const response = await fetch("/api/projects?status=all&limit=100", {
+          cache: "no-store",
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "Games could not be loaded.");
+        if (active) {
+          setProjects(Array.isArray(result.projects) ? result.projects : []);
+          setStatus("ready");
         }
-
-        const data = await response.json();
-        setGames(data);
-      } catch (error) {
-        console.error("Error fetching games:", error);
-        setError("Failed to load games. Please try again later.");
-      } finally {
-        setLoading(false);
+      } catch (loadError) {
+        if (active) {
+          setError(loadError.message || "Games could not be loaded.");
+          setStatus("error");
+        }
       }
+    }
+    load();
+    return () => {
+      active = false;
     };
-
-    fetchGames();
   }, []);
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  const games = useMemo(() => projects.filter(isGameProject), [projects]);
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-4xl font-bold mb-8">Games</h1>
-        <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
-          <p className="text-red-600 dark:text-red-400">{error}</p>
-          <Button onClick={() => window.location.reload()} className="mt-4">
-            Try again
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  if (status === "loading") return <LoadingSpinner />;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-4">Games</h1>
-      <p className="text-muted-foreground mb-8">
-        Review games and playable work listed by Galactic Omnivore. Each entry
-        carries its own project details and creator credit.
-      </p>
+    <main className="container mx-auto px-4 py-8">
+      <header className="mb-8">
+        <div className="flex items-center gap-3">
+          <Gamepad2 className="h-9 w-9 text-primary" aria-hidden="true" />
+          <h1 className="text-4xl font-bold">Games</h1>
+        </div>
+        <p className="mt-4 max-w-3xl text-muted-foreground">
+          Discover approved games and playable work created through the GO community.
+          Each entry links to its project, team, goals, and current opportunities.
+        </p>
+      </header>
 
-      {games.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {status === "error" ? (
+        <Card><CardContent className="p-8 text-center"><p role="alert" className="text-destructive">{error}</p></CardContent></Card>
+      ) : null}
+
+      {status === "ready" && games.length ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {games.map((game) => (
-            <BlogCard key={game.id} post={game} />
+            <Card key={game.id} className="overflow-hidden">
+              {game.thumbnail ? (
+                <div className="relative aspect-video">
+                  <Image src={game.thumbnail} alt="" fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
+                </div>
+              ) : null}
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <CardTitle>{game.title}</CardTitle>
+                  <Badge variant="outline">{game.type}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="line-clamp-3 text-sm text-muted-foreground">{game.description || game.goal}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {(game.categoryTags || []).slice(0, 4).map((tag) => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                </div>
+                <Button asChild className="mt-6 w-full"><Link href={`/project/${game.id}`}>View project</Link></Button>
+              </CardContent>
+            </Card>
           ))}
         </div>
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-xl mb-4">No games are listed now.</p>
-          <p className="text-muted-foreground">
-            Return to this page to review newly listed work.
-          </p>
-        </div>
-      )}
-    </div>
+      ) : null}
+
+      {status === "ready" && !games.length ? (
+        <Card><CardContent className="p-10 text-center text-muted-foreground">No approved game projects are listed right now.</CardContent></Card>
+      ) : null}
+    </main>
   );
-});
-
-
-
-export default GamesPage;
+}

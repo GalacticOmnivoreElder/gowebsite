@@ -31,6 +31,7 @@ export function LearningDetail({ slug }) {
   const [submitting, setSubmitting] = useState(false);
   const [answers, setAnswers] = useState({});
   const [message, setMessage] = useState("");
+  const [sessionAccess, setSessionAccess] = useState(null);
   const viewTracked = useRef(false);
 
   const load = useCallback(async () => {
@@ -41,6 +42,11 @@ export function LearningDetail({ slug }) {
     const response = await fetch(`/api/learning-items/${encodeURIComponent(slug)}`, { headers, cache: "no-store" });
     const result = await response.json().catch(() => ({}));
     setItem(response.ok ? result : { error: result.error || "Learning item unavailable" });
+    setSessionAccess(null);
+    if (response.ok && user && (result.canManage || ["confirmed", "attended", "did_not_attend", "completed"].includes(result.enrollment?.state))) {
+      const accessResponse = await fetch(`/api/learning-items/${encodeURIComponent(slug)}/session-access`, { headers, cache: "no-store" });
+      if (accessResponse.ok) setSessionAccess(await accessResponse.json());
+    }
     if (response.ok && !viewTracked.current) {
       viewTracked.current = true;
       const contentType = result.learningType || "learning_item";
@@ -125,6 +131,7 @@ export function LearningDetail({ slug }) {
             {item.startsAt && <p className="flex gap-2 text-sm"><CalendarDays className="h-4 w-4 shrink-0 text-primary" />{formatDateTimeInTimeZone(item.startsAt, item.timeZone)} ({item.timeZone})</p>}
             {item.durationMinutes > 0 && <p className="flex gap-2 text-sm"><Clock className="h-4 w-4 shrink-0 text-primary" />{item.durationMinutes} minutes</p>}
             {item.location && <p className="flex gap-2 text-sm"><MapPin className="h-4 w-4 shrink-0 text-primary" />{item.location}</p>}
+            {sessionAccess?.privateSessionUrl && <Button asChild className="w-full"><a href={sessionAccess.privateSessionUrl} target="_blank" rel="noopener noreferrer">Open private session <ExternalLink className="ml-2 h-4 w-4" /></a></Button>}
             {item.placesRemaining !== null && <p className="flex gap-2 text-sm"><Users className="h-4 w-4 shrink-0 text-primary" />{item.placesRemaining} places remaining</p>}
             {enrollment && <div className="rounded-md border bg-muted/20 p-3"><p className="text-sm font-medium capitalize">{enrollment.state.replaceAll("_", " ")}</p>{enrollment.waitlistOfferStatus === "offered" && <p className="mt-1 text-xs text-muted-foreground">Offer expires {new Date(enrollment.waitlistOfferExpiresAt).toLocaleString()}</p>}</div>}
             {!active && (item.customQuestions || []).map((question) => <div key={question.id}><label className="mb-2 block text-sm font-medium">{question.label}{question.required ? " *" : ""}</label><QuestionField question={question} value={answers[question.id]} onChange={(value) => setAnswers((current) => ({ ...current, [question.id]: value }))} />{question.type === "accessibility_request" && <p className="mt-1 text-xs text-muted-foreground">Visible only to authorized organizers and the assigned instructor when needed.</p>}</div>)}

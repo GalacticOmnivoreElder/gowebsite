@@ -88,10 +88,11 @@ const CHECKOUT_LINK_PRODUCT_IDS = {
     "dd316098-f962-456e-a14a-080464b670b5",
   ],
   mentor: [
+    // Monthly and annual product ids from the approved production checkout links.
     "1d213038-ac43-4c83-87a4-56a5d79ee2df",
     "b6838dca-edaf-4fc7-bfdf-d2ceed0ba1f9",
-    // Legacy product whose billing interval was incorrectly monthly. Keep it
-    // mapped so historical webhook events still resolve to Mentor membership.
+    // Historical product id retained only so prior webhook records still map
+    // to the Mentor tier; new checkouts never select it.
     "7963bdf5-be68-4d72-82ef-d86da4558b37",
   ],
 };
@@ -131,7 +132,7 @@ export function resolvePolarProductTier(productId) {
  * Resolve the Polar product id for a (tier, interval) pair.
  *
  * Polar products each have a single recurring interval, so monthly and annual
- * are separate products. The legacy single-interval vars
+ * are separate products. The older single-interval vars
  * (NEXT_PUBLIC_POLAR_PRODUCT_ID / NEXT_PUBLIC_POLAR_COMPANY_PRODUCT_ID) are used
  * as the MONTHLY fallback so existing config keeps working.
  *

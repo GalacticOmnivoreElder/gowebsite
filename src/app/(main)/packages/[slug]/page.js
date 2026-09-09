@@ -307,9 +307,6 @@ export default function PackageDetailPage({ params }) {
               {packageData.month} {packageData.year}
             </Badge>
             <Badge variant="secondary">{packageData.theme}</Badge>
-            {packageData.status === "legacy" && (
-              <Badge variant="secondary">Legacy</Badge>
-            )}
             {isCurrentMonth && (
               <Badge variant="default" className="bg-green-600">
                 Current listing

@@ -27,7 +27,7 @@ const BlogPage = observer(() => {
     const fetchBlogs = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/wordpress?category=blog");
+        const response = await fetch("/api/blog");
 
         if (!response.ok) {
           throw new Error("Failed to fetch blogs");

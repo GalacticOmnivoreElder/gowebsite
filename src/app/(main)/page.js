@@ -85,8 +85,8 @@ const orbitRoutes = [
       "Browse approved mentor profiles and request focused guidance when matching is enabled.",
     detail:
       "Completed engagements support private direct reviews and optional author-consented mentor references.",
-    href: "/matchmaking",
-    cta: "Explore matchmaking",
+    href: "/mentorship",
+    cta: "Explore mentorship",
   },
   {
     title: "Learn",

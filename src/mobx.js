@@ -308,7 +308,7 @@ class Store {
     if (this.blogsLoading || this.blogsFetched) return;
     this.blogsLoading = true;
     try {
-      const response = await fetch("/api/wordpress");
+      const response = await fetch("/api/blog");
       if (!response.ok) throw new Error("Failed to fetch blogs");
       const data = await response.json();
       runInAction(() => {
@@ -333,7 +333,7 @@ class Store {
     });
 
     try {
-      const response = await fetch(`/api/wordpress?slug=${slug}`);
+      const response = await fetch(`/api/blog?slug=${encodeURIComponent(slug)}`);
       if (!response.ok) throw new Error("Failed to fetch blog details");
       const data = await response.json();
       runInAction(() => {

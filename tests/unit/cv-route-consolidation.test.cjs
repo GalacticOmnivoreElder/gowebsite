@@ -28,12 +28,12 @@ test("the canonical profile CV route renders the shared CV workspace", () => {
   assert.match(workspace, /use when applying to\s+projects/);
 });
 
-test("legacy /cv preserves query parameters and redirects to /profile/cv", () => {
-  const legacyRoute = read("src/app/cv/page.js");
+test("the /cv compatibility route preserves query parameters and redirects to /profile/cv", () => {
+  const compatibilityRoute = read("src/app/cv/page.js");
 
-  assert.match(legacyRoute, /const legacyParams = await searchParams/);
-  assert.match(legacyRoute, /nextParams\.append\(key, item\)/);
-  assert.match(legacyRoute, /redirect\(`\/profile\/cv/);
+  assert.match(compatibilityRoute, /const forwardedParams = await searchParams/);
+  assert.match(compatibilityRoute, /nextParams\.append\(key, item\)/);
+  assert.match(compatibilityRoute, /redirect\(`\/profile\/cv/);
 });
 
 test("headers omit Passport navigation while Profile keeps the canonical destination", () => {

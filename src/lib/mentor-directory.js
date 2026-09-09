@@ -1,6 +1,7 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { isPublicMentorProfile } from "@/lib/content-visibility";
 import { isMentorProfileComplete, toPublicMentorProfileDto } from "@/lib/mentor-profiles";
+import { hasMentorToolAccess } from "@/lib/content-entitlements";
 
 function matches(mentor, filters = {}) {
   const includes = (values, value) => !value || (values || []).some((item) => item.toLowerCase() === value.toLowerCase());
@@ -17,7 +18,9 @@ function matches(mentor, filters = {}) {
 
 export async function listPublicMentors({ db = adminDb, filters = {} } = {}) {
   const users = await db.collection("users").where("mentorStatus", "==", "approved").limit(200).get();
-  const eligibleUsers = users.docs.filter((doc) => doc.data().mentorPublicProfileEnabled === true);
+  const eligibleUsers = users.docs.filter((doc) =>
+    doc.data().mentorPublicProfileEnabled === true && hasMentorToolAccess(doc.data())
+  );
   const profiles = await Promise.all(
     eligibleUsers.map(async (userDoc) => {
       const profileDoc = await db.collection("mentor_profiles").doc(userDoc.id).get();
@@ -39,6 +42,6 @@ export async function getPublicMentor(mentorId, { db = adminDb } = {}) {
   if (!userDoc.exists || !profileDoc.exists) return null;
   const user = userDoc.data();
   const profile = profileDoc.data();
-  if (!isPublicMentorProfile({ mentorStatus: user.mentorStatus, publicProfileEnabled: user.mentorPublicProfileEnabled }) || !isMentorProfileComplete(profile)) return null;
+  if (!hasMentorToolAccess(user) || !isPublicMentorProfile({ mentorStatus: user.mentorStatus, publicProfileEnabled: user.mentorPublicProfileEnabled }) || !isMentorProfileComplete(profile)) return null;
   return toPublicMentorProfileDto(mentorId, profile);
 }

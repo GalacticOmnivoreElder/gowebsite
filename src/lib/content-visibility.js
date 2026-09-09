@@ -1,4 +1,4 @@
-export const PUBLIC_RESOURCE_STATUSES = Object.freeze(["published", "legacy"]);
+export const PUBLIC_RESOURCE_STATUSES = Object.freeze(["published"]);
 export const PUBLIC_VIDEO_BUNDLE_STATUSES = Object.freeze(["published"]);
 export const PUBLIC_LEARNING_STATUSES = Object.freeze([
   "enrollment_open",

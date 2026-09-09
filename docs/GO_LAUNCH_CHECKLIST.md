@@ -15,7 +15,7 @@ does not require an AI provider or AI consent:
 
 ```bash
 POLAR_SERVER=sandbox
-POLAR_ACCESS_TOKEN=<your SANDBOX org token>        # replace the legacy prod token!
+POLAR_ACCESS_TOKEN=<your SANDBOX org token>        # never use a production token in local testing
 POLAR_ORGANIZATION_SLUG=<your sandbox org slug>
 POLAR_WEBHOOK_SECRET=<from step C>
 POLAR_SUCCESS_URL=http://localhost:3000/subscription/success
@@ -27,7 +27,7 @@ NEXT_PUBLIC_POLAR_COMPANY_ANNUAL_PRODUCT_ID=<id>
 ADMIN_BOOTSTRAP_SECRET=<any long random string>    # to make yourself admin (step F)
 ```
 
-> ⚠️ The `.env` still contains a **legacy production** Polar token. Replace it with a
+> ⚠️ Never reuse a production Polar token for local checkout testing. Use a
 > sandbox token now, and **rotate that production token** in the Polar dashboard since
 > it was sitting in plaintext.
 

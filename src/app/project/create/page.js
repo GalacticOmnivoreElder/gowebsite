@@ -195,7 +195,7 @@ const projectSchema = z
     existingSourceProjectId: z.string().optional(),
   })
   .superRefine((data, context) => {
-    const schedule = normalizeProjectSchedule(data, { allowLegacy: false });
+    const schedule = normalizeProjectSchedule(data, { allowPrevious: false });
     if (!schedule.ok) {
       context.addIssue({
         code: z.ZodIssueCode.custom,

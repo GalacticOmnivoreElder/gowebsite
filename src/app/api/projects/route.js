@@ -124,7 +124,7 @@ function parseProjectDate(value) {
     : null;
 }
 
-function normalizeProjectSchedule(input = {}, { allowLegacy = true } = {}) {
+function normalizeProjectSchedule(input = {}, { allowPrevious = true } = {}) {
   if (
     Object.prototype.hasOwnProperty.call(input, "isOngoing") &&
     typeof input.isOngoing !== "boolean"
@@ -142,7 +142,7 @@ function normalizeProjectSchedule(input = {}, { allowLegacy = true } = {}) {
   const hasSchedule = hasStartDate || hasEndDate || isOngoing;
 
   if (!hasSchedule) {
-    if (!allowLegacy) {
+    if (!allowPrevious) {
       return { ok: false, error: "A start date is required" };
     }
     const duration = Number(input.duration);
@@ -245,7 +245,7 @@ export async function GET(request) {
 
     // Keep Firestore discovery queries deliberately simple. Combining status,
     // type, visibility and dynamic orderBy fields requires many composite
-    // indexes, while orderBy also drops legacy documents missing optional
+    // indexes, while orderBy also drops earlier documents missing optional
     // fields such as budget. Filter and sort the approved set below instead.
     let query = adminDb.collection("projects");
     query =
@@ -465,7 +465,7 @@ export async function POST(request) {
       (field) => Object.prototype.hasOwnProperty.call(projectData, field)
     );
     const schedule = normalizeProjectSchedule(projectData, {
-      allowLegacy: !hasScheduleFields,
+      allowPrevious: !hasScheduleFields,
     });
     if (!schedule.ok) {
       return NextResponse.json(

@@ -1,8 +1,6 @@
-import { MentorDetail } from "@/components/mentors/MentorDetail";
+import { permanentRedirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-export default async function MentorPage({ params }) {
+export default async function MentorRedirectPage({ params }) {
   const { mentorId } = await params;
-  return <MentorDetail mentorId={mentorId} />;
+  permanentRedirect(`/mentorship/${encodeURIComponent(mentorId)}`);
 }

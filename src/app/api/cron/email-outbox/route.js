@@ -8,7 +8,6 @@ import {
 } from "@/lib/email";
 import { verifyGithubActionsOidcToken } from "@/lib/githubActionsOidc";
 import { processExpiredWaitlistOffers } from "@/lib/learning-enrollment";
-import { processExpiredMentorRequests } from "@/lib/mentorship-service";
 
 async function authorized(request) {
   const authorization = request.headers.get("authorization");
@@ -41,13 +40,6 @@ async function run(request) {
         code: waitlistError?.code || "unknown",
       });
     }
-    let mentorRequests;
-    try {
-      mentorRequests = await processExpiredMentorRequests();
-    } catch (mentorRequestError) {
-      mentorRequests = { error: "Mentor request expiry processing failed" };
-      console.error("mentor_request_worker_failed", { code: mentorRequestError?.code || "unknown" });
-    }
     return NextResponse.json({
       requeued,
       digest,
@@ -55,7 +47,6 @@ async function run(request) {
       configuration,
       deliveryTest,
       learningWaitlist,
-      mentorRequests,
     });
   } catch (error) {
     console.error(

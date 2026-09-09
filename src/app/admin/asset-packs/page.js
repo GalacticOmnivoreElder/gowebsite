@@ -166,7 +166,7 @@ export default function AdminAssetPacksPage() {
                   </select>
                   <Button disabled={busy || !pack.currentVersionId || !reasons[reasonKey]?.trim()} size="sm" variant="outline" onClick={() => act({ action: "set_access_type", packId: pack.id, accessType: access[accessKey] || pack.accessType || "community", reason: reasons[reasonKey] })}>Save access</Button>
                   {pack.status !== "removed" ? <Button disabled={busy || !reasons[reasonKey]?.trim()} size="sm" variant="outline" onClick={() => act({ action: "set_pack_status", packId: pack.id, status: "removed", reason: reasons[reasonKey] }, "Asset pack removed and audited; its history was preserved.")}>Remove pack</Button> : null}
-                  {["published", "legacy", "archived"].filter((status) => status !== pack.status).map((status) => (
+                  {["published", "archived"].filter((status) => status !== pack.status).map((status) => (
                     <Button key={status} disabled={busy || !reasons[reasonKey]?.trim()} size="sm" variant="outline" onClick={() => act({ action: "set_pack_status", packId: pack.id, status, reason: reasons[reasonKey] })}>Mark {status}</Button>
                   ))}
                   <Button disabled={busy || !reasons[reasonKey]?.trim()} size="sm" variant="destructive" onClick={() => deletePack(pack)}><Trash2 className="mr-1.5 h-3.5 w-3.5" />Delete permanently</Button>

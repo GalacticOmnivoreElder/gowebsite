@@ -26,7 +26,6 @@ export default function PackageCard({ package: pkg }) {
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold">{pkg.title}</h3>
             <div className="flex items-center gap-2">
-              {pkg.status === "legacy" && <Badge variant="secondary">Legacy</Badge>}
               <span className="text-muted-foreground">
                 {pkg.month} {pkg.year}
               </span>

@@ -89,7 +89,7 @@ const impactAreas = [
   {
     title: "Projects and collaboration",
     description:
-      "Clear project briefs, role discovery, contributor matchmaking, and community-led production.",
+      "Clear project briefs, role discovery, contributor connections, and community-led production.",
   },
   {
     title: "Events and visibility",

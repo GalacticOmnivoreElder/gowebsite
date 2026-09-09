@@ -31,7 +31,7 @@ Recommended configuration:
 
 Analytics is denied until the visitor chooses it in the cookie preferences UI. Rejecting optional cookies prevents Firebase Analytics initialization and prevents Clarity loading. Revoking analytics consent disables an initialized Firebase client and sends Clarity consent false when available. The settings control is available in the site footer.
 
-Clarity is deliberately limited to public/product surfaces. It is excluded from admin, account, onboarding, authentication, billing, checkout, subscription, project-detail/edit/create, matchmaking, learning-detail, video-bundle-detail, and resource-detail routes. Public newsletter form markup is explicitly marked for Clarity masking.
+Clarity is deliberately limited to public/product surfaces. It is excluded from admin, account, onboarding, authentication, billing, checkout, subscription, project-detail/edit/create, mentorship account workflows, learning-detail, video-bundle-detail, resource-detail, and support routes. Public newsletter form markup is explicitly marked for Clarity masking.
 
 ## Adding a new event
 

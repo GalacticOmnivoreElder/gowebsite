@@ -33,6 +33,7 @@ function serializeParticipant(doc) {
     enrollmentDate: serializeLearningDate(data.enrolledAt || data.createdAt),
     attendanceState: ["attended", "did_not_attend"].includes(data.state) ? data.state : null,
     completionState: data.state === "completed" ? "completed" : null,
+    answers: data.answers || {},
     accessibilityAnswers: data.accessibilityAnswers || {},
     waitlistOfferStatus: data.waitlistOfferStatus || null,
     waitlistOfferExpiresAt: serializeLearningDate(data.waitlistOfferExpiresAt),

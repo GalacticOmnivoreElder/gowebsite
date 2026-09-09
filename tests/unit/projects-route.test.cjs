@@ -242,7 +242,7 @@ test("project creation requires auth and company/admin project creation rights",
   assert.equal(response.body.code, "company_membership_required");
 });
 
-test("project creation validates required fields and enum values", async () => {
+test("project creation validates required fields, bounded custom types, and enum values", async () => {
   const route = loadRoute({ user: { canCreateProjects: true, uid: "company-1" } });
 
   let response = await route.POST(
@@ -252,16 +252,20 @@ test("project creation validates required fields and enum values", async () => {
   assert.deepEqual(plain(response.body), { error: "Missing required field: title" });
 
   response = await route.POST(
-    createRequest({ jsonBody: validProject({ type: "Cooking" }) })
+    createRequest({ jsonBody: validProject({ type: "x".repeat(81) }) })
   );
   assert.equal(response.status, 400);
-  assert.deepEqual(plain(response.body), { error: "Invalid project type" });
+  assert.deepEqual(plain(response.body), {
+    error: "Project type must be 80 characters or fewer",
+  });
 
   response = await route.POST(
-    createRequest({ jsonBody: validProject({ requiredRoles: ["Chef"] }) })
+    createRequest({ jsonBody: validProject({ requiredRoles: ["x".repeat(81)] }) })
   );
   assert.equal(response.status, 400);
-  assert.deepEqual(plain(response.body), { error: "requiredRoles contains invalid values" });
+  assert.deepEqual(plain(response.body), {
+    error: "Each required role must be 80 characters or fewer",
+  });
 
   response = await route.POST(
     createRequest({

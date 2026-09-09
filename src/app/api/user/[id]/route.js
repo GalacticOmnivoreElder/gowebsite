@@ -6,8 +6,7 @@ import { normalizeUsername } from "@/lib/auth-profile";
 import { sanitizeSkills } from "@/lib/skills";
 import { syncUserSkillUsage } from "@/lib/skill-catalog";
 import { redactCvContact } from "@/lib/profile-mission";
-import { getMentorshipPilotConfig, getProductConfig } from "@/lib/product-config";
-import { listPublicMentorReferences } from "@/lib/mentorship-feedback-service";
+import { getMentorshipConfig, getProductConfig } from "@/lib/product-config";
 import { getPublicMentor } from "@/lib/mentor-directory";
 
 export const dynamic = "force-dynamic";
@@ -88,7 +87,7 @@ export async function GET(request, { params }) {
       : userData.profilePrivacy === "private" && !isOwnProfile;
 
     // Published GO CV visibility is authoritative for onboarded users. Users
-    // without a GO CV continue to use the legacy profilePrivacy setting.
+    // without a GO CV continue to use the prior profilePrivacy setting.
     if (isPrivateProfile) {
       return NextResponse.json({
         id: userId,
@@ -112,7 +111,7 @@ export async function GET(request, { params }) {
       hasExplicitProfileEdits &&
       Object.prototype.hasOwnProperty.call(userData, "bio");
     const storedBio = String(userData.bio || "");
-    const legacyAboutMe =
+    const priorAboutMe =
       !userData.aboutMe && storedBio.length > 150 ? storedBio : "";
     const memberSince =
       serializeDate(userData.membershipActivatedAt) ||
@@ -137,7 +136,7 @@ export async function GET(request, { params }) {
         : storedBio.length <= 150
         ? storedBio
         : "",
-      aboutMe: userData.aboutMe || legacyAboutMe,
+      aboutMe: userData.aboutMe || priorAboutMe,
       joinedAt:
         serializeDate(userData.createdAt),
       memberSince,
@@ -173,12 +172,9 @@ export async function GET(request, { params }) {
     publicProfile.mentorReferences = [];
     if (userData.mentorStatus === "approved" && userData.mentorPublicProfileEnabled === true) {
       const product = getProductConfig();
-      const pilot = getMentorshipPilotConfig();
-      if (product.featureFlags.mentorDirectory && pilot.featureFlags.mentorshipSystem && pilot.featureFlags.publicMentorBrowsing) {
+      const mentorship = getMentorshipConfig();
+      if (product.featureFlags.mentorDirectory && mentorship.featureFlags.mentorshipSystem && mentorship.featureFlags.publicMentorBrowsing) {
         publicProfile.mentorSummary = await getPublicMentor(userId);
-      }
-      if (product.featureFlags.mentorFeedback && product.featureFlags.publicMentorStrengths) {
-        publicProfile.mentorReferences = await listPublicMentorReferences(userId);
       }
     }
 

@@ -75,7 +75,7 @@ export async function PATCH(request) {
     return Response.json({ id: doc.id, accessType });
   }
   if (action === "set_pack_status") {
-    const status = ["legacy", "archived", "removed", "published"].includes(body.status) ? body.status : null;
+    const status = ["archived", "removed", "published"].includes(body.status) ? body.status : null;
     if (!status) return Response.json({ error: "Unsupported asset-pack status" }, { status: 400 });
     const ref = adminDb.collection("asset_packs").doc(String(body.packId || ""));
     const doc = await ref.get();

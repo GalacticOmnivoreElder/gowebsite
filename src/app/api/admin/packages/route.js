@@ -43,7 +43,7 @@ function cleanPackage(input) {
   ALLOWED_FIELDS.forEach((field) => {
     if (input?.[field] !== undefined) clean[field] = input[field];
   });
-  clean.status = ["published", "legacy", "archived"].includes(clean.status)
+  clean.status = ["published", "archived"].includes(clean.status)
     ? clean.status
     : "draft";
   clean.title = String(clean.title || "").trim().slice(0, 160);

@@ -246,5 +246,5 @@ export function formatRelativeDate(firebaseDate) {
   return date;
 }
 
-// Legacy export for backwards compatibility
+// Compatibility export for existing imports
 export const formatDate = formatFirebaseDate;

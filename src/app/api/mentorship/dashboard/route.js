@@ -1,18 +1,14 @@
 export const dynamic = "force-dynamic";
 
-import { getRequestUser } from "@/lib/auth-utils";
-import { getMentorshipFeedbackConfig, getProductConfig } from "@/lib/product-config";
 import { getMentorshipDashboard } from "@/lib/mentorship-service";
+import { requireMentorshipUser, routeError } from "@/lib/mentorship-route";
 
 export async function GET(request) {
-  const product = getProductConfig();
-  if (!product.featureFlags.mentorMatchmaking && !product.featureFlags.mentorFeedback) {
-    return Response.json({ error: "Mentorship tools are not available yet" }, { status: 503 });
+  const gate = await requireMentorshipUser(request, "manage_active_mentorship");
+  if (gate.response) return gate.response;
+  try {
+    return Response.json(await getMentorshipDashboard(gate.user), { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    return routeError(error, "Mentorship dashboard could not be loaded");
   }
-  const user = await getRequestUser(request);
-  if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
-  return Response.json(await getMentorshipDashboard(user, {
-    includeFeedback: product.featureFlags.mentorFeedback,
-    feedbackDeadlineDays: getMentorshipFeedbackConfig().feedbackDeadlineDays,
-  }), { headers: { "Cache-Control": "no-store" } });
 }

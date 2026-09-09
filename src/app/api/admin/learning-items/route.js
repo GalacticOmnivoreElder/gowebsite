@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { getRequestUser } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
 import { cleanLearningItem, serializeLearningDate } from "@/lib/learning-items";
+import { hasMentorToolAccess } from "@/lib/content-entitlements";
 
 async function requireAdmin(request) {
   const user = await getRequestUser(request);
@@ -37,6 +38,16 @@ export async function POST(request) {
   if (gate.response) return gate.response;
   try {
     const body = await request.json();
+    const instructorUserId = String(body.instructorUserId || "").trim();
+    if (instructorUserId) {
+      const instructorDoc = await adminDb.collection("users").doc(instructorUserId).get();
+      if (!instructorDoc.exists || !hasMentorToolAccess(instructorDoc.data())) {
+        return Response.json(
+          { error: "Assigned instructors must be approved GO mentors with an active Mentor membership." },
+          { status: 400 }
+        );
+      }
+    }
     const id = String(body.id || "").trim() || adminDb.collection("learning_items").doc().id;
     const ref = adminDb.collection("learning_items").doc(id);
     const previousDoc = await ref.get();

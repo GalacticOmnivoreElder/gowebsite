@@ -25,7 +25,7 @@ export function MentorDetail({ mentorId }) {
 
   return (
     <main className="container mx-auto max-w-5xl px-4 py-12">
-      <Button asChild variant="ghost"><Link href="/matchmaking">Back to mentorship</Link></Button>
+      <Button asChild variant="ghost"><Link href="/mentorship">Back to mentorship</Link></Button>
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_300px]">
         <div>
           <div className="flex items-center gap-5">
@@ -58,7 +58,7 @@ export function MentorDetail({ mentorId }) {
             <div><p className="font-medium">Languages</p><p className="text-muted-foreground">{mentor.languages.join(", ")}</p></div>
             <div><p className="font-medium">Time zone</p><p className="text-muted-foreground">{mentor.timeZone}</p></div>
             <p className="rounded-md bg-muted/30 p-3 text-xs text-muted-foreground">Exact availability and private contact information are shared only inside an authorized mentorship engagement.</p>
-            {mentor.hasAvailableSlots ? <Button asChild className="w-full"><Link href={`/profile?tab=mentorships&view=request&mentor=${encodeURIComponent(mentor.id || mentorId)}`}>Apply for mentorship</Link></Button> : <Button className="w-full" disabled>Currently unavailable</Button>}
+            {mentor.hasAvailableSlots ? <Button asChild className="w-full"><Link href={`/profile?tab=mentorships&view=request&mentor=${encodeURIComponent(mentor.id || mentorId)}`}>Request mentorship</Link></Button> : <Button className="w-full" disabled>Currently unavailable</Button>}
           </CardContent>
         </Card>
       </div>

@@ -329,7 +329,7 @@ function OfficialMentorPanel({ mentor, programme, isOwner }) {
         </div>
         <p className="text-sm"><span className="font-semibold">General availability:</span> <span className="text-muted-foreground">{mentor.generalAvailabilityLabel} · {mentor.availableSlots} remaining slot{mentor.availableSlots === 1 ? "" : "s"}</span></p>
         <div className="flex flex-wrap gap-3">
-          <Button asChild variant="outline"><Link href={`/mentors/${mentor.id}`}>View mentor profile</Link></Button>
+          <Button asChild variant="outline"><Link href={`/mentorship/${mentor.id}`}>View mentor profile</Link></Button>
           {mentor.hasAvailableSlots ? <Button asChild><Link href={`/profile?tab=mentorships&view=request&mentor=${encodeURIComponent(mentor.id)}`}>Apply for mentorship</Link></Button> : <Button disabled>Currently unavailable</Button>}
         </div>
       </div>

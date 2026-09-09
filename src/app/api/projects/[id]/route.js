@@ -126,7 +126,7 @@ function parseProjectDate(value) {
     : null;
 }
 
-function normalizeProjectSchedule(input = {}, { allowLegacy = true } = {}) {
+function normalizeProjectSchedule(input = {}, { allowPrevious = true } = {}) {
   if (
     Object.prototype.hasOwnProperty.call(input, "isOngoing") &&
     typeof input.isOngoing !== "boolean"
@@ -144,7 +144,7 @@ function normalizeProjectSchedule(input = {}, { allowLegacy = true } = {}) {
   const hasSchedule = hasStartDate || hasEndDate || isOngoing;
 
   if (!hasSchedule) {
-    if (!allowLegacy) {
+    if (!allowPrevious) {
       return { ok: false, error: "A start date is required" };
     }
     const duration = Number(input.duration);
@@ -571,7 +571,7 @@ export async function PUT(request, { params }) {
     if (hasScheduleUpdate || hasExistingSchedule) {
       const schedule = normalizeProjectSchedule(
         { ...existingProject, ...filteredUpdateData },
-        { allowLegacy: true }
+        { allowPrevious: true }
       );
       if (!schedule.ok) {
         return NextResponse.json({ error: schedule.error }, { status: 400 });
@@ -592,7 +592,7 @@ export async function PUT(request, { params }) {
       }
     } else if (filteredUpdateData.duration !== undefined) {
       const schedule = normalizeProjectSchedule(filteredUpdateData, {
-        allowLegacy: true,
+        allowPrevious: true,
       });
       if (!schedule.ok) {
         return NextResponse.json({ error: schedule.error }, { status: 400 });

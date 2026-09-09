@@ -1,26 +1,26 @@
 export const dynamic = "force-dynamic";
 
-import { getRequestUser } from "@/lib/auth-utils";
-import { getMentorshipProductConfig, getProductConfig } from "@/lib/product-config";
-import { canSubmitMentorshipRequest } from "@/lib/mentorship";
-import { createMentorshipRequest } from "@/lib/mentorship-service";
+import { getMentorshipDashboard, saveMentorshipRequest } from "@/lib/mentorship-service";
+import { requireMentorshipUser, routeError } from "@/lib/mentorship-route";
+
+export async function GET(request) {
+  const gate = await requireMentorshipUser(request, "manage_active_mentorship");
+  if (gate.response) return gate.response;
+  try {
+    const dashboard = await getMentorshipDashboard(gate.user);
+    return Response.json({ requests: dashboard.requests }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    return routeError(error, "Mentorship requests could not be loaded");
+  }
+}
 
 export async function POST(request) {
-  if (!getProductConfig().featureFlags.mentorMatchmaking) return Response.json({ error: "Mentor matchmaking is not available yet" }, { status: 503 });
-  const user = await getRequestUser(request);
-  const body = await request.json().catch(() => ({}));
-  const eligibility = canSubmitMentorshipRequest(user, { isAdult: body.isAdult === true });
-  if (!eligibility.allowed) return Response.json({ error: eligibility.reason }, { status: eligibility.reason === "authentication_required" ? 401 : 403 });
+  const gate = await requireMentorshipUser(request, "create_request");
+  if (gate.response) return gate.response;
   try {
-    const result = await createMentorshipRequest({
-      student: user,
-      input: body,
-      targetMentorId: String(body.targetMentorId || "").trim() || null,
-      assistanceRequested: body.assistanceRequested === true,
-      responseWorkingDays: getMentorshipProductConfig().responseDeadlineWorkingDays,
-    });
-    return Response.json(result, { status: 201 });
+    const body = await request.json().catch(() => ({}));
+    return Response.json(await saveMentorshipRequest({ user: gate.user, requestId: String(body.requestId || ""), input: body, mode: body.mode === "draft" ? "draft" : "submit" }), { status: body.mode === "draft" ? 200 : 201 });
   } catch (error) {
-    return Response.json({ error: error.code === "validation_error" ? error.message : error.message || "Mentorship request could not be created", code: error.code || "unknown" }, { status: error.status || (error.code === "validation_error" ? 400 : 500) });
+    return routeError(error, "Mentorship request could not be saved");
   }
 }

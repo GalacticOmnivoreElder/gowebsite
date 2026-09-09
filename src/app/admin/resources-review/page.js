@@ -47,7 +47,7 @@ export default function ResourceReviewPage() {
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "Review could not be saved");
-      setMessage(action === "mark_legacy" ? "Resource marked Legacy and audited." : "Review checklist saved and audited.");
+      setMessage(action === "archive" ? "Resource archived and audited." : action === "publish" ? "Resource published and audited." : "Review checklist saved and audited.");
       await load();
     } catch (error) {
       setMessage(error.message);
@@ -59,13 +59,13 @@ export default function ResourceReviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Legacy Resource Review</h1>
-        <p className="mt-2 text-muted-foreground">Search existing records and explicitly review or mark them Legacy. No production record is changed automatically.</p>
+        <h1 className="text-3xl font-bold">Resource Lifecycle Review</h1>
+        <p className="mt-2 text-muted-foreground">Review existing resources, publish current material, and archive discontinued material. Every change requires a reason and creates an audit event.</p>
       </div>
       <div className="grid gap-3 md:grid-cols-5">
         {Object.keys(filters).map((key) => key === "status" ? (
           <select key={key} aria-label="Status filter" className="rounded-md border bg-background px-3 py-2" value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}>
-            <option value="">All statuses</option><option value="published">Published</option><option value="legacy">Legacy</option><option value="draft">Draft</option>
+            <option value="">All statuses</option><option value="published">Published</option><option value="archived">Archived</option><option value="draft">Draft</option>
           </select>
         ) : (
           <Input key={key} aria-label={`${key} filter`} placeholder={key} value={filters[key]} onChange={(event) => setFilters((current) => ({ ...current, [key]: event.target.value }))} />
@@ -76,7 +76,7 @@ export default function ResourceReviewPage() {
         <div className="space-y-4">
           {resources.map((resource) => {
             const review = reviews[resource.id] || { reviewChecklist: {}, reason: "" };
-            const readyForLegacy = review.reviewState === "cleared" && checklistKeys.every((key) => review.reviewChecklist?.[key] === true) && review.reason?.trim();
+            const readyForPublication = review.reviewState === "cleared" && checklistKeys.every((key) => review.reviewChecklist?.[key] === true) && review.reason?.trim();
             return (
               <Card key={resource.id}>
                 <CardContent className="space-y-4 p-5">
@@ -97,7 +97,8 @@ export default function ResourceReviewPage() {
                   <Input aria-label={`Review reason for ${resource.title}`} placeholder="Reason required for every review change" value={review.reason || ""} onChange={(event) => setReviews((current) => ({ ...current, [resource.id]: { ...review, reason: event.target.value } }))} />
                   <div className="flex gap-2">
                     <Button disabled={busy || !review.reason?.trim()} variant="outline" onClick={() => save(resource.id, "save_review")}>Save review</Button>
-                    {resource.status !== "legacy" ? <Button disabled={busy || !readyForLegacy} onClick={() => save(resource.id, "mark_legacy")}>Mark Legacy</Button> : null}
+                    {resource.status !== "published" ? <Button disabled={busy || !readyForPublication} onClick={() => save(resource.id, "publish")}>Publish</Button> : null}
+                    {resource.status !== "archived" ? <Button disabled={busy || !review.reason?.trim()} variant="outline" onClick={() => save(resource.id, "archive")}>Archive</Button> : null}
                   </div>
                 </CardContent>
               </Card>

@@ -229,7 +229,7 @@ test("order.paid grants access, stores order data, and marks webhook processed",
     data: {
       amount: 1500,
       currency: "eur",
-      current_period_end: "2026-08-14T12:00:00.000Z",
+      current_period_end: "2026-10-14T12:00:00.000Z",
       customer: { email: "member@example.com", id: "cus_123" },
       id: "order_1",
       metadata: { tier: "company", uid: "user-1" },
@@ -323,7 +323,7 @@ test("subscription.active and order.paid produce one activation email when activ
   await route.captured.onSubscriptionActive({
     data: {
       customer: { external_id: "user-1", id: "cus_123" },
-      current_period_end: "2026-08-14T12:00:00.000Z",
+      current_period_end: "2026-10-14T12:00:00.000Z",
       id: "sub_1",
       status: "active",
     },
@@ -426,7 +426,7 @@ test("subscription update handles past_due without revoking access", async () =>
 
   await route.captured.onSubscriptionUpdated({
     data: {
-      current_period_end: "2026-08-14T12:00:00.000Z",
+      current_period_end: "2026-10-14T12:00:00.000Z",
       customer_id: "cus_123",
       id: "sub_1",
       status: "past_due",
@@ -445,7 +445,7 @@ test("scheduled Business updates keep Community access until Polar applies them"
   const polarStates = [
     {
       currency: "mkd",
-      current_period_end: "2026-08-14T12:00:00.000Z",
+      current_period_end: "2026-10-14T12:00:00.000Z",
       customer_id: "cus_123",
       id: "sub_1",
       pending_update: {
@@ -540,7 +540,7 @@ test("subscription canceled keeps access until period end and revoked removes ac
 
   await route.captured.onSubscriptionCanceled({
     data: {
-      current_period_end: "2026-08-14T12:00:00.000Z",
+      current_period_end: "2026-10-14T12:00:00.000Z",
       customer_id: "cus_123",
       id: "sub_1",
       status: "canceled",

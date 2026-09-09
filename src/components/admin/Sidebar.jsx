@@ -8,7 +8,6 @@ import {
   Settings,
   CreditCard,
   LogOut,
-  BarChart4,
   Sun,
   Moon,
   Package,
@@ -20,6 +19,7 @@ import {
   HeartHandshake,
   PackagePlus,
   ArchiveRestore,
+  LifeBuoy,
 } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase";
@@ -48,11 +48,11 @@ export function Sidebar() {
     { name: "Video Bundles", href: "/admin/video-bundles", icon: Video },
     { name: "Training Access", href: "/admin/training-assignments", icon: GraduationCap },
     { name: "Mentorships", href: "/admin/mentorships", icon: HeartHandshake },
+    { name: "Support", href: "/admin/support", icon: LifeBuoy },
     { name: "Asset Pack Reviews", href: "/admin/asset-packs", icon: PackagePlus },
-    { name: "Legacy Resources", href: "/admin/resources-review", icon: ArchiveRestore },
+    { name: "Resource Lifecycle", href: "/admin/resources-review", icon: ArchiveRestore },
     { name: "Newsletter", href: "/admin/newsletter", icon: Mail },
     { name: "Skills", href: "/admin/skills", icon: Tags },
-    { name: "Analytics", href: "/admin/analytics", icon: BarChart4 },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
 

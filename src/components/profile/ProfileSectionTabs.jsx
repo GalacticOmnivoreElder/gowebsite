@@ -11,6 +11,7 @@ import {
   HeartHandshake,
   PackagePlus,
   Settings,
+  LifeBuoy,
   User,
   UserCheck,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const profileSections = [
   { value: "mentorships", label: "Mentorships", icon: HeartHandshake },
   { value: "asset-packs", label: "Asset Packs", icon: PackagePlus },
   { value: "notifications", label: "Notifications", icon: Bell },
+  { value: "support", label: "Support", icon: LifeBuoy },
   { value: "billing", label: "Billing", icon: CreditCard },
   { value: "settings", label: "Settings", icon: Settings },
 ];

@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { getRequestUser } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
 import { getProductConfig } from "@/lib/product-config";
+import { hasMentorToolAccess } from "@/lib/content-entitlements";
 import {
   cleanMentorProfile,
   getMentorCapacity,
@@ -28,7 +29,7 @@ export async function GET(request) {
   return Response.json({
     mentorStatus: user.userData?.mentorStatus || "none",
     publicProfileEnabled: user.userData?.mentorPublicProfileEnabled === true,
-    canManage: user.userData?.mentorStatus === "approved",
+    canManage: hasMentorToolAccess(user.userData || {}, { admin: user.admin }),
     availabilityEnabled: getProductConfig().featureFlags.mentorAvailability,
     profile: normalized ? {
       ...normalized,
@@ -46,8 +47,8 @@ export async function PATCH(request) {
   if (!getProductConfig().featureFlags.mentorDirectory) return unavailable();
   const user = await getRequestUser(request);
   if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
-  if (user.userData?.mentorStatus !== "approved") {
-    return Response.json({ error: "Approved mentor status is required" }, { status: 403 });
+  if (!hasMentorToolAccess(user.userData || {}, { admin: user.admin })) {
+    return Response.json({ error: "Active verified Mentor membership is required" }, { status: 403 });
   }
   try {
     const body = await request.json().catch(() => ({}));

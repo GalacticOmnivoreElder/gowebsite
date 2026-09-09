@@ -3,12 +3,7 @@ const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs");
 
-function plain(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
-function loadRoute(path, exports, { resendResult, user } = {}) {
-  const sends = [];
+function loadRoute(path, exports, { user } = {}) {
   const jobs = [];
   const route = loadSourceModule(path, exports, {
     stripImports: true,
@@ -22,44 +17,13 @@ function loadRoute(path, exports, { resendResult, user } = {}) {
         jobs.push(event);
         return { created: true, id: "email-job-1" };
       },
-      getResend: () => ({
-        emails: {
-          async send(payload) {
-            sends.push(payload);
-            return resendResult || { data: { id: "email-1" }, error: null };
-          },
-        },
-      }),
     },
   });
-
-  return { ...route, jobs, sends };
+  return { ...route, jobs };
 }
 
-test("email diagnostics require a platform admin", async () => {
-  let route = loadRoute("src/app/api/testEmail/route.js", ["GET", "POST"]);
-  let response = await route.GET(createRequest());
-  assert.equal(response.status, 401);
-
-  route = loadRoute("src/app/api/testEmail/route.js", ["GET", "POST"], {
-    user: { admin: false, email: "member@example.com" },
-  });
-  response = await route.POST(createRequest());
-  assert.equal(response.status, 403);
-  assert.equal(route.sends.length, 0);
-});
-
-test("email diagnostics send only to the authenticated admin", async () => {
-  const route = loadRoute("src/app/api/testEmail/route.js", ["GET", "POST"], {
-    user: { admin: true, email: "admin@example.com" },
-  });
-  const response = await route.POST(
-    createRequest({ jsonBody: { email: "spoofed@example.com" } })
-  );
-
-  assert.equal(response.status, 200);
-  assert.equal(response.body.emailId, "email-1");
-  assert.equal(route.sends[0].to, "admin@example.com");
+test("the production email diagnostic endpoint is removed", () => {
+  assert.equal(require("node:fs").existsSync("src/app/api/testEmail/route.js"), false);
 });
 
 test("onboarding email utility requires an admin and a message", async () => {
@@ -74,7 +38,7 @@ test("onboarding email utility requires an admin and a message", async () => {
   });
   response = await route.POST(createRequest({ jsonBody: { message: "" } }));
   assert.equal(response.status, 400);
-  assert.equal(route.sends.length, 0);
+  assert.equal(route.jobs.length, 0);
 });
 
 test("onboarding email utility cannot relay mail to a supplied address", async () => {

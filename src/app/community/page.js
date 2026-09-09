@@ -49,10 +49,10 @@ const routes = [
     icon: Clapperboard,
   },
   {
-    title: "Matchmaking & Mentorship",
+    title: "GO Mentorship",
     eyebrow: "Guidance",
     description: "Find focused support, review mentor routes, and connect your current challenge to a next step.",
-    href: "/matchmaking",
+    href: "/mentorship",
     icon: HeartHandshake,
   },
   {

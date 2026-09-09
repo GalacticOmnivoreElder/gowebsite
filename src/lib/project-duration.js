@@ -23,7 +23,7 @@ function invalidSchedule(field, error) {
   return { ok: false, field, error };
 }
 
-export function normalizeProjectSchedule(input = {}, { allowLegacy = true } = {}) {
+export function normalizeProjectSchedule(input = {}, { allowPrevious = true } = {}) {
   const rawStartDate = input.startDate;
   const rawEndDate = input.endDate;
 
@@ -42,7 +42,7 @@ export function normalizeProjectSchedule(input = {}, { allowLegacy = true } = {}
   const hasSchedule = hasStartDate || hasEndDate || isOngoing;
 
   if (!hasSchedule) {
-    if (!allowLegacy) {
+    if (!allowPrevious) {
       return invalidSchedule("startDate", "A start date is required");
     }
 
@@ -134,7 +134,7 @@ function formatDateOnly(value) {
   }).format(date);
 }
 
-function formatLegacyDuration(days) {
+function formatPreviousDuration(days) {
   if (days >= 365) {
     return `${Math.round(days / 365)} year${days >= 730 ? "s" : ""}`;
   }
@@ -159,6 +159,6 @@ export function getProjectScheduleLabel(project = {}) {
 
   const duration = Number(project.duration);
   return Number.isFinite(duration) && duration > 0
-    ? formatLegacyDuration(duration)
+    ? formatPreviousDuration(duration)
     : "Not specified";
 }

@@ -11,8 +11,8 @@ const visibility = loadSourceModule("src/lib/content-visibility.js", [
 ]);
 
 test("visibility helpers allow only explicit public states", () => {
-  for (const status of ["published", "legacy"]) assert.equal(visibility.isPublicResourceStatus(status), true);
-  for (const status of [undefined, null, "", "draft", "scheduled", "archived", "rejected", "private"]) assert.equal(visibility.isPublicResourceStatus(status), false);
+  assert.equal(visibility.isPublicResourceStatus("published"), true);
+  for (const status of [undefined, null, "", "draft", "scheduled", "legacy", "archived", "rejected", "private"]) assert.equal(visibility.isPublicResourceStatus(status), false);
   assert.equal(visibility.isPublicVideoBundleStatus("published"), true);
   for (const status of ["draft", "legacy", "scheduled", "archived"]) assert.equal(visibility.isPublicVideoBundleStatus(status), false);
 

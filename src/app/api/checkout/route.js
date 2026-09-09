@@ -98,7 +98,7 @@ export async function POST(request) {
     if (!status.available) {
       return NextResponse.json(
         {
-          error: `GO Mentor ${interval} checkout is temporarily unavailable. Please choose another billing option or contact support.`,
+          error: `GO Mentor ${interval} checkout is unavailable. Please choose another billing option or contact support.`,
           code: "mentor_checkout_unavailable",
         },
         { status: 503 }

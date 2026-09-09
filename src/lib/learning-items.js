@@ -1,6 +1,7 @@
 // @ts-check
 
 import { isPublicLearningStatus } from "@/lib/content-visibility";
+import { hasMentorToolAccess } from "@/lib/content-entitlements";
 
 export const LEARNING_TYPES = Object.freeze(["course", "workshop"]);
 export const LEARNING_ACCESS_TYPES = Object.freeze([
@@ -21,6 +22,8 @@ export const LEARNING_STATUSES = Object.freeze([
   "canceled",
   "archived",
 ]);
+export const LEARNING_FORMATS = Object.freeze(["online", "in_person", "hybrid", "self_paced"]);
+export const LEARNING_LOCATION_TYPES = Object.freeze(["online", "go_hq", "external_venue", "hybrid", "not_applicable"]);
 export const ENROLLMENT_STATES = Object.freeze([
   "started",
   "pending_profile_completion",
@@ -88,6 +91,23 @@ function cleanOptionalDate(value, field) {
   return date;
 }
 
+function cleanHttpsUrl(value, field) {
+  const clean = cleanText(value, 2000);
+  if (!clean) return null;
+  try {
+    const url = new URL(clean);
+    if (url.protocol !== "https:") throw new Error();
+    return url.toString();
+  } catch {
+    throw validationError(`${field} must be a valid HTTPS URL`);
+  }
+}
+
+function publicLocationText(value) {
+  const clean = cleanText(value, 500);
+  return /^https?:\/\//i.test(clean) ? "" : clean;
+}
+
 function cleanQuestions(value) {
   if (!Array.isArray(value)) return [];
   return value.slice(0, 30).map((question, index) => {
@@ -147,8 +167,15 @@ export function cleanLearningItem(input = {}) {
     endsAt: cleanOptionalDate(input.endsAt, "End date"),
     timeZone: requestedTimeZone || "Europe/Skopje",
     durationMinutes: Math.max(0, Math.floor(Number(input.durationMinutes) || 0)),
-    format: cleanText(input.format, 100),
-    location: cleanText(input.location, 500),
+    format: LEARNING_FORMATS.includes(input.format) ? input.format : "online",
+    locationType: LEARNING_LOCATION_TYPES.includes(input.locationType)
+      ? input.locationType
+      : "online",
+    publicLocation: publicLocationText(input.publicLocation || input.location),
+    privateSessionUrl: cleanHttpsUrl(
+      input.privateSessionUrl || (/^https?:\/\//i.test(String(input.location || "")) ? input.location : ""),
+      "Private session URL"
+    ),
     capacity: capacityValue,
     confirmedCount: Math.max(0, Math.floor(Number(input.confirmedCount) || 0)),
     reservedCount: Math.max(0, Math.floor(Number(input.reservedCount) || 0)),
@@ -194,7 +221,8 @@ export function toPublicLearningItemDto(item = {}) {
     timeZone: item.timeZone || "Europe/Skopje",
     durationMinutes: Number(item.durationMinutes) || 0,
     format: item.format || "",
-    location: item.location || "",
+    locationType: item.locationType || "online",
+    location: publicLocationText(item.publicLocation || item.location),
     capacity: Number.isInteger(item.capacity) ? item.capacity : null,
     placesRemaining: learningPlacesRemaining(item),
     enrollmentOpensAt: serializeLearningDate(item.enrollmentOpensAt),
@@ -250,5 +278,9 @@ export function validateEnrollmentAnswers(questions = [], answers = {}) {
 }
 
 export function isLearningManager(item, user) {
-  return user?.admin === true || (!!user?.uid && item?.instructorUserId === user.uid);
+  return user?.admin === true || (
+    !!user?.uid &&
+    item?.instructorUserId === user.uid &&
+    hasMentorToolAccess(user.userData || {})
+  );
 }

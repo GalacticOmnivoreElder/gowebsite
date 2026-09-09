@@ -69,14 +69,6 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // Legacy subscriptions collection. Client (admin panel) manages these;
-    // a user may read their own. Polar-era writes happen via the Admin SDK.
-    match /subscriptions/{doc} {
-      allow read: if isAdmin()
-        || (isSignedIn() && resource.data.userId == request.auth.uid);
-      allow write: if isAdmin();
-    }
-
     // ── Server-only collections (Admin SDK bypasses these; browser is denied) ──
     match /projects/{doc}            { allow read, write: if false; }
     match /sourceProjects/{doc}      { allow read, write: if false; }
@@ -101,15 +93,10 @@ service cloud.firestore {
     match /mentorship_suggestions/{doc} { allow read, write: if false; }
     match /mentorship_requests/{doc}   { allow read, write: if false; }
     match /mentorship_active_requests/{doc} { allow read, write: if false; }
-    match /mentorship_request_overrides/{doc} { allow read, write: if false; }
     match /mentorship_engagements/{doc} { allow read, write: if false; }
-    match /mentorship_active_engagements/{doc} { allow read, write: if false; }
     match /mentorship_concerns/{doc}   { allow read, write: if false; }
     match /mentorship_feedback/{doc}   { allow read, write: if false; }
     match /mentorship_feedback_audit/{doc} { allow read, write: if false; }
-    match /mentorship_pilot_requests/{doc} { allow read, write: if false; }
-    match /mentorship_pilot_active_requests/{doc} { allow read, write: if false; }
-    match /mentorship_pilot_engagements/{doc} { allow read, write: if false; }
     match /mentorship_checkins/{doc} { allow read, write: if false; }
     match /mentorship_closing_feedback/{doc} { allow read, write: if false; }
     match /mentorship_reports/{doc} { allow read, write: if false; }
@@ -118,6 +105,10 @@ service cloud.firestore {
     match /asset_packs/{doc}           { allow read, write: if false; }
     match /asset_pack_versions/{doc}   { allow read, write: if false; }
     match /asset_pack_grants/{doc}     { allow read, write: if false; }
+    match /support_requests/{doc}       { allow read, write: if false; }
+    match /support_request_messages/{doc} { allow read, write: if false; }
+    match /support_audit_events/{doc}   { allow read, write: if false; }
+    match /support_jira_events/{doc}    { allow read, write: if false; }
     match /email_outbox/{doc}        { allow read, write: if false; }
     match /email_deduplication/{doc} { allow read, write: if false; }
     match /email_delivery_events/{doc} { allow read, write: if false; }

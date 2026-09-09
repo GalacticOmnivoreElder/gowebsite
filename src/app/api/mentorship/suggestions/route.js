@@ -1,19 +1,39 @@
 export const dynamic = "force-dynamic";
 
-import { getRequestUser } from "@/lib/auth-utils";
-import { getProductConfig } from "@/lib/product-config";
-import { canSubmitMentorshipRequest } from "@/lib/mentorship";
-import { suggestCompatibleMentors } from "@/lib/mentorship-service";
+import { applyToMentorSuggestion, declineMentorSuggestion, getMentorshipSuggestionsForUser } from "@/lib/mentorship-service";
+import { requireMentorshipUser, routeError } from "@/lib/mentorship-route";
+import { adminDb } from "@/lib/firebase-admin";
+
+export async function GET(request) {
+  const gate = await requireMentorshipUser(request, "manage_active_mentorship");
+  if (gate.response) return gate.response;
+  try {
+    return Response.json({ suggestions: await getMentorshipSuggestionsForUser({ user: gate.user, db: adminDb }) }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    return routeError(error, "Mentor suggestions could not be loaded");
+  }
+}
 
 export async function POST(request) {
-  if (!getProductConfig().featureFlags.mentorMatchmaking) return Response.json({ error: "Mentor matchmaking is not available yet" }, { status: 503 });
-  const user = await getRequestUser(request);
-  const body = await request.json().catch(() => ({}));
-  const eligibility = canSubmitMentorshipRequest(user, { isAdult: body.isAdult === true });
-  if (!eligibility.allowed) return Response.json({ error: eligibility.reason }, { status: eligibility.reason === "authentication_required" ? 401 : 403 });
+  const gate = await requireMentorshipUser(request, "apply_to_suggestion");
+  if (gate.response) return gate.response;
   try {
-    return Response.json({ suggestions: await suggestCompatibleMentors(body) }, { headers: { "Cache-Control": "no-store" } });
+    const body = await request.json().catch(() => ({}));
+    if (!body.suggestionId) return Response.json({ error: "Mentor suggestion is required" }, { status: 400 });
+    return Response.json(await applyToMentorSuggestion({ user: gate.user, suggestionId: String(body.suggestionId), message: body.message, dataSharingConsent: body.dataSharingConsent === true }), { status: 201 });
   } catch (error) {
-    return Response.json({ error: error.code === "validation_error" ? error.message : "Mentor suggestions could not be prepared" }, { status: error.code === "validation_error" ? 400 : 500 });
+    return routeError(error, "Mentor application could not be submitted");
+  }
+}
+
+export async function PATCH(request) {
+  const gate = await requireMentorshipUser(request, "manage_active_mentorship");
+  if (gate.response) return gate.response;
+  try {
+    const body = await request.json().catch(() => ({}));
+    if (body.action !== "decline" || !body.suggestionId) return Response.json({ error: "A suggestion decline is required" }, { status: 400 });
+    return Response.json(await declineMentorSuggestion({ user: gate.user, suggestionId: String(body.suggestionId) }));
+  } catch (error) {
+    return routeError(error, "Mentor suggestion could not be updated");
   }
 }

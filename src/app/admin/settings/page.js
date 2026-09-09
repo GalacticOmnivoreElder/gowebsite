@@ -50,7 +50,7 @@ export default function SettingsPage() {
 
       <div className="rounded-lg border border-border bg-card p-8 shadow">
         <h2 className="text-xl font-semibold">Product availability</h2>
-        <p className="mt-2 text-sm text-muted-foreground">The server configuration remains the safety gate. An admin override cannot open mentor applications until the application URL and environment flag are configured.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Open or close the native mentor application form. Applicants complete and track the entire process inside GO.</p>
         <div className="mt-6 flex items-start gap-3">
           <input
             id="mentor-applications-open"
@@ -64,8 +64,8 @@ export default function SettingsPage() {
             <label htmlFor="mentor-applications-open" className="font-medium">Mentor applications open</label>
             <p className="text-sm text-muted-foreground">
               {productSettings?.mentorApplicationsConfigured
-                ? "The application destination is configured on the server."
-                : "Coming soon: MENTOR_APPLICATION_URL and MENTOR_APPLICATIONS_OPEN are not enabled."}
+                ? "Applications are submitted in Profile → Mentor and reviewed in Mentorship operations."
+                : "Mentor applications are disabled by the server configuration."}
             </p>
           </div>
         </div>

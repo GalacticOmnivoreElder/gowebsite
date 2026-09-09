@@ -11,7 +11,7 @@ export function MentorApplicationOverview() {
   const load = useCallback(async () => {
     const token = await auth.currentUser?.getIdToken();
     if (!token) return setState({ loading: false, application: null, error: "" });
-    const response = await fetch("/api/mentorship/pilot/mentor-application", {
+    const response = await fetch("/api/mentorship/mentor-application", {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });

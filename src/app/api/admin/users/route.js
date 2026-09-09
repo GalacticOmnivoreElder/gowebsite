@@ -44,7 +44,7 @@ async function requireAdmin(request) {
 // GET /api/admin/users
 // Returns every user in a single server-side read (adminDb bypasses client
 // Firestore rules). Membership is derived from the Polar fields written by the
-// subscription webhook onto users/{uid} - NOT from the legacy `subscriptions`
+// subscription webhook onto users/{uid} - not from the prior `subscriptions`
 // collection, which was the source of the client-side N+1 query storm.
 export async function GET(request) {
   try {

@@ -94,16 +94,15 @@ test("asset-pack publication protects destinations and retains the current versi
   for (const collection of ["asset_packs", "asset_pack_versions", "asset_pack_grants"]) assert.match(rules, new RegExp(`match /${collection}/\\{doc\\}\\s+\\{ allow read, write: if false; \\}`));
 });
 
-test("legacy-resource review is explicit, filterable, audited, and does not touch the April 2025 record", () => {
+test("resource lifecycle review is explicit, filterable, and audited", () => {
   const route = fs.readFileSync("src/app/api/admin/resources-review/route.js", "utf8");
   const page = fs.readFileSync("src/app/admin/resources-review/page.js", "utf8");
-  const docs = fs.readFileSync("docs/go-product-placeholders.md", "utf8");
   const env = fs.readFileSync(".env.example", "utf8");
   for (const filter of ["title", "date", "status", "contributor", "id"]) assert.match(route, new RegExp(filter, "i"));
   for (const checklist of ["files", "contributorRights", "license", "compatibility", "previewImage", "downloadUrl", "entitlement", "supportStatus"]) assert.match(route, new RegExp(checklist));
-  assert.match(route, /resource\.marked_legacy/);
-  assert.match(page, /Mark Legacy/);
-  assert.match(env, /^APRIL_2025_RESOURCE_ID=$/m);
-  assert.match(docs, /April 2025 resource remains unchanged/);
-  assert.doesNotMatch(route, /APRIL_2025_RESOURCE_ID|April 2025/i);
+  assert.match(route, /resource\.published/);
+  assert.match(route, /resource\.archived/);
+  assert.match(page, />Publish</);
+  assert.match(page, />Archive</);
+  assert.doesNotMatch(env, /APRIL_2025_RESOURCE_ID/);
 });

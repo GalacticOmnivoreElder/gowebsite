@@ -77,7 +77,7 @@ export function getEventCategory(event = {}) {
   if (title.includes("community")) return "community";
   if (title.includes("mentor")) return "mentorship";
   if (title.includes("workshop")) return "workshop";
-  if (title.includes("match")) return "matchmaking";
+  if (title.includes("match")) return "collaboration";
   return "go-event";
 }
 

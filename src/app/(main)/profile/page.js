@@ -44,10 +44,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import SubscribeButton from "@/components/ui/SubscribeButton";
 import { LearningDashboard } from "@/components/learning/LearningDashboard";
 import { NotificationsPanel } from "@/components/notifications/NotificationsPanel";
-import { MentorshipPilotMentorWorkspace } from "@/components/mentors/MentorshipPilotMentorWorkspace";
-import { MentorshipPilotDashboard } from "@/components/mentors/MentorshipPilotDashboard";
+import { MentorshipMentorWorkspace } from "@/components/mentors/MentorshipMentorWorkspace";
+import { MentorshipDashboard } from "@/components/mentors/MentorshipDashboard";
 import { MentorApplicationOverview } from "@/components/profile/MentorApplicationOverview";
 import { AssetPackWorkspace } from "@/components/asset-packs/AssetPackWorkspace";
+import { SupportWorkspace } from "@/components/support/SupportWorkspace";
 
 // Helper function to safely convert Firestore timestamp to Date
 const convertToDate = (timestamp) => {
@@ -368,6 +369,7 @@ const ProfileContent = observer(() => {
         "mentorships",
         "asset-packs",
         "notifications",
+        "support",
         "billing",
         "settings",
       ].includes(tabParam)
@@ -864,11 +866,11 @@ const ProfileContent = observer(() => {
         </TabsContent>
 
         <TabsContent value="mentor">
-          <MentorshipPilotMentorWorkspace />
+          <MentorshipMentorWorkspace />
         </TabsContent>
 
         <TabsContent value="mentorships">
-          <MentorshipPilotDashboard />
+          <MentorshipDashboard />
         </TabsContent>
 
         <TabsContent value="asset-packs">
@@ -877,6 +879,10 @@ const ProfileContent = observer(() => {
 
         <TabsContent value="notifications">
           <NotificationsPanel />
+        </TabsContent>
+
+        <TabsContent value="support">
+          <SupportWorkspace />
         </TabsContent>
 
         <TabsContent value="settings">

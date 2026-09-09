@@ -390,7 +390,7 @@ export const PricingDisplay = observer(({ mentorAvailability = {} }) => {
                 ) : plan.tier === "mentor" && !mentorAvailability[interval] ? (
                   <div className="w-full space-y-2">
                     <Button className="w-full" size="lg" variant="outline" disabled>
-                      {interval === "annual" ? "Annual" : "Monthly"} temporarily unavailable
+                      {interval === "annual" ? "Annual" : "Monthly"} checkout unavailable
                     </Button>
                     <p className="text-sm text-muted-foreground">
                       {interval === "annual" && mentorAvailability.monthly

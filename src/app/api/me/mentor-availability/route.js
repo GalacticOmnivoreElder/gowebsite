@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { getRequestUser } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
 import { getProductConfig } from "@/lib/product-config";
+import { hasMentorToolAccess } from "@/lib/content-entitlements";
 import { cleanMentorAvailability, publicAvailabilitySummary, serializeMentorDate } from "@/lib/mentor-profiles";
 
 function unavailable() {
@@ -15,7 +16,7 @@ async function gate(request) {
   if (!getProductConfig().featureFlags.mentorAvailability) return { response: unavailable() };
   const user = await getRequestUser(request);
   if (!user) return { response: Response.json({ error: "Authentication required" }, { status: 401 }) };
-  if (user.userData?.mentorStatus !== "approved") return { response: Response.json({ error: "Approved mentor status is required" }, { status: 403 }) };
+  if (!hasMentorToolAccess(user.userData || {}, { admin: user.admin })) return { response: Response.json({ error: "Active verified Mentor membership is required" }, { status: 403 }) };
   return { user };
 }
 
