@@ -1,0 +1,134 @@
+.single-lab { font-family: system-ui, sans-serif; color: #fff; }
+.single-lab, .single-lab *, .single-lab *::before, .single-lab *::after { box-sizing: border-box; }
+.single-lab a { color: inherit; text-decoration: none; }
+.single-lab button, .single-lab input { font: inherit; }
+/* The avatar is the entire working surface. Layers share the original image coordinates. */
+.lab-shell.single-lab { display:grid; place-items:center; min-height:100svh; padding:8px; overflow:visible; background:#000; }
+.single-lab .omnivore-interface { position:relative; width:min(calc(100vw - 16px), calc(100svh - 16px), 900px); aspect-ratio:1; isolation:isolate; }
+.single-lab .logo-stage { position:relative; width:100%; height:100%; }
+.single-lab .character { position:absolute; inset:0; transform-origin:50% 64%; animation:go-omnivore-idle-breath 6s ease-in-out infinite; }
+.single-lab .avatar-base,.single-lab .avatar-jaw { object-fit:contain; pointer-events:none; user-select:none; }
+.single-lab .avatar-base { clip-path:polygon(evenodd, 0 0,100% 0,100% 100%,0 100%,0 0,25% 60%,38% 64%,50% 66%,62% 64%,75% 60%,78% 70%,74% 77%,60% 80%,40% 80%,26% 76%,22% 69%,25% 60%); }
+.single-lab .avatar-jaw { clip-path:polygon(25% 60%,38% 64%,50% 66%,62% 64%,75% 60%,78% 70%,74% 77%,60% 80%,40% 80%,26% 76%,22% 69%); transform-origin:50% 62%; }
+.single-lab .mouth-depth { position:absolute; inset:58% 23% 19%; background:#000; border-radius:50%; }
+.single-lab .eye-light { position:absolute; left:52%; top:25%; width:15%; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle,rgba(226,214,255,.85),rgba(146,97,255,.15) 40%,transparent 70%); opacity:0; mix-blend-mode:screen; pointer-events:none; }
+.single-lab .is-listening .character { animation:none; transform:translateY(-.5%) rotate(-.45deg); transition:transform .5s ease; }
+.single-lab .is-listening .eye-light { opacity:.28; transition:opacity .4s; }
+.single-lab .mouth-slot { position:absolute; inset:0; z-index:3; pointer-events:none; }
+.single-lab .mouth-search { position:absolute; left:50%; top:61.5%; width:49%; display:flex; align-items:center; gap:10px; min-height:56px; padding:6px 7px 6px 16px; border:1px solid #666; border-radius:30px; color:white; background:rgba(5,4,8,.96); box-shadow:0 8px 20px #000a; transform:translate(-50%,-50%); pointer-events:auto; transition:box-shadow .2s,opacity .2s; }
+.single-lab .mouth-search:focus-within { border-color:#d5cbec; box-shadow:0 0 0 3px #bb9aff28,0 8px 20px #000a; }
+.single-lab .mouth-search>svg { flex:none; color:#aaa; width:16px; }
+.single-lab .mouth-search input { width:100%; min-width:0; padding:4px 0; background:none; border:0; outline:0; font-size:16px; color:#fff; }
+.single-lab .mouth-search input::placeholder { color:#bdb8c7; }
+.single-lab .mouth-search button { flex:none; width:42px; height:42px; border:0; border-radius:50%; display:grid; place-items:center; background:#f6f2ff; color:#18121e; transition:transform .2s,opacity .2s; }
+.single-lab .mouth-search button:hover:not(:disabled) { transform:scale(1.06); }
+.single-lab .mouth-search button:disabled { opacity:.3; cursor:default; }
+.single-lab .mouth-hint { position:absolute; top:69%; left:20%; width:60%; margin:0; color:#d6d1df; font-size:14px; text-align:center; text-shadow:0 1px 6px #000,0 1px 3px #000; transition:opacity .2s; }
+.single-lab .question-morsel { position:absolute; top:61.5%; left:50%; max-width:45%; padding:10px 18px; border-radius:24px; background:#fff; color:#121019; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:16px; transform:translate(-50%,-50%); box-shadow:0 0 22px #b990ff55; }
+.single-lab .phase-anticipate .mouth-search,.single-lab .phase-feed .mouth-search,.single-lab .phase-chew .mouth-search,.single-lab .phase-swallow .mouth-search { opacity:0; pointer-events:none; }
+.single-lab .phase-anticipate .character { animation:go-omnivore-anticipation .26s ease-in both; }
+.single-lab .phase-feed .character { animation:go-omnivore-take-question .42s ease-out both; }
+.single-lab .phase-feed .avatar-jaw { animation:go-omnivore-open-jaw .42s cubic-bezier(.2,.65,.3,1) both; }
+.single-lab .phase-feed .question-morsel { animation:go-omnivore-question-in .42s ease-in forwards; }
+.single-lab .phase-chew .character { animation:go-omnivore-body-chew .32s ease-in-out infinite; }
+.single-lab .phase-chew .avatar-jaw { animation:go-omnivore-jaw-chew .32s cubic-bezier(.4,0,.2,1) infinite; }
+.single-lab .phase-chew .question-morsel,.single-lab .phase-swallow .question-morsel { visibility:hidden; }
+.single-lab .phase-swallow .character { animation:go-omnivore-swallow .3s ease-in-out both; }
+.single-lab .phase-swallow .avatar-jaw { animation:go-omnivore-jaw-settle .3s ease-out both; }
+.single-lab .phase-swallow .eye-light { animation:go-omnivore-eye-awaken .3s ease-in both; }
+.single-lab .phase-reveal .character { animation:go-omnivore-pleased .6s ease-out both; }
+.single-lab .phase-reveal .eye-light { animation:go-omnivore-eye-answer-light 1s ease-out both; }
+.single-lab .motion-control { position:absolute; top:82%; left:calc(50% - 18px); z-index:4; width:36px; height:36px; display:grid; place-items:center; color:#aaa; border:1px solid #333; border-radius:50%; background:#0009; }
+.single-lab .motion-control:hover { color:#fff; border-color:#888; }
+.single-lab .motion-control:disabled { opacity:.5; }
+.single-lab .eye-answer { position:absolute; z-index:5; top:9%; left:50%; width:min(430px,85%); max-height:47%; overflow:auto; overscroll-behavior:contain; padding:20px; color:#faf7ff; border:1px solid #8d7899; border-radius:24px; background:linear-gradient(145deg,#1b1523f7,#08070afc); box-shadow:0 25px 65px #000c,0 0 50px #9c65cf18; transform:translateX(-50%); transform-origin:62% 65%; animation:go-omnivore-answer-out .65s cubic-bezier(.16,1,.3,1) both; scrollbar-width:thin; }
+.single-lab .eye-answer:focus { outline:0; }
+.single-lab .answer-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.single-lab .answer-top>span { display:flex; align-items:center; gap:7px; font-size:12px; letter-spacing:.08em; color:#c8b6de; }
+.single-lab .answer-top button { display:grid; place-items:center; flex:none; width:32px; height:32px; padding:0; color:#ccc; border:0; border-radius:50%; background:#ffffff0c; }
+.single-lab .answer-top button:hover { background:#ffffff20; }
+.single-lab .eye-answer h1 { margin:12px 0 8px; font-size:clamp(20px,3vw,27px); line-height:1.12; letter-spacing:-.035em; }
+.single-lab .eye-answer p { margin:0 0 16px; color:#c8c1cf; font-size:16px; line-height:1.45; }
+.single-lab .primary-answer { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border-radius:12px; background:#f2eafc; color:#1b1423; font-size:16px; font-weight:600; }
+.single-lab .primary-answer:hover { background:#fff; }
+.single-lab .related-answers { display:grid; gap:0; margin-top:10px; }
+.single-lab .related-answers a { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 1px; color:#d7cddd; font-size:14px; border-bottom:1px solid #ffffff12; }
+.single-lab .related-answers a:hover { color:#fff; }
+.single-lab .eye-answer footer { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:14px; font-size:12px; color:#bcb0c6; }
+.single-lab .eye-answer footer a { text-decoration:underline; text-underline-offset:3px; }
+.single-lab .comfy-clip { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+.single-lab .uses-clip .avatar-base,.single-lab .uses-clip .avatar-jaw,.single-lab .uses-clip .mouth-depth { visibility:hidden; }
+.single-lab .comfy-clip { visibility:hidden; }
+.single-lab .uses-clip .comfy-clip { visibility:visible; }
+.single-lab .image-failed .avatar-base { clip-path:none; }
+.single-lab .no-script { color:#fff; text-align:center; }
+.single-lab :is(button,a):focus-visible { outline:2px solid #e4d8f5; outline-offset:4px; }
+@keyframes go-omnivore-idle-breath { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-.5%)} }
+@keyframes go-omnivore-anticipation { 0%{transform:scale(1)} 100%{transform:scale(.985,1.012) rotate(-.6deg)} }
+@keyframes go-omnivore-take-question { 0%{transform:scale(.985,1.012) rotate(-.6deg)} 55%{transform:scale(1.015,.985)} 100%{transform:scale(1)} }
+@keyframes go-omnivore-open-jaw { 0%{transform:translateY(0)} 45%,65%{transform:translateY(3%) rotate(1.4deg)} 100%{transform:translateY(.8%)} }
+@keyframes go-omnivore-question-in { 0%{transform:translate(-50%,-50%) scale(1);opacity:1} 45%{transform:translate(-50%,-20%) scale(.8);opacity:1} 100%{transform:translate(-50%,-5%) scale(.03);opacity:0} }
+@keyframes go-omnivore-body-chew { 0%,100%{transform:scale(1)} 48%{transform:scale(1.012,.992) rotate(-.18deg)} }
+@keyframes go-omnivore-jaw-chew { 0%,100%{transform:translateY(.8%) rotate(.4deg)} 38%{transform:translateY(-1.4%) rotate(-.55deg)} 62%{transform:translateY(-1%) rotate(-.1deg)} }
+@keyframes go-omnivore-swallow { 0%,100%{transform:scale(1)} 40%{transform:scale(.985,1.015)} }
+@keyframes go-omnivore-jaw-settle { 0%{transform:translateY(.8%)} 60%{transform:translateY(-.4%)} 100%{transform:translateY(0)} }
+@keyframes go-omnivore-eye-awaken { to{opacity:.8;transform:scale(1.6)} }
+@keyframes go-omnivore-pleased { 0%{transform:translateY(0)} 40%{transform:translateY(-.7%) rotate(.4deg)} 100%{transform:translateY(0)} }
+@keyframes go-omnivore-eye-answer-light { 0%{opacity:.8;transform:scale(1.6)} 100%{opacity:0;transform:scale(2.4)} }
+@keyframes go-omnivore-answer-out { 0%{opacity:0;transform:translate(0,60%) scale(.05)} 60%{opacity:1} 100%{opacity:1;transform:translateX(-50%) scale(1)} }
+.single-lab .motion-quiet * { animation:none!important; transition:none!important; }
+.single-lab .motion-quiet .character { transform:none; }
+.single-lab .motion-quiet .avatar-jaw { transform:none; }
+.single-lab .motion-quiet .question-morsel { display:none; }
+@media (prefers-reduced-motion:reduce) { .single-lab .omnivore-interface * { animation:none!important; transition:none!important; } }
+@media (max-width:680px) {
+  .lab-shell.single-lab { padding:0; }
+  .single-lab .omnivore-interface { width:100vw; }
+  .single-lab .mouth-search { width:61%; min-height:48px; padding:4px 5px 4px 12px; gap:6px; }
+  .single-lab .mouth-search>svg { display:none; }
+  .single-lab .mouth-search button { width:38px; height:38px; }
+  .single-lab .mouth-search input { font-size:16px; }
+  .single-lab .mouth-hint { top:72%; font-size:12px; width:75%; left:12.5%; }
+  .single-lab .motion-control { top:85%; }
+  .single-lab .has-answer { min-height:100svh; aspect-ratio:auto; padding-top:0; }
+  .single-lab .has-answer .logo-stage { height:100vw; margin-top:clamp(190px,36svh,320px); }
+  .single-lab .eye-answer { top:auto; bottom:55%; max-height:min(52svh,400px); width:calc(100vw - 32px); padding:16px; border-radius:20px; }
+  .single-lab .eye-answer h1 { font-size:23px; }
+  .single-lab .eye-answer footer { font-size:12px; }
+}
+
+/* A close-up camera: 250% of the former square, capped to keep eye and mouth on screen. */
+.lab-shell.single-lab { padding:0; overflow:clip; }
+.single-lab .omnivore-interface { width:100%; height:100svh; min-height:600px; aspect-ratio:auto; }
+.single-lab .logo-stage { position:absolute; width:min(250vw,150svh,2250px); height:auto; aspect-ratio:1; left:50%; top:50%; transform:translate(-50%,-50%); }
+.single-lab .mouth-search { width:min(88vw,60%,980px); min-height:112px; padding:12px 14px 12px 30px; gap:20px; border-width:2px; border-radius:60px; }
+.single-lab .mouth-search input { font-size:clamp(20px,2.5vw,32px); }
+.single-lab .mouth-search>svg { width:30px; height:30px; }
+.single-lab .mouth-search button { width:80px; height:80px; }
+.single-lab .mouth-search button svg { width:36px; height:36px; }
+.single-lab .mouth-hint { top:68%; font-size:clamp(14px,1.5vw,20px); }
+.single-lab .question-morsel { font-size:clamp(20px,2.5vw,32px); padding:22px 30px; }
+.single-lab .motion-control { top:74%; width:44px; height:44px; left:calc(50% - 22px); }
+/* Answers occupy the eye itself: no floating panel, header or dashboard chrome. */
+.single-lab .eye-answer { top:33%; bottom:auto; left:55%; width:min(34%,86vw,610px); max-height:31%; padding:32px 24px 22px; transform:translate(-50%,-50%); border:0; border-radius:45%; background:radial-gradient(ellipse,#08050dfc 50%,#08050de8 70%,#08050d00 100%); box-shadow:none; text-align:center; scrollbar-width:thin; animation:go-omnivore-eye-discovery .6s cubic-bezier(.16,1,.3,1) both; }
+.single-lab .close-eye { display:grid; place-items:center; margin:0 auto 4px; width:36px; height:36px; border:1px solid #ffffff35; border-radius:50%; color:white; background:#09060ecc; }
+.single-lab .eye-answer { padding:20px 24px 14px; scrollbar-color:#806794 #100b16; }
+.single-lab .eye-answer h1 { margin:0 0 8px; font-size:clamp(22px,2.2vw,30px); }
+.single-lab .eye-answer p { font-size:16px; line-height:1.25; margin-bottom:12px; }
+.single-lab .primary-answer { justify-content:center; border-radius:32px; }
+.single-lab .related-answers { gap:4px; }
+.single-lab .related-answers a { justify-content:center; padding:4px 0; border:0; text-decoration:underline; text-underline-offset:4px; }
+.single-lab .eye-answer footer { justify-content:center; margin-top:8px; font-size:11px; }
+@keyframes go-omnivore-eye-discovery { from{opacity:0;transform:translate(-50%,-50%) scale(.08)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+@media (max-width:680px) {
+  .single-lab .omnivore-interface.has-answer { min-height:600px; }
+  .single-lab .has-answer .logo-stage { height:auto; margin-top:0; }
+  .single-lab .mouth-search { width:min(90vw,60%); min-height:88px; padding:10px 10px 10px 22px; gap:8px; }
+  .single-lab .mouth-search input { font-size:20px; }
+  .single-lab .mouth-search button { width:60px; height:60px; }
+  .single-lab .eye-answer { left:52%; width:min(38%,90vw); padding:20px 16px; max-height:35%; border-radius:30%; }
+  .single-lab .eye-answer h1 { font-size:24px; }
+  .single-lab .eye-answer p { font-size:16px; }
+  .single-lab .mouth-hint { top:69%; }
+  .single-lab .motion-control { top:74%; }
+}

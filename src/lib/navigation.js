@@ -1,5 +1,11 @@
 export const learningNavigation = Object.freeze([
   {
+    label: "Ask the Omnivore",
+    href: "/learn",
+    path: "/learn",
+    description: "Find your next learning step with the Galactic Omnivore.",
+  },
+  {
     label: "Courses",
     href: "/education?format=course",
     path: "/education",

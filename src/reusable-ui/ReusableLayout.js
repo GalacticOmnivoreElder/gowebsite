@@ -14,7 +14,7 @@ const ReusableLayout = observer(({ children }) => {
   const isAdminRoute = pathname?.startsWith("/admin");
 
   // If we're on an admin route, just render the children without the layout
-  if (isAdminRoute) {
+  if (isAdminRoute || pathname === "/learn") {
     return <>{children}</>;
   }
 
