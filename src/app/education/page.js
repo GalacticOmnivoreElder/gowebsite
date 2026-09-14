@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LearningCategoryNav } from "@/components/learning/LearningCategoryNav";
 import { LearningPageHeader } from "@/components/learning/LearningPageHeader";
+import { learningCatalog } from "@/content/evergreen-curriculum.mjs";
 
 const STREAMS = Object.freeze({
   course: "Courses",
@@ -78,7 +79,6 @@ function EducationContent() {
         )}
       />
 
-      <p className="my-6 rounded-lg border p-4"><Link href="/learn">Start the six-world Starter Pathway</Link> — your first mission is free. 500 mission XP + 100 completion bonus.</p>
       <LearningCategoryNav activeItem={STREAMS[activeFormat]} className="mt-10" />
 
       <section className="mt-10" aria-labelledby="learning-list-heading">
@@ -88,6 +88,19 @@ function EducationContent() {
           </h2>
         </div>
 
+        {activeFormat === "course" && (
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex flex-wrap gap-2"><Badge variant="outline">Course</Badge><Badge>Self-paced · First mission free</Badge></div>
+              <CardTitle className="mt-3">{learningCatalog.starterPathway.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Explore the logic of making games in six steps: Notice, Imagine, Shape, Build, Test, and Share. Work at your own pace, with any tools you prefer.</p>
+              <p className="mt-3 text-sm text-muted-foreground">500 mission XP + 100 completion bonus. Start for free; continue with GO Community.</p>
+              <Button asChild className="mt-6"><Link href="/education/starter-pathway">Open Starter Pathway</Link></Button>
+            </CardContent>
+          </Card>
+        )}
         {status === "loading" ? <EducationGridSkeleton /> : null}
 
         {status === "error" ? (
@@ -131,7 +144,7 @@ function EducationContent() {
           </div>
         ) : null}
 
-        {status === "ready" && !visibleItems.length ? (
+        {status === "ready" && !visibleItems.length && activeFormat !== "course" ? (
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
               No {STREAMS[activeFormat].toLowerCase()} are published right now.

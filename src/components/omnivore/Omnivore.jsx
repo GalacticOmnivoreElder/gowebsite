@@ -1,5 +1,5 @@
 "use client";
-import StarterPathway from "./StarterPathway";
+
 import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/firebase";
@@ -229,7 +229,7 @@ function pause(ms, signal) {
     });
 }
 export default function Omnivore() {
-    const [starterRequest, setStarterRequest] = useState(0);
+
     const [question, setQuestion] = useState("");
     const [phase, setPhase] = useState("idle");
     const [chewQuestion, setChewQuestion] = useState("");
@@ -437,7 +437,7 @@ export default function Omnivore() {
             closeAnswer(); }}>
               <button className="close-eye" type="button" onClick={closeAnswer} aria-label="Close answer"><X size={20}/></button>
               <h1>{answerTitle}</h1>
-              {answer.key === "orientation" && <><p>Start by noticing the repeating action in a game you know.</p><button className="primary-answer" onClick={() => { setStarterRequest(value => value + 1); closeAnswer(); document.querySelector(".starter-pathway")?.scrollIntoView({ block: "start" }); }}>Open mission: Notice</button></>}
+              {answer.key === "orientation" && <><p>Start by noticing the repeating action in a game you know.</p><Link className="primary-answer" href="/education/starter-pathway#world-notice">Open mission: Notice</Link></>}
               <p>{answerDescription}</p>
               <a className="primary-answer" href={`/api/go-link?key=${answer.key}`} target="_blank" rel="noreferrer" onClick={() => { void sendLearningSignal(answer, "open_route").then(value => { if (value) {
             setSummary(value); setSaved(true); } }); }}>Explore {resolution?.fallback || !resolution ? 'GO Education' : 'this route'} <ArrowUpRight size={18}/></a>
@@ -447,6 +447,6 @@ export default function Omnivore() {
         </div>
         <noscript><p className="no-script">This guide needs JavaScript. <a href={`${GO_ORIGIN}/education`}>Browse GO Education</a> to keep learning.</p></noscript>
       </section>
-      <StarterPathway requestedLesson={starterRequest} onProgress={value => { setSummary(mergeSummary(value)); setSaved(true); }} />
+
     </main>);
 }

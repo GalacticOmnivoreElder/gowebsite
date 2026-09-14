@@ -1,5 +1,12 @@
 # Starter Pathway implementation — review notes
 
+Current placement: the course is listed under Education → Courses and opens at
+`/education/starter-pathway`. Ask the Omnivore links to its first mission; it no
+longer embeds the course. The profile's Learning tab contains the progression
+card previously shown in the Passport editor. Saved records and awards retain
+their existing identifiers and storage. Earlier verification notes below refer
+to the original `/learn` placement.
+
 Implemented in the existing Next.js/Firebase GO platform. No deployment, new identity system, checkout, upload service, or academy.
 
 ## Routes and content
@@ -54,3 +61,9 @@ Fresh checks: 439 unit tests passed; typecheck passed; production build passed; 
 Local preview: http://localhost:3100/learn. Content version: starter-pathway-v1. The live website has not been changed. Publication remains subject to the product owner's explicit request after copy, access and privacy review.
 
 Additional documentation updated during this review: `docs/omnivore.md`. Existing unrelated workspace changes, including `.claude/`, were preserved.
+
+## Evergreen course revision — starter-pathway-v2
+
+The product owner's latest request supersedes the original mandatory-evidence contract. All six lessons now teach player actions, decisions, rules, consequences, feedback, iteration and communication without prescribing tools or engines. Each step has two concrete optional approaches, three practical actions, an enduring principle and optional private journey notes/reflection. Completion is self-reported and accepts omitted or empty notes. Existing IDs, membership gates, XP totals and duplicate protection remain intact. Legacy evidence/reflection storage keys and mode inputs remain compatible; the new UI uses journey language and a validated optional approach instead of tool choices.
+
+The curriculum, editorial reference, course listing, metadata and reading/form UI were updated together. Notes entered here are saved with first completion; this revision does not introduce a full journal editor. Public sharing remains an explicit separate opt-in. Checks: 440 tests passed, typecheck and lint passed (existing host warnings), and mobile/desktop browser checks passed including empty-note completion, draft retention, duplicate safety and membership lock. No deployment performed.

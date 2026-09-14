@@ -43,6 +43,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import SubscribeButton from "@/components/ui/SubscribeButton";
 import { LearningDashboard } from "@/components/learning/LearningDashboard";
+import StarterAchievements from "@/components/profile/StarterAchievements";
 import { NotificationsPanel } from "@/components/notifications/NotificationsPanel";
 import { MentorshipMentorWorkspace } from "@/components/mentors/MentorshipMentorWorkspace";
 import { MentorshipDashboard } from "@/components/mentors/MentorshipDashboard";
@@ -862,7 +863,10 @@ const ProfileContent = observer(() => {
         </TabsContent>
 
         <TabsContent value="learning">
-          <LearningDashboard />
+          <div className="space-y-6">
+            <StarterAchievements record={profile?.cv?.starterPathway} />
+            <LearningDashboard />
+          </div>
         </TabsContent>
 
         <TabsContent value="mentor">

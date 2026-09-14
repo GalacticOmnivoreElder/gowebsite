@@ -15,17 +15,17 @@ export function validateLearningEvent(body) {
   if (body && ['lesson_started', 'lesson_complete'].includes(body.eventType)) {
     const lesson = typeof body.lessonId === 'string' && Object.hasOwn(lessonById, body.lessonId) ? lessonById[body.lessonId] : null;
     const clean = value => typeof value === 'string' ? value.replace(/<[^>]*>/g, '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').trim() : '';
-    if (!lesson || Object.keys(body).some(key => !['eventType','eventId','lessonId','evidence','reflection','mode','publicSummary'].includes(key)) ||
+    if (!lesson || Object.keys(body).some(key => !['eventType','eventId','lessonId','evidence','reflection','mode','approach','publicSummary'].includes(key)) ||
         (body.publicSummary !== undefined && (typeof body.publicSummary !== 'string' || body.publicSummary.length > 1200)) ||
         ['evidence', 'reflection'].some(key => body[key] !== undefined && (typeof body[key] !== 'string' || body[key].length > 1200)) ||
         (body.publicSummary !== undefined && (body.eventType !== 'lesson_complete' || lesson.id !== 'share')) ||
         typeof body.eventId !== 'string' || !/^[a-zA-Z0-9-]{16,64}$/.test(body.eventId) ||
         (body.mode !== undefined && !lesson.modes.includes(body.mode)) ||
-        (body.eventType === 'lesson_complete' && ['evidence','reflection'].some(key => typeof body[key] !== 'string' || body[key].length > 1200 || !clean(body[key])))) {
-      throw Object.assign(new Error('Choose a lesson and include evidence and reflection, each up to 1,200 characters.'), { status: 400 });
+        (body.approach !== undefined && !lesson.approaches.some(option => option.id === body.approach))) {
+      throw Object.assign(new Error('Choose a known step and approach. Optional journey notes must be text of up to 1,200 characters per field.'), { status: 400 });
     }
     return { eventType: body.eventType, eventId: body.eventId, lessonId: lesson.id, routeKey: lesson.nextRouteKey,
-      evidence: clean(body.evidence), reflection: clean(body.reflection), publicSummary: clean(body.publicSummary), mode: body.mode ?? lesson.modes[0] };
+      evidence: clean(body.evidence), reflection: clean(body.reflection), publicSummary: clean(body.publicSummary), mode: body.mode ?? '', approach: body.approach ?? '' };
   }
   if (!body || typeof body !== 'object' || Array.isArray(body) ||
       Object.keys(body).some(key => !['eventType', 'routeKey', 'eventId'].includes(key)) ||
@@ -63,7 +63,7 @@ export function applyLearningEvent(data = {}, event, now = Date.now()) {
     const next = { ...data, xp: summary.xp + xpAwarded, badges: [...badges], completedLessons,
       pathwayBonusAwarded: data.pathwayBonusAwarded === true || bonus > 0,
       ...(complete && lesson.id === 'share' ? { publicSummary: event.publicSummary || '' } : {}),
-      completions: { ...data.completions, ...(complete ? { [lesson.id]: { at: now, evidence: event.evidence, reflection: event.reflection, mode: event.mode } } : {}) },
+      completions: { ...data.completions, ...(complete ? { [lesson.id]: { at: now, evidence: event.evidence, reflection: event.reflection, mode: event.mode, approach: event.approach ?? '' } } : {}) },
       lastRoute: lesson.nextRouteKey, day, dailyCount: dailyCount + 1, recent: [...recent, { at: now }], eventIds: [...ids, event.eventId], updatedAt: now };
     return { data: next, summary: learningSummary(next), xpAwarded, changed: true };
   }

@@ -1,4 +1,5 @@
 "use client";
+import "./starter-pathway.css";
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -16,7 +17,7 @@ export default function StarterPathway({ requestedLesson, onProgress }) {
   const [reflection, setReflection] = useState('');
   const [share, setShare] = useState(false);
   const [publicSummary, setPublicSummary] = useState('');
-  const [mode, setMode] = useState('drawing');
+  const [approach, setApproach] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const local = useRef({});
@@ -30,7 +31,7 @@ export default function StarterPathway({ requestedLesson, onProgress }) {
     const version = ++generation.current;
     local.current = {}; drafts.current = {}; submitting.current = false;
     setSummary(learningSummary()); setAccess(false); setLoading(true); setBusy(false);
-    setEvidence(''); setReflection(''); setShare(false); setPublicSummary(''); setMessage(''); setError('');
+    setEvidence(''); setReflection(''); setApproach(''); setShare(false); setPublicSummary(''); setMessage(''); setError('');
     try {
       if (!user) return;
       const token = await user.getIdToken();
@@ -61,7 +62,7 @@ export default function StarterPathway({ requestedLesson, onProgress }) {
     const draft = drafts.current[lesson.id];
     setEvidence(draft?.evidence ?? ''); setReflection(draft?.reflection ?? '');
     setShare(draft?.share ?? false); setPublicSummary(draft?.publicSummary ?? '');
-    setMode(draft?.mode ?? lesson.modes[0]); setError(''); setMessage('');
+    setApproach(draft?.approach ?? ''); setError(''); setMessage('');
   }, [lesson]);
   useEffect(() => { if (index !== null) heading.current?.focus(); }, [index]);
   function open(next) {
@@ -74,11 +75,11 @@ export default function StarterPathway({ requestedLesson, onProgress }) {
   async function complete(event) {
     event.preventDefault();
     if (submitting.current || locked || loading) return;
-    if (!evidence.trim() || !reflection.trim()) { setError('Add both evidence and reflection before completing the mission.'); return; }
+
     submitting.current = true; setBusy(true); setError('');
     const version = generation.current;
     const user = auth.currentUser;
-    const body = { eventType: 'lesson_complete', eventId: crypto.randomUUID(), lessonId: lesson.id, evidence, reflection, mode, ...(lesson.id === 'share' && share ? { publicSummary } : {}) };
+    const body = { eventType: 'lesson_complete', eventId: crypto.randomUUID(), lessonId: lesson.id, evidence, reflection, ...(approach ? { approach } : {}), ...(lesson.id === 'share' && share ? { publicSummary } : {}) };
     try {
       let payload;
       if (user) {
@@ -103,35 +104,48 @@ export default function StarterPathway({ requestedLesson, onProgress }) {
     finally { if (version === generation.current) { submitting.current = false; setBusy(false); } }
   }
   return <section className="starter-pathway" aria-label="Starter Pathway" data-clarity-mask="true">
-    <h2>Make your first tiny game</h2>
+    <p className="starter-eyebrow">Six steps · One small playable idea</p><h2>Learn the thinking behind making games</h2><p>Explore actions, choices, rules, and consequences. Use whatever you have, at your own pace. No particular tool or game engine is needed.</p>
     <p>Notice → Imagine → Shape → Build → Test → Share</p>
     <p>500 mission XP + 100 completion bonus. Notice is free; continue with GO Community.</p>
-    <button type="button" onClick={() => open(0)} disabled={busy || loading}>Start Starter Pathway</button>
-    <p>{summary.completedLessons.length} of 6 worlds complete · {summary.xp} learning XP</p>
-    <nav aria-label="Six learning worlds" className="starter-worlds">{starterLessons.map((world, i) => <button key={world.id} type="button" disabled={busy} aria-current={index === i ? 'step' : undefined} onClick={() => open(i)}>{world.world}. {world.title}{summary.completedLessons.includes(world.id) ? ' ✓ Complete' : world.access !== 'free' && !access ? ' · Community' : ''}</button>)}</nav>
+    <button type="button" onClick={() => open(0)} disabled={busy || loading}>Begin the journey</button>
+    <p>{summary.completedLessons.length} of 6 steps complete · {summary.xp} learning XP</p>
+    <nav aria-label="Six steps of making a game" className="starter-worlds">{starterLessons.map((world, i) => <button key={world.id} type="button" disabled={busy} aria-current={index === i ? 'step' : undefined} onClick={() => open(i)}>{world.world}. {world.title}{summary.completedLessons.includes(world.id) ? ' ✓ Complete' : world.access !== 'free' && !access ? ' · Community' : ''}</button>)}</nav>
     {loading && <p role="status">Checking your saved progress…</p>}
     {lesson && <article>
-      <h3 ref={heading} tabIndex={-1}>World {lesson.world} — {lesson.title}</h3>
+      <h3 ref={heading} tabIndex={-1}>Step {lesson.world} — {lesson.title}</h3>
       <p>{lesson.promise}</p>
-      {locked ? <p>This world is included with GO Community. <Link href="/membership">Explore membership</Link> or <Link href="/login">sign in</Link> to continue.</p> : <>
-        <p>{lesson.idea}</p><h4>Notice an example</h4><p>{lesson.example}</p>
-        <h4>Your mission · {lesson.missionXp} XP</h4><p>{lesson.mission}</p>
+      {locked ? <p>This step is included with GO Community. <Link href="/membership">Explore membership</Link> or <Link href="/login">sign in</Link> to continue.</p> : <>
+        <div className="starter-idea"><h4>The idea</h4><p>{lesson.idea}</p></div>
+        <details className="starter-example"><summary>See a simple example</summary><p>{lesson.example}</p></details>
+        <div className="starter-mission"><h4>Try this</h4><p>{lesson.mission}</p><ol>{lesson.steps.map(step => <li key={step}>{step}</li>)}</ol></div>
+        <p className="starter-principle"><strong>Carry this with you</strong><br />{lesson.principle}</p>
         <form onSubmit={complete} aria-busy={busy}>
-          <label htmlFor="starter-mode">How will you make it?</label>
-          <select id="starter-mode" value={mode} onChange={e => edit('mode', e.target.value, setMode)} disabled={busy}>{lesson.modes.map(value => <option key={value} value={value}>{value.replaceAll('-', ' ')}</option>)}</select>
-          <label htmlFor="starter-evidence">Evidence — {lesson.evidencePrompt}</label>
-          <textarea id="starter-evidence" required maxLength={1200} value={evidence} onChange={e => edit('evidence', e.target.value, setEvidence)} disabled={busy} aria-invalid={!!error} aria-describedby="starter-guidance starter-error" />
-          <label htmlFor="starter-reflection">Reflection — {lesson.reflectionPrompt}</label>
-          <textarea id="starter-reflection" required maxLength={1200} value={reflection} onChange={e => edit('reflection', e.target.value, setReflection)} disabled={busy} aria-invalid={!!error} aria-describedby="starter-guidance starter-error" />
-          <p id="starter-guidance">Up to 1,200 characters in each field. Describe your work or paste a project link. Evidence and reflection stay private.</p>
+          <fieldset className="starter-approaches" disabled={busy}>
+            <legend>{lesson.approachPrompt} <span>(optional)</span></legend>
+            <p>Choose a starting point if it helps. Both approaches explore the same idea.</p>
+            {lesson.approaches.map(option => <label className="starter-approach" key={option.id}>
+              <input type="radio" name="starter-approach" value={option.id} checked={approach === option.id} onChange={() => edit('approach', option.id, setApproach)} />
+              <span><strong>{option.label}</strong><span>{option.detail}</span></span>
+            </label>)}
+          </fieldset>
+          <div className="starter-journal">
+            <h4>Your journey, your way</h4>
+            <p>{lesson.evidencePrompt}</p>
+            <p id="starter-guidance">These notes are optional and private. Use this space or keep your own journal. There is nothing to prove or upload. Up to 1,200 characters per field; notes entered here are saved with your first completion.</p>
+            <label htmlFor="starter-evidence">Something you want to remember (optional)</label>
+            <textarea id="starter-evidence" maxLength={1200} placeholder="An idea, a surprise, a decision… whatever matters to you." value={evidence} onChange={e => edit('evidence', e.target.value, setEvidence)} disabled={busy} aria-describedby="starter-guidance starter-error" />
+            <label htmlFor="starter-reflection">A question to take with you (optional)</label>
+            <p id="starter-reflection-prompt">{lesson.reflectionPrompt}</p>
+            <textarea id="starter-reflection" maxLength={1200} placeholder="Leave a thought here, or simply take a moment to reflect." value={reflection} onChange={e => edit('reflection', e.target.value, setReflection)} disabled={busy} aria-describedby="starter-reflection-prompt starter-guidance starter-error" />
+          </div>
           {lesson.id === 'share' && !summary.completedLessons.includes('share') && <><label><input type="checkbox" checked={share} onChange={e => edit('share', e.target.checked, setShare)} disabled={busy} /> Include a separate project summary in my Passport when I finish all six worlds, following my existing visibility settings.</label>{share && <><label htmlFor="starter-public">Project summary to share (optional, up to 1,200 characters)</label><textarea id="starter-public" maxLength={1200} value={publicSummary} onChange={e => edit('publicSummary', e.target.value, setPublicSummary)} disabled={busy} /></>}</>}
-          <button disabled={busy || loading} type="submit">{busy ? 'Saving…' : summary.completedLessons.includes(lesson.id) ? 'Confirm completion (no extra XP)' : 'Complete mission'}</button>
+          <button disabled={busy || loading} type="submit">{busy ? 'Saving…' : summary.completedLessons.includes(lesson.id) ? 'Confirm completion (no extra XP)' : 'Mark this step complete'}</button>
         </form>
       </>}
-      {summary.completedLessons.includes(lesson.id) && <p>{index < 5 ? <button type="button" disabled={busy} onClick={() => open(index + 1)}>Next world: {lesson.nextRouteLabel}</button> : <Link href="/projects">Explore GO Projects</Link>}</p>}
+      {summary.completedLessons.includes(lesson.id) && <p>{index < 5 ? <button type="button" disabled={busy} onClick={() => open(index + 1)}>Next step: {lesson.nextRouteLabel}</button> : <Link href="/projects">Explore GO Projects</Link>}</p>}
     </article>}
     <p id="starter-error" role="alert">{error}</p><p role="status">{message}</p>
-    <p><Link href="/profile/cv">Your GameDev Passport</Link> · <Link href="/education">Browse GO Education</Link></p>
+    <p><Link href="/profile?tab=learning">Your learning journey</Link> · <Link href="/profile/cv">Your GameDev Passport</Link> · <Link href="/education">Browse GO Education</Link></p>
   </section>;
 }
 

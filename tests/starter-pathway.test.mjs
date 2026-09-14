@@ -17,8 +17,8 @@ test('retries, lifetime 600 XP, private projection, preserved legacy progress',(
  assert.equal(next.summary.xp,620);assert.equal(next.summary.completedLessons.length,6);assert.equal(next.summary.skills.length,6);
  assert.equal(starterPassportRecord(data).complete,true);assert.ok(!JSON.stringify(starterPassportRecord(data)).includes('Choose'));assert.ok(!JSON.stringify(next.summary).includes('Choose'));
 });
-test('validate authority, required private fields, length and mode',()=>{
- for(const extra of [{evidence:' '},{reflection:''},{evidence:'x'.repeat(1201)},{evidence:'<b></b>'},{lessonId:'__proto__'},{xp:999},{uid:'victim'},{badgeId:'winner'},{routeKey:'https://evil.test'},{mode:'unknown'}]) assert.throws(()=>validateLearningEvent({...event('notice'),...extra}),{status:400});
+test('validate authority, optional private fields, length and mode',()=>{
+ for(const extra of [{evidence:'x'.repeat(1201)},{lessonId:'__proto__'},{xp:999},{uid:'victim'},{badgeId:'winner'},{routeKey:'https://evil.test'},{mode:'unknown'}]) assert.throws(()=>validateLearningEvent({...event('notice'),...extra}),{status:400});
  assert.equal(validateLearningEvent({...event('notice'),evidence:'<b>Paper</b>'}).evidence,'Paper');
 });
 test('existing membership gate rejects locked lessons before storage',async()=>{
@@ -32,7 +32,7 @@ test('next routes are reviewed and lesson input is strictly bounded', () => {
  for (const lesson of starterLessons) {
   const route = learningCatalog.routes[lesson.nextRouteKey];
   assert.ok(route);
-  assert.ok(route.href === '/projects' || starterLessons.some(world => route.href === `/learn#world-${world.id}`));
+  assert.ok(route.href === '/projects' || starterLessons.some(world => route.href === `/education/starter-pathway#world-${world.id}`));
  }
  for (const extra of [{lessonId: ['notice']}, {publicSummary: 'publish this'}, {eventType: 'lesson_started', evidence: 'x'.repeat(1201)}, {eventType: 'lesson_started', reflection: 123}]) {
   assert.throws(() => validateLearningEvent({...event('notice'), ...extra}), {status: 400});
@@ -44,4 +44,21 @@ test('opted-in summary stays private until all worlds complete in any order', ()
  for (const lesson of starterLessons.filter(l => l.id !== 'share')) data = applyLearningEvent(data, validateLearningEvent(event(lesson.id))).data;
  assert.equal(starterPassportRecord(data).publicSummary, 'My tiny game');
  assert.equal(data.xp, 600);
+});
+
+test('all six steps can complete without proof or reflection, with canonical awards', () => {
+ let data = {};
+ for (const lesson of starterLessons) {
+  assert.equal(lesson.approaches.length, 2);
+  assert.equal(lesson.steps.length, 3);
+  const body = {eventType:'lesson_complete',eventId:`optional-notes-${lesson.id}-0000`,lessonId:lesson.id};
+  const validated = validateLearningEvent(body);
+  assert.equal(validated.evidence, ''); assert.equal(validated.reflection, '');
+  data = applyLearningEvent(data, validated).data;
+  assert.equal(applyLearningEvent(data, validated).xpAwarded, 0);
+  assert.throws(() => validateLearningEvent({...body, approach: 'invented'}), {status:400});
+  assert.equal(validateLearningEvent({...body, approach:lesson.approaches[0].id}).approach, lesson.approaches[0].id);
+ }
+ assert.equal(data.xp, 600);
+ assert.equal(starterPassportRecord(data).complete, true);
 });
