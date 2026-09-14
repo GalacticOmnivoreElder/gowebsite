@@ -307,3 +307,24 @@ test("PUT /api/me/cv publishes the current user's CV", async () => {
   assert.equal(response.body.cv.user_id, "user-1");
   assert.equal(response.body.cv.published_at, "2026-07-14T12:00:00.000Z");
 });
+
+test("CV regeneration preserves a completion arriving after its initial read", async () => {
+  const route = loadRoute({seed: {
+    user_profiles: {'user-1': {display_name: 'Ada'}},
+    go_cvs: {'user-1': {starterPathway: {complete: false}}},
+  }});
+  const originalCollection = route.adminDb.collection.bind(route.adminDb);
+  route.adminDb.collection = name => {
+    const collection = originalCollection(name);
+    return {doc(id) {
+      const ref = collection.doc(id);
+      return {...ref, async set(data, options) {
+        if (name === 'go_cvs') route.adminDb.docs.go_cvs[id] = {...route.adminDb.docs.go_cvs[id], starterPathway: {complete: true}};
+        return ref.set(data, options);
+      }};
+    }};
+  };
+  const response = await route.POST(createRequest());
+  assert.equal(response.body.cv.starterPathway.complete, true);
+  assert.equal(route.adminDb.docs.go_cvs['user-1'].starterPathway.complete, true);
+});

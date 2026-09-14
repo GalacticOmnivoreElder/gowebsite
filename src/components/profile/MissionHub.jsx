@@ -1,4 +1,5 @@
 "use client";
+import StarterAchievements from "./StarterAchievements";
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
@@ -831,6 +832,7 @@ export default function MissionHub({
 
         <EducationList items={model.education} />
 
+        <StarterAchievements record={profile?.cv?.starterPathway} />
         <OfficialMentorPanel mentor={profile?.mentorSummary} programme={profile?.mentorProgramme} isOwner={isOwner} />
 
         <MentorReferences items={profile?.mentorReferences} />

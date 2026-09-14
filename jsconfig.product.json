@@ -17,6 +17,13 @@
     "paths": { "@/*": ["src/*"] }
   },
   "include": [
+    "src/content/*.mjs",
+    "src/components/omnivore/StarterPathway.jsx",
+    "src/components/profile/StarterAchievements.jsx",
+    "src/app/api/learning-catalog/route.js",
+    "src/app/api/learning-signal/route.js",
+    "src/lib/omnivore-progress.mjs",
+    "src/lib/starter-passport.mjs",
     "src/lib/content-visibility.js",
     "src/lib/content-entitlements.js",
     "src/lib/product-config.js",

@@ -1,4 +1,5 @@
 "use client";
+import StarterAchievements from "./StarterAchievements";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -1038,6 +1039,7 @@ const CvWorkspace = observer(() => {
           </div>
         </section>
 
+        <StarterAchievements record={cv?.starterPathway} />
         {cv.suggested_improvements?.length ||
         passportMissingInformation.length ? (
           <Card className="border-amber-500/30">

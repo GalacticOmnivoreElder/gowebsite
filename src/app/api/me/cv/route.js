@@ -76,7 +76,10 @@ export async function POST(request) {
 
   await adminDb.collection("go_cvs").doc(user.uid).set(cv, { merge: true });
   await adminDb.collection("users").doc(user.uid).set({ hasCv: true }, { merge: true });
-  return NextResponse.json({ cv: serializeCv(cv) });
+  // The merge leaves server-earned fields untouched, including completions that
+  // arrived while this draft was being generated. Return the current record.
+  const saved = await adminDb.collection("go_cvs").doc(user.uid).get();
+  return NextResponse.json({ cv: serializeCv(saved.data()) });
 }
 
 // PATCH /api/me/cv - user edits to the generated CV (title/summary/sections/visibility).

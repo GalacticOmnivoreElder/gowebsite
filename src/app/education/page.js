@@ -78,6 +78,7 @@ function EducationContent() {
         )}
       />
 
+      <p className="my-6 rounded-lg border p-4"><Link href="/learn">Start the six-world Starter Pathway</Link> — your first mission is free. 500 mission XP + 100 completion bonus.</p>
       <LearningCategoryNav activeItem={STREAMS[activeFormat]} className="mt-10" />
 
       <section className="mt-10" aria-labelledby="learning-list-heading">
