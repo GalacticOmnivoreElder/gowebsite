@@ -67,3 +67,11 @@ Additional documentation updated during this review: `docs/omnivore.md`. Existin
 The product owner's latest request supersedes the original mandatory-evidence contract. All six lessons now teach player actions, decisions, rules, consequences, feedback, iteration and communication without prescribing tools or engines. Each step has two concrete optional approaches, three practical actions, an enduring principle and optional private journey notes/reflection. Completion is self-reported and accepts omitted or empty notes. Existing IDs, membership gates, XP totals and duplicate protection remain intact. Legacy evidence/reflection storage keys and mode inputs remain compatible; the new UI uses journey language and a validated optional approach instead of tool choices.
 
 The curriculum, editorial reference, course listing, metadata and reading/form UI were updated together. Notes entered here are saved with first completion; this revision does not introduce a full journal editor. Public sharing remains an explicit separate opt-in. Checks: 440 tests passed, typecheck and lint passed (existing host warnings), and mobile/desktop browser checks passed including empty-note completion, draft retention, duplicate safety and membership lock. No deployment performed.
+
+## Verification completed — 16 September 2026
+
+Verified the current committed implementation (`1b429b7`, curriculum `starter-pathway-v2`) without reverting the later course-location or optional-notes revisions. The canonical course entry is `/education/starter-pathway`, linked from `/education`; `/learn` remains the instructor guide.
+
+Fresh results: all 440 unit tests passed; typecheck passed; production build passed, including lint with existing unrelated warnings. The browser acceptance suite passed against that production build on local port 3107 at mobile and desktop sizes: Education entry, keyboard start, optional-note completion, private draft retention across steps, duplicate XP, visit-only reload reset, membership lock, catalog and no horizontal overflow or browser errors. Mobile output was visually reviewed.
+
+No application changes were needed during this verification. Java remains unavailable, so Firestore emulator tests and real-account/concurrent persistence and visibility checks remain outstanding before release. No deployment or production writes were performed.
