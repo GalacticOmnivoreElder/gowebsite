@@ -131,7 +131,7 @@ export function GoPillars() {
                     onClick={() =>
                       setActivePillar(isActive ? null : pillar.slug)
                     }
-                    className="group flex min-h-full w-full flex-col p-6 text-left outline-none transition-colors hover:bg-white/[0.03] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-7"
+                    className="group flex w-full flex-col p-6 text-left outline-none transition-colors hover:bg-white/[0.03] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-7"
                   >
                     <div className="flex items-center justify-between gap-4">
                       <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-white/45">
