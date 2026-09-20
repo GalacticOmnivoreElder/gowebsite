@@ -19,6 +19,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { getMentorCheckoutStatus } from "@/lib/mentor-checkout";
 import { getMentorApplicationState } from "@/lib/product-settings";
 import { MentorApplicationButton } from "@/components/pricing/MentorApplicationButton";
+import { GO_INTENTS, validGoIntent } from "@/lib/go-intents";
 
 export const dynamic = "force-dynamic";
 
@@ -57,9 +58,44 @@ const accessRows = [
   ["GO release and publishing guidance", "—", "Included", "Included", "Included"],
 ];
 
+const intentContext = {
+  mentorship: {
+    eyebrow: "Learn / mentorship",
+    title: "Get ongoing guidance for a real milestone",
+    body: "Active GO members can browse reviewed mentors and submit a private request for structured mentorship. Public learning questions remain available to everyone on Learn.",
+  },
+  "become-mentor": {
+    eyebrow: "Learn / mentor",
+    title: "Share your experience with GO",
+    body: "Mentor membership includes the application, GO interview, and approval path required before you offer mentorship or create paid learning resources.",
+  },
+  "publish-solo": {
+    eyebrow: "Portfolio / solo creator",
+    title: "Build and publish your game with GO",
+    body: "Community and Mentor members can own one unreleased creator project at a time and receive guided release preparation subject to GO review and terms.",
+  },
+  "find-team": {
+    eyebrow: "Portfolio / collaboration",
+    title: "Find collaborators and build visible work",
+    body: "Membership gives you access to eligible project roles and one included creator project. Continue to project opportunities after reviewing the access that fits your goal.",
+  },
+  "find-work": {
+    eyebrow: "Outsource / contributor",
+    title: "Find paid project work",
+    body: "Return to the Projects board to browse paid briefs first. Each project keeps its own application rules, including the existing free-account exceptions.",
+  },
+  "hire-talent": {
+    eyebrow: "Outsource / business",
+    title: "Hire talent with GO Business",
+    body: "Business members can create hiring briefs, review applicants, and manage teams within a project capacity agreed with GO. Business access is separate from the included creator project.",
+  },
+};
+
 export default async function MembershipPage({ searchParams }) {
   const params = await searchParams;
   const creatorMembershipRequired = params?.reason === "creator";
+  const selectedIntent = validGoIntent(params?.intent);
+  const selectedPath = selectedIntent ? intentContext[selectedIntent] : null;
   const [mentorMonthly, mentorAnnual, mentorApplicationState] = await Promise.all([
     getMentorCheckoutStatus("monthly"),
     getMentorCheckoutStatus("annual"),
@@ -118,6 +154,17 @@ export default async function MembershipPage({ searchParams }) {
             </p>
           </div>
         </section>
+
+        {selectedPath && (
+          <section className="border-b border-primary/25 bg-primary/[0.04]" aria-labelledby="membership-intent-heading">
+            <div className="container mx-auto max-w-5xl px-4 py-7 md:py-9">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{selectedPath.eyebrow}</p>
+              <h2 id="membership-intent-heading" className="mt-2 text-2xl font-bold md:text-3xl">{selectedPath.title}</h2>
+              <p className="mt-2 max-w-3xl text-muted-foreground">{selectedPath.body}</p>
+              <p className="mt-3 text-sm text-muted-foreground">Selected path: <strong className="text-foreground">{GO_INTENTS[selectedIntent].label}</strong></p>
+            </div>
+          </section>
+        )}
 
         <GoJourney membership />
         <section id="plans" className="container mx-auto px-4 py-10 md:py-14">

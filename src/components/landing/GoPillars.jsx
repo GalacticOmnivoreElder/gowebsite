@@ -10,6 +10,7 @@ import {
   FileText,
   FolderKanban,
 } from "lucide-react";
+import { GO_INTENTS, rememberGoIntent } from "@/lib/go-intents";
 
 const pillars = [
   {
@@ -18,18 +19,7 @@ const pillars = [
     icon: BookOpen,
     description:
       "Build practical game-development skills through courses, workshops, video bundles, shared resources, and community knowledge.",
-    paths: [
-      {
-        title: "Ask for mentorship",
-        description: "Get matched with guidance for your next practical milestone.",
-        href: "/learn",
-      },
-      {
-        title: "Become a mentor",
-        description: "Share your experience and help another creator progress.",
-        href: "/membership",
-      },
-    ],
+    intentIds: ["mentorship", "become-mentor"],
   },
   {
     title: "Portfolio",
@@ -37,38 +27,15 @@ const pillars = [
     icon: FileText,
     description:
       "Turn real contributions, completed work, and project experience into credited evidence through your profile and GameDev Passport.",
-    paths: [
-      {
-        title: "Publish solo",
-        description: "Create and publish your game as a GO Community member.",
-        href: "/membership",
-      },
-      {
-        title: "Find a team",
-        description: "Meet collaborators and build a portfolio together.",
-        href: "/membership",
-      },
-    ],
+    intentIds: ["publish-solo", "find-team"],
   },
   {
-    // Legacy analytics label: title: "Business". The public pillar is now OUTSOURCE.
     title: "Outsource",
     slug: "outsource",
     icon: FolderKanban,
     description:
       "Create clear project briefs, find the right collaborators, manage production, and move promising work toward sustainable opportunities.",
-    paths: [
-      {
-        title: "Create and earn",
-        description: "Browse projects and find paid opportunities.",
-        href: "/projects",
-      },
-      {
-        title: "Pay 2 win",
-        description: "Create a project brief and hire approved GO talent.",
-        href: "/project/create?intent=hire-talent",
-      },
-    ],
+    intentIds: ["find-work", "hire-talent"],
   },
 ];
 
@@ -99,8 +66,7 @@ export function GoPillars() {
             id="go-pillars-heading"
             className="mt-3 text-3xl font-bold text-white sm:text-4xl lg:text-5xl"
           >
-            {/* Legacy heading copy: Learn. Build your portfolio. Move toward business. */}
-            Learn. Build your portfolio. Find work or hire.
+            Learn. Build your portfolio. Find work or hire talent.
           </h2>
           <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-white/70 sm:text-lg">
             Galactic Omnivore helps game creators develop practical skills,
@@ -114,6 +80,10 @@ export function GoPillars() {
             const PillarIcon = pillar.icon;
             const isActive = activePillar === pillar.slug;
             const pathsId = `go-paths-${pillar.slug}`;
+            const paths = pillar.intentIds.map((intentId) => ({
+              id: intentId,
+              ...GO_INTENTS[intentId],
+            }));
 
             return (
               <li key={pillar.title} className="contents">
@@ -171,14 +141,15 @@ export function GoPillars() {
                       aria-label={`${pillar.title} paths`}
                       className="grid gap-3 border-t border-primary/25 bg-black/25 p-4 sm:grid-cols-2 sm:p-5"
                     >
-                      {pillar.paths.map((path) => (
+                      {paths.map((path) => (
                         <Link
-                          key={path.title}
+                          key={path.id}
                           href={path.href}
+                          onClick={() => rememberGoIntent(path.id)}
                           className="group/path rounded-md border border-white/10 bg-white/[0.035] p-4 outline-none transition-colors hover:border-primary/60 hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary"
                         >
                           <span className="flex items-start justify-between gap-3 text-base font-semibold text-white">
-                            {path.title}
+                            {path.label}
                             <ArrowUpRight
                               className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-transform group-hover/path:-translate-y-0.5 group-hover/path:translate-x-0.5"
                               aria-hidden="true"

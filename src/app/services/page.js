@@ -135,6 +135,10 @@ export default function ServicesPage() {
                 gamified experience, or find the expertise to move a project
                 forward.
               </p>
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-white/50">
+                Choose a managed service delivered with GO, or use Projects to
+                hire community talent through a GO Business brief.
+              </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
               <Button asChild size="lg" className="min-h-12 w-full sm:flex-1 lg:flex-none">
@@ -149,7 +153,7 @@ export default function ServicesPage() {
                 variant="outline"
                 className="min-h-12 w-full border-white/20 bg-transparent text-white hover:border-primary hover:bg-primary/10 hover:text-white sm:flex-1 lg:flex-none"
               >
-                <Link href="/projects">See GO project work</Link>
+                <Link href="/project/create?intent=hire-talent">Hire community talent</Link>
               </Button>
             </div>
           </div>

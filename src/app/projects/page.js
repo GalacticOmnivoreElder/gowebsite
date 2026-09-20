@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
 
@@ -199,6 +199,7 @@ const ProjectCard = ({ project }) => {
 
 const ProjectsPage = observer(() => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [localFilters, setLocalFilters] = useState({
     compensation: "all",
@@ -211,9 +212,9 @@ const ProjectsPage = observer(() => {
   });
 
   useEffect(() => {
-    const compensation = new URLSearchParams(window.location.search).get("compensation");
-    if (compensation) setLocalFilters(current => ({ ...current, compensation }));
-  }, []);
+    const compensation = searchParams.get("compensation") || (searchParams.get("intent") === "find-work" ? "Paid" : "all");
+    setLocalFilters(current => current.compensation === compensation ? current : { ...current, compensation });
+  }, [searchParams]);
 
   // Load projects on component mount and when filters change
   useEffect(() => {
@@ -285,6 +286,7 @@ const ProjectsPage = observer(() => {
 
   const activeFilterCount = [
     localFilters.search,
+    localFilters.compensation !== "all" ? localFilters.compensation : "",
     localFilters.category !== "all" ? localFilters.category : "",
     localFilters.type !== "all" ? localFilters.type : "",
     localFilters.status !== "all" ? localFilters.status : "",
@@ -328,6 +330,25 @@ const ProjectsPage = observer(() => {
           </Button>
         </div>
       </div>
+
+      {searchParams.get("intent") === "find-work" && (
+        <Alert className="mb-6 border-primary/40 bg-primary/[0.06]">
+          <DollarSign className="h-4 w-4" />
+          <AlertTitle>Find paid work</AlertTitle>
+          <AlertDescription>
+            Paid project briefs are selected for you first. Each project keeps its own role, application, and compensation terms.
+          </AlertDescription>
+        </Alert>
+      )}
+      {searchParams.get("intent") === "find-team" && (
+        <Alert className="mb-6 border-primary/40 bg-primary/[0.06]">
+          <Users className="h-4 w-4" />
+          <AlertTitle>Find a team</AlertTitle>
+          <AlertDescription>
+            Explore open roles and find collaborators for your next portfolio milestone. You can also start your included creator project from your workspace.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="mb-5 max-w-xs"><label htmlFor="compensation-filter" className="text-sm font-medium">Compensation</label><select id="compensation-filter" className="mt-2 w-full rounded-md border bg-background p-3" value={localFilters.compensation} onChange={event => handleFilterChange("compensation", event.target.value)}>{["all", "Paid", "Revenue Share", "Portfolio/Experience", "Volunteer", "Equity", "Hybrid"].map(value => <option key={value} value={value}>{value === "all" ? "All compensation types" : value}</option>)}</select></div>
       {/* Filters and Search */}
