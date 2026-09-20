@@ -66,7 +66,7 @@ const pillars = [
       {
         title: "Pay 2 win",
         description: "Create a project brief and hire approved GO talent.",
-        href: "/project/create",
+        href: "/project/create?intent=hire-talent",
       },
     ],
   },
