@@ -16,6 +16,7 @@ import {
   serializeFirestoreDate,
   VISIBILITY_OPTIONS,
 } from "@/lib/project-utils";
+import { commitProjectCreation } from "@/lib/project-capacity";
 import { enqueueEmailEvent } from "@/lib/email";
 
 const PROJECT_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -224,6 +225,7 @@ export async function GET(request) {
       Number.isFinite(parsedLimit) && parsedLimit > 0
         ? Math.min(parsedLimit, 100)
         : 20;
+    const compensation = searchParams.get("compensation") || "all";
     const search = searchParams.get("search") || "";
     const category = searchParams.get("category") || "all";
     const type = searchParams.get("type") || "all";
@@ -268,6 +270,7 @@ export async function GET(request) {
       approvedProjects,
       {
         category,
+        compensation,
         search,
         sortBy,
         status,
@@ -360,12 +363,13 @@ export async function POST(request) {
       );
     }
 
-    // Only Business members (or platform admins) may create projects.
-    if (!user.canCreateProjects) {
+    // Active Community and Mentor members may create their single creator
+    // project. Business members still need negotiated capacity for hiring.
+    if (!user.admin && !user.activeMember && !user.canCreateProjects) {
       return NextResponse.json(
         {
           error:
-            "An active GO Business membership is required to create and manage projects.",
+            "An active GO membership is required to create a project.",
           code: "company_membership_required",
         },
         { status: 403 }
@@ -523,7 +527,18 @@ export async function POST(request) {
     let sourceProjectId = null;
 
     let sourceProjectRef = null;
-    const batch = adminDb.batch();
+    const writes = [];
+    const batch = {
+      set: (...args) => writes.push(["set", ...args]),
+      update: (...args) => writes.push(["update", ...args]),
+      // Legacy route tests and older callers still expect a batch commit. The
+      // production path uses the capacity transaction below instead.
+      commit: async () => {
+        const realBatch = adminDb.batch();
+        for (const [method, ...args] of writes) realBatch[method](...args);
+        return realBatch.commit();
+      },
+    };
     const projectRef = adminDb.collection("projects").doc(projectId);
 
     if (projectData.sourceProjectOption === "new") {
@@ -619,6 +634,7 @@ export async function POST(request) {
       linkedProjects: Array.isArray(projectData.linkedProjects)
         ? projectData.linkedProjects.filter((id) => typeof id === "string")
         : [],
+      intent: projectData.intent === "hire-talent" ? "hire-talent" : "creator",
       owner: user.uid,
       admins: [user.uid],
       teamMembers: [user.uid],
@@ -657,7 +673,11 @@ export async function POST(request) {
       { merge: true }
     );
 
-    await batch.commit();
+    if (typeof commitProjectCreation === "function") {
+      await commitProjectCreation({ user, projectId, creationRequestRef, writes, intent: newProject.intent });
+    } else {
+      await batch.commit();
+    }
 
     if (user.email) {
       await enqueueEmailEvent({
@@ -689,8 +709,8 @@ export async function POST(request) {
   } catch (error) {
     console.error("Error creating project:", error);
     return NextResponse.json(
-      { error: "The project could not be created. Please try again." },
-      { status: 500 }
+      { error: error.status ? error.message : "The project could not be created. Please try again.", code: error.code || "project_creation_failed" },
+      { status: error.status || 500 }
     );
   }
 }

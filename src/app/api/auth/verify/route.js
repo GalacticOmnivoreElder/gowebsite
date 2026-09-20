@@ -106,11 +106,13 @@ export async function GET(request) {
     // Admin can be set via Auth custom claims (decodedToken.admin) OR Firestore users/{uid}.admin
     const isAdmin = !!(decodedToken.admin === true || userData?.admin === true);
 
-    // Tier: "member" can apply to projects; "company" can also create/manage projects.
+    // Tier: "member" can create one creator project; Business can also create
+    // hiring briefs once GO has recorded negotiated capacity.
     const membership = getEffectiveMembership(userData, { admin: isAdmin, now });
     const isMember = membership.activeMember;
     const membershipTier = membership.membershipTier;
     const canCreateProjects = membership.canCreateProjects;
+    const canCreateCreatorProjects = membership.canCreateCreatorProjects;
     const membershipConfirmationId =
       getMembershipConfirmationId(userData);
 
@@ -119,6 +121,7 @@ export async function GET(request) {
       isMember,
       membershipTier,
       canCreateProjects,
+      canCreateCreatorProjects,
       canAccessPackages: membership.canAccessPackages,
       hasPaidSubscription,
     };
@@ -132,6 +135,7 @@ export async function GET(request) {
         unlockedPackages: userData?.unlockedPackages || [],
         activeMember: isMember,
         membershipTier,
+        canCreateCreatorProjects,
         subscriptionStatus: userData?.subscriptionStatus || null,
         willRenew: userData?.willRenew ?? null,
         subscriptionEndsAt: userData?.subscriptionEndsAt || null,

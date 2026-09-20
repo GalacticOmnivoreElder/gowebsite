@@ -1,3 +1,4 @@
+import { hasMentorAddon } from "@/lib/go-policy";
 import { getEffectiveMembership } from "@/lib/auth-utils";
 
 export function hasCommunityContentAccess(userData = {}, { admin = false, now = new Date() } = {}) {
@@ -24,7 +25,7 @@ export function hasMentorToolAccess(userData = {}, { admin = false, now = new Da
   const membership = getEffectiveMembership(userData, { now });
   return (
     membership.activeMember === true &&
-    membership.membershipTier === "mentor" &&
+    (membership.membershipTier === "mentor" || (membership.membershipTier === "company" && hasMentorAddon(userData, now))) &&
     userData.mentorStatus === "approved"
   );
 }

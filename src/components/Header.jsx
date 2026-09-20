@@ -135,8 +135,6 @@ const Header = observer(() => {
               </Button>
             )}
 
-            {primaryNavigation.slice(0, 2).map(renderPrimaryLink)}
-
             <NavigationMenu delayDuration={120} skipDelayDuration={300}>
               <NavigationMenuList>
                 <NavigationMenuItem>
@@ -181,7 +179,8 @@ const Header = observer(() => {
               </NavigationMenuList>
             </NavigationMenu>
 
-            {primaryNavigation.slice(2).map(renderPrimaryLink)}
+            {/* The ordered primary destinations now follow Learn as one group; the former trailing split was primaryNavigation.slice(2). */}
+            {primaryNavigation.map(renderPrimaryLink)}
           </nav>
         </div>
 
@@ -280,19 +279,6 @@ const Header = observer(() => {
               </Button>
             )}
 
-            {primaryNavigation.slice(0, 2).map((item) => (
-              <Button
-                key={item.href}
-                asChild
-                variant={pathIsActive(item.href) ? "default" : "ghost"}
-                className="justify-start"
-              >
-                <Link href={item.href} onClick={handleNavigation}>
-                  {item.label}
-                </Link>
-              </Button>
-            ))}
-
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="learn" className="border-0">
                 <AccordionTrigger
@@ -331,7 +317,7 @@ const Header = observer(() => {
               </AccordionItem>
             </Accordion>
 
-            {primaryNavigation.slice(2).map((item) => (
+            {primaryNavigation.map((item) => (
               <Button
                 key={item.href}
                 asChild

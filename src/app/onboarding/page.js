@@ -1,5 +1,6 @@
 "use client";
 
+import { goContinuation } from "@/lib/go-intents";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { observer } from "mobx-react-lite";
@@ -203,7 +204,7 @@ const OnboardingContent = observer(() => {
         form_id: "onboarding",
         page_path: "/onboarding",
       });
-      router.push("/profile/cv?welcome=1");
+      router.push(goContinuation("/profile/cv?welcome=1"));
     } catch (e) {
       setError(e.message);
     } finally {

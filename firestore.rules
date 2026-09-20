@@ -36,6 +36,8 @@ service cloud.firestore {
         'admin', 'adminGrantedBy', 'activeMember', 'membershipTier',
         'subscriptionId', 'subscriptionStatus', 'subscriptionEndsAt',
         'willRenew', 'polarCustomerId', 'unlockedPackages',
+        'businessProjectLimit', 'mentorAddonStatus', 'mentorAddonEndsAt',
+        'mentorAddonSubscriptionId', 'retainedAccess',
         'ownerOfProjects', 'adminOfProjects', 'teamMemberOfProjects',
         'mentorStatus', 'mentorPublicProfileEnabled',
         'mentorStatusUpdatedBy', 'mentorStatusUpdatedAt'

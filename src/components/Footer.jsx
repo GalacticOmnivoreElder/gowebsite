@@ -184,6 +184,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/services"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Services
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/contact"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >

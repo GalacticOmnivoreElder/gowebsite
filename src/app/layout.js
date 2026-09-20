@@ -103,6 +103,7 @@ export const metadata = {
 
 // Create a client component wrapper for ThemeProvider
 import ThemeProviderWrapper from "@/components/ThemeProviderWrapper";
+import { GoJourney } from "@/components/GoJourney";
 import { Toaster } from "@/components/ui/toaster";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import CookieConsent from "@/components/cookies/CookieConsent";
@@ -119,7 +120,7 @@ export default function RootLayout({ children }) {
         />
         <ThemeProviderWrapper>
           <AnalyticsProvider>
-            <ReusableLayout>{children}</ReusableLayout>
+            <GoJourney /><ReusableLayout>{children}</ReusableLayout>
             <Toaster />
             <CookieConsent />
           </AnalyticsProvider>

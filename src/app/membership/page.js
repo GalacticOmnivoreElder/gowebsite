@@ -1,3 +1,4 @@
+import { GoJourney } from "@/components/GoJourney";
 import Link from "next/link";
 import {
   Briefcase,
@@ -46,6 +47,16 @@ const checkoutNotes = [
   },
 ];
 
+const accessRows = [
+  ["Public learning, FAQ, and project browsing", "Yes", "Yes", "Yes", "Yes"],
+  ["Submit structured mentorship requests", "—", "Yes", "Yes", "Yes"],
+  ["Apply to projects", "Selected public briefs", "Per-project rules", "Per-project rules", "Per-project rules"],
+  ["Own unreleased creator projects", "—", "1 at a time", "1 at a time", "Negotiated capacity"],
+  ["Create hiring briefs", "—", "—", "—", "Within capacity"],
+  ["Create mentor resources", "—", "—", "After verification", "Add-on + verification"],
+  ["GO release and publishing guidance", "—", "Included", "Included", "Included"],
+];
+
 export default async function MembershipPage({ searchParams }) {
   const params = await searchParams;
   const creatorMembershipRequired = params?.reason === "creator";
@@ -69,7 +80,7 @@ export default async function MembershipPage({ searchParams }) {
       title: "GO Community",
       icon: User,
       description: "Individual creator access with the current Community membership.",
-      benefits: ["Apply to open community projects", "Eligible courses, video bundles, member resources, and approved asset packs", "Contribute asset packs when community submissions are enabled", "Request an available official GO mentor"],
+      benefits: ["One creator project at a time; GO release approval unlocks the next", "Guided release preparation with GO", "Apply to open community projects", "Eligible courses, video bundles, member resources, and approved asset packs", "Contribute asset packs when community submissions are enabled", "Request an available official GO mentor"],
       footer: <Button asChild variant="outline" className="w-full"><Link href="#paid-plans">See current pricing</Link></Button>,
     },
     {
@@ -85,7 +96,7 @@ export default async function MembershipPage({ searchParams }) {
       title: "GO Business",
       icon: Briefcase,
       description: "Project creation and team management for studios and project owners.",
-      benefits: ["Everything included in GO Community", "Create and publish community projects", "Review applicants and manage project teams"],
+      benefits: ["Everything included in GO Community", "Project capacity negotiated with the GO Business team", "Review applicants and manage project teams", "Optional verified mentor earning access: +1,500 MKD/month"],
       footer: <Button asChild variant="outline" className="w-full"><Link href="#paid-plans">See current pricing</Link></Button>,
     },
   ];
@@ -108,13 +119,14 @@ export default async function MembershipPage({ searchParams }) {
           </div>
         </section>
 
+        <GoJourney membership />
         <section id="plans" className="container mx-auto px-4 py-10 md:py-14">
           {creatorMembershipRequired && (
             <Alert className="mx-auto mb-8 max-w-5xl">
               <Briefcase className="h-4 w-4" />
-              <AlertTitle>Business membership required</AlertTitle>
+              <AlertTitle>Choose your project access</AlertTitle>
               <AlertDescription>
-                Choose GO Business to create projects and manage project teams.
+                Community and Mentor include one unreleased creator project. GO Business hiring capacity is agreed with the GO team.
               </AlertDescription>
             </Alert>
           )}
@@ -134,9 +146,28 @@ export default async function MembershipPage({ searchParams }) {
             ))}
           </div>
 
+          <section className="mx-auto mt-14 max-w-7xl" aria-labelledby="access-overview-heading">
+            <h2 id="access-overview-heading" className="mb-3 text-2xl font-bold">Access at a glance</h2>
+            <p className="mb-5 max-w-3xl text-sm text-muted-foreground">Benefits are subject to project terms, GO approval, and the paid-through period. Business capacity and the mentor earning add-on are recorded separately by GO.</p>
+            <div className="overflow-x-auto rounded-xl border">
+              <table className="w-full min-w-[760px] text-left text-sm">
+                <caption className="sr-only">GO access by account type</caption>
+                <thead className="bg-muted/40"><tr><th scope="col" className="px-4 py-3 font-semibold">Capability</th><th scope="col" className="px-4 py-3 font-semibold">Public / Free</th><th scope="col" className="px-4 py-3 font-semibold">Community</th><th scope="col" className="px-4 py-3 font-semibold">Mentor</th><th scope="col" className="px-4 py-3 font-semibold">Business</th></tr></thead>
+                <tbody>{accessRows.map(([capability, free, community, mentor, business]) => <tr key={capability} className="border-t"><th scope="row" className="px-4 py-3 font-medium">{capability}</th><td className="px-4 py-3 text-muted-foreground">{free}</td><td className="px-4 py-3">{community}</td><td className="px-4 py-3">{mentor}</td><td className="px-4 py-3">{business}</td></tr>)}</tbody>
+              </table>
+            </div>
+          </section>
+
           <div id="paid-plans" className="scroll-mt-24 pt-14">
             <h2 className="mb-7 text-center text-3xl font-bold">Current paid membership pricing</h2>
             <PricingDisplay mentorAvailability={{ monthly: mentorMonthly.available, annual: mentorAnnual.available }} />
+            <Alert className="mx-auto mt-8 max-w-4xl">
+              <Briefcase className="h-4 w-4" />
+              <AlertTitle>Optional Business mentor earning add-on</AlertTitle>
+              <AlertDescription>
+                GO Business members can request verified mentor earning access for an additional 1,500 MKD/month. GO approval, mentor verification, and payment confirmation are required; the add-on is recorded by GO separately from the Business subscription.
+              </AlertDescription>
+            </Alert>
           </div>
         </section>
 

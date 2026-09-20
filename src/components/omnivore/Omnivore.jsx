@@ -1,5 +1,6 @@
 "use client";
 
+import GoQuestions from "@/components/learning/GoQuestions";
 import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/firebase";
@@ -448,5 +449,6 @@ export default function Omnivore() {
         <noscript><p className="no-script">This guide needs JavaScript. <a href={`${GO_ORIGIN}/education`}>Browse GO Education</a> to keep learning.</p></noscript>
       </section>
 
+      <GoQuestions query={chewQuestion || question} />
     </main>);
 }

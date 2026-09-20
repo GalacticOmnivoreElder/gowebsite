@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 
-// New Landing Components
+// Landing components
 import { HeroSection } from "@/components/landing/HeroSection";
 import { SkillBanner } from "@/components/landing/SkillBanner";
 import { PartnerBanner } from "@/components/landing/PartnerBanner";
@@ -53,81 +53,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { ExploreGo } from "@/components/landing/ExploreGo";
 import { trackEvent } from "@/lib/analytics/client";
-
-const orbitRoutes = [
-  {
-    title: "Find a Project",
-    signal: "Collaborate",
-    icon: Search,
-    description:
-      "Browse approved game-development briefs and find a role that matches your skills and availability.",
-    detail:
-      "Review the project terms, current stage, and listed contribution routes before applying.",
-    href: "/projects",
-    cta: "Browse projects",
-  },
-  {
-    title: "Create a Project",
-    signal: "Launch",
-    icon: FolderKanban,
-    description:
-      "Create a clear project brief, recruit collaborators, and manage a game-development team.",
-    detail:
-      "Project creation and team-management tools are included with GO Business.",
-    href: "/membership?reason=creator",
-    cta: "Review Business access",
-  },
-  {
-    title: "Find a Mentor",
-    signal: "Guidance",
-    icon: Users,
-    description:
-      "Browse approved mentor profiles and request focused guidance when matching is enabled.",
-    detail:
-      "Completed engagements support private direct reviews and optional author-consented mentor references.",
-    href: "/mentorship",
-    cta: "Explore mentorship",
-  },
-  {
-    title: "Learn",
-    signal: "Develop",
-    icon: BookOpen,
-    description: "Build practical skills through current learning material and community knowledge.",
-    detail: "Choose material that fits your role, current level, and next playable milestone.",
-    href: "/education",
-    cta: "Explore learning",
-  },
-  {
-    title: "Video Bundles",
-    signal: "Watch",
-    icon: Clapperboard,
-    description: "Follow focused video collections through eligible learning content.",
-    detail: "Published availability, membership access, and progress are shown on each bundle without promising unavailable material.",
-    href: "/video-bundles",
-    cta: "Browse video bundles",
-  },
-  {
-    title: "Community Resources",
-    signal: "Connect",
-    icon: PackageOpen,
-    description: "Explore current resources, approved community asset packs, creator stories, games, and Discord.",
-    detail: "Each resource route shows its published availability and any membership or account requirement.",
-    href: "/resources",
-    cta: "Explore resources",
-  },
-  {
-    title: "GO Events",
-    signal: "Transmit",
-    icon: Radio,
-    description:
-      "Join workshops, meetups, mentorship sessions, and practical conversations for your next stage in game development.",
-    detail:
-      "Follow the live public calendar and choose the event route that fits your current mission.",
-    href: "/community#events",
-    cta: "Explore GO Events",
-    analyticsId: "events",
-  },
-];
 
 const magenta = "#CA2280";
 
@@ -399,115 +324,6 @@ const HomePage = () => {
       <SkillBanner />
       <PartnerBanner />
       <GoPillars />
-
-      <section
-        id="orbits"
-        aria-labelledby="orbits-heading"
-        className="relative isolate overflow-hidden border-y border-primary/35 bg-[#a51561] px-4 py-16 sm:px-6 sm:py-20 lg:py-24"
-      >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_50%_-15%,rgba(255,255,255,0.2),transparent_34%),linear-gradient(135deg,rgba(48,5,31,0.16),rgba(202,34,128,0.18)_48%,rgba(35,4,24,0.28))]"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 opacity-30 [background-image:radial-gradient(circle,rgba(255,255,255,0.75)_0.7px,transparent_0.8px),linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:43px_43px,72px_72px,72px_72px] [mask-image:linear-gradient(to_bottom,black,transparent_90%)]"
-        />
-
-        <div className="mx-auto max-w-7xl">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/75">
-              Product routes through GO
-            </p>
-            <h2 id="orbits-heading" className="mt-3 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
-              Choose your next orbit
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/75 sm:text-base">
-              Find the project, guidance, learning, resources, or community
-              route that fits your current mission.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:mt-14 lg:grid-cols-3 lg:gap-8">
-            {orbitRoutes.map((orbit, index) => {
-              const OrbitIcon = orbit.icon;
-
-              return (
-                <article
-                  key={orbit.title}
-                  className="group relative flex min-w-0 flex-col"
-                >
-                  <div className="mb-4 flex items-end justify-between px-1">
-                    <div>
-                      <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/60">
-                        Route 0{index + 1} / {orbit.signal}
-                      </span>
-                      <h3 className="mt-1 text-2xl font-bold uppercase tracking-tight text-white sm:text-3xl">
-                        {orbit.title}
-                      </h3>
-                    </div>
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-black/40 text-white shadow-[0_0_24px_rgba(255,255,255,0.12)] backdrop-blur-sm transition-transform duration-300 group-hover:-translate-y-1">
-                      <OrbitIcon className="h-5 w-5" aria-hidden="true" />
-                    </div>
-                  </div>
-
-                  <div className="relative flex min-h-[340px] flex-1 flex-col overflow-hidden border border-white/35 bg-[#080609]/95 p-6 shadow-[0_18px_55px_rgba(31,3,21,0.38),inset_0_1px_0_rgba(255,255,255,0.12)] sm:p-7">
-                    <div
-                      aria-hidden="true"
-                      className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent"
-                    />
-                    <div
-                      aria-hidden="true"
-                      className="absolute left-0 top-10 h-24 w-px bg-gradient-to-b from-primary via-white/40 to-transparent"
-                    />
-                    <div
-                      aria-hidden="true"
-                      className="absolute right-0 bottom-10 h-24 w-px bg-gradient-to-t from-primary via-white/40 to-transparent"
-                    />
-                    <div className="mb-8 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.24em] text-primary">
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_12px_rgba(202,34,128,0.9)]" />
-                      Navigation channel online
-                    </div>
-                    <p className="text-lg font-medium leading-8 text-white">
-                      {orbit.description}
-                    </p>
-                    <p className="mt-5 text-sm leading-6 text-white/65">
-                      {orbit.detail}
-                    </p>
-                    <div
-                      aria-hidden="true"
-                      className="mt-auto flex items-center gap-2 pt-10"
-                    >
-                      <span className="h-px flex-1 bg-white/10" />
-                      <span className="h-1.5 w-8 bg-primary/70" />
-                      <span className="h-px w-8 bg-white/10" />
-                    </div>
-                  </div>
-
-                  <Button
-                    asChild
-                    className="mt-3 h-12 w-full rounded-sm border border-white bg-white text-black shadow-[0_10px_28px_rgba(31,3,21,0.28)] hover:bg-neutral-100"
-                  >
-                    <Link
-                      href={orbit.href}
-                      onClick={() => {
-                        if (!orbit.analyticsId) return;
-                        trackEvent("event_route_clicked", {
-                          event_route: orbit.analyticsId,
-                          destination_path: orbit.href,
-                        });
-                      }}
-                    >
-                      {orbit.cta}
-                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                    </Link>
-                  </Button>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
       <section className="bg-black p-4 flex flex-col justify-center">
         <About />

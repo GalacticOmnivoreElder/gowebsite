@@ -8,7 +8,12 @@ export async function getProductSettings() {
 
 export async function getMentorApplicationState() {
   const config = getMentorshipConfig();
-  const settings = await getProductSettings().catch(() => ({}));
+  // Product settings are an enhancement to the public membership page. Keep
+  // a slow or unavailable Firestore connection from blocking the whole page.
+  const settings = await Promise.race([
+    getProductSettings().catch(() => ({})),
+    new Promise((resolve) => setTimeout(() => resolve({}), 1500)),
+  ]);
   return {
     configured: config.featureFlags.mentorApplications,
     open:

@@ -201,6 +201,7 @@ export function filterAndSortProjectsForDiscovery(
       }
 
       if (status !== "all" && project.status !== status) return false;
+      if (filters.compensation && filters.compensation !== "all" && project.compensationType !== filters.compensation) return false;
 
       if (
         requestedType &&

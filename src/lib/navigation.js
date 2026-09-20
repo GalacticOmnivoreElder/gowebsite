@@ -1,3 +1,11 @@
+// Canonical route contract: { href: "/mentorship", label: "Mentorship" }.
+const mentorshipNavigationItem = Object.freeze({
+  href: "/mentorship",
+  label: "Mentorship",
+  path: "/mentorship",
+  description: "Find a reviewed mentor for your next practical milestone.",
+});
+
 export const learningNavigation = Object.freeze([
   {
     label: "Ask the Omnivore",
@@ -5,6 +13,7 @@ export const learningNavigation = Object.freeze([
     path: "/learn",
     description: "Find your next learning step with the Galactic Omnivore.",
   },
+  mentorshipNavigationItem,
   {
     label: "Courses",
     href: "/education?format=course",
@@ -32,8 +41,8 @@ export const learningNavigation = Object.freeze([
 ]);
 
 export const primaryNavigation = Object.freeze([
-  { href: "/projects", label: "Projects" },
-  { href: "/mentorship", label: "Mentorship" },
   { href: "/community", label: "Community" },
   { href: "/membership", label: "Membership" },
+  { href: "/projects", label: "Project" },
+  { href: "/services", label: "Services" },
 ]);

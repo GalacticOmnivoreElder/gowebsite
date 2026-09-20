@@ -16,6 +16,7 @@ export const MEMBERSHIP_PLANS = [
       "Apply to listed projects and use the current Community member resources.",
     popular: true,
     benefits: [
+      "One unreleased creator project; GO release approval unlocks the next",
       "Apply to open community projects",
       "Periodic asset, music, and code resource drops",
       "Tutorials and learning resources",
@@ -48,6 +49,7 @@ export const MEMBERSHIP_PLANS = [
       "Tier I membership for sharing your experience with the GO community.",
     verificationNotice: MENTOR_VERIFICATION_NOTICE,
     benefits: [
+      "One unreleased creator project; GO release approval unlocks the next",
       "Member resources and asset packs as they are released",
       "Educational workshops and learning activities",
       "Portfolio feedback and mentorship opportunities",
@@ -82,9 +84,10 @@ export const MEMBERSHIP_PLANS = [
       "Create project briefs, review applicants, manage teams, and use every Community benefit.",
     benefits: [
       "Everything included in GO Community",
-      "Create and publish community projects",
+      "Project capacity negotiated with the GO Business team",
       "Review applicants and build project teams",
       "Manage your active project portfolio",
+      "Optional verified mentor earning access: +1,500 MKD/month",
       "Priority membership support",
     ],
     pricing: {

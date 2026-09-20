@@ -201,6 +201,7 @@ const ProjectsPage = observer(() => {
   const router = useRouter();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [localFilters, setLocalFilters] = useState({
+    compensation: "all",
     search: "",
     category: "all",
     type: "all",
@@ -208,6 +209,11 @@ const ProjectsPage = observer(() => {
     status: "all",
     sortBy: "status_priority",
   });
+
+  useEffect(() => {
+    const compensation = new URLSearchParams(window.location.search).get("compensation");
+    if (compensation) setLocalFilters(current => ({ ...current, compensation }));
+  }, []);
 
   // Load projects on component mount and when filters change
   useEffect(() => {
@@ -323,6 +329,7 @@ const ProjectsPage = observer(() => {
         </div>
       </div>
 
+      <div className="mb-5 max-w-xs"><label htmlFor="compensation-filter" className="text-sm font-medium">Compensation</label><select id="compensation-filter" className="mt-2 w-full rounded-md border bg-background p-3" value={localFilters.compensation} onChange={event => handleFilterChange("compensation", event.target.value)}>{["all", "Paid", "Revenue Share", "Portfolio/Experience", "Volunteer", "Equity", "Hybrid"].map(value => <option key={value} value={value}>{value === "all" ? "All compensation types" : value}</option>)}</select></div>
       {/* Filters and Search */}
       <div
         id="project-filters"

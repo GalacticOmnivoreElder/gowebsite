@@ -77,7 +77,11 @@ export function getEffectiveMembership(userData = {}, { admin = false, now = new
     activeMember,
     membershipTier,
     subscribed,
+    // Business project administration remains distinct from the creator
+    // project entitlement. The latter is resolved by the project-capacity
+    // service so membership does not imply negotiated Business capacity.
     canCreateProjects: membershipTier === "company",
+    canCreateCreatorProjects: activeMember,
     canAccessPackages:
       activeMember || (Array.isArray(userData.unlockedPackages) && userData.unlockedPackages.length > 0),
   };
@@ -127,6 +131,7 @@ export async function getRequestUser(request) {
     activeMember: membership.activeMember,
     membershipTier: membership.membershipTier,
     canCreateProjects: membership.canCreateProjects,
+    canCreateCreatorProjects: membership.canCreateCreatorProjects,
     canAccessPackages: membership.canAccessPackages,
     claims: decoded,
     userData,

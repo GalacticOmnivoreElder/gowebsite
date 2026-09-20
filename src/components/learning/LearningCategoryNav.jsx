@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { BookOpen, Clapperboard, FileText, Workflow, Compass } from "lucide-react";
+import { BookOpen, Clapperboard, FileText, Workflow, Compass, HeartHandshake } from "lucide-react";
 import { learningNavigation } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 const learningIcons = {
   "Ask the Omnivore": Compass,
+  Mentorship: HeartHandshake,
   Courses: BookOpen,
   Workshops: Workflow,
   "Video Bundles": Clapperboard,
@@ -16,7 +17,7 @@ export function LearningCategoryNav({ activeItem, className }) {
     <nav
       aria-label="Learning categories"
       className={cn(
-        "mx-auto grid w-full max-w-5xl grid-cols-2 gap-2 rounded-lg border border-primary/20 bg-card/50 p-2 lg:grid-cols-5",
+        "mx-auto grid w-full max-w-6xl grid-cols-2 gap-2 rounded-lg border border-primary/20 bg-card/50 p-2 lg:grid-cols-6",
         className
       )}
     >
