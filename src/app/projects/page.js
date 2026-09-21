@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import Link from "next/link";
 import Image from "next/image";
@@ -533,4 +533,16 @@ const ProjectsPage = observer(() => {
   );
 });
 
-export default ProjectsPage;
+export default function ProjectsPageWithSuspense() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-12" role="status">
+          Loading projects…
+        </div>
+      }
+    >
+      <ProjectsPage />
+    </Suspense>
+  );
+}
