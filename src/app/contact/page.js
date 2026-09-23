@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata({
@@ -25,8 +24,15 @@ export default function ContactPage() {
               Use the support desk for account, billing, resource, or platform
               questions.
             </p>
-            <Button asChild><Link href="/profile?tab=support">Open GO Support</Link></Button>
-            <p className="mt-3 text-xs text-muted-foreground">Active Community, Mentor, and Business members can create requests and follow every update from their profile.</p>
+            <Button asChild>
+              <a
+                href="https://galacticomnivore.atlassian.net/servicedesk/customer/portal/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Support Omnidesk
+              </a>
+            </Button>
           </CardContent>
         </Card>
 
