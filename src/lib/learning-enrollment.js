@@ -12,6 +12,7 @@ import { createProductNotification } from "@/lib/product-notifications";
 import { enqueueEmailEventForUsers } from "@/lib/email";
 import { getLearningProductConfig } from "@/lib/product-config";
 import { isTrainingAssignmentActive, trainingAssignmentId } from "@/lib/training-assignments";
+import { courseSeatCount, courseUsesSeat } from "@/lib/learning-courses";
 
 export function enrollmentDocumentId(itemId, userId) {
   return crypto
@@ -38,12 +39,12 @@ export function getLearningEligibility(item, user, now = new Date(), { trainingA
   const opensAt = asDate(item.enrollmentOpensAt);
   const closesAt = asDate(item.enrollmentClosesAt);
   if (opensAt && now < opensAt) return { allowed: false, reason: "enrollment_not_open" };
-  if (closesAt && now > closesAt) return { allowed: false, reason: "enrollment_closed" };
-  if (trainingAssigned) return { allowed: true, reason: "training_assignment" };
+  if (closesAt && now >= closesAt) return { allowed: false, reason: "enrollment_closed" };
+  if (trainingAssigned && !item.courseId) return { allowed: true, reason: "training_assignment" };
 
   switch (item.accessType) {
     case "community_member_only":
-      return hasCommunityContentAccess(user.userData || {}, { admin: user.admin, now })
+      return (hasCommunityContentAccess(user.userData || {}, { admin: user.admin, now }) || (item.courseId && item.invitedUserIds?.includes(user.uid)))
         ? { allowed: true }
         : { allowed: false, reason: "community_membership_required" };
     case "invitation_only":
@@ -106,7 +107,7 @@ async function communicateEnrollment({ item, userId, state, eventId }) {
   return results;
 }
 
-export async function createLearningEnrollment({ itemId, user, answers = {}, db = adminDb, now = new Date() }) {
+export async function createLearningEnrollment({ itemId, user, answers = {}, attendanceMode = "in_person", db = adminDb, now = new Date() }) {
   if (!user?.uid) throw enrollmentError("Authentication required", "authentication_required", 401);
   const itemRef = db.collection("learning_items").doc(itemId);
   const enrollmentId = enrollmentDocumentId(itemId, user.uid);
@@ -122,6 +123,10 @@ export async function createLearningEnrollment({ itemId, user, answers = {}, db 
     ]);
     if (!itemDoc.exists) throw enrollmentError("Learning item unavailable", "not_found", 404);
     const item = { id: itemDoc.id, ...itemDoc.data() };
+    if (item.courseId) {
+      const courseDoc = await transaction.get(db.collection("learning_courses").doc(item.courseId));
+      if (courseDoc.exists && (courseDoc.data().status !== "published" || courseDoc.data().memberAccess === false)) throw enrollmentError("Course enrollment is not available", "enrollment_closed", 403);
+    }
     const trainingAssigned = trainingDoc.exists && isTrainingAssignmentActive(trainingDoc.data(), now);
     const eligibility = getLearningEligibility(item, user, now, { trainingAssigned });
     if (!eligibility.allowed) throw enrollmentError("Enrollment is not available for this account", eligibility.reason, 403);
@@ -130,12 +135,14 @@ export async function createLearningEnrollment({ itemId, user, answers = {}, db 
     }
 
     const cleanAnswers = validateEnrollmentAnswers(item.customQuestions || [], answers);
+    if (item.capacityMode === "in_person" && !["in_person", "online"].includes(attendanceMode)) throw enrollmentError("Choose GOHQ or online attendance", "invalid_attendance_mode");
+    const online = item.capacityMode === "in_person" && attendanceMode === "online";
     let state = item.enrollmentMode === "approval" || item.accessType === "administrator_approved"
       ? "pending_approval"
       : "confirmed";
     const confirmedCount = Math.max(0, Number(item.confirmedCount) || 0);
     const reservedCount = Math.max(0, Number(item.reservedCount) || 0);
-    const hasCapacity = !Number.isInteger(item.capacity) || confirmedCount + reservedCount < item.capacity;
+    const hasCapacity = online || !Number.isInteger(item.capacity) || courseSeatCount(item) + reservedCount < item.capacity;
     if (state === "confirmed" && !hasCapacity) {
       if (!item.waitlistEnabled) throw enrollmentError("This learning item is full", "capacity_full", 409);
       state = "waitlisted";
@@ -143,6 +150,7 @@ export async function createLearningEnrollment({ itemId, user, answers = {}, db 
 
     const enrollment = {
       itemId,
+      ...(item.courseId ? { courseId: item.courseId, attendanceMode, accessBasis: item.invitedUserIds?.includes(user.uid) ? "internal" : "membership" } : {}),
       itemSlug: item.slug,
       itemTitle: item.title,
       userId: user.uid,
@@ -159,14 +167,14 @@ export async function createLearningEnrollment({ itemId, user, answers = {}, db 
       trainingAssignmentId: trainingAssigned ? trainingRef.id : null,
       waitlistOfferStatus: null,
       waitlistOfferExpiresAt: null,
-      createdAt: existingDoc.exists ? existingDoc.data().createdAt || now : now,
+      createdAt: item.courseId ? now : existingDoc.exists ? existingDoc.data().createdAt || now : now,
       updatedAt: now,
       enrolledAt: now,
       canceledAt: null,
     };
     transaction.set(enrollmentRef, enrollment);
     if (state === "confirmed") {
-      transaction.update(itemRef, { confirmedCount: confirmedCount + 1, updatedAt: now });
+      transaction.update(itemRef, { confirmedCount: confirmedCount + 1, ...(online ? { onlineConfirmedCount: (Number(item.onlineConfirmedCount) || 0) + 1 } : {}), updatedAt: now });
     } else if (state === "waitlisted") {
       transaction.update(itemRef, { waitlistCount: Math.max(0, Number(item.waitlistCount) || 0) + 1, updatedAt: now });
     }
@@ -188,21 +196,20 @@ export async function offerNextWaitlisted({ itemId, db = adminDb, now = new Date
     const itemDoc = await transaction.get(itemRef);
     if (!itemDoc.exists) return null;
     const item = { id: itemDoc.id, ...itemDoc.data() };
-    const confirmedCount = Math.max(0, Number(item.confirmedCount) || 0);
+    const confirmedCount = courseSeatCount(item);
     const reservedCount = Math.max(0, Number(item.reservedCount) || 0);
     if (Number.isInteger(item.capacity) && confirmedCount + reservedCount >= item.capacity) return null;
+    if (item.courseId && (!["enrollment_open", "full", "waitlist_available"].includes(item.status) || (asDate(item.enrollmentClosesAt) && now >= asDate(item.enrollmentClosesAt)))) return null;
 
-    const waitlist = await transaction.get(
-      db.collection("learning_enrollments")
+    let waitingQuery = db.collection("learning_enrollments")
         .where("itemId", "==", itemId)
-        .where("state", "==", "waitlisted")
-        .orderBy("createdAt", "asc")
-        .limit(50)
-    );
+        .where("state", "==", "waitlisted");
+    if (item.courseId) waitingQuery = waitingQuery.where("waitlistOfferStatus", "==", null);
+    const waitlist = await transaction.get(waitingQuery.orderBy("createdAt", "asc").limit(item.courseId ? 1 : 50));
     const candidate = waitlist.docs.find((doc) => !doc.data().waitlistOfferStatus);
     if (!candidate) return null;
     const hours = getLearningProductConfig().waitlistConfirmationHours;
-    const expiresAt = new Date(now.getTime() + hours * 60 * 60 * 1000);
+    const expiresAt = new Date(Math.min(now.getTime() + hours * 60 * 60 * 1000, item.courseId ? asDate(item.enrollmentClosesAt)?.getTime() || Infinity : Infinity));
     transaction.update(candidate.ref, {
       waitlistOfferStatus: "offered",
       waitlistOfferExpiresAt: expiresAt,
@@ -259,7 +266,8 @@ export async function cancelLearningEnrollment({ itemId, userId, db = adminDb, n
     let releasedCapacity = false;
     if (["confirmed", "attended", "completed"].includes(enrollment.state)) {
       updates.confirmedCount = Math.max(0, (Number(item.confirmedCount) || 0) - 1);
-      releasedCapacity = true;
+      releasedCapacity = courseUsesSeat(item, enrollment);
+      if (!releasedCapacity) updates.onlineConfirmedCount = Math.max(0, (Number(item.onlineConfirmedCount) || 0) - 1);
     }
     if (enrollment.state === "waitlisted") {
       updates.waitlistCount = Math.max(0, (Number(item.waitlistCount) || 0) - 1);
@@ -310,9 +318,15 @@ export async function confirmWaitlistOffer({ itemId, userId, db = adminDb, now =
     const item = { id: itemDoc.id, ...itemDoc.data() };
     const enrollment = enrollmentDoc.data();
     const expiresAt = asDate(enrollment.waitlistOfferExpiresAt);
+    if (item.courseId) {
+      const courseDoc = await transaction.get(db.collection("learning_courses").doc(item.courseId));
+      if (courseDoc.exists && (courseDoc.data().status !== "published" || courseDoc.data().memberAccess === false)) throw enrollmentError("Course enrollment is not available", "enrollment_closed", 403);
+    }
+    if (item.courseId && (!["enrollment_open", "full", "waitlist_available"].includes(item.status) || (asDate(item.enrollmentClosesAt) && now >= asDate(item.enrollmentClosesAt)))) throw enrollmentError("Cohort enrollment is closed", "enrollment_closed", 409);
     if (enrollment.state !== "waitlisted" || enrollment.waitlistOfferStatus !== "offered" || !expiresAt || now > expiresAt) {
       throw enrollmentError("This waiting-list offer has expired", "waitlist_offer_expired", 409);
     }
+    if (item.courseId && !(Number(item.reservedCount) > 0)) throw enrollmentError("Seat reservation is no longer available", "capacity_full", 409);
     transaction.update(enrollmentRef, {
       state: "confirmed",
       waitlistOfferStatus: "accepted",

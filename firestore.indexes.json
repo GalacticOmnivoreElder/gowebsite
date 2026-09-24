@@ -6,6 +6,16 @@
       "fields": [
         { "fieldPath": "itemId", "order": "ASCENDING" },
         { "fieldPath": "state", "order": "ASCENDING" },
+        { "fieldPath": "waitlistOfferStatus", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "learning_enrollments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "itemId", "order": "ASCENDING" },
+        { "fieldPath": "state", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
     },

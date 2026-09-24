@@ -34,6 +34,7 @@ export async function GET(request, { params }) {
     }
     if (
       item.accessType === "community_member_only" &&
+      !item.courseId &&
       !hasCommunityContentAccess(user.userData || {}, { admin: user.admin })
     ) {
       return Response.json({ error: "Active membership is required" }, { status: 403 });

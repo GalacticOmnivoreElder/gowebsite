@@ -7,6 +7,7 @@ const staticRoutes = [
   { path: "/blog", priority: 0.7, changeFrequency: "weekly" },
   { path: "/contact", priority: 0.6, changeFrequency: "monthly" },
   { path: "/education", priority: 0.8, changeFrequency: "weekly" },
+  { path: "/education/from-idea-to-playable", priority: 0.8, changeFrequency: "weekly" },
   { path: "/learn", priority: 0.7, changeFrequency: "monthly" },
   { path: "/faq", priority: 0.6, changeFrequency: "monthly" },
   { path: "/games", priority: 0.7, changeFrequency: "weekly" },

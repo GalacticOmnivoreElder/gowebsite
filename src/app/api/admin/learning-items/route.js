@@ -52,6 +52,7 @@ export async function POST(request) {
     const ref = adminDb.collection("learning_items").doc(id);
     const previousDoc = await ref.get();
     const previous = previousDoc.exists ? previousDoc.data() : {};
+    if (body.courseId || previous.courseId) return Response.json({ error: "Manage flagship cohorts in the flagship course editor" }, { status: 400 });
     const clean = cleanLearningItem({ ...previous, ...body, confirmedCount: previous.confirmedCount, reservedCount: previous.reservedCount, waitlistCount: previous.waitlistCount });
     const now = new Date();
     const data = {

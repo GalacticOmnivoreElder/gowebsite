@@ -83,6 +83,8 @@ service cloud.firestore {
     match /site_settings/{doc}      { allow read, write: if false; }
     match /protected_link_tickets/{doc} { allow read, write: if false; }
     match /learning_items/{doc}       { allow read, write: if false; }
+    match /learning_courses/{doc}     { allow read, write: if false; }
+    match /learning_course_interest/{doc} { allow read, write: if false; }
     match /learning_enrollments/{doc} { allow read, write: if false; }
     match /product_notifications/{doc} { allow read, write: if false; }
     match /video_bundles/{doc}        { allow read, write: if false; }

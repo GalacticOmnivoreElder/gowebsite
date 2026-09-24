@@ -2,6 +2,7 @@
 
 import { isPublicLearningStatus } from "@/lib/content-visibility";
 import { hasMentorToolAccess } from "@/lib/content-entitlements";
+import { cleanCourseModules, cleanCourseResources, cleanCourseSessions, courseSeatCount, courseUrl } from "@/lib/learning-courses";
 
 export const LEARNING_TYPES = Object.freeze(["course", "workshop"]);
 export const LEARNING_ACCESS_TYPES = Object.freeze([
@@ -194,6 +195,17 @@ export function cleanLearningItem(input = {}) {
     invitedUserIds: cleanStringArray(input.invitedUserIds, 500, 160),
     status,
   };
+  if (input.courseId) {
+    Object.assign(item, {
+      courseId: cleanText(input.courseId, 160),
+      capacityMode: input.capacityMode === "in_person" ? "in_person" : "all",
+      onlineConfirmedCount: Math.max(0, Math.floor(Number(input.onlineConfirmedCount) || 0)),
+      sessions: cleanCourseSessions(input.sessions), resources: cleanCourseResources(input.resources),
+      jamUrl: courseUrl(input.jamUrl, { itch: true }),
+      curriculumSnapshot: cleanCourseModules(input.curriculumSnapshot),
+      curriculumVersion: Math.max(1, Math.floor(Number(input.curriculumVersion) || 1)),
+    });
+  }
   if (!item.title || !item.slug || !item.description) {
     throw validationError("Title, slug, and description are required");
   }
@@ -202,12 +214,16 @@ export function cleanLearningItem(input = {}) {
 
 export function learningPlacesRemaining(item = {}) {
   if (!Number.isInteger(item.capacity)) return null;
-  return Math.max(0, item.capacity - (Number(item.confirmedCount) || 0) - (Number(item.reservedCount) || 0));
+  return Math.max(0, item.capacity - courseSeatCount(item) - (Number(item.reservedCount) || 0));
 }
 
 export function toPublicLearningItemDto(item = {}) {
   return {
     id: item.id,
+    courseId: item.courseId || null,
+    capacityMode: item.capacityMode || "all",
+    sessions: (item.sessions || []).map(({ id, title, startsAt, endsAt }) => ({ id, title, startsAt: serializeLearningDate(startsAt), endsAt: serializeLearningDate(endsAt) })),
+    jamUrl: item.jamUrl || null,
     slug: item.slug,
     title: item.title,
     description: item.description,

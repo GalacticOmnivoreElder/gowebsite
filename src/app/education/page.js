@@ -58,7 +58,7 @@ function EducationContent() {
   }, []);
 
   const visibleItems = useMemo(
-    () => items.filter((item) => item.learningType === activeFormat),
+    () => items.filter((item) => item.learningType === activeFormat && item.courseId !== "from-idea-to-playable"),
     [activeFormat, items],
   );
 
@@ -88,6 +88,7 @@ function EducationContent() {
           </h2>
         </div>
 
+        {activeFormat === "course" && <Card className="mb-6 border-primary/40"><CardHeader><div className="flex flex-wrap gap-2"><Badge>Flagship bootcamp</Badge><Badge variant="outline">5 days · Live · Members free</Badge></div><CardTitle className="mt-3">From Idea to Playable</CardTitle></CardHeader><CardContent><p className="text-lg">Bring a game idea on Monday. Publish a playable v0.1 prototype by Friday.</p><p className="mt-3 text-muted-foreground">AI-Assisted Game Development Bootcamp · Godot, Codex, GitHub and itch.io. First cohort: 5–9 October 2026, 18:00–20:00 GOHQ local time. Eight in-person seats and unlimited online attendance.</p><Button asChild className="mt-6"><Link href="/education/from-idea-to-playable">View course and enroll</Link></Button></CardContent></Card>}
         {activeFormat === "course" && (
           <Card className="mb-6">
             <CardHeader>

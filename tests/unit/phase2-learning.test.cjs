@@ -3,7 +3,8 @@ const { test } = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
 const visibility = loadSourceModule("src/lib/content-visibility.js", ["isPublicLearningStatus"]);
-const learning = loadSourceModule("src/lib/learning-items.js", ["ACTIVE_ENROLLMENT_STATES", "cleanLearningItem", "isActiveEnrollmentState", "isLearningManager", "toPublicLearningItemDto", "validateEnrollmentAnswers"], { stripImports: true, sandbox: { ...visibility, hasMentorToolAccess: (data) => data.mentorStatus === "approved" && data.activeMember === true && data.membershipTier === "mentor" } });
+const courseModels = loadSourceModule("src/lib/learning-courses.js", ["courseSeatCount"], { stripImports: true });
+const learning = loadSourceModule("src/lib/learning-items.js", ["ACTIVE_ENROLLMENT_STATES", "cleanLearningItem", "isActiveEnrollmentState", "isLearningManager", "toPublicLearningItemDto", "validateEnrollmentAnswers"], { stripImports: true, sandbox: { ...courseModels, ...visibility, hasMentorToolAccess: (data) => data.mentorStatus === "approved" && data.activeMember === true && data.membershipTier === "mentor" } });
 
 function baseItem(overrides = {}) { return learning.cleanLearningItem({ slug: "atomic-workshop", title: "Atomic Workshop", description: "A capacity-controlled workshop.", status: "enrollment_open", waitlistEnabled: true, capacity: 2, accessType: "free", ...overrides }); }
 

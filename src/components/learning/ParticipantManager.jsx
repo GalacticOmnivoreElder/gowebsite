@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { CourseAssessment } from "@/components/learning/CourseAssessment";
 
 const filters = ["all", "confirmed", "waitlisted", "canceled", "attended", "did_not_attend", "completed"];
 const managementStates = ["pending_approval", "confirmed", "waitlisted", "declined", "canceled_by_organizer", "attended", "did_not_attend", "completed"];
@@ -92,7 +93,8 @@ export function ParticipantManager({ slug }) {
                   <div className="flex gap-3"><input type="checkbox" checked={selected.includes(participant.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, participant.id] : current.filter((id) => id !== participant.id))} /><div><Link className="font-semibold hover:underline" href={participant.profileUrl}>{participant.displayName}</Link><p className="mt-1 text-xs text-muted-foreground">Enrolled {participant.enrollmentDate ? new Date(participant.enrollmentDate).toLocaleString() : "date unavailable"}</p></div></div>
                   <Badge className="capitalize">{participant.state.replaceAll("_", " ")}</Badge>
                 </div>
-                <div className="mt-4 flex flex-wrap items-center gap-2"><span className="text-xs text-muted-foreground">Update state:</span>{managementStates.map((state) => <Button key={state} size="sm" variant="outline" disabled={participant.state === state} onClick={() => updateParticipant(participant.id, state).catch((updateError) => setError(updateError.message))}>{state.replaceAll("_", " ")}</Button>)}</div>
+                <div className="mt-4 flex flex-wrap items-center gap-2"><span className="text-xs text-muted-foreground">Update state:</span>{managementStates.filter(state => !data.item.courseId || state !== "completed").map((state) => <Button key={state} size="sm" variant="outline" disabled={participant.state === state} onClick={() => updateParticipant(participant.id, state).catch((updateError) => setError(updateError.message))}>{state.replaceAll("_", " ")}</Button>)}</div>
+                {data.item.courseId && <CourseAssessment key={`${participant.id}-${participant.submissionVersion}-${participant.assessment?.reviewedAt || ""}`} participant={participant} slug={slug} onSaved={load} />}
                 {Object.keys(participant.answers || {}).length > 0 && <details className="mt-4 rounded-md bg-muted/30 p-3"><summary className="cursor-pointer text-sm font-medium">Application responses</summary><div className="mt-2 space-y-2 text-sm">{Object.entries(participant.answers).map(([key, value]) => { const question = (data.item.customQuestions || []).find((item) => item.id === key); return <p key={key}><span className="font-medium">{question?.label || key}:</span> {Array.isArray(value) ? value.join(", ") : String(value)}</p>; })}</div></details>}
                 {Object.keys(participant.accessibilityAnswers || {}).length > 0 && <details className="mt-4 rounded-md bg-muted/30 p-3"><summary className="cursor-pointer text-sm font-medium">Operational accessibility responses</summary><div className="mt-2 space-y-2 text-sm">{Object.entries(participant.accessibilityAnswers).map(([key, value]) => <p key={key}><span className="font-medium">{key}:</span> {String(value)}</p>)}</div></details>}
               </div>

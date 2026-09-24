@@ -10,6 +10,7 @@ import { cancelLearningEnrollment, offerNextWaitlisted } from "@/lib/learning-en
 import { addProductNotificationToBatch, createProductNotification } from "@/lib/product-notifications";
 import { enqueueEmailEventForUsers } from "@/lib/email";
 import { getProductConfig } from "@/lib/product-config";
+import { courseSeatCount, courseUsesSeat } from "@/lib/learning-courses";
 
 async function context(request, slug) {
   const user = await getRequestUser(request);
@@ -30,6 +31,11 @@ function serializeParticipant(doc) {
     displayName: data.participantDisplayName || "GO participant",
     profileUrl: `/user/${encodeURIComponent(data.userId)}`,
     state: data.state,
+    attendanceMode: data.attendanceMode || null,
+    submission: data.submission || null,
+    submissionVersion: data.submissionVersion || 0,
+    assessment: data.assessment || null,
+    badge: data.badge || null,
     enrollmentDate: serializeLearningDate(data.enrolledAt || data.createdAt),
     attendanceState: ["attended", "did_not_attend"].includes(data.state) ? data.state : null,
     completionState: data.state === "completed" ? "completed" : null,
@@ -46,7 +52,7 @@ export async function GET(request, { params }) {
   if (gate.response) return gate.response;
   const snapshot = await adminDb.collection("learning_enrollments").where("itemId", "==", gate.item.id).get();
   return Response.json({
-    item: { id: gate.item.id, slug: gate.item.slug, title: gate.item.title, customQuestions: gate.item.customQuestions || [] },
+    item: { id: gate.item.id, slug: gate.item.slug, title: gate.item.title, courseId: gate.item.courseId || null, customQuestions: gate.item.customQuestions || [] },
     participants: snapshot.docs.map(serializeParticipant).sort((a, b) => String(b.enrollmentDate).localeCompare(String(a.enrollmentDate))),
   }, { headers: { "Cache-Control": "no-store" } });
 }
@@ -95,6 +101,7 @@ export async function PATCH(request, { params }) {
       if (!currentDoc.exists || !itemDoc.exists) throw new Error("Enrollment unavailable");
       const current = currentDoc.data();
       const item = itemDoc.data();
+      if (item.courseId && (state === "completed" || current.badge || (current.attendanceMode === "online" && state === "waitlisted"))) throw Object.assign(new Error("Use the course assessment to change completion. Online attendees do not need a waitlist."), { code: "invalid_transition" });
       const auditRef = adminDb.collection("admin_audit_events").doc();
       const now = new Date();
       const capacityStates = new Set(["confirmed", "attended", "did_not_attend", "completed"]);
@@ -115,13 +122,15 @@ export async function PATCH(request, { params }) {
       const itemUpdates = { updatedAt: now };
       let releasedCapacity = false;
       if (!currentUsesCapacity && targetUsesCapacity) {
-        if (Number.isInteger(item.capacity) && confirmed + reserved - (usesReservation ? 1 : 0) >= item.capacity) {
+        if (courseUsesSeat(item, current) && Number.isInteger(item.capacity) && courseSeatCount(item) + reserved - (usesReservation ? 1 : 0) >= item.capacity) {
           throw Object.assign(new Error("No capacity is available"), { code: "capacity_full" });
         }
         itemUpdates.confirmedCount = confirmed + 1;
+        if (!courseUsesSeat(item, current)) itemUpdates.onlineConfirmedCount = (Number(item.onlineConfirmedCount) || 0) + 1;
       } else if (currentUsesCapacity && !targetUsesCapacity) {
         itemUpdates.confirmedCount = Math.max(0, confirmed - 1);
-        releasedCapacity = true;
+        releasedCapacity = courseUsesSeat(item, current);
+        if (!releasedCapacity) itemUpdates.onlineConfirmedCount = Math.max(0, (Number(item.onlineConfirmedCount) || 0) - 1);
       }
 
       if (currentWaitlisted && !targetWaitlisted) {
