@@ -1,4 +1,5 @@
 import { Webhooks } from "@polar-sh/nextjs";
+import { enqueueDiscordSync } from "@/lib/discord";
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import {
@@ -92,6 +93,15 @@ async function processWebhook(payload, handler) {
 
   try {
     await handler(payload.data, payload);
+    if (process.env.DISCORD_ENABLED === "true") {
+      try {
+        const discordUser = await findUserForPolarData(payload.data);
+        if (discordUser) await enqueueDiscordSync(discordUser.id);
+      } catch {
+        // Periodic reconciliation heals this without retrying settled billing/email side effects.
+        console.error("discord_enqueue_failed");
+      }
+    }
     await markWebhookProcessed(eventId, payload.type, payload);
   } catch (error) {
     await releaseWebhookProcessing(eventId, payload.type).catch(

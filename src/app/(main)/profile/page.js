@@ -16,6 +16,7 @@ import { ProfileSectionTabs } from "@/components/profile/ProfileSectionTabs";
 
 import Downloads from "@/components/profile/Downloads";
 import Settings from "@/components/profile/Settings";
+import DiscordConnection from "@/components/profile/DiscordConnection";
 import { observer } from "mobx-react-lite";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
@@ -890,6 +891,7 @@ const ProfileContent = observer(() => {
         </TabsContent>
 
         <TabsContent value="settings">
+          <div className="mb-6"><DiscordConnection /></div>
           <Settings user={MobxStore.user} />
         </TabsContent>
       </Tabs>

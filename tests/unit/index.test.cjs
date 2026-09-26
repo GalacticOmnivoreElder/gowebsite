@@ -90,3 +90,4 @@ require("./user-id-route.test.cjs");
 require("./user-projects-route.test.cjs");
 require("./welcome-email-client.test.cjs");
 require("./welcome-email-route.test.cjs");
+require("./discord.test.cjs");

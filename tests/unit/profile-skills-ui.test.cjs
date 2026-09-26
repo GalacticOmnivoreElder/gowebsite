@@ -43,8 +43,8 @@ test("onboarding accepts directory-backed roles, custom tools, and optional Disc
   assert.match(selectorSource, /catalogMode === "all"/);
   assert.match(onboardingSource, /Secondary roles \(optional\)/);
   assert.match(onboardingSource, /Common tools and engines/);
-  assert.match(onboardingSource, /Discord username \(optional\)/);
-  assert.match(onboardingSource, /Join the GO Discord/);
+  assert.match(onboardingSource, /<DiscordConnection/);
+  assert.doesNotMatch(onboardingSource, /I have already joined the GO Discord/);
   assert.match(
     selectorSource,
     /onChange=\{\(event\) => onChange\(event\.target\.value\)\}/

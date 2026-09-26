@@ -1,0 +1,30 @@
+name: Synchronize Discord access
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: production-discord-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: vars.DISCORD_SYNC_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Reconcile Discord member access
+        env:
+          DISCORD_CRON_SECRET: ${{ secrets.DISCORD_CRON_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DISCORD_CRON_SECRET"
+          curl --request POST --fail-with-body --silent --show-error \
+            --connect-timeout 10 --max-time 130 \
+            --header "Authorization: Bearer $DISCORD_CRON_SECRET" \
+            https://www.galacticomnivore.com/api/cron/discord-sync

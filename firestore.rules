@@ -72,6 +72,11 @@ service cloud.firestore {
     }
 
     // ── Server-only collections (Admin SDK bypasses these; browser is denied) ──
+    match /discord_connections/{doc}  { allow read, write: if false; }
+    match /discord_identities/{doc}   { allow read, write: if false; }
+    match /discord_oauth_states/{doc} { allow read, write: if false; }
+    match /discord_oauth_limits/{doc} { allow read, write: if false; }
+    match /discord_locks/{doc}        { allow read, write: if false; }
     match /projects/{doc}            { allow read, write: if false; }
     match /sourceProjects/{doc}      { allow read, write: if false; }
     match /applications/{doc}        { allow read, write: if false; }

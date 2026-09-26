@@ -28,7 +28,6 @@ import {
   COMMON_TOOLS,
   PORTFOLIO_LINK_TYPES,
   PAST_PROJECT_STATUSES,
-  DISCORD_INVITE_URL,
 } from "@/constants/onboarding";
 import {
   countWords,
@@ -38,6 +37,7 @@ import {
 import { trackEvent } from "@/lib/analytics/client";
 import { normalizePreferredTimeCommitment } from "@/lib/availability";
 import { TimeZoneSelect } from "@/components/forms/TimeZoneSelect";
+import DiscordConnection from "@/components/profile/DiscordConnection";
 
 const STEP_TITLES = {
   identity: "Your profile",
@@ -283,30 +283,7 @@ const OnboardingContent = observer(() => {
             )}
 
             {step === "discord" && (
-              <>
-                <Field label="Discord username (optional)">
-                  <Input value={stepData.discord_username || ""} onChange={(e) => setField("discord_username", e.target.value)} />
-                </Field>
-                <CheckRow
-                  checked={!!stepData.already_joined}
-                  onChange={(v) => setField("already_joined", v)}
-                  label="I have already joined the GO Discord"
-                />
-                {!stepData.already_joined && (
-                  <p className="text-sm text-muted-foreground">
-                    Not joined yet?{" "}
-                    <a
-                      className="font-medium text-primary underline underline-offset-4"
-                      href={DISCORD_INVITE_URL}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Join the GO Discord
-                    </a>
-                    . Your joined status is saved separately from your username.
-                  </p>
-                )}
-              </>
+              <DiscordConnection />
             )}
 
             {step === "role-skills" && (

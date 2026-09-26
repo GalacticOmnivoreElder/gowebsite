@@ -56,6 +56,16 @@ export default function PrivacyPage() {
 
       <h2>4. Data Security</h2>
       <p>
+        If you connect Discord, we store your Discord user ID, username, server
+        ID, connection timestamps, and access synchronization status. With your
+        authorization, we add you to the GO Discord server and manage the GO
+        member role according to your membership. We do not request your Discord
+        password or read your messages, and we do not store Discord access or
+        refresh tokens. You can disconnect in your account settings; this removes
+        the account link and GO-managed member access while allowing you to remain
+        in the public server channels.
+      </p>
+      <p>
         We implement appropriate security measures to protect your personal
         information from unauthorized access, alteration, or destruction.
       </p>
