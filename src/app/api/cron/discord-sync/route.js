@@ -4,7 +4,8 @@ import { getDiscordConfig } from "@/lib/discord-api";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 120;
+// This project's Vercel Hobby configuration allows at most 60 seconds.
+export const maxDuration = 60;
 
 export async function POST(request) {
   if (!process.env.CRON_SECRET || request.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {

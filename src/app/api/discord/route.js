@@ -6,7 +6,8 @@ import { DISCORD_COOKIE, discordCookieOptions, startDiscordConnection, completeD
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 90;
+// This project's Vercel Hobby configuration allows at most 60 seconds.
+export const maxDuration = 60;
 
 const messages = {
   not_configured: "Discord connection is not available yet.",
