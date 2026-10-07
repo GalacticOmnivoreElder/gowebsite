@@ -1,4 +1,3 @@
-import { Inter } from "next/font/google";
 import "../globals.css";
 import ReusableLayout from "@/reusable-ui/ReusableLayout";
 import {
@@ -11,8 +10,6 @@ import {
 } from "@/lib/seo";
 // import CookieConsent from "@/components/cookies/CookieConsent";
 
-const inter = Inter({ subsets: ["latin"] });
-// new font
 
 export const viewport = {
   width: "device-width",
@@ -111,7 +108,7 @@ import CookieConsent from "@/components/cookies/CookieConsent";
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning className="dark">
-      <body className={inter.className}>
+      <body className="font-sans">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

@@ -48,6 +48,7 @@ persisted in job data or logs.
 | Subscription reminders | `billing.renewal_reminder`, `billing.access_expiring` | `settings.subscriptionReminders !== false`; worker also rechecks renewal/cancellation state |
 | Package | `package.published` | Active member and `settings.newPackageAlerts !== false` |
 | Marketing | `newsletter.campaign` | Confirmed newsletter consent or `settings.marketingEmails === true`, with no bounce/complaint/suppression |
+| GO Merch | `merch.confirm`, `merch.available` | Separate explicit merch consent, confirmed email, active request matching the available item/size/location, and no hard suppression; rechecked when queued mail is sent |
 | Admin | `admin.project_review_required`, membership/cancellation/refund/payment-failure events, failure digest, onboarding note | Configured server-side recipients |
 
 Email verification and password reset deliberately remain on Firebase's
@@ -158,6 +159,13 @@ The implementation adds:
   record.
 - `newsletter_events`: minimal consent audit history.
 - `newsletter_rate_limits` and `email_action_rate_limits`: abuse controls.
+- `merch_requests`: email-confirmed product, size, quantity, location, and
+  fulfillment interest. Unconfirmed requests expire after 30 days. Confirmed
+  records remain until the user leaves the waitlist.
+- `merch_suggestions`: private, contact-free product suggestions, removed by
+  Firestore TTL after one year.
+- `merch_batches`: immutable, idempotent availability messages prepared by an
+  admin, with recipient batches queued through the email outbox.
 
 Browser access is denied in `firestore.rules`. Deploy rules, indexes, and TTL
 policies:
@@ -172,6 +180,9 @@ project after deployment. Outbox/delivery records expire after about 90 days,
 processed webhook records after 30 days, and newsletter audit events after
 about three years. Suppression records intentionally do not expire
 automatically.
+Merch TTL settings also ship in `firestore.indexes.json`; enable them in the
+production Firestore project so expired pending requests and suggestions are
+automatically removed.
 
 ## Worker and scheduler
 
@@ -249,6 +260,15 @@ records, the latest verified delivery events, recent consent history, search,
 CSV export, pending-confirmation resend, manual suppression, and
 privacy-request anonymization.
 
+`/admin/merch` requires the same platform-admin access. It distinguishes
+confirmed people from requested units, reports variants by item, size, city,
+and fulfillment, reviews private suggestions, exports demand to CSV, and
+requires recipient preview, a test email, and an explicit send for each
+availability batch. Outbox jobs retain normal retry, suppression, and delivery
+tracking. A visitor can replace choices only by confirming a new request, or
+remove the full request and stop future availability updates from a signed,
+expiring email link.
+
 Anonymization removes the plain address and provider contact while retaining
 the one-way document/suppression hash. Do this only after verifying the request
 under the organization's privacy procedure.
@@ -289,6 +309,10 @@ and cron retry.
 - [ ] SPF, DKIM, DMARC, transactional sender, and marketing sender are verified.
 - [ ] Firebase verification/reset templates and continue URLs are tested.
 - [ ] Firestore rules, composite indexes, and TTL policies are deployed.
+- [ ] Merch waitlist and recipient preview pass in staging; confirm an email,
+      update and withdraw a request, and verify unavailable sizes are excluded.
+- [ ] `firebase deploy --only firestore:rules,firestore:indexes` has applied the
+      server-only merch rules and TTL policies to the intended project.
 - [ ] Resend Topics/Segment and signed webhook are configured.
 - [ ] The OIDC-protected `Process email outbox` workflow succeeds manually and
       on schedule.

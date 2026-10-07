@@ -38,6 +38,12 @@ export const EMAIL_TEMPLATE_FIXTURES = Object.freeze(
                 "https://example.invalid/newsletter/confirm/demo-token",
             }
           : {}),
+        ...(eventType === "merch.confirm"
+          ? { requestId: "a".repeat(64), version: "fixture-version", manageVersion: "fixture-manage", expires: Date.now() + 48 * 60 * 60 * 1000, confirmationUrl: "https://example.invalid/merch/confirm#token=fake", manageUrl: "https://example.invalid/merch/manage#token=fake" }
+          : {}),
+        ...(eventType === "merch.available"
+          ? { requestId: "a".repeat(64), manageVersion: "fixture-manage", manageUrl: "https://example.invalid/merch/manage#token=fake", productName: "GO T-shirt", batch: { details: "Demo price and order instructions; this is fictional sample content only." } }
+          : {}),
         ...(eventType === "newsletter.campaign"
           ? {
               subject: "Demo Galactic Omnivore newsletter",

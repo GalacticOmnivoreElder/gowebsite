@@ -45,9 +45,9 @@ export const availabilitySchema = z.object({
   details: text(2000).min(20),
 });
 export function matchesAvailability(request, batch) {
-  return request?.status === "confirmed" && request.active?.consent === true &&
-    (batch.location === "all" || request.active.location === batch.location) &&
-    request.active.lines.some((line) => line.productId === batch.productId && batch.sizes.includes(line.size));
+  return request?.status === "confirmed" && request.consent?.text === MERCH_CONSENT && request.consent?.version === "merch-v1" &&
+    (batch.location === "all" || request.active?.location === batch.location) &&
+    request.active?.lines?.some((line) => line.productId === batch.productId && batch.sizes.includes(line.size)) === true;
 }
 export function summarizeMerch(requests) {
   const summary = { people: 0, units: 0, pending: 0, variants: {} };

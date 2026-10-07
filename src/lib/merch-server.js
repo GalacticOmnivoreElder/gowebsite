@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import { addEmailEventToBatch } from "@/lib/email/outbox";
 import { hashValue } from "@/lib/email/utils";
 import { consumeNewsletterRateLimit, newsletterFingerprint } from "@/lib/email/newsletter";
@@ -47,12 +48,15 @@ export async function submitMerch(body) {
   if (["bounced", "complained", "suppressed"].includes(suppression.data()?.status)) return merchResponse;
   await adminDb.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(ref); const previous = snapshot.data() || {};
+    const retained = { ...previous };
+    delete retained.pendingExpiresAt;
     const manageVersion = previous.manageVersion || crypto.randomUUID();
     if (previous.pending && now - previous.pending.createdAt < 5 * 60 * 1000) return;
     transaction.set(ref, {
-      ...previous, email: data.email, status: previous.status === "confirmed" ? "confirmed" : "pending",
+      ...retained, email: data.email, status: previous.status === "confirmed" ? "confirmed" : "pending",
       manageVersion,
       pending: { ...data, version, expires, createdAt: now },
+      ...(previous.status === "confirmed" ? {} : { pendingExpiresAt: new Date(now + 30 * 24 * 60 * 60 * 1000) }),
       createdAt: previous.createdAt || now, updatedAt: now,
     });
     addEmailEventToBatch(transaction, { type: "merch.confirm", eventId: `${id}:${version}`, recipient: data.email, data: { requestId: id, version, expires, manageVersion } });
@@ -68,7 +72,7 @@ export async function saveMerchSuggestion(body) {
   const ref = adminDb.collection("merch_suggestions").doc(id);
   await adminDb.runTransaction(async (transaction) => {
     const existing = await transaction.get(ref);
-    if (!existing.exists) transaction.create(ref, { ...parsed.data, status: "new", createdAt: Date.now() });
+    if (!existing.exists) transaction.create(ref, { ...parsed.data, status: "new", createdAt: Date.now(), expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) });
   });
   return { message: "Thank you. Your suggestion has been sent to GO." };
 }
@@ -84,12 +88,12 @@ export async function merchAction(body) {
       if (data.confirmedVersion === token.version && data.status === "confirmed") return { message: "Your GO merch request is confirmed." };
       if (data.pending?.version !== token.version || data.pending.expires <= Date.now()) throw merchError("This confirmation has expired or been replaced. Submit your choices again.");
       const { version, expires, createdAt, ...active } = data.pending;
-      transaction.update(ref, { active, pending: null, status: "confirmed", confirmedVersion: version, confirmedAt: Date.now(), updatedAt: Date.now(), consent: { text: MERCH_CONSENT, version: "merch-v1", confirmedAt: Date.now() } });
+      transaction.update(ref, { active, pending: null, pendingExpiresAt: FieldValue.delete(), status: "confirmed", confirmedVersion: version, confirmedAt: Date.now(), updatedAt: Date.now(), consent: { text: MERCH_CONSENT, version: "merch-v1", confirmedAt: Date.now() } });
       return { message: "Your GO merch request is confirmed. We’ll email you when your selected merchandise is available." };
     }
     if (data.manageVersion !== token.version) throw merchError("This link is no longer valid.");
     if (body.action === "withdraw") {
-      transaction.set(ref, { status: "withdrawn", manageVersion: crypto.randomUUID(), updatedAt: Date.now() });
+      transaction.set(ref, { status: "withdrawn", manageVersion: crypto.randomUUID(), pendingExpiresAt: FieldValue.delete(), updatedAt: Date.now() });
       return { message: "You have left the merch waitlist. Your request details have been removed." };
     }
     throw merchError("Unknown action.");

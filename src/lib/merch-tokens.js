@@ -12,7 +12,7 @@ export function readMerchToken(token, purpose) {
     const [payload, signature, extra] = token.split(".");
     if (!payload || !signature || extra) return null;
     const data = JSON.parse(Buffer.from(payload, "base64url").toString());
-    if (data.purpose !== purpose || !/^[a-f0-9]{64}$/.test(data.id) || typeof data.version !== "string" || data.expires <= Date.now()) return null;
+    if (data.purpose !== purpose || !/^[a-f0-9]{64}$/.test(data.id) || typeof data.version !== "string" || typeof data.expires !== "number" || data.expires <= Date.now()) return null;
     const expected = merchToken(data.id, data.version, purpose, data.expires).split(".")[1];
     const left = Buffer.from(expected); const right = Buffer.from(signature);
     return left.length === right.length && crypto.timingSafeEqual(left, right) ? data : null;
