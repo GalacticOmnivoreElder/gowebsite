@@ -1,10 +1,15 @@
 import { EMAIL_CATEGORIES, getEmailEventDefinition } from "./events";
+import { matchesAvailability } from "@/lib/merch-core";
 
 export function getEmailPreferenceDecision({
   eventType,
   userData = {},
   newsletterSubscriber = null,
   emailSuppression = null,
+  merchRequest = null,
+  merchBatch = null,
+  merchVersion = null,
+  merchManageVersion = null,
 }) {
   const { category } = getEmailEventDefinition(eventType);
   const settings = userData?.settings || {};
@@ -13,6 +18,12 @@ export function getEmailPreferenceDecision({
   );
 
   switch (category) {
+    case EMAIL_CATEGORIES.MERCH: {
+      const allowed = !isHardSuppressed && (eventType === "merch.confirm"
+        ? merchRequest?.pending?.version === merchVersion && merchRequest.pending.expires > Date.now()
+        : Boolean(merchBatch && merchRequest?.manageVersion === merchManageVersion && matchesAvailability(merchRequest, merchBatch)));
+      return { allowed, category, reason: allowed ? null : "merch_consent_or_request_inactive" };
+    }
     case EMAIL_CATEGORIES.ESSENTIAL:
     case EMAIL_CATEGORIES.ADMIN:
       return { allowed: true, category };

@@ -45,4 +45,5 @@ export const primaryNavigation = Object.freeze([
   { href: "/membership", label: "Membership" },
   { href: "/projects", label: "Project" },
   { href: "/services", label: "Services" },
+  { href: "/merch", label: "GO Merch" },
 ]);

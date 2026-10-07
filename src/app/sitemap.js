@@ -2,6 +2,7 @@ import { SITE_URL, getWordPressBlogPostsForSitemap } from "@/lib/seo";
 import { getProductConfig } from "@/lib/product-config";
 
 const staticRoutes = [
+  { path: "/merch", priority: 0.6, changeFrequency: "monthly" },
   { path: "/", priority: 1, changeFrequency: "weekly" },
   { path: "/about", priority: 0.8, changeFrequency: "monthly" },
   { path: "/blog", priority: 0.7, changeFrequency: "weekly" },

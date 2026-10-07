@@ -55,6 +55,7 @@ export function Sidebar() {
     { name: "Asset Pack Reviews", href: "/admin/asset-packs", icon: PackagePlus },
     { name: "Resource Lifecycle", href: "/admin/resources-review", icon: ArchiveRestore },
     { name: "Newsletter", href: "/admin/newsletter", icon: Mail },
+    { name: "GO Merch", href: "/admin/merch", icon: Package },
     { name: "Skills", href: "/admin/skills", icon: Tags },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ];

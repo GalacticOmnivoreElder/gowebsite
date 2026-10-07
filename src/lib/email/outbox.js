@@ -270,6 +270,12 @@ async function loadPreferenceContext(job) {
     onboardingSessionData,
     newsletterSubscriber,
     emailSuppression,
+    ...(job.category === "merch" ? {
+      merchRequest: (await adminDb.collection("merch_requests").doc(job.templateData.requestId).get()).data() || null,
+      merchBatch: job.templateData.batch || null,
+      merchVersion: job.templateData.version || null,
+      merchManageVersion: job.templateData.manageVersion || null,
+    } : {}),
   };
 }
 

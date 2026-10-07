@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Newspaper,
   PackageOpen,
+  ShoppingBag,
   Users,
 } from "lucide-react";
 
@@ -27,6 +28,13 @@ export const metadata = createMetadata({
 });
 
 const routes = [
+  {
+    title: "GO Merch",
+    eyebrow: "Shape the collection",
+    description: "Join the GO merch waitlist or suggest what we should make next. Starting in Skopje.",
+    href: "/merch",
+    icon: ShoppingBag,
+  },
   {
     title: "Projects",
     eyebrow: "Collaborate",

@@ -134,6 +134,9 @@ service cloud.firestore {
     match /skill_catalog/{doc}       { allow read, write: if false; }
 
     // Default deny for anything not explicitly matched above.
+    match /merch_requests/{doc} { allow read, write: if false; }
+    match /merch_suggestions/{doc} { allow read, write: if false; }
+    match /merch_batches/{doc} { allow read, write: if false; }
     match /{document=**} {
       allow read, write: if false;
     }

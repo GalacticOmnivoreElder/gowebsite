@@ -621,6 +621,23 @@ function eventCopy(type, data) {
         ctaUrl: absoluteSiteUrl("/profile?tab=asset-packs"),
       };
     }
+    case "merch.confirm":
+      return {
+        subject: "Confirm your GO merch request",
+        heading: "Confirm your merch request",
+        body: paragraph("Confirm your email to save these merchandise choices. If you already joined, this replaces your previous choices. This is a waitlist, not an order or stock reservation. The confirmation link expires in 48 hours.") + paragraph("If you did not request this, ignore this email."),
+        text: "Confirm your email to save or replace your GO merchandise choices. No payment or stock reservation. This link expires in 48 hours. If you did not request this, ignore this email.",
+        ctaLabel: "Review and confirm", ctaUrl: data.confirmationUrl,
+        secondaryCtas: [{ label: "Leave the merch waitlist", url: data.manageUrl }],
+      };
+    case "merch.available":
+      return {
+        subject: `${data.productName || "GO merchandise"} is available`,
+        heading: `${data.productName || "GO merchandise"} is available`,
+        body: paragraph(data.batch?.details || "") + paragraph("Your waitlist request is not an order or reservation. Follow the instructions above to arrange your purchase."),
+        text: `${data.batch?.details || ""}\n\nYour waitlist request is not an order or reservation. Follow the instructions above to arrange your purchase.`,
+        ctaLabel: "Leave the merch waitlist", ctaUrl: data.manageUrl,
+      };
     case "newsletter.confirm":
       return {
         subject: "Confirm your Galactic Omnivore newsletter signup",

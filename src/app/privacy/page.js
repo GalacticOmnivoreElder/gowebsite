@@ -2,7 +2,7 @@ import LegalPageLayout from "@/components/legal/LegalPageLayout";
 
 export default function PrivacyPage() {
   return (
-    <LegalPageLayout title="Privacy Policy" lastUpdated="August 4, 2026">
+    <LegalPageLayout title="Privacy Policy" lastUpdated="October 7, 2026">
       <h2>1. Information We Collect</h2>
       <p>We collect information that you provide directly to us, including:</p>
       <ul>
@@ -17,6 +17,20 @@ export default function PrivacyPage() {
       </ul>
 
       <h2>2. How We Use Your Information</h2>
+      <p>
+        For the GO merch waitlist, we store your email, optional first name,
+        merchandise choices, quantities, city, fulfillment preference, and
+        email consent to plan production and send relevant availability updates.
+        Email confirmation is required; merch consent is separate from newsletter
+        consent. Firebase stores requests and Resend delivers emails. We do not
+        collect delivery addresses or payment details at this stage. Suggestions
+        are reviewed privately by staff; please do not include personal details.
+        You can replace your choices by submitting and confirming a new request,
+        or use the leave-waitlist link in a merch email to remove your request
+        details and stop future availability updates. Contact GO for other data
+        requests. Email delivery records follow the platform’s email retention
+        policy; leaving the waitlist does not erase historical delivery records.
+      </p>
       <p>We use the collected information to:</p>
       <ul>
         <li>Provide and maintain our services</li>

@@ -1,4 +1,5 @@
 import { getResend } from "@/lib/resend";
+import { merchToken } from "@/lib/merch-tokens";
 import { renderEmailEventTemplate } from "./templates/events";
 import {
   absoluteSiteUrl,
@@ -138,6 +139,16 @@ export async function sendEmailJob(job) {
   }
 
   let templateData = job.templateData || {};
+  if (job.category === "merch") {
+    const managementToken = merchToken(templateData.requestId, templateData.manageVersion, "manage", Date.now() + 365 * 24 * 60 * 60 * 1000);
+    templateData = {
+      ...templateData,
+      manageUrl: absoluteSiteUrl(`/merch/manage#token=${encodeURIComponent(managementToken)}`),
+      ...(job.eventType === "merch.confirm" ? {
+        confirmationUrl: absoluteSiteUrl(`/merch/confirm#token=${encodeURIComponent(merchToken(templateData.requestId, templateData.version, "confirm", templateData.expires))}`),
+      } : {}),
+    };
+  }
   if (job.eventType === "newsletter.confirm") {
     const confirmationToken = createNewsletterConfirmationToken(
       templateData.subscriberId,

@@ -4,10 +4,13 @@ export const EMAIL_CATEGORIES = Object.freeze({
   SUBSCRIPTION_REMINDER: "subscription_reminder",
   PACKAGE: "package",
   MARKETING: "marketing",
+  MERCH: "merch",
   ADMIN: "admin",
 });
 
 export const EMAIL_EVENTS = Object.freeze({
+  "merch.confirm": { category: EMAIL_CATEGORIES.MERCH },
+  "merch.available": { category: EMAIL_CATEGORIES.MERCH },
   "account.welcome": { category: EMAIL_CATEGORIES.ESSENTIAL },
   "onboarding.incomplete_reminder": {
     category: EMAIL_CATEGORIES.ESSENTIAL,
