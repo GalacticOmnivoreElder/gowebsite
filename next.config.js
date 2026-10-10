@@ -20,6 +20,7 @@ if (
 const nextConfig = {
   ...(deploymentId ? { deploymentId } : {}),
   outputFileTracingRoot: __dirname,
+  serverExternalPackages: ["firebase-admin"],
   async headers() {
     return [
       {
