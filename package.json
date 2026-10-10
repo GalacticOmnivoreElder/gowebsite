@@ -9,6 +9,7 @@
     "node": "24.x"
   },
   "scripts": {
+    "postinstall": "node scripts/patch-jwks-rsa.cjs",
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
