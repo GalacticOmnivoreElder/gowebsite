@@ -285,8 +285,7 @@ export async function GET(request) {
     // available from their direct authorized route, never mixed into this scan.
     baseQuery = baseQuery
       .where("visibility", "==", "Public")
-      .orderBy("createdAt", "desc")
-      .orderBy("__name__", "asc");
+      .orderBy("createdAt", "desc");
 
     let cursorDoc = null;
     if (cursorId) {
