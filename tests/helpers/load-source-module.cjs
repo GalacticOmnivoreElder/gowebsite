@@ -28,6 +28,8 @@ function loadSourceModule(relativePath, exportNames, options = {}) {
   source += `\nmodule.exports = { ${exportNames.join(", ")} };\n`;
 
   const sandbox = {
+    AbortController,
+    AbortSignal,
     Buffer,
     Date,
     URL,

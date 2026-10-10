@@ -77,7 +77,7 @@ class Store {
     sortBy: "status_priority",
   };
   projectPagination = {
-    page: 1,
+    cursor: null,
     limit: 20,
     hasMore: true,
   };
@@ -363,7 +363,7 @@ class Store {
     }
 
     const requestId = ++this.projectRequestId;
-    const requestedPage = reset ? 1 : this.projectPagination.page;
+    const requestedCursor = reset ? null : this.projectPagination.cursor;
     const requestController = new AbortController();
     this.projectRequestController = requestController;
     const requestTimeout = setTimeout(() => requestController.abort(), 20000);
@@ -371,18 +371,18 @@ class Store {
     runInAction(() => {
       this.projectsLoading = true;
       if (reset) {
-        this.projectPagination.page = 1;
+        this.projectPagination.cursor = null;
         this.projectPagination.hasMore = true;
       }
     });
 
     try {
       const params = new URLSearchParams({
-        page: requestedPage.toString(),
         limit: this.projectPagination.limit.toString(),
         ...this.projectFilters,
         ...filters,
       });
+      if (requestedCursor) params.set("cursor", requestedCursor);
 
       // Prepare headers with authentication if user is logged in
       const headers = {
@@ -418,7 +418,7 @@ class Store {
         });
 
         this.projectPagination.hasMore = data.hasMore;
-        this.projectPagination.page = data.hasMore ? requestedPage + 1 : requestedPage;
+        this.projectPagination.cursor = data.nextCursor || null;
       });
     } catch (error) {
       if (requestId === this.projectRequestId && error?.name !== "AbortError") {

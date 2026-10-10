@@ -167,15 +167,9 @@ function getMetadataUid(data) {
 
 function getMetadataTier(data) {
   const productId = getProductId(data);
-  const productTier = resolvePolarProductTier(productId);
-  if (productTier) return productTier;
-
-  const metadataTier =
-    data?.metadata?.tier ||
-    data?.subscription?.metadata?.tier ||
-    data?.checkout?.metadata?.tier ||
-    null;
-  return ["member", "mentor", "company"].includes(metadataTier) ? metadataTier : null;
+  // Metadata is buyer-controlled context, not an entitlement authority. Only
+  // an exact server allowlisted Polar product may resolve to a membership.
+  return resolvePolarProductTier(productId);
 }
 
 function parsePolarDate(value) {
@@ -375,22 +369,34 @@ async function findUserForPolarData(data) {
     }
   }
 
-  const customerEmail = getCustomerEmail(data);
-  if (customerEmail) {
-    const byEmail = await adminDb
-      .collection("users")
-      .where("email", "==", customerEmail)
-      .limit(1)
-      .get();
-    if (!byEmail.empty) {
-      return byEmail.docs[0];
-    }
-  }
-
   return null;
 }
 
 async function handleOrderPaid(orderData, payload) {
+  const tier = getMetadataTier(orderData);
+  if (!tier) {
+    await adminDb
+      .collection("orders")
+      .doc(orderData.id)
+      .set(
+        {
+          customerId: getCustomerId(orderData),
+          productId: getProductId(orderData),
+          status: "entitlement_rejected",
+          rejectionReason: "unrecognized_product",
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
+    console.error("polar_entitlement_rejected", {
+      eventType: payload?.type || "order.paid",
+      orderId: orderData?.id || null,
+      productId: getProductId(orderData),
+      reason: "unrecognized_product",
+    });
+    return;
+  }
+
   const userDoc = await findUserForPolarData(orderData);
   if (!userDoc) {
     throw new Error(`No user found for paid Polar order ${orderData?.id}`);
@@ -401,7 +407,6 @@ async function handleOrderPaid(orderData, payload) {
   const currentPeriodEnd = getCurrentPeriodEnd(orderData);
   const amount = getOrderAmount(orderData);
 
-  const tier = getMetadataTier(orderData);
   const interval = getRecurringInterval(orderData);
   const previousUserData = userDoc.data();
   const activationKey = getCanonicalMembershipActivationKey(
@@ -565,6 +570,7 @@ async function handleSubscriptionActive(subscriptionData, payload) {
     }),
     canceledAt: null,
   });
+  if (result?.ignored) return;
   const previous = result?.previousData;
   const activationKey = getCanonicalMembershipActivationKey(
     subscriptionData,
@@ -644,6 +650,7 @@ async function handleSubscriptionUpdated(subscriptionData) {
         new Date()
       : null,
   });
+  if (result?.ignored) return;
   const previous = result?.previousData;
   const nextTier = getMetadataTier(authoritativeData);
   if (previous?.email && isPastDue && previous.subscriptionStatus !== "past_due") {
@@ -698,6 +705,7 @@ async function handleSubscriptionUncanceled(subscriptionData) {
     }),
     canceledAt: null,
   });
+  if (result?.ignored) return;
   await cancelPendingEmailEvents({
     userId: result?.userId,
     eventType: "billing.access_expiring",
@@ -725,6 +733,7 @@ async function handleSubscriptionCanceled(subscriptionData) {
     canceledAt: parsePolarDate(subscriptionData.canceled_at || subscriptionData.canceledAt) || new Date(),
     subscriptionEndsAt: currentPeriodEnd || new Date(),
   });
+  if (result?.ignored) return;
   await cancelPendingEmailEvents({
     userId: result?.userId,
     eventType: "billing.renewal_reminder",
@@ -902,6 +911,33 @@ async function updateSubscriptionUser(subscriptionData, state, options = {}) {
     state.subscriptionEndsAt || getCurrentPeriodEnd(subscriptionData);
   const subscriptionId = getSubscriptionId(subscriptionData);
   const tier = getMetadataTier(subscriptionData);
+  if (
+    state.activeMember === true &&
+    previousData.activeMember !== true &&
+    !tier
+  ) {
+    await adminDb.collection("subscription_events").add({
+      userId: userDoc.id,
+      subscriptionId,
+      eventType: state.subscriptionStatus || "active",
+      productId: getProductId(subscriptionData),
+      processedAt: new Date(),
+      rejected: true,
+      rejectionReason: "unrecognized_product",
+    });
+    console.error("polar_entitlement_rejected", {
+      eventType: state.subscriptionStatus || "subscription.active",
+      productId: getProductId(subscriptionData),
+      subscriptionId,
+      reason: "unrecognized_product",
+    });
+    return {
+      ignored: true,
+      previousData,
+      userId: userDoc.id,
+      userRef: userDoc.ref,
+    };
+  }
   const pendingUpdate = getPendingSubscriptionUpdate(subscriptionData);
   const hasPendingUpdateField =
     Object.hasOwn(subscriptionData || {}, "pending_update") ||

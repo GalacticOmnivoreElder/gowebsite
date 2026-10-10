@@ -65,6 +65,7 @@ export async function GET(request) {
             Authorization: `Bearer ${process.env.POLAR_ACCESS_TOKEN}`,
             "Content-Type": "application/json",
           },
+          signal: AbortSignal.timeout(10000),
         }
       );
 

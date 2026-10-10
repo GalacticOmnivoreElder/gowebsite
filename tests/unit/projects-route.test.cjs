@@ -37,6 +37,7 @@ const projectUtils = loadSourceModule("src/lib/project-utils.js", [
   "DEFAULT_APPLICATION_ACCESS",
   "filterAndSortProjectsForDiscovery",
   "normalizeApplicationAccess",
+  "normalizeProjectThumbnailUrl",
   "normalizeProjectDiscoveryStatus",
   "PROJECT_DISCOVERY_SORT_OPTIONS",
   "PROJECT_STATUSES",
@@ -44,6 +45,7 @@ const projectUtils = loadSourceModule("src/lib/project-utils.js", [
   "PUBLIC_PROJECT_STATUSES",
   "REQUIRED_ROLES",
   "serializeFirestoreDate",
+  "toPublicProjectDto",
   "validateArrayValues",
   "VISIBILITY_OPTIONS",
 ]);
@@ -80,7 +82,7 @@ function createDb(seed = {}) {
     return { collectionName, id };
   }
 
-  function query(collectionName, constraints = []) {
+  function query(collectionName, constraints = [], options = {}) {
     return {
       async get() {
         const collection =
@@ -89,24 +91,47 @@ function createDb(seed = {}) {
             : collectionName === "sourceProjects"
               ? sourceProjects
               : {};
-        const entries = Object.entries(collection).filter(([, data]) =>
+        let entries = Object.entries(collection).filter(([, data]) =>
           constraints.every(({ field, operator, value }) => {
             if (operator === "==") return data[field] === value;
             if (operator === "in") return value.includes(data[field]);
             throw new Error(`Unsupported operator: ${operator}`);
           })
         );
+        entries.sort(([leftId, left], [rightId, right]) => {
+          const leftDate = new Date(left.createdAt || 0).getTime();
+          const rightDate = new Date(right.createdAt || 0).getTime();
+          return rightDate - leftDate || leftId.localeCompare(rightId);
+        });
+        if (options.startAfterId) {
+          const cursorIndex = entries.findIndex(([id]) => id === options.startAfterId);
+          entries = cursorIndex >= 0 ? entries.slice(cursorIndex + 1) : entries;
+        }
+        if (options.limit) entries = entries.slice(0, options.limit);
         const docs = entries.map(([id, data]) => ({
           data: () => data,
+          exists: true,
           id,
         }));
-        return { docs, empty: docs.length === 0 };
+        return { docs, empty: docs.length === 0, size: docs.length };
       },
       where(field, operator, value) {
         return query(collectionName, [
           ...constraints,
           { field, operator, value },
-        ]);
+        ], options);
+      },
+      orderBy() {
+        return query(collectionName, constraints, options);
+      },
+      limit(value) {
+        return query(collectionName, constraints, { ...options, limit: value });
+      },
+      startAfter(doc) {
+        return query(collectionName, constraints, {
+          ...options,
+          startAfterId: doc.id,
+        });
       },
     };
   }
@@ -492,4 +517,42 @@ test("public discovery never returns pending projects, including to admins", asy
   );
   assert.equal(response.status, 200);
   assert.deepEqual(Array.from(response.body.projects), []);
+});
+
+test("public discovery never serializes project role, moderation, or billing fields", async () => {
+  const route = loadRoute({
+    seed: {
+      projects: {
+        safe: {
+          admins: ["admin-secret"],
+          adminNotes: "moderation secret",
+          billingCustomerId: "cus_secret",
+          createdAt: "2026-07-29T10:00:00.000Z",
+          owner: "owner-secret",
+          status: "hiring",
+          teamMembers: ["member-secret"],
+          title: "Public project",
+          type: "Art & Design",
+          visibility: "Public",
+        },
+      },
+    },
+  });
+
+  const response = await route.GET(
+    createRequest({ url: "http://localhost:3000/api/projects" })
+  );
+  const project = plain(response.body.projects[0]);
+
+  assert.equal(response.status, 200);
+  assert.equal(project.title, "Public project");
+  for (const field of [
+    "owner",
+    "admins",
+    "teamMembers",
+    "adminNotes",
+    "billingCustomerId",
+  ]) {
+    assert.equal(project[field], undefined, `${field} must not be public`);
+  }
 });

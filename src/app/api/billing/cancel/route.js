@@ -65,6 +65,7 @@ export async function POST(request) {
         Authorization: `Bearer ${customerSession.token}`, // Use customer session token
         "Content-Type": "application/json",
       },
+      signal: AbortSignal.timeout(10000),
     });
 
     console.log("📡 Polar API Response Status:", response.status);

@@ -93,7 +93,11 @@ export async function merchAction(body) {
     }
     if (data.manageVersion !== token.version) throw merchError("This link is no longer valid.");
     if (body.action === "withdraw") {
-      transaction.set(ref, { status: "withdrawn", manageVersion: crypto.randomUUID(), pendingExpiresAt: FieldValue.delete(), updatedAt: Date.now() });
+      // Deleting the request removes every stored choice and contact field in a
+      // single operation. Any queued merch job is re-checked against this
+      // document before delivery, so deletion also suppresses pending mail and
+      // invalidates every previously issued management token.
+      transaction.delete(ref);
       return { message: "You have left the merch waitlist. Your request details have been removed." };
     }
     throw merchError("Unknown action.");

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Polar } from "@polar-sh/sdk";
+import { createPolar } from "@polar-sh/sdk/2026-10";
 import { getRequestUser } from "@/lib/auth-utils";
 import { getMentorCheckoutStatus } from "@/lib/mentor-checkout";
 import {
@@ -106,9 +106,9 @@ export async function POST(request) {
     }
   }
 
-  const polar = new Polar({
+  const polar = createPolar({
     accessToken: process.env.POLAR_ACCESS_TOKEN,
-    server: getPolarServer(),
+    environment: getPolarServer(),
   });
 
   const checkoutInput = {

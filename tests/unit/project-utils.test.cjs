@@ -12,8 +12,11 @@ const {
   isPlatformAdmin,
   isProjectMember,
   normalizeApplicationAccess,
+  normalizeProjectThumbnailUrl,
   normalizeProjectDiscoveryStatus,
   PROJECT_DISCOVERY_SORT_OPTIONS,
+  toProjectDetailDto,
+  toPublicProjectDto,
   validateArrayValues,
 } = loadSourceModule("src/lib/project-utils.js", [
   "canApplyToProject",
@@ -24,8 +27,11 @@ const {
   "isPlatformAdmin",
   "isProjectMember",
   "normalizeApplicationAccess",
+  "normalizeProjectThumbnailUrl",
   "normalizeProjectDiscoveryStatus",
   "PROJECT_DISCOVERY_SORT_OPTIONS",
+  "toProjectDetailDto",
+  "toPublicProjectDto",
   "validateArrayValues",
 ]);
 
@@ -231,6 +237,63 @@ test("project discovery excludes pending projects even for admins and owners", (
       (item) => item.id
     ),
     []
+  );
+});
+
+test("public project DTOs fail closed when Firestore gains sensitive fields", () => {
+  const stored = project({
+    id: "project-1",
+    adminNotes: "moderation secret",
+    billingCustomerId: "cus_secret",
+    createdAt: { toDate: () => new Date("2026-07-14T12:00:00.000Z") },
+    internalScore: 99,
+    title: "Safe title",
+  });
+
+  const publicDto = toPublicProjectDto(stored);
+  assert.equal(publicDto.title, "Safe title");
+  assert.equal(publicDto.createdAt, "2026-07-14T12:00:00.000Z");
+  assert.equal(publicDto.owner, undefined);
+  assert.equal(publicDto.admins, undefined);
+  assert.equal(publicDto.teamMembers, undefined);
+  assert.equal(publicDto.adminNotes, undefined);
+  assert.equal(publicDto.billingCustomerId, undefined);
+  assert.equal(publicDto.internalScore, undefined);
+
+  const memberDto = toProjectDetailDto(stored, { includeRoles: true });
+  assert.equal(memberDto.owner, "owner");
+  assert.deepEqual(Array.from(memberDto.admins), ["project-admin"]);
+  assert.equal(memberDto.adminNotes, undefined);
+  assert.equal(memberDto.billingCustomerId, undefined);
+});
+
+test("project thumbnails allow only owned or explicitly approved image origins", () => {
+  const env = {
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "go-platform.appspot.com",
+    NEXT_PUBLIC_SITE_URL: "https://go.example",
+  };
+
+  assert.equal(normalizeProjectThumbnailUrl("/images/project.png", env), "/images/project.png");
+  assert.equal(
+    normalizeProjectThumbnailUrl("https://go.example/images/project.png", env),
+    "https://go.example/images/project.png"
+  );
+  assert.equal(
+    normalizeProjectThumbnailUrl(
+      "https://firebasestorage.googleapis.com/v0/b/go-platform.appspot.com/o/project.png?alt=media",
+      env
+    ),
+    "https://firebasestorage.googleapis.com/v0/b/go-platform.appspot.com/o/project.png?alt=media"
+  );
+  assert.equal(normalizeProjectThumbnailUrl("http://go.example/image.png", env), null);
+  assert.equal(normalizeProjectThumbnailUrl("https://evil.example/tracker.png", env), null);
+  assert.equal(normalizeProjectThumbnailUrl("//evil.example/tracker.png", env), null);
+  assert.equal(
+    normalizeProjectThumbnailUrl(
+      "https://res.cloudinary.com/other-account/image/upload/tracker.png",
+      env
+    ),
+    null
   );
 });
 

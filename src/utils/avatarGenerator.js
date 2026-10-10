@@ -1,5 +1,5 @@
 import { createAvatar } from "@dicebear/core";
-import { identicon } from "@dicebear/collection";
+import * as identicon from "@dicebear/identicon";
 
 /**
  * Generate a unique avatar based on a seed (usually username or email)

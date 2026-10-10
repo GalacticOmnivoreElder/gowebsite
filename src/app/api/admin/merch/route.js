@@ -8,6 +8,8 @@ import { addEmailEventToBatch } from "@/lib/email/outbox";
 import { sendEmailJob } from "@/lib/email/send-email";
 
 export const runtime = "nodejs";
+const MAX_ADMIN_MERCH_REQUESTS = 5000;
+const MAX_BATCH_DELIVERY_ROWS = 1000;
 const json = (data, status = 200) => NextResponse.json(data, { status, headers: { "Cache-Control": "no-store" } });
 async function requireAdmin(request) {
   const user = await getRequestUser(request);
@@ -17,28 +19,31 @@ async function requireAdmin(request) {
 }
 async function allRequests() {
   const results = []; let cursor = null;
-  while (true) {
-    let query = adminDb.collection("merch_requests").orderBy("__name__").limit(300);
+  while (results.length < MAX_ADMIN_MERCH_REQUESTS) {
+    const pageSize = Math.min(300, MAX_ADMIN_MERCH_REQUESTS - results.length);
+    let query = adminDb.collection("merch_requests").orderBy("__name__").limit(pageSize);
     if (cursor) query = query.startAfter(cursor);
     const page = await query.get();
     page.docs.forEach((doc) => results.push({ id: doc.id, ...doc.data() }));
-    if (page.size < 300) return results;
+    if (page.size < pageSize) return { rows: results, truncated: false };
     cursor = page.docs[page.docs.length - 1];
   }
+  return { rows: results, truncated: true };
 }
 export async function GET(request) {
   try {
     await requireAdmin(request);
-    const [requests, suggestions, batches] = await Promise.all([
+    const [requestPage, suggestions, batches] = await Promise.all([
       allRequests(), adminDb.collection("merch_suggestions").orderBy("createdAt", "desc").limit(100).get(), adminDb.collection("merch_batches").orderBy("createdAt", "desc").limit(30).get(),
     ]);
+    const requests = requestPage.rows;
     const batchRows = await Promise.all(batches.docs.map(async (doc) => {
-      const jobs = await adminDb.collection("email_outbox").where("eventId", "==", doc.id).get();
+      const jobs = await adminDb.collection("email_outbox").where("eventId", "==", doc.id).limit(MAX_BATCH_DELIVERY_ROWS).get();
       const delivery = {};
       jobs.docs.forEach((job) => { const status = job.data().deliveryStatus || job.data().status; delivery[status] = (delivery[status] || 0) + 1; });
       return { id: doc.id, ...doc.data(), delivery };
     }));
-    return json({ summary: summarizeMerch(requests), requests: requests.filter((item) => item.status !== "withdrawn").map(({ id, email, status, active, updatedAt }) => ({ id, email, status, active: active || null, updatedAt })), suggestions: suggestions.docs.map((doc) => ({ id: doc.id, ...doc.data() })), batches: batchRows });
+    return json({ summary: summarizeMerch(requests), requests: requests.filter((item) => item.status !== "withdrawn").map(({ id, email, status, active, updatedAt }) => ({ id, email, status, active: active || null, updatedAt })), suggestions: suggestions.docs.map((doc) => ({ id: doc.id, ...doc.data() })), batches: batchRows, truncated: requestPage.truncated });
   } catch (error) { return json({ error: error.status ? error.message : "Could not load merch data." }, error.status || 500); }
 }
 export async function POST(request) {
@@ -60,9 +65,9 @@ export async function POST(request) {
         const existing = await transaction.get(ref);
         if (!existing.exists) transaction.create(ref, { ...batch, state: "prepared", cursor: null, queued: 0, createdAt: Date.now(), createdBy: user.uid });
       });
-      const requests = await allRequests();
-      const count = requests.filter((item) => matchesAvailability(item, batch)).length;
-      return json({ id, ...batch, count, productName: MERCH_PRODUCTS.find((item) => item.id === batch.productId).name });
+      const requestPage = await allRequests();
+      const count = requestPage.rows.filter((item) => matchesAvailability(item, batch)).length;
+      return json({ id, ...batch, count, countIsMinimum: requestPage.truncated, productName: MERCH_PRODUCTS.find((item) => item.id === batch.productId).name });
     }
     if (!["send", "test"].includes(body.action) || !/^[a-f0-9]{64}$/.test(body.id || "")) throw merchError("Invalid action.");
     requireMerchEmail();

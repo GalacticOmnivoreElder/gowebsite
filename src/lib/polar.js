@@ -20,6 +20,7 @@ async function polarApiRequest(path, options = {}) {
       "Content-Type": "application/json",
       ...options.headers,
     },
+    signal: options.signal || AbortSignal.timeout(10000),
   });
 
   if (!response.ok) {
@@ -53,9 +54,8 @@ export function getPolarProduct(productId) {
 /**
  * Schedule a product change without granting the target product immediately.
  *
- * The pinned Polar SDK predates `next_period`, so this deliberately uses the
- * current REST API. Keeping this policy in a server-only helper prevents the
- * browser from choosing an unsafe proration behavior.
+ * This deliberately keeps the scheduling policy in a server-only REST helper
+ * so the browser can never select an unsafe proration behavior.
  */
 export function schedulePolarProductChange(subscriptionId, productId) {
   if (!subscriptionId || !productId) {
@@ -194,6 +194,7 @@ export async function createPolarCustomerSession(customerId) {
     body: JSON.stringify({
       customer_id: customerId,
     }),
+    signal: AbortSignal.timeout(10000),
   });
 
   if (!response.ok) {

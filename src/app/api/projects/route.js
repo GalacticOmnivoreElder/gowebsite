@@ -9,11 +9,13 @@ import {
   DEFAULT_APPLICATION_ACCESS,
   filterAndSortProjectsForDiscovery,
   normalizeApplicationAccess,
+  normalizeProjectThumbnailUrl,
   normalizeProjectDiscoveryStatus,
   PROJECT_TYPES,
   PUBLIC_PROJECT_STATUSES,
   REQUIRED_ROLES,
   serializeFirestoreDate,
+  toPublicProjectDto,
   VISIBILITY_OPTIONS,
 } from "@/lib/project-utils";
 import { commitProjectCreation } from "@/lib/project-capacity";
@@ -26,6 +28,22 @@ const MAX_PROJECT_ROLE_LENGTH = 80;
 const MAX_PROJECT_CATEGORIES = 30;
 const MAX_PROJECT_CATEGORY_LENGTH = 80;
 const MAX_PROJECT_TYPE_LENGTH = 80;
+const PROJECT_DISCOVERY_READ_LIMIT = 300;
+const PROJECT_DISCOVERY_BATCH_SIZE = 50;
+
+function encodeProjectCursor(id) {
+  return Buffer.from(String(id), "utf8").toString("base64url");
+}
+
+function decodeProjectCursor(value) {
+  if (!value) return null;
+  try {
+    const id = Buffer.from(value, "base64url").toString("utf8");
+    return id && id.length <= 1500 && !id.includes("/") ? id : null;
+  } catch {
+    return null;
+  }
+}
 
 function validateProjectRequiredRoles(values) {
   if (!Array.isArray(values) || values.length === 0) {
@@ -218,9 +236,7 @@ function creationDocumentIds(userId, idempotencyKey) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const parsedPage = Number.parseInt(searchParams.get("page") || "1", 10);
     const parsedLimit = Number.parseInt(searchParams.get("limit") || "20", 10);
-    const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
     const limit =
       Number.isFinite(parsedLimit) && parsedLimit > 0
         ? Math.min(parsedLimit, 100)
@@ -232,55 +248,99 @@ export async function GET(request) {
     const visibility = searchParams.get("visibility") || "all";
     const requestedStatus = searchParams.get("status") || "all";
     const sortBy = searchParams.get("sortBy") || "status_priority";
+    const cursorValue = searchParams.get("cursor");
+    const cursorId = decodeProjectCursor(cursorValue);
+    if (cursorValue && !cursorId) {
+      return NextResponse.json({ error: "Invalid project cursor" }, { status: 400 });
+    }
 
-    // Get user to determine what projects they can see
-    const user = await getUserFromToken(request);
     const status = normalizeProjectDiscoveryStatus(requestedStatus);
 
     if (status === null) {
       return NextResponse.json({
         projects: [],
         hasMore: false,
-        pagination: { page, limit, total: 0 },
+        nextCursor: null,
+        pagination: { limit, total: 0 },
       });
     }
 
-    // Keep Firestore discovery queries deliberately simple. Combining status,
-    // type, visibility and dynamic orderBy fields requires many composite
-    // indexes, while orderBy also drops earlier documents missing optional
-    // fields such as budget. Filter and sort the approved set below instead.
-    let query = adminDb.collection("projects");
-    query =
+    let baseQuery = adminDb.collection("projects");
+    baseQuery =
       status === "all"
-        ? query.where("status", "in", PUBLIC_PROJECT_STATUSES)
-        : query.where("status", "==", status);
+        ? baseQuery.where("status", "in", PUBLIC_PROJECT_STATUSES)
+        : baseQuery.where("status", "==", status);
+    // Discovery is a public directory. Private and invite-only records are
+    // available from their direct authorized route, never mixed into this scan.
+    baseQuery = baseQuery
+      .where("visibility", "==", "Public")
+      .orderBy("createdAt", "desc")
+      .orderBy("__name__", "asc");
 
-    const snapshot = await query.get();
-    const approvedProjects = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: serializeFirestoreDate(data.createdAt),
-        updatedAt: serializeFirestoreDate(data.updatedAt),
-      };
-    });
+    let cursorDoc = null;
+    if (cursorId) {
+      cursorDoc = await adminDb.collection("projects").doc(cursorId).get();
+      if (!cursorDoc.exists) {
+        return NextResponse.json({ error: "Project cursor expired" }, { status: 400 });
+      }
+    }
 
-    const filteredProjects = filterAndSortProjectsForDiscovery(
-      approvedProjects,
-      {
-        category,
-        compensation,
-        search,
-        sortBy,
-        status,
-        type,
-        visibility,
-      },
-      user
+    const filters = {
+      category,
+      compensation,
+      search,
+      sortBy,
+      status,
+      type,
+      visibility,
+    };
+    const matchedProjects = [];
+    let reads = 0;
+    let exhausted = false;
+    let lastScannedDoc = cursorDoc;
+    let lastReturnedDoc = null;
+    let hasMore = false;
+    let foundAdditionalMatch = false;
+
+    while (reads < PROJECT_DISCOVERY_READ_LIMIT && !exhausted && !hasMore) {
+      const remaining = PROJECT_DISCOVERY_READ_LIMIT - reads;
+      let query = baseQuery.limit(
+        Math.min(PROJECT_DISCOVERY_BATCH_SIZE, remaining)
+      );
+      if (lastScannedDoc) query = query.startAfter(lastScannedDoc);
+      const snapshot = await query.get();
+      if (snapshot.empty) {
+        exhausted = true;
+        break;
+      }
+
+      for (const doc of snapshot.docs) {
+        reads++;
+        lastScannedDoc = doc;
+        const project = toPublicProjectDto({ id: doc.id, ...doc.data() });
+        const matches =
+          filterAndSortProjectsForDiscovery([project], filters, null).length === 1;
+        if (!matches) continue;
+        if (matchedProjects.length === limit) {
+          hasMore = true;
+          foundAdditionalMatch = true;
+          break;
+        }
+        matchedProjects.push(project);
+        lastReturnedDoc = doc;
+      }
+
+      if (snapshot.size < Math.min(PROJECT_DISCOVERY_BATCH_SIZE, remaining)) {
+        exhausted = true;
+      }
+    }
+
+    if (!exhausted && reads >= PROJECT_DISCOVERY_READ_LIMIT) hasMore = true;
+    const projects = filterAndSortProjectsForDiscovery(
+      matchedProjects,
+      filters,
+      null
     );
-    const offset = (page - 1) * limit;
-    const projects = filteredProjects.slice(offset, offset + limit);
 
     // Fetch sourceProject names only for the current page.
     const sourceProjectIds = new Set();
@@ -294,24 +354,17 @@ export async function GET(request) {
     const sourceProjectsMap = new Map();
     if (sourceProjectIds.size > 0) {
       try {
-        const sourceProjectPromises = Array.from(sourceProjectIds).map(
-          async (id) => {
-            const doc = await adminDb
-              .collection("sourceProjects")
-              .doc(id)
-              .get();
-            if (doc.exists) {
-              const data = doc.data();
-              return {
-                id: doc.id,
-                name: data.name,
-              };
-            }
-            return null;
-          }
+        const refs = Array.from(sourceProjectIds).map((id) =>
+          adminDb.collection("sourceProjects").doc(id)
         );
-
-        const sourceProjectResults = await Promise.all(sourceProjectPromises);
+        const sourceProjectResults = (
+          typeof adminDb.getAll === "function"
+            ? await adminDb.getAll(...refs)
+            : await Promise.all(refs.map((ref) => ref.get()))
+        ).map((doc) => {
+          if (!doc.exists) return null;
+          return { id: doc.id, name: doc.data().name };
+        });
         sourceProjectResults.forEach((sp) => {
           if (sp) {
             sourceProjectsMap.set(sp.id, sp);
@@ -333,15 +386,24 @@ export async function GET(request) {
       }
     });
 
-    const hasMore = offset + projects.length < filteredProjects.length;
+    const nextCursorSource = foundAdditionalMatch
+      ? lastReturnedDoc
+      : lastScannedDoc;
+    const nextCursor = hasMore && nextCursorSource
+      ? encodeProjectCursor(nextCursorSource.id)
+      : null;
 
     return NextResponse.json({
       projects,
       hasMore,
+      nextCursor,
       pagination: {
-        page,
         limit,
-        total: filteredProjects.length,
+        total: exhausted ? projects.length : null,
+      },
+    }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
       },
     });
   } catch (error) {
@@ -422,6 +484,13 @@ export async function POST(request) {
       return NextResponse.json({ error: projectTypeError }, { status: 400 });
     }
     const projectType = normalizeProjectType(projectData.type);
+    const thumbnail = normalizeProjectThumbnailUrl(projectData.thumbnail);
+    if (thumbnail === null) {
+      return NextResponse.json(
+        { error: "Thumbnail must use an approved HTTPS image host" },
+        { status: 400 }
+      );
+    }
 
     if (!VISIBILITY_OPTIONS.includes(projectData.visibility)) {
       return NextResponse.json(
@@ -611,7 +680,7 @@ export async function POST(request) {
     // Create the project
     const newProject = {
       title: projectData.title.trim(),
-      thumbnail: projectData.thumbnail || "",
+      thumbnail,
       categoryTags,
       type: projectType,
       description: projectData.description,

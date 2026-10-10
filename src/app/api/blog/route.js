@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+const WORDPRESS_TIMEOUT_MS = 8000;
+
+function wordpressRequestOptions(options = {}) {
+  return {
+    ...options,
+    signal: AbortSignal.timeout(WORDPRESS_TIMEOUT_MS),
+  };
+}
 
 function blogApiUrl(path) {
   const base = String(process.env.WORDPRESS_API_URL || "").replace(/\/$/, "");
@@ -10,7 +18,10 @@ function blogApiUrl(path) {
 async function getBlogCategoryId() {
   const url = blogApiUrl("/categories?slug=blog&_fields=id");
   if (!url) return null;
-  const response = await fetch(url, { next: { revalidate: 300 } });
+  const response = await fetch(
+    url,
+    wordpressRequestOptions({ next: { revalidate: 300 } })
+  );
   if (!response.ok) return null;
   const categories = await response.json();
   return Array.isArray(categories) ? categories[0]?.id || null : null;
@@ -53,9 +64,10 @@ export async function GET(request) {
     });
     if (slug) params.set("slug", slug);
 
-    const response = await fetch(blogApiUrl(`/posts?${params}`), {
-      next: { revalidate: 60 },
-    });
+    const response = await fetch(
+      blogApiUrl(`/posts?${params}`),
+      wordpressRequestOptions({ next: { revalidate: 60 } })
+    );
     if (!response.ok) {
       throw new Error(`WordPress responded with ${response.status}`);
     }

@@ -79,7 +79,10 @@ export function verifyJiraWebhook(rawBody, signature) {
   const secret = process.env.JIRA_WEBHOOK_SECRET;
   if (!secret || !signature) return false;
   const expected = `sha256=${crypto.createHmac("sha256", secret).update(rawBody).digest("hex")}`;
-  return signature.length === expected.length && crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  return signature.length === expected.length && crypto.timingSafeEqual(
+    Uint8Array.from(Buffer.from(signature)),
+    Uint8Array.from(Buffer.from(expected))
+  );
 }
 
 export function jiraWebhookEventId(rawBody, providedId) {

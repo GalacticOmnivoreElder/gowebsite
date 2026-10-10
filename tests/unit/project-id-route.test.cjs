@@ -9,11 +9,13 @@ const projectUtils = loadSourceModule("src/lib/project-utils.js", [
   "canViewProject",
   "COMPENSATION_TYPES",
   "normalizeApplicationAccess",
+  "normalizeProjectThumbnailUrl",
   "OWNER_MANAGED_STATUSES",
   "PROJECT_STATUSES",
   "PROJECT_TYPES",
   "REQUIRED_ROLES",
   "serializeFirestoreDate",
+  "toProjectDetailDto",
   "validateArrayValues",
   "VISIBILITY_OPTIONS",
 ]);
@@ -102,7 +104,7 @@ function createDb(seed = {}) {
           assert.equal(operator, "==");
           return {
             limit(limitValue) {
-              assert.equal(limitValue, 450);
+              assert.equal(limitValue, 351);
               return {
                 async get() {
                   return {
@@ -318,6 +320,63 @@ test("project admins cannot change creator-controlled application access", async
   assert.match(response.body.error, /project creator/i);
 });
 
+test("project owners cannot assign arbitrary admins or team members", async () => {
+  const route = loadRoute({
+    seed: { projects: { "project-1": existingProject() } },
+    user: { uid: "owner-1" },
+  });
+
+  const response = await route.PUT(
+    createRequest({
+      jsonBody: {
+        admins: ["owner-1", "attacker-controlled-user"],
+        teamMembers: ["owner-1", "attacker-controlled-user"],
+      },
+    }),
+    { params: { id: "project-1" } }
+  );
+
+  assert.equal(response.status, 403);
+  assert.match(response.body.error, /accepted application|platform administrator/i);
+  assert.deepEqual(route.adminDb.docs.projects["project-1"].admins, ["owner-1"]);
+});
+
+test("platform admins cannot attach nonexistent users to project roles", async () => {
+  const route = loadRoute({
+    seed: {
+      projects: { "project-1": existingProject() },
+      users: {
+        "admin-1": { username: "Platform Admin" },
+        "owner-1": { username: "Owner" },
+      },
+    },
+    user: { admin: true, uid: "admin-1" },
+  });
+
+  const response = await route.PUT(
+    createRequest({ jsonBody: { teamMembers: ["owner-1", "ghost-user"] } }),
+    { params: { id: "project-1" } }
+  );
+
+  assert.equal(response.status, 400);
+  assert.match(response.body.error, /existing user/i);
+});
+
+test("project updates reject attacker-controlled thumbnail origins", async () => {
+  const route = loadRoute({
+    seed: { projects: { "project-1": existingProject() } },
+    user: { uid: "owner-1" },
+  });
+
+  const response = await route.PUT(
+    createRequest({ jsonBody: { thumbnail: "https://evil.example/tracker.png" } }),
+    { params: { id: "project-1" } }
+  );
+
+  assert.equal(response.status, 400);
+  assert.match(response.body.error, /approved HTTPS image host/i);
+});
+
 test("project owners cannot submit or revert project status", async () => {
   const route = loadRoute({
     seed: { projects: { "project-1": existingProject() } },
@@ -430,13 +489,13 @@ test("project permanent delete requires a platform admin", async () => {
     ),
     true
   );
-  const userCleanup = route.adminDb.records.find(
-    (record) => record.type === "set" && record.ref.collectionName === "users"
+  assert.equal(
+    route.adminDb.records.some(
+      (record) => record.ref.collectionName === "users"
+    ),
+    false,
+    "deletion must not create user documents for stale project role IDs"
   );
-  assert.equal(userCleanup.options.merge, true);
-  assert.deepEqual(plain(userCleanup.data.ownerOfProjects.values), ["project-1"]);
-  assert.deepEqual(plain(userCleanup.data.adminOfProjects.values), ["project-1"]);
-  assert.deepEqual(plain(userCleanup.data.teamMemberOfProjects.values), ["project-1"]);
 });
 
 test("project delete tolerates a missing source project", async () => {

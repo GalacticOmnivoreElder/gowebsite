@@ -8,8 +8,10 @@ import {
   canViewProject,
   COMPENSATION_TYPES,
   normalizeApplicationAccess,
+  normalizeProjectThumbnailUrl,
   PROJECT_STATUSES,
   serializeFirestoreDate,
+  toProjectDetailDto,
   VISIBILITY_OPTIONS,
 } from "@/lib/project-utils";
 import {
@@ -27,6 +29,33 @@ const MAX_PROJECT_ROLE_LENGTH = 80;
 const MAX_PROJECT_CATEGORIES = 30;
 const MAX_PROJECT_CATEGORY_LENGTH = 80;
 const MAX_PROJECT_TYPE_LENGTH = 80;
+const MAX_PROJECT_ROLE_USERS = 100;
+const PROJECT_USER_ID_PATTERN = /^[^\s/]{1,128}$/;
+
+function normalizeProjectUserIds(values, fieldName) {
+  if (!Array.isArray(values)) {
+    return { error: `${fieldName} must be an array` };
+  }
+  if (values.length > MAX_PROJECT_ROLE_USERS) {
+    return {
+      error: `${fieldName} cannot contain more than ${MAX_PROJECT_ROLE_USERS} users`,
+    };
+  }
+  if (values.some((uid) => !PROJECT_USER_ID_PATTERN.test(uid || ""))) {
+    return { error: `${fieldName} contains an invalid user ID` };
+  }
+  return { values: [...new Set(values)] };
+}
+
+async function missingProjectUserIds(userIds) {
+  const uniqueIds = [...new Set(userIds.filter(Boolean))];
+  const snapshots = await Promise.all(
+    uniqueIds.map((uid) => adminDb.collection("users").doc(uid).get())
+  );
+  return snapshots.flatMap((snapshot, index) =>
+    snapshot.exists ? [] : [uniqueIds[index]]
+  );
+}
 
 function validateProjectRequiredRoles(values) {
   if (!Array.isArray(values) || values.length === 0) {
@@ -351,20 +380,20 @@ export async function GET(request, { params }) {
       }
     }
 
-    const safeProjectData =
-      user?.admin === true
-        ? projectData
-        : Object.fromEntries(
-            Object.entries(projectData).filter(([key]) => key !== "adminNotes")
-          );
+    const includeRoles =
+      user?.admin === true ||
+      projectData.owner === user?.uid ||
+      projectData.admins?.includes(user?.uid) ||
+      projectData.teamMembers?.includes(user?.uid);
+    const safeProjectData = toProjectDetailDto(
+      { id: projectDoc.id, ...projectData },
+      { includeRoles }
+    );
     const project = {
-      id: projectDoc.id,
       ...safeProjectData,
       applicationAccess: normalizeApplicationAccess(
         projectData.applicationAccess
       ),
-      createdAt: serializeFirestoreDate(projectData.createdAt),
-      updatedAt: serializeFirestoreDate(projectData.updatedAt),
       ownerDetails,
       adminDetails,
       teamMemberDetails,
@@ -413,7 +442,6 @@ export async function PUT(request, { params }) {
     }
 
     const updateData = await request.json();
-    const isOwner = existingProject.owner === user.uid;
     const isPlatformAdmin = user.admin || false;
     const hasOwnerUpdate = updateData.owner !== undefined;
 
@@ -443,6 +471,17 @@ export async function PUT(request, { params }) {
         filteredUpdateData[field] = updateData[field];
       }
     });
+
+    if (filteredUpdateData.thumbnail !== undefined) {
+      const thumbnail = normalizeProjectThumbnailUrl(filteredUpdateData.thumbnail);
+      if (thumbnail === null) {
+        return NextResponse.json(
+          { error: "Thumbnail must use an approved HTTPS image host" },
+          { status: 400 }
+        );
+      }
+      filteredUpdateData.thumbnail = thumbnail;
+    }
 
     if (hasOwnerUpdate && !isPlatformAdmin) {
       return NextResponse.json(
@@ -632,30 +671,34 @@ export async function PUT(request, { params }) {
       }
     }
 
-    // Only admins can change certain sensitive fields
+    // Membership changes are intentionally server-mediated. Project owners use
+    // the application approval/member removal flows; only a platform admin may
+    // directly repair role arrays.
     if (
       hasOwnerUpdate ||
       updateData.admins !== undefined ||
       updateData.teamMembers !== undefined
     ) {
-      if (isOwner || isPlatformAdmin) {
+      if (isPlatformAdmin) {
         if (updateData.admins !== undefined) {
-          if (!Array.isArray(updateData.admins)) {
-            return NextResponse.json({ error: "admins must be an array" }, { status: 400 });
+          const normalized = normalizeProjectUserIds(updateData.admins, "admins");
+          if (normalized.error) {
+            return NextResponse.json({ error: normalized.error }, { status: 400 });
           }
           filteredUpdateData.admins = [
-            ...new Set([nextOwner, ...updateData.admins]),
+            ...new Set([nextOwner, ...normalized.values]),
           ];
         }
         if (updateData.teamMembers !== undefined) {
-          if (!Array.isArray(updateData.teamMembers)) {
-            return NextResponse.json(
-              { error: "teamMembers must be an array" },
-              { status: 400 }
-            );
+          const normalized = normalizeProjectUserIds(
+            updateData.teamMembers,
+            "teamMembers"
+          );
+          if (normalized.error) {
+            return NextResponse.json({ error: normalized.error }, { status: 400 });
           }
           filteredUpdateData.teamMembers = [
-            ...new Set([nextOwner, ...updateData.teamMembers]),
+            ...new Set([nextOwner, ...normalized.values]),
           ];
         }
 
@@ -681,9 +724,40 @@ export async function PUT(request, { params }) {
             ]),
           ];
         }
+
+        const nextAdmins = filteredUpdateData.admins || existingProject.admins || [];
+        const nextTeamMembers = [
+          ...new Set([
+            nextOwner,
+            ...nextAdmins,
+            ...(filteredUpdateData.teamMembers || existingProject.teamMembers || []),
+          ]),
+        ];
+        if (nextTeamMembers.length > MAX_PROJECT_ROLE_USERS) {
+          return NextResponse.json(
+            { error: `A project cannot contain more than ${MAX_PROJECT_ROLE_USERS} role users` },
+            { status: 400 }
+          );
+        }
+        const missingUsers = await missingProjectUserIds([
+          nextOwner,
+          ...nextAdmins,
+          ...nextTeamMembers,
+        ]);
+        if (missingUsers.length > 0) {
+          return NextResponse.json(
+            { error: "Every project role must reference an existing user" },
+            { status: 400 }
+          );
+        }
+        filteredUpdateData.admins = [...new Set([nextOwner, ...nextAdmins])];
+        filteredUpdateData.teamMembers = nextTeamMembers;
       } else {
         return NextResponse.json(
-          { error: "Only project owners or platform admins can change team members" },
+          {
+            error:
+              "Project roles can only be added through an accepted application or changed by a platform administrator.",
+          },
           { status: 403 }
         );
       }
@@ -833,6 +907,37 @@ export async function DELETE(request, { params }) {
       );
     }
 
+    const uniqueRelatedUserIds = [
+      ...new Set([
+        existingProject.owner,
+        ...(existingProject.admins || []),
+        ...(existingProject.teamMembers || []),
+      ].filter(Boolean)),
+    ];
+    const relatedUserRefs = uniqueRelatedUserIds.map((uid) =>
+      adminDb.collection("users").doc(uid)
+    );
+    const relatedUserSnapshots = await Promise.all(
+      relatedUserRefs.map((ref) => ref.get())
+    );
+
+    // Keep the whole destructive operation atomic and below Firestore's
+    // 500-write batch limit: project + source + audit + up to 100 role users.
+    const applicationsSnapshot = await adminDb
+      .collection("applications")
+      .where("projectId", "==", id)
+      .limit(351)
+      .get();
+    if (applicationsSnapshot.docs.length > 350) {
+      return NextResponse.json(
+        {
+          error:
+            "This project has too many applications for safe atomic deletion. Archive it and contact support.",
+        },
+        { status: 409 }
+      );
+    }
+
     const batch = adminDb.batch();
     batch.delete(adminDb.collection("projects").doc(id));
 
@@ -850,29 +955,18 @@ export async function DELETE(request, { params }) {
       }
     }
 
-    const relatedUserIds = [
-      existingProject.owner,
-      ...(existingProject.admins || []),
-      ...(existingProject.teamMembers || []),
-    ].filter(Boolean);
-    [...new Set(relatedUserIds)].forEach((uid) => {
-      batch.set(
-        adminDb.collection("users").doc(uid),
+    relatedUserSnapshots.forEach((snapshot, index) => {
+      if (!snapshot.exists) return;
+      batch.update(
+        relatedUserRefs[index],
         {
           ownerOfProjects: admin.firestore.FieldValue.arrayRemove(id),
           adminOfProjects: admin.firestore.FieldValue.arrayRemove(id),
           teamMemberOfProjects: admin.firestore.FieldValue.arrayRemove(id),
           updatedAt: new Date(),
-        },
-        { merge: true }
+        }
       );
     });
-
-    const applicationsSnapshot = await adminDb
-      .collection("applications")
-      .where("projectId", "==", id)
-      .limit(450)
-      .get();
     applicationsSnapshot.docs.forEach((applicationDoc) => {
       batch.delete(applicationDoc.ref);
     });
@@ -890,7 +984,7 @@ export async function DELETE(request, { params }) {
     await enqueueEmailEventForUsers({
       type: "project.deleted",
       eventId: id,
-      userIds: [...new Set(relatedUserIds)].filter((uid) => uid !== user.uid),
+      userIds: uniqueRelatedUserIds.filter((uid) => uid !== user.uid),
       data: {
         projectId: id,
         projectTitle: existingProject.title || "Project",
@@ -925,8 +1019,14 @@ async function syncUserProjectArrays(projectId, previousProject, nextProject) {
 
   if (touchedUserIds.size === 0) return;
 
+  const userRefs = [...touchedUserIds]
+    .filter(Boolean)
+    .map((uid) => adminDb.collection("users").doc(uid));
+  const existingUsers = await Promise.all(userRefs.map((ref) => ref.get()));
   const batch = adminDb.batch();
-  touchedUserIds.forEach((uid) => {
+  existingUsers.forEach((snapshot, index) => {
+    if (!snapshot.exists) return;
+    const uid = userRefs[index].id;
     if (!uid) return;
     const updates = { updatedAt: new Date() };
 
@@ -951,7 +1051,7 @@ async function syncUserProjectArrays(projectId, previousProject, nextProject) {
     }
 
     if (Object.keys(updates).length > 1) {
-      batch.set(adminDb.collection("users").doc(uid), updates, { merge: true });
+      batch.update(userRefs[index], updates);
     }
   });
 

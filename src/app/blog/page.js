@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Clock, User } from "lucide-react";
 import Link from "next/link";
 import he from "he";
+import DOMPurify from "dompurify";
 import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
 import Image from "next/image";
 
@@ -119,7 +120,11 @@ export const BlogCard = ({ post }) => {
 
   // Decode the title and excerpt
   const decodedTitle = he.decode(post.title);
-  const decodedExcerpt = he.decode(post.excerpt);
+  const decodedExcerpt = DOMPurify.sanitize(he.decode(post.excerpt), {
+    ALLOWED_TAGS: ["p", "br", "strong", "b", "em", "i"],
+    ALLOWED_ATTR: [],
+    ALLOW_DATA_ATTR: false,
+  });
 
   return (
     <Link href={`/blog/${post.slug}`} className="block">

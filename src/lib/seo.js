@@ -162,7 +162,7 @@ async function getWordPressBlogCategoryId() {
   if (!process.env.WORDPRESS_API_URL) return null;
   const response = await fetch(
     `${process.env.WORDPRESS_API_URL}/categories?slug=blog&_fields=id`,
-    { next: { revalidate: 3600 } },
+    { next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000) },
   );
   if (!response.ok) return null;
   const categories = await response.json();
@@ -179,7 +179,7 @@ export async function getWordPressBlogPostBySlug(slug) {
       `${process.env.WORDPRESS_API_URL}/posts?_embed&slug=${encodeURIComponent(
         slug
       )}&categories=${categoryId}`,
-      { next: { revalidate: 3600 } }
+      { next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000) }
     );
 
     if (!response.ok) return null;
@@ -213,7 +213,7 @@ export async function getWordPressBlogPostsForSitemap() {
     if (!categoryId) return [];
     const response = await fetch(
       `${process.env.WORDPRESS_API_URL}/posts?per_page=100&categories=${categoryId}&_fields=slug,modified_gmt,date_gmt`,
-      { next: { revalidate: 3600 } }
+      { next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000) }
     );
 
     if (!response.ok) return [];

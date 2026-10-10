@@ -1,4 +1,5 @@
 import "../globals.css";
+import { headers } from "next/headers";
 import ReusableLayout from "@/reusable-ui/ReusableLayout";
 import {
   DEFAULT_DESCRIPTION,
@@ -105,18 +106,20 @@ import { Toaster } from "@/components/ui/toaster";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import CookieConsent from "@/components/cookies/CookieConsent";
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const nonce = (await headers()).get("x-nonce") || undefined;
   return (
     <html lang="en" suppressHydrationWarning className="dark">
       <body className="font-sans">
         <script
+          nonce={nonce}
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(seoJsonLd),
           }}
         />
         <ThemeProviderWrapper>
-          <AnalyticsProvider>
+          <AnalyticsProvider nonce={nonce}>
             <GoJourney /><ReusableLayout>{children}</ReusableLayout>
             <Toaster />
             <CookieConsent />

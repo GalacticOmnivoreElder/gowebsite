@@ -114,6 +114,7 @@ async function getServiceAccountToken() {
       assertion,
     }),
     cache: "no-store",
+    signal: AbortSignal.timeout(8000),
   });
 
   if (!response.ok) {
@@ -159,7 +160,11 @@ function buildFields() {
 }
 
 async function googleFetch(url, options = {}) {
-  const response = await fetch(url, { ...options, cache: "no-store" });
+  const response = await fetch(url, {
+    ...options,
+    cache: "no-store",
+    signal: options.signal || AbortSignal.timeout(8000),
+  });
   if (!response.ok) {
     const error = calendarApiError(
       `Google Calendar request failed with status ${response.status}.`,

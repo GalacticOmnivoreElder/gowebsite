@@ -31,7 +31,7 @@ export function useAnalyticsConsent() {
   return value;
 }
 
-function AnalyticsRuntime({ consent, pathname }) {
+function AnalyticsRuntime({ consent, nonce, pathname }) {
   const [claritySrc, setClaritySrc] = useState(null);
   const lastTrackedPagePath = useRef(null);
   const pagePath = pathname || "/";
@@ -67,6 +67,7 @@ function AnalyticsRuntime({ consent, pathname }) {
   return claritySrc ? (
     <Script
       id="go-clarity"
+      nonce={nonce}
       src={claritySrc}
       strategy="afterInteractive"
       onLoad={() => setClarityConsent(true)}
@@ -75,7 +76,7 @@ function AnalyticsRuntime({ consent, pathname }) {
   ) : null;
 }
 
-export function AnalyticsProvider({ children }) {
+export function AnalyticsProvider({ children, nonce }) {
   const pathname = usePathname();
   const [consent, setConsent] = useState(null);
   const [hydrated, setHydrated] = useState(false);
@@ -108,6 +109,7 @@ export function AnalyticsProvider({ children }) {
     <AnalyticsConsentContext.Provider value={contextValue}>
       <AnalyticsRuntime
         consent={consent}
+        nonce={nonce}
         pathname={pathname}
       />
       {children}

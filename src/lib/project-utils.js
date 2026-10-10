@@ -67,6 +67,103 @@ export const PROJECT_DISCOVERY_SORT_OPTIONS = [
 
 export const DEFAULT_PROJECT_DISCOVERY_SORT = "status_priority";
 
+// Public project responses are an explicit contract. Never spread a Firestore
+// document into an anonymous response: moderation, billing, invitation, and
+// audit fields must remain private even when new fields are added later.
+const PUBLIC_PROJECT_FIELDS = [
+  "applicationAccess",
+  "budget",
+  "categoryTags",
+  "compensationType",
+  "createdAt",
+  "description",
+  "duration",
+  "endDate",
+  "goal",
+  "intent",
+  "isOngoing",
+  "linkedProjects",
+  "requiredRoles",
+  "sourceProject",
+  "startDate",
+  "status",
+  "thumbnail",
+  "title",
+  "type",
+  "updatedAt",
+  "visibility",
+];
+
+export function toPublicProjectDto(project = {}) {
+  const dto = { id: project.id };
+  for (const field of PUBLIC_PROJECT_FIELDS) {
+    if (project[field] !== undefined) dto[field] = project[field];
+  }
+  dto.createdAt = serializeFirestoreDate(dto.createdAt);
+  dto.updatedAt = serializeFirestoreDate(dto.updatedAt);
+  return dto;
+}
+
+export function toProjectDetailDto(project = {}, { includeRoles = false } = {}) {
+  const dto = toPublicProjectDto(project);
+  if (includeRoles) {
+    dto.owner = project.owner || null;
+    dto.admins = Array.isArray(project.admins) ? [...project.admins] : [];
+    dto.teamMembers = Array.isArray(project.teamMembers)
+      ? [...project.teamMembers]
+      : [];
+    dto.archived = project.archived === true;
+    dto.archivedAt = serializeFirestoreDate(project.archivedAt);
+    dto.archivedBy = project.archivedBy || null;
+  }
+  return dto;
+}
+
+export function normalizeProjectThumbnailUrl(value, env = process.env) {
+  if (value === undefined || value === null || value === "") return "";
+  if (typeof value !== "string" || value.length > 2048) return null;
+  const candidate = value.trim();
+  if (!candidate || candidate.startsWith("//")) return null;
+  if (candidate.startsWith("/")) return candidate;
+
+  try {
+    const url = new URL(candidate);
+    if (
+      url.protocol !== "https:" ||
+      url.username ||
+      url.password ||
+      url.port ||
+      url.hash
+    ) {
+      return null;
+    }
+
+    const siteOrigin = env.NEXT_PUBLIC_SITE_URL
+      ? new URL(env.NEXT_PUBLIC_SITE_URL).origin
+      : null;
+    if (siteOrigin && url.origin === siteOrigin) return url.toString();
+    if (["images.unsplash.com", "plus.unsplash.com"].includes(url.hostname)) {
+      return url.toString();
+    }
+    if (
+      url.hostname === "res.cloudinary.com" &&
+      url.pathname.startsWith("/gho3c66o/image/upload/")
+    ) {
+      return url.toString();
+    }
+    if (url.hostname === "firebasestorage.googleapis.com") {
+      const bucket = String(env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "").trim();
+      return bucket &&
+        url.pathname.startsWith(`/v0/b/${encodeURIComponent(bucket)}/o/`)
+        ? url.toString()
+        : null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export function isPlatformAdmin(user) {
   return !!user?.admin;
 }

@@ -71,6 +71,14 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // A signed-in user may inspect only the subscription record that names
+    // their UID. Subscription creation and changes remain server-only.
+    match /subscriptions/{doc} {
+      allow get: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow list, create, update, delete: if false;
+    }
+
     // ── Server-only collections (Admin SDK bypasses these; browser is denied) ──
     match /discord_connections/{doc}  { allow read, write: if false; }
     match /discord_identities/{doc}   { allow read, write: if false; }

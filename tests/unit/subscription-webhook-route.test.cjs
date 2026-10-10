@@ -233,7 +233,7 @@ test("order.paid grants access, stores order data, and marks webhook processed",
       customer: { email: "member@example.com", id: "cus_123" },
       id: "order_1",
       metadata: { tier: "company", uid: "user-1" },
-      product_id: "prod_1",
+      product_id: "company-product",
       status: "paid",
       subscription_id: "sub_1",
     },
@@ -248,6 +248,67 @@ test("order.paid grants access, stores order data, and marks webhook processed",
   assert.equal(route.marks[0].eventType, "order.paid");
 });
 
+test("unknown Polar products are recorded but never grant membership", async () => {
+  const route = loadRoute({
+    seed: {
+      users: {
+        "user-1": { activeMember: false, email: "member@example.com" },
+      },
+    },
+  });
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    await route.captured.onOrderPaid({
+      data: {
+        customer: { external_id: "user-1", id: "cus_123" },
+        id: "order_unknown_product",
+        metadata: { tier: "company", uid: "user-1" },
+        product_id: "attacker-controlled-product",
+        status: "paid",
+      },
+      id: "evt_unknown_product",
+      type: "order.paid",
+    });
+  } finally {
+    console.error = originalError;
+  }
+
+  assert.equal(route.adminDb.docs.users["user-1"].activeMember, false);
+  assert.equal(
+    route.adminDb.docs.orders.order_unknown_product.status,
+    "entitlement_rejected"
+  );
+  assert.equal(route.marks.length, 1);
+});
+
+test("Polar email alone cannot select a local account", async () => {
+  const route = loadRoute({
+    seed: {
+      users: {
+        "user-1": { activeMember: false, email: "victim@example.com" },
+      },
+    },
+  });
+
+  await assert.rejects(
+    route.captured.onOrderPaid({
+      data: {
+        customer: { email: "victim@example.com", id: "cus_unlinked" },
+        id: "order_email_only",
+        product_id: "member-product",
+        status: "paid",
+      },
+      id: "evt_email_only",
+      type: "order.paid",
+    }),
+    /No user found/
+  );
+
+  assert.equal(route.adminDb.docs.users["user-1"].activeMember, false);
+  assert.equal(route.adminDb.docs.orders.order_email_only, undefined);
+});
+
 test("order.paid derives Business creator access from the Polar product", async () => {
   const route = loadRoute({
     seed: {
@@ -259,7 +320,11 @@ test("order.paid derives Business creator access from the Polar product", async 
 
   await route.captured.onOrderPaid({
     data: {
-      customer: { email: "creator@example.com", id: "cus_creator" },
+      customer: {
+        email: "creator@example.com",
+        external_id: "user-1",
+        id: "cus_creator",
+      },
       id: "order_creator",
       product_id: "company-product",
       status: "paid",
@@ -287,6 +352,7 @@ test("order.paid and subscription.active produce one activation email", async ()
       customer: { email: "member@example.com", id: "cus_123" },
       id: "order_1",
       metadata: { uid: "user-1" },
+      product_id: "member-product",
       status: "paid",
       subscription_id: "sub_1",
     },
@@ -297,6 +363,7 @@ test("order.paid and subscription.active produce one activation email", async ()
     data: {
       customer_id: "cus_123",
       id: "sub_1",
+      product_id: "member-product",
       status: "active",
     },
     id: "evt_active_after_paid",
@@ -325,6 +392,7 @@ test("subscription.active and order.paid produce one activation email when activ
       customer: { external_id: "user-1", id: "cus_123" },
       current_period_end: "2026-10-14T12:00:00.000Z",
       id: "sub_1",
+      product_id: "member-product",
       status: "active",
     },
     id: "evt_active_first",
@@ -338,6 +406,7 @@ test("subscription.active and order.paid produce one activation email when activ
       customer: { email: "member@example.com", id: "cus_123" },
       id: "order_1",
       metadata: { uid: "user-1" },
+      product_id: "member-product",
       status: "paid",
       subscription_id: "sub_1",
       total_amount: 1500,
@@ -393,6 +462,7 @@ test("concurrent replay claims one webhook execution", async () => {
       customer: { email: "member@example.com", id: "cus_123" },
       id: "order_concurrent",
       metadata: { uid: "user-1" },
+      product_id: "member-product",
       status: "paid",
       subscription_id: "sub_concurrent",
     },
@@ -429,6 +499,7 @@ test("subscription update handles past_due without revoking access", async () =>
       current_period_end: "2026-10-14T12:00:00.000Z",
       customer_id: "cus_123",
       id: "sub_1",
+      product_id: "member-product",
       status: "past_due",
     },
     id: "evt_past_due",
@@ -543,6 +614,7 @@ test("subscription canceled keeps access until period end and revoked removes ac
       current_period_end: "2026-10-14T12:00:00.000Z",
       customer_id: "cus_123",
       id: "sub_1",
+      product_id: "member-product",
       status: "canceled",
     },
     id: "evt_canceled",

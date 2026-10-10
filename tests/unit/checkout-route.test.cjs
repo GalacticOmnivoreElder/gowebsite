@@ -37,17 +37,16 @@ function loadRoute({
   mentorAvailable = true,
 } = {}) {
   const polarCalls = [];
-  class Polar {
-    constructor(config) {
-      this.config = config;
-      this.checkouts = {
+  function createPolar(config) {
+    return {
+      checkouts: {
         create: async (input) => {
           polarCalls.push({ config, input });
           if (polarCreate) return polarCreate(input);
           return { url: "https://checkout.polar.test/session" };
         },
-      };
-      this.subscriptions = {
+      },
+      subscriptions: {
         get: async (input) => {
           polarCalls.push({ config, input, operation: "subscription.get" });
           return { recurringInterval: "month" };
@@ -60,8 +59,8 @@ function loadRoute({
           });
           return { status: "active" };
         },
-      };
-    }
+      },
+    };
   }
 
   const route = loadSourceModule(
@@ -71,7 +70,7 @@ function loadRoute({
       stripImports: true,
       sandbox: {
         NextResponse,
-        Polar,
+        createPolar,
         getPolarServer: () => "sandbox",
         getMentorCheckoutStatus: async () => ({ available: mentorAvailable }),
         getRequestUser: async () => user || null,
@@ -255,7 +254,7 @@ test("checkout route creates Polar checkout with authenticated identity and buye
       });
       assert.deepEqual(plain(polarCalls[0].config), {
         accessToken: "token",
-        server: "sandbox",
+        environment: "sandbox",
       });
       assert.deepEqual(plain(polarCalls[0].input), {
         customerEmail: "member@example.com",
