@@ -4,7 +4,9 @@ const SITE_NAME = "Galactic Omnivore";
 const DESCRIPTION =
   "Galactic Omnivore is Macedonia's game development community for learning, collaboration, portfolio building, and finding a game dev team.";
 
-export const runtime = "edge";
+// ImageResponse pulls in enough rendering code to exceed Vercel Hobby's
+// 1 MB Edge Function limit. Node.js functions have a larger bundle allowance.
+export const runtime = "nodejs";
 export const alt = `${SITE_NAME} game development community`;
 export const size = {
   width: 1200,
