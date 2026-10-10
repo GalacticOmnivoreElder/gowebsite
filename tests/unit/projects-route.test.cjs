@@ -75,6 +75,7 @@ function createDb(seed = {}) {
   const projects = seed.projects || {};
   const sourceProjects = seed.sourceProjects || {};
   const projectCreationRequests = seed.project_creation_requests || {};
+  let failProjectDiscoveryIndex = seed.failProjectDiscoveryIndex === true;
   let projectCounter = 0;
   let sourceCounter = 0;
 
@@ -85,6 +86,17 @@ function createDb(seed = {}) {
   function query(collectionName, constraints = [], options = {}) {
     return {
       async get() {
+        if (
+          collectionName === "projects" &&
+          failProjectDiscoveryIndex &&
+          constraints.some(({ field }) => field === "status") &&
+          constraints.some(({ field }) => field === "visibility")
+        ) {
+          failProjectDiscoveryIndex = false;
+          const error = new Error("The query requires an index");
+          error.code = 9;
+          throw error;
+        }
         const collection =
           collectionName === "projects"
             ? projects
@@ -555,4 +567,46 @@ test("public discovery never serializes project role, moderation, or billing fie
   ]) {
     assert.equal(project[field], undefined, `${field} must not be public`);
   }
+});
+
+test("project discovery safely falls back while the composite index is unavailable", async () => {
+  const route = loadRoute({
+    seed: {
+      failProjectDiscoveryIndex: true,
+      projects: {
+        public: {
+          createdAt: "2026-07-29T10:00:00.000Z",
+          status: "hiring",
+          title: "Public project",
+          type: "Art & Design",
+          visibility: "Public",
+        },
+        private: {
+          adminNotes: "must remain private",
+          createdAt: "2026-07-29T11:00:00.000Z",
+          status: "hiring",
+          title: "Private project",
+          type: "Art & Design",
+          visibility: "Private",
+        },
+        pending: {
+          createdAt: "2026-07-29T12:00:00.000Z",
+          status: "pending",
+          title: "Pending project",
+          type: "Art & Design",
+          visibility: "Public",
+        },
+      },
+    },
+  });
+
+  const response = await route.GET(
+    createRequest({ url: "http://localhost:3000/api/projects" })
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    Array.from(response.body.projects, (project) => project.id),
+    ["public"]
+  );
 });

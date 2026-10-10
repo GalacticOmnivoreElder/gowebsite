@@ -31,6 +31,17 @@ const MAX_PROJECT_TYPE_LENGTH = 80;
 const PROJECT_DISCOVERY_READ_LIMIT = 300;
 const PROJECT_DISCOVERY_BATCH_SIZE = 50;
 
+function isMissingFirestoreIndexError(error) {
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    (code === "9" ||
+      code === "failed-precondition" ||
+      code.endsWith("/failed-precondition")) &&
+    message.includes("index")
+  );
+}
+
 function encodeProjectCursor(id) {
   return Buffer.from(String(id), "utf8").toString("base64url");
 }
@@ -301,6 +312,7 @@ export async function GET(request) {
     let lastReturnedDoc = null;
     let hasMore = false;
     let foundAdditionalMatch = false;
+    let usingIndexFallback = false;
 
     while (reads < PROJECT_DISCOVERY_READ_LIMIT && !exhausted && !hasMore) {
       const remaining = PROJECT_DISCOVERY_READ_LIMIT - reads;
@@ -308,7 +320,25 @@ export async function GET(request) {
         Math.min(PROJECT_DISCOVERY_BATCH_SIZE, remaining)
       );
       if (lastScannedDoc) query = query.startAfter(lastScannedDoc);
-      const snapshot = await query.get();
+      let snapshot;
+      try {
+        snapshot = await query.get();
+      } catch (error) {
+        if (usingIndexFallback || !isMissingFirestoreIndexError(error)) {
+          throw error;
+        }
+
+        // A newly deployed application can become live before its composite
+        // index finishes provisioning. Keep discovery available with a bounded
+        // single-field scan; the same public/status checks below still apply.
+        usingIndexFallback = true;
+        baseQuery = adminDb.collection("projects").orderBy("createdAt", "desc");
+        query = baseQuery.limit(
+          Math.min(PROJECT_DISCOVERY_BATCH_SIZE, remaining)
+        );
+        if (lastScannedDoc) query = query.startAfter(lastScannedDoc);
+        snapshot = await query.get();
+      }
       if (snapshot.empty) {
         exhausted = true;
         break;
@@ -317,7 +347,14 @@ export async function GET(request) {
       for (const doc of snapshot.docs) {
         reads++;
         lastScannedDoc = doc;
-        const project = toPublicProjectDto({ id: doc.id, ...doc.data() });
+        const projectData = { id: doc.id, ...doc.data() };
+        if (
+          projectData.visibility !== "Public" ||
+          !PUBLIC_PROJECT_STATUSES.includes(projectData.status)
+        ) {
+          continue;
+        }
+        const project = toPublicProjectDto(projectData);
         const matches =
           filterAndSortProjectsForDiscovery([project], filters, null).length === 1;
         if (!matches) continue;
