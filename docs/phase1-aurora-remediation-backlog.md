@@ -1,0 +1,42 @@
+# AURORA remediation backlog — proposed Phase 2 scope
+
+Derived from the 8 October 2026 baseline and the independent repository assessment in [the Phase 1 assessment](phase1-aurora-assessment.md). Estimates are engineering effort, not elapsed calendar time, and are preliminary until the affected page is measured.
+
+| Task | Finding; AURORA severity / proposed priority | Root cause and evidence | Target and acceptance criteria | Effort |
+|---|---|---|---|---|
+| QA-01 | AURORA-01; High / P1 | The four Projects Radix select triggers have no stable action-specific labels; current visible placeholder text means the reported unnamed-button failure still needs DOM confirmation. | Label category, project type, status, and sort actions so names remain meaningful after selection. Render and keyboard-test each trigger; run axe on `/projects` at desktop and mobile; no `button-name` violation. | 0.25–0.5 day |
+| QA-02 | AURORA-02; Medium / P1 | The accent token is identical in light and dark themes. `--primary: 326 71% 46%` yields about 3.84:1 against the dark surface sampled. Report lists 89 selectors over 17 pages. | Inventory all listed selectors in both themes. Correct the dark-theme text token or the responsible local pairing without changing decorative fills. Meet 4.5:1 for normal text and 3:1 for qualifying large text and controls. Preserve brand appearance. Re-run contrast coverage across all 17 routes; manually check focus, hover, disabled and errors. | 1–2 days |
+| QA-03 | AURORA-03; Medium / P2 verification | `X-Frame-Options: DENY` in `next.config.js`; `frame-ancestors 'none'` in `src/proxy.js`. In the 10 October production revision. No current response capture. | Capture both headers on a rendered page and the relevant fallback if tested. Confirm intended embeds do not frame GO pages. Keep the policy `DENY`/`none` unless a specific, supported product requirement proves an embed is needed. | 0.25 day |
+| QA-04 | AURORA-04; Medium / P1 verification | `src/proxy.js` enforces an application CSP for matched page requests. The policy permits scripts with a request nonce and `strict-dynamic`; APIs/static/image paths follow other response behavior. | Capture document and route headers. Exercise sign-in, account, checkout redirect, events, video/analytics and media journeys in controlled staging. Resolve any policy error without broad `*` or unjustified unsafe allowances. No production relaxation. | 0.5–1 day |
+| QA-05 | AURORA-05; Medium / P2 verification | `X-Content-Type-Options: nosniff` in the global Next.js route-header rule. | Confirm header on a page, JS/CSS asset, API response, and representative legitimate resource/download. Confirm MIME type is correct and no browser resource failures occur. | 0.25 day |
+| QA-06 | AURORA-06; Medium / P1 | `MissionHub.jsx` places `aria-label` on a generic `<span>` for a decorative-looking green avatar marker. | Inspect adjacent profile content and decide if the marker carries information. If decorative, hide it from assistive technology; otherwise use accurate status semantics and announce only truthful status. Axe reports no `aria-prohibited-attr`; keyboard and screen-reader review is sound. | 0.25–0.5 day |
+| QA-07 | AURORA-07; Medium / P2 | Report records project-detail CLS 0.36 but not the responsible element. Page data and some media load after initial render. | Collect cold-cache lab runs at desktop and mobile. Record LCP, CLS, FCP, and route/data conditions. Attribute shifts. Reserve space or prevent specific late content from moving existing content. Achieve CLS ≤0.10 over repeat comparable runs with no material LCP or visual regression. | 0.5–2 days after diagnosis |
+| QA-08 | AURORA-08; Low / P3 | WordPress article content can contain media and wide blocks. Image rules exist; the reported 11 px overflow source has not been isolated. | At 375 px, identify the offending box using browser scroll-width and element bounds. Constrain overflowing embeds/images and give genuinely wide tables/code local scrolling. No page clipping and no unintended horizontal overflow at 360, 375, 768, and 1280 px. Check another post template. | 0.25–0.75 day |
+| QA-09 | All eight; P1 quality gate | Original run used read-only form constraints and excluded nine state-changing checks. Private pages were out of scope. | Preserve a same-run AURORA-compatible baseline. Run appropriate build/type/lint and existing tests; manual keyboard check; document unavailable sandbox or account journeys. Fail release on remaining confirmed severe violations, header regression, material workflow failure, or unexplained layout shift. | 1–2 days including verification |
+
+## Work ordering and dependencies
+
+1. Reproduce QA-01, QA-02, QA-06, QA-07, and QA-08 using the current production revision and an isolated preview, and save the route, viewport, theme, element, and measured result. This prevents stale-baseline fixes.
+2. Implement QA-01, QA-02, QA-06, and the diagnosed portions of QA-07 and QA-08. Contrast changes need the full dark/light inventory before choosing tokens.
+3. Re-run accessibility, mobile, and performance checks under conditions comparable to the reports. Verify QA-03/04/05 in the deployed preview and revisit external integration flows under the enforced CSP.
+4. Release only after the [test plan](phase1-aurora-test-plan.md) and [production plan](phase1-production-and-rollback-plan.md) pass.
+
+**Estimate:** approximately 3–7 engineering days for AURORA implementation and verification, after the baseline is reproducible and a reliable preview/test identity is available. The upper bound reflects the uninvestigated CLS root cause and full contrast sampling. This excludes the GOHQ programme.
+
+## Exclusions
+
+The AURORA brief also suggests testing login, checkout, payments, subscription state, forms, admin routes, and external integrations. These are coverage recommendations, not additional defects proven by the 8 October report. Phase 2 should verify them only with staging accounts, payment sandbox and controlled data. It should not charge or mutate customer accounts on production. The community event and access system is separate project scope and remains gated by its own agreed design and implementation plan.
+
+## Local implementation record — 17 October 2026
+
+The user authorized local implementation, validation, and commit, with no push or production deployment. The changes below are ready for local review:
+
+| Task | Local result | Evidence / remaining limit |
+|---|---|---|
+| QA-01 | Added action-specific accessible names to the four Projects filter/sort triggers. | Playwright confirms each named combobox is rendered. |
+| QA-02 | Added `--primary-text` for text utilities while preserving the existing `--primary` brand fill; increased the low-contrast event labels and aligned the Starter Pathway eyebrow. | Local axe scans with seeded route data cleared the reported contrast findings on the sampled affected pages in dark mode; primary text was also checked in light mode. Full route coverage with production-equivalent content still needs the user's local test environment. |
+| QA-03/04/05 | Kept existing response policy unchanged. | Local rendered-page headers include `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and CSP `frame-ancestors 'none'`. CDN and asset response behavior remains a deployment-side check. |
+| QA-06 | Marked the decorative profile status dot `aria-hidden`. | Playwright confirms the generic marker no longer carries an invalid label. |
+| QA-07 | Reworked the loading placeholder to reserve the toolbar, 16:9 media, and detail area; keyed loading and loaded trees so React does not reuse the loading grid node as the loaded hero. | Three controlled local Chromium fixture runs each measured CLS 0.000. This is a deterministic lab fixture, not field Core Web Vitals data. |
+| QA-08 | Added responsive WordPress media rules, local scrolling for wide embeds/tables/code, and wrapping for long links. | Fixture with a long URL, iframe, wide table and code block has no document overflow at 360, 375, 768, or 1280 px. |
+| QA-09 | Added a Playwright regression config and six focused checks. | Six Playwright checks pass. Repository typecheck passes. Lint exits 0 with 17 existing warnings. The existing unit suite passes 486/491; five unrelated landing-page/subscription assertions fail. The production build was not run because a Next dev server already owns this checkout's `.next` directory. No production test or release was run. |

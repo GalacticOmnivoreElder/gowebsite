@@ -749,9 +749,23 @@ const ProjectDetailsPage = observer(() => {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Skeleton className="h-8 w-1/4" />
-          <Skeleton className="h-64 w-full" />
+        <div key="project-loading" className="max-w-4xl mx-auto space-y-6">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-10 w-36" />
+          </div>
+          <div className="mb-8">
+            <Skeleton className="aspect-video w-full rounded-lg" />
+            <div className="mt-6 min-h-[248px] space-y-4">
+              <Skeleton className="h-10 w-2/3" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-6 w-16" />
+              </div>
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Skeleton className="h-40" />
             <Skeleton className="h-40" />
@@ -802,7 +816,7 @@ const ProjectDetailsPage = observer(() => {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="max-w-4xl mx-auto">
+      <div key="project-loaded" className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <Button variant="outline" onClick={() => router.push("/projects")}>

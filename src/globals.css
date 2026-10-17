@@ -11,6 +11,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
     --primary: 326 71% 46%;
+    --primary-text: 326 71% 40%;
     --primary-foreground: 355.7 100% 97.3%;
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
@@ -39,6 +40,7 @@
     --popover: 0 0% 9%;
     --popover-foreground: 0 0% 95%;
     --primary: 326 71% 46%;
+    --primary-text: 326 71% 68%;
     --primary-foreground: 355.7 100% 97.3%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -446,4 +448,49 @@
   .go-logo-spinner--running {
     animation: none;
   }
+}
+
+.wordpress-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.wordpress-content figure,
+.wordpress-content .wp-block-embed,
+.wordpress-content .wp-block-table {
+  max-width: 100%;
+}
+
+.wordpress-content video,
+.wordpress-content iframe,
+.wordpress-content embed,
+.wordpress-content object,
+.wordpress-content svg,
+.wordpress-content canvas {
+  max-width: 100%;
+}
+
+.wordpress-content video,
+.wordpress-content iframe {
+  height: auto;
+}
+
+.wordpress-content pre,
+.wordpress-content .wp-block-embed,
+.wordpress-content .wp-block-table {
+  overflow-x: auto;
+}
+
+/* Accent text uses a contrast-safe shade while bg-primary keeps the brand fill. */
+.text-primary,
+[class~="text-primary/60"],
+[class~="text-primary/80"] {
+  color: hsl(var(--primary-text));
+}
+
+[class~="hover:text-primary"]:hover,
+[class~="hover:text-primary/80"]:hover,
+[class~="focus:text-primary"]:focus,
+.group:hover [class~="group-hover:text-primary"] {
+  color: hsl(var(--primary-text));
 }

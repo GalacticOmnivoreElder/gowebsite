@@ -372,7 +372,7 @@ const ProjectsPage = observer(() => {
           value={localFilters.category}
           onValueChange={(value) => handleFilterChange("category", value)}
         >
-          <SelectTrigger>
+          <SelectTrigger aria-label="Filter projects by category">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
@@ -389,7 +389,7 @@ const ProjectsPage = observer(() => {
           value={localFilters.type}
           onValueChange={(value) => handleFilterChange("type", value)}
         >
-          <SelectTrigger>
+          <SelectTrigger aria-label="Filter projects by type">
             <SelectValue placeholder="Project type" />
           </SelectTrigger>
           <SelectContent>
@@ -406,7 +406,7 @@ const ProjectsPage = observer(() => {
           value={localFilters.status}
           onValueChange={(value) => handleFilterChange("status", value)}
         >
-          <SelectTrigger>
+          <SelectTrigger aria-label="Filter projects by status">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -436,7 +436,7 @@ const ProjectsPage = observer(() => {
           value={localFilters.sortBy}
           onValueChange={(value) => handleFilterChange("sortBy", value)}
         >
-          <SelectTrigger>
+          <SelectTrigger aria-label="Sort projects">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>

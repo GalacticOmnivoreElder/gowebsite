@@ -597,7 +597,7 @@ export default function MissionHub({
                   </Avatar>
                   <span
                     className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-background bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]"
-                    aria-label="Profile status marker"
+                    aria-hidden="true"
                   />
                 </div>
 
