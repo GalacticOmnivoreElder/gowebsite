@@ -9,10 +9,10 @@
   "metrics": [
     {
       "id": "meetings",
-      "value": 263,
+      "value": 351,
       "label": "Recorded meetings & appointments",
       "period": "17 Oct 2023–16 Oct 2026",
-      "note": "Conservative count of scheduled events across four GO calendars. Attendance is not verified.",
+      "note": "Conservative count across 11 calendars in three GO-maintained exports. Attendance and GO-specific relevance are not verified.",
       "href": "/impact#calendar-method"
     },
     {
@@ -41,35 +41,38 @@
     }
   ],
   "calendar": {
-    "raw": 944,
-    "unique": 904,
-    "duplicates": 40,
-    "meetings": 263,
-    "needsReview": 217,
-    "otherExcluded": 424,
+    "sourceArchives": 3,
+    "sourceEventComponents": 809,
+    "unique": 1132,
+    "duplicates": 53,
+    "meetings": 351,
+    "needsReview": 343,
+    "otherExcluded": 438,
+    "sourceCalendars": 11,
+    "expandedOccurrences": 1185,
+    "allDayRecords": 419,
+    "nonMeeting": 19,
+    "recurrenceSeries": 34,
+    "detachedExceptions": 36,
     "byYear": [
       {
         "year": 2023,
-        "count": null,
-        "note": "No records returned for this part of the window."
+        "count": 3
       },
       {
         "year": 2024,
-        "count": 13
+        "count": 17
       },
       {
         "year": 2025,
-        "count": 92
+        "count": 132
       },
       {
         "year": 2026,
-        "count": 158
+        "count": 199
       }
     ],
-    "recurring": 146,
-    "accepted": 219,
-    "needsAction": 23,
-    "noResponseRecorded": 21
+    "recurring": 178
   },
   "work": {
     "archiveDate": "2025-01-29",
@@ -118,7 +121,7 @@
     },
     {
       "title": "Attendance and older calendars",
-      "detail": "Confirm ambiguous entries, personal attendance and any missing calendars. No entries were returned for 2022–2023; that is a coverage gap, not proof of no activity."
+      "detail": "Review 343 ambiguous entries and confirm personal attendance. The supplied exports reach back to 3 April 2023; earlier calendar coverage is unknown."
     },
     {
       "title": "Recent task completions",

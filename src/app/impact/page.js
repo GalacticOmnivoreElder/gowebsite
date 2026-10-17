@@ -90,16 +90,16 @@ export default function ImpactPage() {
           <div className="grid gap-6 lg:grid-cols-2">
             <article id="calendar-method" className="scroll-mt-24 rounded-xl border bg-card p-6 sm:p-8">
               <h3 className="text-2xl font-semibold">Meetings and appointments</h3>
-              <p className="mt-4 leading-7 text-muted-foreground">We queried GO Core Team, GO Meetings, GO Events and GO Weekly Community Meetings, including recurring occurrences. All four queries completed pagination.</p>
+              <p className="mt-4 leading-7 text-muted-foreground">Three GO-maintained Google Calendar exports supplied 11 calendars and 809 source event records. We expanded 34 recurring series and applied 36 detached-instance changes to produce 1,185 scheduled occurrence copies in the reporting window. Times were normalized to Europe/Warsaw.</p>
               <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-6 text-muted-foreground">
-                <li>944 calendar records became 904 unique entries after 40 duplicate copies were removed.</li>
-                <li>263 clearly named meetings, calls, appointments, interviews, mentoring sessions and coordination sessions fall within the window.</li>
-                <li>217 ambiguous entries remain outside the headline count. Another 424 entries are office/availability blocks, reminders, other exclusions or declined invitations.</li>
-                <li>146 counted entries are recurring occurrences. A recurring schedule or an accepted invitation does not verify attendance.</li>
-                <li>These are organizational calendar records; they do not establish a personal attendance total for any individual.</li>
+                <li>Removing 53 duplicate copies leaves 1,132 unique entries across the exports.</li>
+                <li>351 clearly named meetings, calls, appointments, interviews, mentoring sessions and coordination sessions fall within the window.</li>
+                <li>343 ambiguous entries remain outside the headline count. Another 419 all-day entries and 19 clearly non-meeting records are excluded.</li>
+                <li>178 counted entries are recurring occurrences. A calendar entry or invitation response does not verify attendance.</li>
+                <li>The exports include shared and account calendars; the records do not prove personal attendance or that every meeting directly involved GO.</li>
               </ul>
-              <table className="mt-6 w-full text-left text-sm"><caption className="mb-3 text-left font-semibold">Recorded meetings by calendar year</caption><thead><tr className="border-b"><th scope="col" className="py-2">Year</th><th scope="col" className="py-2 text-right">Count</th></tr></thead><tbody>{impact.calendar.byYear.map((row) => <tr key={row.year} className="border-b border-border/50"><th scope="row" className="py-3 font-normal">{row.year}{row.year === 2026 ? " (through 16 Oct)" : ""}</th><td className="py-3 text-right">{row.count === null ? "No records returned" : row.count}</td></tr>)}</tbody></table>
-              <p className="mt-4 text-sm leading-6 text-muted-foreground">The additional search back to 1 January 2022 returned no earlier calendar entries. This reflects available coverage, not an absence of activity.</p>
+              <table className="mt-6 w-full text-left text-sm"><caption className="mb-3 text-left font-semibold">Recorded meetings by calendar year</caption><thead><tr className="border-b"><th scope="col" className="py-2">Year</th><th scope="col" className="py-2 text-right">Count</th></tr></thead><tbody>{impact.calendar.byYear.map((row) => <tr key={row.year} className="border-b border-border/50"><th scope="row" className="py-3 font-normal">{row.year}{row.year === 2026 ? " (through 16 Oct)" : ""}</th><td className="py-3 text-right">{row.count}</td></tr>)}</tbody></table>
+              <p className="mt-4 text-sm leading-6 text-muted-foreground">The earliest dated event in these exports is 3 April 2023. Calendar coverage before that date is unknown.</p>
             </article>
 
             <article id="work-method" className="scroll-mt-24 rounded-xl border bg-card p-6 sm:p-8">

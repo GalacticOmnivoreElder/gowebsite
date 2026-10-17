@@ -8,16 +8,16 @@ The public report is `public/documents/go-impact-2026-10-17.md`; the page is `/i
 - Completed Jira archive, tab `29.01.2025`, header A1:EZ2, populated data A2:W640: 637 distinct Done issue records.
 - April Jira export, tab `Jira Export CSV (all fields) 20250429124307`, populated data A2:W113: 110 open issues, no completion evidence.
 - April 2025 pitch. Its mission and creator journey inform the public adaptation. Historical member/project/event counts, market assertions, funding asks, forecasts and prices are not treated as verified current facts.
-- GO Core Team, GO Meetings, GO Events, GO Weekly Community Meetings: paginated calendar searches for 17 October 2023–17 October 2026, Europe/Warsaw; four terminal pages. A separate 2022–17 October 2023 search returned no entries.
+- Three user-supplied Google Calendar iCalendar export archives, dated 17 October 2026: 11 calendars and 809 source event components. The private importer expands recurrence rules and applies detached-instance changes, date exclusions and additions within the reporting window.
 - [Public project endpoint](https://www.galacticomnivore.com/api/projects?status=all&limit=100): 13 distinct IDs, `hasMore=false`, read 17 October 2026.
 
 ## Private reproducibility
 
-Connector exports and the statute extraction are kept under ignored `tmp/kpi/`. Do not move those raw exports into `public/` or commit them.
+Calendar exports, normalized snapshots and the statute extraction are kept under ignored `tmp/kpi/`. Do not move those raw exports into `public/` or commit them.
 
-Run `node scripts/audit-go-impact.cjs tmp/kpi` to reproduce the private audit summary and review queue. The script requires completed calendar and portfolio pagination. It deduplicates invitations, excludes all-day/undated events, uses a conservative title classifier, and reports ambiguous records separately. It selects Jira completions by resolution date and separates epics from tasks/stories/subtasks.
+After extracting the three supplied archives into ignored `tmp/kpi/calendar-import/`, run `node scripts/import-google-calendar-ics.cjs tmp/kpi/calendar-import tmp/kpi`, then `node scripts/audit-go-impact.cjs tmp/kpi` to reproduce the private audit summary and review queue. The importer expands supported recurrence rules and applies `EXDATE`, `RDATE` and detached-instance overrides in the event timezone. The audit deduplicates event identities and matching normalized title/start/end pairs across calendars, excludes all-day/undated entries and non-meetings, uses a conservative title classifier, and reports ambiguous records separately. It selects Jira completions by resolution date and separates epics from tasks/stories/subtasks.
 
-Final calendar reconciliation: 944 source rows, 40 duplicate copies, 904 unique entries; 263 meetings, 217 needing review, 424 other exclusions. Shared organizational schedules do not establish personal attendance. Four all-day entries were excluded during final date validation, correcting the provisional 267 count.
+Final calendar reconciliation: 11 source calendars and 809 event components; recurrence expansion produced 1,185 occurrence copies in the window. After removing 53 duplicate copies, 1,132 unique entries remain: 351 clearly named meetings, 343 needing review, 419 all-day entries and 19 non-meeting exclusions. This replaces the earlier connector-based snapshot. Shared calendar schedules do not establish personal attendance.
 
 ## Updating
 
@@ -27,6 +27,6 @@ Final calendar reconciliation: 944 source rows, 40 duplicate copies, 904 unique 
 4. Verify homepage, About/footer links, `/impact`, report download, mobile overflow and sitemap. Run the audit tests and relevant page checks.
 5. Publish only aggregate data and already-public project information. Do not expose meeting links, participants, task descriptions or internal notes.
 
-A fresh founding document, post-January-2025 Jira completion export, project completion dates and verified website analytics will resolve the documented gaps.
+A fresh founding document, review of the 343 ambiguous calendar entries, post-January-2025 Jira completion export, project completion dates and verified website analytics will resolve the documented gaps. The calendar exports reach back to 3 April 2023; earlier coverage is unknown.
 
 Exact internal source URLs are retained only in the ignored local source register.

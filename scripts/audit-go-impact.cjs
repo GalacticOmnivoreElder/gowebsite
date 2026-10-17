@@ -7,13 +7,17 @@ const WINDOW = {
   endExclusive: "2026-10-17T00:00:00+02:00",
   timezone: "Europe/Warsaw",
 };
-const MEETING = /\b(meetings?|meetup|meet up|meet with|sync|stand.up|sprint planning|retrospective|retro|mentorship|mentoring|consultation|interview|kick.?off|sostanok|pdr|catch.up|call|coordination|discussion|101)\b|состанок|седница|собрание|visit gohq/i;
+const MEETING = /\b(meetings?|meetup|meet up|meet with|appointments?|sync|stand.up|sprint planning|retrospective|retro|mentorship|mentoring|consultation|interview|kick.?off|sostanok|pdr|catch.up|call|coordination|discussion|101)\b|состанок|седница|собрание|visit gohq/i;
 const NON_MEETING = /remind|prepping|prepare|birthday|b-day|\bbusy\b|available|\booo\b|membership fee|^office$|^go virtual office|check availability|slot for schedule/i;
 const normalize = (value) => String(value || "").normalize("NFKC").toLowerCase().trim().replace(/\s+/g, " ");
 const tally = (values) => values.reduce((counts, value) => {
   counts[value] = (counts[value] || 0) + 1;
   return counts;
 }, {});
+const yearInTimezone = (value, timezone) => new Intl.DateTimeFormat("en", {
+  year: "numeric",
+  timeZone: timezone,
+}).format(new Date(value));
 
 function auditCalendar(calendars, window = WINDOW) {
   if (calendars.some((calendar) => calendar.complete !== true)) {
@@ -59,11 +63,11 @@ function auditCalendar(calendars, window = WINDOW) {
   });
   const meetings = classified.filter((event) => event.category === "meeting");
   return {
-    rawRecords: calendars.reduce((sum, calendar) => sum + calendar.events.length, 0),
+    expandedCopies: calendars.reduce((sum, calendar) => sum + calendar.events.length, 0),
     uniqueRecords: classified.length,
     duplicateCopies: classified.reduce((sum, event) => sum + event.copies - 1, 0),
     categories: tally(classified.map((event) => event.category)),
-    meetingsByYear: tally(meetings.map((event) => event.start.slice(0, 4))),
+    meetingsByYear: tally(meetings.map((event) => yearInTimezone(event.start, window.timezone))),
     meetingResponseStatuses: tally(meetings.map((event) => event.my_response_status || "not_recorded")),
     recurringMeetings: meetings.filter((event) => event.recurring_event_id).length,
     // Private audit rows are deliberately separate from the public summary.
@@ -101,7 +105,9 @@ if (require.main === module) {
   const directory = process.argv[2];
   if (!directory) throw new Error("Usage: node scripts/audit-go-impact.cjs <private export directory>");
   const read = (name) => JSON.parse(fs.readFileSync(path.join(directory, name), "utf8").replace(/^\uFEFF/, ""));
-  const calendar = auditCalendar(read("calendar-snapshot.json").calendars);
+  const calendarSnapshot = read("calendar-snapshot.json");
+  const calendar = auditCalendar(calendarSnapshot.calendars);
+  const calendarSource = calendarSnapshot.source || {};
   const jira = auditJira(read("jira-snapshot.json").january);
   const projects = read("public-projects.json");
   if (projects.hasMore !== false) throw new Error("Finish public project pagination before counting.");
@@ -109,7 +115,14 @@ if (require.main === module) {
   const { review, ...calendarSummary } = calendar;
   const summary = {
     window: WINDOW,
-    calendar: calendarSummary,
+    calendar: {
+      ...calendarSummary,
+      sourceFiles: calendarSource.sourceFiles,
+      sourceEventComponents: calendarSource.sourceEventComponents,
+      recurringSeries: calendarSource.recurringSeries,
+      exceptionComponents: calendarSource.exceptionComponents,
+      expandedOccurrencesInWindow: calendarSource.expandedOccurrencesInWindow,
+    },
     jira,
     publicProjects: { count: uniqueProjects.length, statuses: tally(uniqueProjects.map((project) => project.status)) },
   };
@@ -118,4 +131,4 @@ if (require.main === module) {
   console.log(JSON.stringify(summary, null, 2));
 }
 
-module.exports = { auditCalendar, auditJira, jiraDate };
+module.exports = { WINDOW, auditCalendar, auditJira, jiraDate };
