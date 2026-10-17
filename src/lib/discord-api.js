@@ -11,6 +11,11 @@ export function getDiscordConfig() {
     botToken: process.env.DISCORD_BOT_TOKEN,
     guildId: process.env.DISCORD_GUILD_ID,
     memberRoleId: process.env.DISCORD_MEMBER_ROLE_ID || null,
+    appetiteRoleIds: {
+      hungry: process.env.DISCORD_APPETITE_HUNGRY_ROLE_ID || null,
+      one_more_bite: process.env.DISCORD_APPETITE_ONE_MORE_BITE_ROLE_ID || null,
+      full: process.env.DISCORD_APPETITE_FULL_ROLE_ID || null,
+    },
     redirectUri: process.env.DISCORD_REDIRECT_URI,
     membersOnly: process.env.DISCORD_JOIN_MEMBERS_ONLY === "true",
   };
@@ -21,10 +26,15 @@ export function getDiscordConfig() {
       (process.env.NODE_ENV !== "production" && url.hostname === "localhost" && url.protocol === "http:")) &&
       url.pathname === "/api/discord/callback" && !url.search && !url.hash && !url.username && !url.password;
   } catch { /* Configuration remains disabled. */ }
+  const appetiteRoleIds = Object.values(config.appetiteRoleIds);
+  const validAppetiteRoles = appetiteRoleIds.every((id) => /^\d{17,20}$/.test(id || "")) &&
+    new Set(appetiteRoleIds).size === appetiteRoleIds.length &&
+    appetiteRoleIds.every((id) => id !== config.guildId && id !== config.memberRoleId);
   config.enabled = process.env.DISCORD_ENABLED === "true" && validRedirect &&
     /^\d{17,20}$/.test(config.clientId || "") && /^\d{17,20}$/.test(config.guildId || "") &&
     !!config.clientSecret && !!config.botToken &&
     (!config.memberRoleId || (/^\d{17,20}$/.test(config.memberRoleId) && config.memberRoleId !== config.guildId));
+  config.appetiteEnabled = config.enabled && validAppetiteRoles;
   return config;
 }
 

@@ -5,6 +5,10 @@ OAuth requests `identify guilds.join`. GO verifies the Discord user ID, reserves
 it for one GO account, and adds the user to the configured server using the bot.
 Existing server members can connect too. The first release manages one optional
 paid-member role; mentor, business, and project-specific roles are not included.
+The public GO appetite signal can also summarize three optional self-selected
+roles: Hungry (green), One More Bite (yellow), and Full (red). It uses only the
+role on recently synced Discord accounts linked to GO and publishes aggregate
+counts without usernames.
 
 The existing Python bot was reviewed from the supplied repository archive. See
 [existing bot review](./DISCORD_EXISTING_BOT_REVIEW.md) for the responsibility split
@@ -31,11 +35,21 @@ do not use that as the paid-member role while reaction-based granting is enabled
    to it, and set `DISCORD_MEMBER_ROLE_ID`. Audit other roles and channel overrides
    for alternate access paths. Do not use a staff, moderator, integration-managed,
    or self-assignable role. GO owns assignment/removal of the configured role.
-7. Set `DISCORD_JOIN_MEMBERS_ONLY=true` only if joining via GO requires an active
+7. To enable the appetite signal, create three distinct roles named `Hungry`,
+   `One More Bite`, and `Full`. Add a Discord role-selection menu that lets each
+   member choose exactly one. The supplied bot archive only has a single planet
+   reaction role, so it needs a separate role menu or command before members can
+   use these appetite choices. Copy each role ID into
+   `DISCORD_APPETITE_HUNGRY_ROLE_ID`,
+   `DISCORD_APPETITE_ONE_MORE_BITE_ROLE_ID`, and
+   `DISCORD_APPETITE_FULL_ROLE_ID`. These IDs must be unique and must not reuse
+   the server or GO Member role ID. The website will show setup status until all
+   three valid IDs are configured.
+8. Set `DISCORD_JOIN_MEMBERS_ONLY=true` only if joining via GO requires an active
    membership. This setting gates joining through this integration, not existing
    members, public invite links, or server membership after a subscription expires.
-8. Configure and test the synchronization scheduler below before enabling paid roles.
-9. Set `DISCORD_ENABLED=true` after staging verification. Deploy the application.
+9. Configure and test the synchronization scheduler below before enabling paid roles.
+10. Set `DISCORD_ENABLED=true` after staging verification. Deploy the application.
 
 The feature reports unavailable until required configuration is valid. No secrets
 are sent to the browser, and no Discord access or refresh tokens are persisted.

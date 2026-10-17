@@ -12,6 +12,7 @@
 - GO staff issue event/LAN attendance stamps after checking participation, with an internal evidence note. Members cannot award themselves official stamps. Earned stamps stay as history when membership ends; revoked awards are excluded from public display.
 - A public profile can display its stamps. An explicitly public profile or published public CV is required for visitor display. Existing profile/CV privacy choices remain authoritative. A private profile does not disclose stamps or event participation to visitors.
 - Clicking a stamp is a local animation only. It does not add likes, votes, XP, currency, attendance or additional official awards. Keyboard activation and reduced-motion preferences are supported.
+- The Galactic Omnivore campaign voice presents GO as a cosmic patron sustained by published games. The public appetite signal maps the leading linked Discord role to Hungry (green), One More Bite (yellow), or Full (red); ties show a split signal. It counts only recently synced GO accounts linked to Discord and remains in setup mode until all three role IDs and the Discord role selector are configured.
 
 ## Animation handoff
 

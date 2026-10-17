@@ -2,6 +2,8 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { adminDb } from "@/lib/firebase-admin";
 import { getEffectiveMembership } from "@/lib/auth-utils";
+import { getDiscordConfig } from "@/lib/discord-api";
+import { appetiteConfigHash, summarizeAppetite } from "@/lib/discord-appetite.mjs";
 import { currentBuildPeriod, periodForKey, shiftDate, officiallyPublishedPack, votingEligibility, cleanCandidates, publicPoll, publicStamp, spritePath, visiblePassport, problem } from "@/lib/monday-builds.mjs";
 
 const hash = (value) => createHash("sha256").update(value).digest("hex");
@@ -22,6 +24,18 @@ export async function getBuildBoard(user) {
   const [poll, previous, packs, ballot, member] = await Promise.all(reads);
   const eligibility = user ? votingEligibility(active(member.data()), packs.docs.map((doc) => doc.data())) : { eligible: false, reason: "Sign in to see your weekly voting benefit." };
   return { period, poll: poll.exists ? publicPoll(poll.id, poll.data()) : null, previous: previous.exists ? { ...publicPoll(previous.id, previous.data()), period: periodForKey(previousKey) } : null, authenticated: Boolean(user), eligibility, votedOptionId: ballot?.exists ? ballot.data().optionId : null, availableVotes: eligibility.eligible && period.votingOpen && !ballot?.exists ? 1 : 0 };
+}
+
+export async function getPublicAppetite() {
+  const config = getDiscordConfig();
+  if (!config.appetiteEnabled) return { configured: false, status: "setup_needed", counts: null, total: 0 };
+  const snapshot = await adminDb.collection("discord_connections").where("status", "==", "joined").get();
+  const signal = summarizeAppetite(
+    snapshot.docs.map((doc) => doc.data()),
+    new Date(),
+    appetiteConfigHash(config.appetiteRoleIds),
+  );
+  return { configured: true, ...signal };
 }
 
 export async function castBuildVote(user, optionId, expectedPeriod) {

@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { adminDb } from "@/lib/firebase-admin";
 import { hasActiveSubscription } from "@/lib/auth-utils";
 import { discordError, discordRequest, requireDiscordConfig } from "@/lib/discord-api";
+import { appetiteConfigHash, appetiteFromDiscordRoles } from "@/lib/discord-appetite.mjs";
 
 export const DISCORD_COOKIE = "go_discord_oauth";
 const hash = (value) => createHash("sha256").update(value).digest("hex");
@@ -115,6 +116,9 @@ async function syncConnection(uid, config) {
     const user = await adminDb.collection("users").doc(uid).get();
     const eligible = user.exists && hasActiveSubscription(user.data());
     const wantedRole = eligible && !member.pending ? config.memberRoleId : null;
+    const appetiteStatus = config.appetiteEnabled
+      ? appetiteFromDiscordRoles(member.roles || [], config.appetiteRoleIds)
+      : null;
     // Preserve the previously managed ID so changing configuration cannot strand old access.
     const managed = new Set([connection.managedRoleId, config.memberRoleId].filter(Boolean));
     for (const role of managed) {
@@ -128,7 +132,9 @@ async function syncConnection(uid, config) {
       if (!member.roles.includes(wantedRole)) await discordRequest(`${path}/roles/${wantedRole}`, { token, method: "PUT" });
     }
     await ref.update({ status: member.pending ? "screening_required" : "joined", memberAccess: !!wantedRole,
-      managedRoleId: wantedRole, lastError: null, retryNotBefore: null, lastSyncedAt: new Date(), nextSyncAt: new Date(Date.now() + 300000) });
+      managedRoleId: wantedRole, appetiteStatus,
+      appetiteRoleMapHash: config.appetiteEnabled ? appetiteConfigHash(config.appetiteRoleIds) : null,
+      lastError: null, retryNotBefore: null, lastSyncedAt: new Date(), nextSyncAt: new Date(Date.now() + 300000) });
   } catch (error) {
     await ref.update({ status: error.code === "not_in_server" ? "join_required" : "sync_pending",
       memberAccess: false, lastError: error.code || "sync_failed",

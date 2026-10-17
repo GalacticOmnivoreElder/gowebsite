@@ -31,7 +31,7 @@ export default function ImpactPage() {
         <div className="mx-auto max-w-7xl">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Galactic Omnivore · Open record</p>
           <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight sm:text-6xl">A community built<br className="hidden sm:block" /> through doing.</h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">From a first conversation to a shared project, GO helps game creators learn, collaborate and show their work. This is our public pitch and the evidence behind it.</p>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">I am the Galactic Omnivore: cosmic patron of game development, sustained by games brought all the way to publication. GO gives creators a practical route from first skill to shared project, playable milestone and public release. This is my pitch, and the open record behind it.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg"><a href="#public-pitch">Read the public pitch</a></Button>
             <Button asChild size="lg" variant="outline"><a href="/documents/go-impact-2026-10-17.md" download>Download the report · Markdown</a></Button>
@@ -59,6 +59,12 @@ export default function ImpactPage() {
             <Button asChild variant="outline"><Link href="/membership">Membership options</Link></Button>
             <Button asChild><Link href="/contact">Support or partner with GO</Link></Button>
           </div>
+        </section>
+
+        <section aria-labelledby="appetite-pitch-heading" className="rounded-2xl border border-primary/30 bg-[radial-gradient(ellipse_at_top_right,rgba(202,34,128,0.14),transparent_65%)] p-6 sm:p-10">
+          <SectionTitle id="appetite-pitch-heading" eyebrow="A word from the Omnivore">Published games are my sustenance.</SectionTitle>
+          <p className="max-w-3xl text-lg leading-8 text-muted-foreground">A prototype is a promise. A published game is a world released into the galaxy, and that is what feeds me. I hunger for more creators to finish, share and celebrate their games. GO helps make the journey between those moments easier to see and easier to join.</p>
+          <div className="mt-7 flex flex-wrap gap-3"><Button asChild><Link href="/community-builds">Choose my next bite</Link></Button><Button asChild variant="outline"><Link href="/games">Explore GO games</Link></Button></div>
         </section>
 
         <section aria-labelledby="history-heading">

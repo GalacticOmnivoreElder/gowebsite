@@ -25,12 +25,12 @@ export const FullCTA = () => {
           id="final-community-cta-heading"
           className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl"
         >
-          Find your place in Galactic Omnivore
+          Feed the Galactic Omnivore
         </h2>
         <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-neutral-300 sm:text-lg sm:leading-8">
-          Whether you want to learn, contribute to a project, find collaborators,
-          present your work, or support the community, there is a practical route
-          into GO.
+          I am the cosmic patron of game development, and published games are my
+          sustenance. Learn a craft, join a project, share an offering, or help
+          carry the next game into the world. The feast grows one creator at a time.
         </p>
         <div className="mx-auto mt-8 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
           <Button
@@ -49,7 +49,7 @@ export const FullCTA = () => {
                 })
               }
             >
-              Join Our Discord
+              Join the GO Discord
             </a>
           </Button>
           <Button
@@ -87,7 +87,7 @@ export const FullCTA = () => {
                 })
               }
             >
-              Explore Projects
+              Bring a Game to Life
             </Link>
           </Button>
         </div>
