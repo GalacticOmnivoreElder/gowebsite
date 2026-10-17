@@ -12,6 +12,7 @@ import { LandingOpenHours } from "@/components/landing/LandingOpenHours";
 import { LandingDiscordJoin } from "@/components/landing/LandingDiscordJoin";
 import { NewsletterSignup } from "@/components/newsletter/NewsletterSignup";
 import { GoPillars } from "@/components/landing/GoPillars";
+import { StatsPreview } from "@/components/landing/StatsPreview";
 
 import background1Img from "../../assets/background1.png";
 import heroImg from "../../assets/HERO.png";
@@ -328,6 +329,8 @@ const HomePage = () => {
       <section className="bg-black p-4 flex flex-col justify-center">
         <About />
       </section>
+
+      <StatsPreview />
 
       <ExploreGo />
 

@@ -180,6 +180,9 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/impact" className="text-muted-foreground hover:text-foreground transition-colors">GO in numbers &amp; public pitch</Link>
+              </li>
+              <li>
                 <Link
                   href="/membership"
                   className="text-muted-foreground hover:text-foreground transition-colors"

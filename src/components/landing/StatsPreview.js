@@ -1,40 +1,22 @@
-"use client";
-import React from "react";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ImpactMetrics } from "@/components/impact/ImpactMetrics";
 
-const stats = [
-  { value: "4", label: "Creator routes" },
-  { value: "1", label: "Useful next step" },
-  { value: "GO", label: "North Macedonian nonprofit" },
-  { value: "GOHQ", label: "Human ground station" },
-];
-
-export const StatsPreview = () => {
+export function StatsPreview() {
   return (
-    <section className="bg-black text-white py-16 md:py-24">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 text-center mb-12">
-          {stats.map((stat, index) => (
-            <div key={index}>
-              <div className="text-5xl md:text-6xl lg:text-7xl font-bold text-primary mb-2">
-                {stat.value}
-              </div>
-              <p className="text-lg text-muted-foreground">{stat.label}</p>
-            </div>
-          ))}
+    <section aria-labelledby="go-numbers-heading" className="bg-black px-4 py-16 text-white sm:px-6 md:py-24">
+      <div className="mx-auto max-w-7xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">A record of the work</p>
+        <div className="mb-8 mt-3 max-w-3xl">
+          <h2 id="go-numbers-heading" className="text-3xl font-bold sm:text-4xl">GO in numbers</h2>
+          <p className="mt-4 leading-7 text-muted-foreground">The conversations, completed work and projects behind Galactic Omnivore. Each number has a source, a date and a clear definition.</p>
         </div>
-        <div className="text-center">
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="border-primary text-primary hover:bg-primary/10 hover:text-primary rounded-sm"
-          >
-            <Link href="/about">About Galactic Omnivore</Link>
-          </Button>
+        <ImpactMetrics />
+        <div className="mt-8 flex flex-wrap items-center gap-4">
+          <Button asChild size="lg"><Link href="/impact">Read our story &amp; public pitch</Link></Button>
+          <p className="text-sm text-muted-foreground">Evidence reviewed 17 October 2026 · Organization activity</p>
         </div>
       </div>
     </section>
   );
-};
+}

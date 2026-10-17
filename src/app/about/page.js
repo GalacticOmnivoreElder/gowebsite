@@ -343,8 +343,10 @@ export default function AboutPage() {
                   build projects, and make their work visible.
                 </p>
                 <p>
-                  The initiative began in 2022, and Galactic Omnivore was
-                  formally established in 2023. Since then, it has developed
+                  Our archived work reaches back to 2022. The consolidated
+                  statute names an assembly on 20 August 2025; the exact founding
+                  and registration dates remain to be reconciled with the original
+                  records. Over this time, GO has developed
                   into a community and platform connecting creators with
                   practical education, collaborative projects, events,
                   mentorship, publishing preparation, and opportunities for
@@ -390,6 +392,9 @@ export default function AboutPage() {
           </div>
           <Button asChild size="lg" variant="outline" className="mt-7 min-h-11">
             <Link href="/projects">View our work</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="mt-7 min-h-11 sm:ml-3">
+            <Link href="/impact">GO in numbers &amp; public pitch</Link>
           </Button>
         </section>
 

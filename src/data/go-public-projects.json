@@ -1,0 +1,67 @@
+[
+  {
+    "id": "project_b81a21cef088cd887fcd0209f3d94f0c6a0dc5833048667d7b20a538b26e7b3a",
+    "title": "HIAO",
+    "status": "hiring"
+  },
+  {
+    "id": "project_a8582578a4a3909344523f8405f56e28d5f5ea2e301110b4e7d0071038362a8f",
+    "title": "Golema Majka - Digital Reconstruction & VR Experience",
+    "status": "live"
+  },
+  {
+    "id": "project_f63e030a4a12e43443bb584af06281a46b1cfcd11bfdf37eed63a2a9a8070210",
+    "title": "MUGI - Macedonian Union of Gaming Industry",
+    "status": "live"
+  },
+  {
+    "id": "project_77344fdbd0d6a5d92854333077a41d526fa32ca0857f65936c16e97320031593",
+    "title": "Battle Toynks",
+    "status": "live"
+  },
+  {
+    "id": "project_3975d7d866969afcea688ec716aca193b7f9a8593b9f513222b776f285c6fd19",
+    "title": "Rogue Tanks",
+    "status": "live"
+  },
+  {
+    "id": "pNeovsStgCyDHo4UoxtX",
+    "title": "Glagolica: Macedonian Glagolitic in VR",
+    "status": "live"
+  },
+  {
+    "id": "project_adbd6ecb95ed60547c0db160e3db5f74647dae386e518b218992cd078b915b21",
+    "title": "How Shari Became a Member of Parliament",
+    "status": "completed"
+  },
+  {
+    "id": "project_07c123619933666d84b54803109b9f66a93c6b898af10bb995f594fcdb0fa16d",
+    "title": "Passion to Profession Game Jam 2025",
+    "status": "completed"
+  },
+  {
+    "id": "project_639f1e08f15f23990ccd863fed258f7ed3808c19a5eaa5c7aa44f3fa4517d049",
+    "title": "Everbloom",
+    "status": "completed"
+  },
+  {
+    "id": "project_42bd8be783c4df309db37ce479dd589665301ce53eecc2a509cc3cd21902f8df",
+    "title": "Navigator 2.0",
+    "status": "completed"
+  },
+  {
+    "id": "project_38e30cbb517efb62cba7ef5749b5236019c8d59036b9de6c181aefc83a79bc23",
+    "title": "Make Your Own God",
+    "status": "completed"
+  },
+  {
+    "id": "project_a85bf73683d209b58158e67f4b370dfaedcc8dacc0e625f5dbf5e537683104e8",
+    "title": "Empowering the Next Generation of Game Developers",
+    "status": "completed"
+  },
+  {
+    "id": "project_010238458c647debe119f59ef15898a450ef1ec878140f88076acf2651f3f432",
+    "title": "The Human Rights Game Navigator",
+    "status": "completed"
+  }
+]

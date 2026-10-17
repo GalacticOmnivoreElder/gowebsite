@@ -1,0 +1,136 @@
+{
+  "updatedAt": "2026-10-17",
+  "window": {
+    "start": "2023-10-17",
+    "endExclusive": "2026-10-17",
+    "label": "17 October 2023–16 October 2026",
+    "timezone": "Europe/Warsaw"
+  },
+  "metrics": [
+    {
+      "id": "meetings",
+      "value": 263,
+      "label": "Recorded meetings & appointments",
+      "period": "17 Oct 2023–16 Oct 2026",
+      "note": "Conservative count of scheduled events across four GO calendars. Attendance is not verified.",
+      "href": "/impact#calendar-method"
+    },
+    {
+      "id": "work-items",
+      "value": 558,
+      "label": "Completed work items",
+      "period": "17 Oct 2023–29 Jan 2025 archive",
+      "note": "Tasks, stories and subtasks marked Done. Later completions are still to be added.",
+      "href": "/impact#work-method"
+    },
+    {
+      "id": "projects",
+      "value": 13,
+      "label": "Public project listings",
+      "period": "Website snapshot · 17 Oct 2026",
+      "note": "Games, community initiatives and creative projects in the public GO portfolio.",
+      "href": "/impact#portfolio"
+    },
+    {
+      "id": "completed-projects",
+      "value": 7,
+      "label": "Projects marked completed",
+      "period": "Website snapshot · 17 Oct 2026",
+      "note": "Current project status. Completion dates and release evidence still need reconciliation.",
+      "href": "/impact#portfolio"
+    }
+  ],
+  "calendar": {
+    "raw": 944,
+    "unique": 904,
+    "duplicates": 40,
+    "meetings": 263,
+    "needsReview": 217,
+    "otherExcluded": 424,
+    "byYear": [
+      {
+        "year": 2023,
+        "count": null,
+        "note": "No records returned for this part of the window."
+      },
+      {
+        "year": 2024,
+        "count": 13
+      },
+      {
+        "year": 2025,
+        "count": 92
+      },
+      {
+        "year": 2026,
+        "count": 158
+      }
+    ],
+    "recurring": 146,
+    "accepted": 219,
+    "needsAction": 23,
+    "noResponseRecorded": 21
+  },
+  "work": {
+    "archiveDate": "2025-01-29",
+    "allArchivedDone": 637,
+    "allArchivedWorkItems": 622,
+    "allArchivedEpics": 15,
+    "windowDone": 571,
+    "windowWorkItems": 558,
+    "windowEpics": 13,
+    "types": [
+      {
+        "label": "Stories",
+        "count": 269
+      },
+      {
+        "label": "Subtasks",
+        "count": 260
+      },
+      {
+        "label": "Tasks",
+        "count": 29
+      }
+    ],
+    "byYear": [
+      {
+        "year": 2023,
+        "count": 42,
+        "note": "17 Oct–31 Dec"
+      },
+      {
+        "year": 2024,
+        "count": 433,
+        "note": "Full year in archive"
+      },
+      {
+        "year": 2025,
+        "count": 83,
+        "note": "Through 29 Jan"
+      }
+    ]
+  },
+  "gaps": [
+    {
+      "title": "Earlier history",
+      "detail": "GO work is recorded from 2022. The supplied consolidated statute names an assembly on 20 August 2025. The original founding and registration documents are needed to confirm an exact founding date."
+    },
+    {
+      "title": "Attendance and older calendars",
+      "detail": "Confirm ambiguous entries, personal attendance and any missing calendars. No entries were returned for 2022–2023; that is a coverage gap, not proof of no activity."
+    },
+    {
+      "title": "Recent task completions",
+      "detail": "Add Jira completion records after 29 January 2025. The April 2025 export contains open work and cannot fill this gap."
+    },
+    {
+      "title": "Project outcomes",
+      "detail": "Add completion dates, deliverable links and a reviewed project register. Public listings are a current portfolio snapshot, not a complete lifetime project count."
+    },
+    {
+      "title": "Website usage",
+      "detail": "Add verified visitors, active members and conversion figures from website analytics. Calendar and Jira activity describe the organization and do not measure website traffic."
+    }
+  ]
+}
