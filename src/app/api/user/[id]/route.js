@@ -8,6 +8,7 @@ import { syncUserSkillUsage } from "@/lib/skill-catalog";
 import { redactCvContact } from "@/lib/profile-mission";
 import { getMentorshipConfig, getProductConfig } from "@/lib/product-config";
 import { getPublicMentor } from "@/lib/mentor-directory";
+import { readVisiblePassport } from "@/lib/community-build-service";
 
 export const dynamic = "force-dynamic";
 
@@ -169,6 +170,8 @@ export async function GET(request, { params }) {
       };
     }
 
+    // Default-deny Passport projection: private/unpublished profiles trigger no stamp or contribution reads.
+    publicProfile.passport = await readVisiblePassport(userId, { owner: isOwnProfile, hasCv: cvDoc.exists, publicCv: isPublicCv, profilePrivacy: userData.profilePrivacy });
     publicProfile.mentorReferences = [];
     if (userData.mentorStatus === "approved" && userData.mentorPublicProfileEnabled === true) {
       const product = getProductConfig();

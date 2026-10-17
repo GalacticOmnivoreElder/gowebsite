@@ -50,6 +50,7 @@ import { MentorshipMentorWorkspace } from "@/components/mentors/MentorshipMentor
 import { MentorshipDashboard } from "@/components/mentors/MentorshipDashboard";
 import { MentorApplicationOverview } from "@/components/profile/MentorApplicationOverview";
 import { AssetPackWorkspace } from "@/components/asset-packs/AssetPackWorkspace";
+import { PassportWorkspace } from "@/components/community/PassportWorkspace";
 import { SupportWorkspace } from "@/components/support/SupportWorkspace";
 
 // Helper function to safely convert Firestore timestamp to Date
@@ -370,6 +371,7 @@ const ProfileContent = observer(() => {
         "mentor",
         "mentorships",
         "asset-packs",
+        "passport",
         "notifications",
         "support",
         "billing",
@@ -876,6 +878,10 @@ const ProfileContent = observer(() => {
 
         <TabsContent value="mentorships">
           <MentorshipDashboard />
+        </TabsContent>
+
+        <TabsContent value="passport">
+          <PassportWorkspace />
         </TabsContent>
 
         <TabsContent value="asset-packs">

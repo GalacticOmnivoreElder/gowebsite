@@ -154,6 +154,9 @@ const serverOnlyDocuments = [
   ["asset_packs", "pack-1"],
   ["asset_pack_versions", "version-1"],
   ["asset_pack_grants", "grant-1"],
+  ["community_build_polls", "week-1"],
+  ["community_build_ballots", "ballot-1"],
+  ["passport_stamps", "stamp-1"],
 ];
 
 test("project owners cannot bypass server authorization from the browser", async () => {

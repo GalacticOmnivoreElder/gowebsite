@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getRequestUser } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
+import { awardAssetPackStamp } from "@/lib/community-build-service";
 import { ASSET_PACK_ACCESS_TYPES, assetPackGrantId, serializeAssetPackVersion } from "@/lib/asset-packs";
 import { createProductNotification } from "@/lib/product-notifications";
 import { enqueueEmailEventForUsers } from "@/lib/email";
@@ -177,6 +178,7 @@ export async function PATCH(request) {
     batch.set(packRef, { ...publicFields, contributorId: version.contributorId, contributorDisplayName: version.contributorDisplayName, status: "published", accessType, currentVersionId: versionRef.id, pendingVersionId: null, publishedAt: now, updatedAt: now, lastReviewedBy: gate.user.uid }, { merge: true });
     addAuditToBatch(batch, { actorId: gate.user.uid, action: "asset_pack_version.published", targetType: "asset_pack", targetId: version.packId, previousValue: { status: packDoc.data().status, currentVersionId: packDoc.data().currentVersionId || null, accessType: packDoc.data().accessType || "community" }, newValue: { status: "published", currentVersionId: versionRef.id, accessType }, reason }, now);
     await batch.commit();
+    await awardAssetPackStamp(version.packId).catch(() => console.error("asset_pack_stamp_reconciliation_needed", { packId: version.packId }));
     await notifyContributor(version, versionRef.id, "Asset pack published", "Your approved asset-pack version is now published.");
     return Response.json({ id: version.packId, status: "published", accessType });
   }

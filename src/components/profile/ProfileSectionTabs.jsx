@@ -20,6 +20,7 @@ import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 const profileSections = [
   { value: "profile", label: "Profile", icon: User },
   { value: "cv", label: "GameDev Passport", icon: FileText },
+  { value: "passport", label: "GO Stamps & Votes", icon: PackagePlus },
   { value: "projects", label: "My Projects", icon: Briefcase },
   { value: "applications", label: "Applications", icon: ClipboardList },
   { value: "downloads", label: "Downloads", icon: Download },

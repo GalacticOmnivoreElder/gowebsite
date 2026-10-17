@@ -28,6 +28,7 @@ export const metadata = createMetadata({
 });
 
 const routes = [
+  { title: "Monday Builds", eyebrow: "Shape GO together", description: "Use your weekly contributor vote to help choose our Monday morning platform improvement.", href: "/community-builds", icon: Gamepad2 },
   {
     title: "GO Merch",
     eyebrow: "Shape the collection",

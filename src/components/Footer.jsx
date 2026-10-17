@@ -143,6 +143,7 @@ export default function Footer() {
                   GO Events
                 </Link>
               </li>
+              <li><Link href="/community-builds" className="text-muted-foreground hover:text-foreground transition-colors">Monday Builds</Link></li>
               <li>
                 <Link href="/merch" className="text-muted-foreground hover:text-foreground transition-colors">
                   GO Merch

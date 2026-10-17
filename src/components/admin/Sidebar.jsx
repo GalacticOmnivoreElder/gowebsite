@@ -53,6 +53,7 @@ export function Sidebar() {
     { name: "Mentorships", href: "/admin/mentorships", icon: HeartHandshake },
     { name: "Support", href: "/admin/support", icon: LifeBuoy },
     { name: "Asset Pack Reviews", href: "/admin/asset-packs", icon: PackagePlus },
+    { name: "Monday Builds & Stamps", href: "/admin/community-builds", icon: PackagePlus },
     { name: "Resource Lifecycle", href: "/admin/resources-review", icon: ArchiveRestore },
     { name: "Newsletter", href: "/admin/newsletter", icon: Mail },
     { name: "GO Merch", href: "/admin/merch", icon: Package },

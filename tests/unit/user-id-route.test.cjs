@@ -65,7 +65,9 @@ function createDb(seed = {}) {
   };
 }
 
-function loadRoute({ decodedToken = null, seed = {} } = {}) {
+const { visiblePassport } = loadSourceModule("src/lib/monday-builds.mjs", ["visiblePassport"]);
+
+function loadRoute({ decodedToken = null, seed = {}, passportRead = async () => ({ stamps: [], contributions: [] }) } = {}) {
   const adminDb = createDb(seed);
   const route = loadSourceModule("src/app/api/user/[id]/route.js", ["GET", "PUT"], {
     stripImports: true,
@@ -81,6 +83,7 @@ function loadRoute({ decodedToken = null, seed = {} } = {}) {
       syncUserSkillUsage: async () => {},
       validateProfileData,
       redactCvContact,
+      readVisiblePassport: (uid, visibility) => visiblePassport(passportRead, uid, visibility),
     },
   });
   return { ...route, adminDb };
@@ -451,4 +454,29 @@ test("legacy profiles without a GO CV keep profilePrivacy behavior", async () =>
   });
   response = await route.GET(createRequest(), { params: { id: "user-1" } });
   assert.equal(response.body.isPrivate, true);
+});
+
+test("private Passport activity is never read or returned to a public profile visitor", async () => {
+  let reads = 0;
+  for (const seed of [
+    { users: { "user-1": { profilePrivacy: "private" } } },
+    { users: { "user-1": { profilePrivacy: "public" } }, go_cvs: { "user-1": cv({ visibility_public: false }) } },
+    { users: { "user-1": { profilePrivacy: "public" } }, go_cvs: { "user-1": cv({ status: "draft" }) } },
+  ]) {
+    const route = loadRoute({ seed, passportRead: async () => { reads++; return { stamps: ["private"] }; } });
+    const response = await route.GET(createRequest(), { params: { id: "user-1" } });
+    assert.equal(response.status, 200);
+    assert.equal(response.body.isPrivate, true);
+    assert.equal(response.body.passport, undefined);
+  }
+  assert.equal(reads, 0);
+});
+test("an explicitly public Passport exposes only the approved projection for its subject", async () => {
+  const route = loadRoute({
+    seed: { users: { "user-1": { profilePrivacy: "public" } } },
+    passportRead: async (uid) => { assert.equal(uid, "user-1"); return { stamps: [{ id: "award", title: "GO LAN" }], contributions: [] }; },
+  });
+  const response = await route.GET(createRequest(), { params: { id: "user-1" } });
+  assert.equal(response.status, 200);
+  assert.deepEqual(plain(response.body.passport.stamps), [{ id: "award", title: "GO LAN" }]);
 });
