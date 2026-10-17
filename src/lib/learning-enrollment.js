@@ -10,9 +10,10 @@ import {
 } from "@/lib/learning-items";
 import { createProductNotification } from "@/lib/product-notifications";
 import { enqueueEmailEventForUsers } from "@/lib/email";
-import { getLearningProductConfig } from "@/lib/product-config";
+import { getLearningProductConfig, getProductConfig } from "@/lib/product-config";
 import { isTrainingAssignmentActive, trainingAssignmentId } from "@/lib/training-assignments";
 import { courseSeatCount, courseUsesSeat } from "@/lib/learning-courses";
+import { recordJourneyEvent } from "@/lib/go-journey-service";
 
 export function enrollmentDocumentId(itemId, userId) {
   return crypto
@@ -180,6 +181,23 @@ export async function createLearningEnrollment({ itemId, user, answers = {}, att
     }
     return { enrollment: { id: enrollmentId, ...enrollment }, item };
   });
+
+  if (result.item.isGameJam && result.enrollment.state === "confirmed" && getProductConfig().featureFlags.goDevelopmentJourney) {
+    try {
+      await recordJourneyEvent({
+        uid: user.uid,
+        type: "game_jam_registered",
+        sourceId: itemId,
+        title: "Registered for a GO game jam",
+        summary: `Registration for ${result.item.title} is confirmed. Registration is not attendance verification.`,
+        publicTitle: "Registered for a GO game jam",
+        publicSummary: `Registration for ${result.item.title} is confirmed. Attendance is verified separately.`,
+        occurredAt: now,
+      });
+    } catch (error) {
+      console.error("game_jam_registration_journal_failed", { itemId, userId: user.uid, code: error?.code || "unknown" });
+    }
+  }
 
   await communicateEnrollment({
     item: result.item,

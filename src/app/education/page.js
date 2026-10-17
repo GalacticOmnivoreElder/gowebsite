@@ -118,13 +118,13 @@ function EducationContent() {
               <Card key={item.id} className="flex flex-col">
                 <CardHeader>
                   <div className="flex items-center justify-between gap-3">
-                    <Badge variant="outline">{STREAMS[item.learningType] || item.learningType}</Badge>
+                    <Badge variant="outline">{STREAMS[item.learningType] || item.learningType}</Badge>{item.isGameJam ? <Badge>GO Game Jam</Badge> : null}
                     <Badge>{String(item.status || "available").replaceAll("_", " ")}</Badge>
                   </div>
                   <CardTitle className="mt-3">{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col">
-                  <p className="line-clamp-3 text-sm text-muted-foreground">{item.description}</p>
+                  <p className="line-clamp-3 text-sm text-muted-foreground">{item.description}</p>{item.isGameJam && item.skillTags?.length ? <p className="mt-3 text-xs text-muted-foreground">GO skills: {item.skillTags.join(" · ")}</p> : null}
                   <div className="mt-5 space-y-2 text-sm text-muted-foreground">
                     {item.startsAt ? (
                       <p className="flex items-center gap-2"><CalendarDays className="h-4 w-4" aria-hidden="true" />{new Date(item.startsAt).toLocaleString()}</p>

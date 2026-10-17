@@ -1,6 +1,8 @@
 "use client";
 import StarterAchievements from "./StarterAchievements";
 import { PassportStamps } from "@/components/community/PassportStamps";
+import SkillEvidencePanel from "@/components/profile/SkillEvidencePanel";
+import GoDevelopmentLog from "@/components/profile/GoDevelopmentLog";
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
@@ -795,6 +797,7 @@ export default function MissionHub({
               items={model.skills}
               emptyText="Add skills to help collaborators understand your strengths."
             />
+            {profile?.goJourney ? <SkillEvidencePanel userId={profile?.id} isOwner={isOwner} projects={model.platformProjects} /> : null}
           </MissionPanel>
           <MissionPanel title="Tools and technologies" eyebrow="Current tools" icon={Wrench}>
             <TagCluster
@@ -835,6 +838,7 @@ export default function MissionHub({
 
         <StarterAchievements record={profile?.cv?.starterPathway} />
         <PassportStamps passport={profile?.passport} />
+        {profile?.goJourney ? <GoDevelopmentLog journey={profile.goJourney} isOwner={isOwner} userId={profile?.id} /> : null}
         <OfficialMentorPanel mentor={profile?.mentorSummary} programme={profile?.mentorProgramme} isOwner={isOwner} />
 
         <MentorReferences items={profile?.mentorReferences} />

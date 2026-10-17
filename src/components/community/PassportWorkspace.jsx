@@ -29,6 +29,17 @@ export function PassportWorkspace() {
       await load();
     } catch (error) { setMessage(error.message); } finally { setBusy(false); }
   }
+  async function toggleVisibility(stamp) {
+    setBusy(true); setMessage("");
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch("/api/passport", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ stampId: stamp.id, isDisplayed: stamp.displayed === false }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Badge visibility could not be saved.");
+      setMessage(stamp.displayed === false ? "Badge shown on your public Passport." : "Badge hidden from your public Passport. Your earned history is unchanged.");
+      await load();
+    } catch (error) { setMessage(error.message); } finally { setBusy(false); }
+  }
   return <div className="rounded-xl border bg-card p-6 sm:p-8">
     <h1 className="text-3xl font-bold">Your GameDev Passport</h1>
     <p className="mt-4 max-w-3xl leading-7 text-muted-foreground">I remember the creators who help bring new worlds to life. Your Passport is free; official GO stamps mark published asset contributions and GO event participation verified while you are a member. Your earned history stays with your Passport.</p>
@@ -41,6 +52,6 @@ export function PassportWorkspace() {
     <p className="mt-4 text-sm text-muted-foreground">Your existing profile and Passport visibility settings control public display.</p>
     {message ? <p className="mt-4 text-sm" role="status">{message}</p> : null}
     {!data && !message ? <p className="mt-6" role="status">Loading your Passport…</p> : null}
-    <PassportStamps passport={data} />
+    <PassportStamps passport={data} onToggleVisibility={toggleVisibility} visibilityBusy={busy} />
   </div>;
 }

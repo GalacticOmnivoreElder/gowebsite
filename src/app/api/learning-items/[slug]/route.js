@@ -5,6 +5,7 @@ import { getRequestUser } from "@/lib/auth-utils";
 import { canListLearningItem, isLearningManager, serializeLearningDate, toPublicLearningItemDto } from "@/lib/learning-items";
 import { enrollmentDocumentId, getLearningEligibility } from "@/lib/learning-enrollment";
 import { isTrainingAssignmentActive, trainingAssignmentId } from "@/lib/training-assignments";
+import { getProductConfig } from "@/lib/product-config";
 
 export async function GET(request, { params }) {
   const { slug } = await params;
@@ -12,6 +13,7 @@ export async function GET(request, { params }) {
   if (query.empty) return Response.json({ error: "Learning item not found" }, { status: 404 });
   const doc = query.docs[0];
   const item = { id: doc.id, ...doc.data() };
+  if (item.isGameJam && !getProductConfig().featureFlags.goGameJams) return Response.json({ error: "Game jam enrollment is not enabled." }, { status: 404 });
   const user = await getRequestUser(request);
   const manager = isLearningManager(item, user);
   if (!canListLearningItem(item) && !manager) return Response.json({ error: "Learning item not found" }, { status: 404 });

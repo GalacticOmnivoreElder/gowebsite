@@ -161,6 +161,8 @@ export function cleanLearningItem(input = {}) {
     instructorName: cleanText(input.instructorName, 160),
     instructorUserId: cleanText(input.instructorUserId, 160) || null,
     learningType,
+    isGameJam: learningType === "workshop" && input.isGameJam === true,
+    skillTags: cleanStringArray(input.skillTags, 20, 80),
     level: cleanText(input.level, 100),
     prerequisites: cleanText(input.prerequisites, 3000),
     language: cleanText(input.language, 100),
@@ -221,6 +223,8 @@ export function toPublicLearningItemDto(item = {}) {
   return {
     id: item.id,
     courseId: item.courseId || null,
+    isGameJam: item.isGameJam === true,
+    skillTags: Array.isArray(item.skillTags) ? item.skillTags : [],
     capacityMode: item.capacityMode || "all",
     sessions: (item.sessions || []).map(({ id, title, startsAt, endsAt }) => ({ id, title, startsAt: serializeLearningDate(startsAt), endsAt: serializeLearningDate(endsAt) })),
     jamUrl: item.jamUrl || null,

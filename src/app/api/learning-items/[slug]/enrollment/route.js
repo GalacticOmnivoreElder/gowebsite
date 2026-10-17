@@ -24,7 +24,7 @@ export async function POST(request, { params }) {
   const { slug } = await params;
   await ensurePilotCohort(slug);
   const item = await loadItem(slug);
-  if (!getProductConfig().featureFlags.courseEnrollment && item?.courseId !== BOOTCAMP_ID) return featureUnavailable();
+  if (!getProductConfig().featureFlags.courseEnrollment && item?.courseId !== BOOTCAMP_ID && !(item?.isGameJam && getProductConfig().featureFlags.goGameJams)) return featureUnavailable();
   if (!item) return Response.json({ error: "Learning item not found" }, { status: 404 });
   const body = await request.json().catch(() => ({}));
   if (body.action === "confirm_waitlist_offer" && item.courseId) {
@@ -49,7 +49,7 @@ export async function DELETE(request, { params }) {
   if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
   const { slug } = await params;
   const item = await loadItem(slug);
-  if (!getProductConfig().featureFlags.courseEnrollment && item?.courseId !== BOOTCAMP_ID) return featureUnavailable();
+  if (!getProductConfig().featureFlags.courseEnrollment && item?.courseId !== BOOTCAMP_ID && !(item?.isGameJam && getProductConfig().featureFlags.goGameJams)) return featureUnavailable();
   if (!item) return Response.json({ error: "Learning item not found" }, { status: 404 });
   try {
     return Response.json(await cancelLearningEnrollment({ itemId: item.id, userId: user.uid }));

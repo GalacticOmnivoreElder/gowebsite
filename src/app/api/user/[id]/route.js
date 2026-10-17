@@ -9,6 +9,7 @@ import { redactCvContact } from "@/lib/profile-mission";
 import { getMentorshipConfig, getProductConfig } from "@/lib/product-config";
 import { getPublicMentor } from "@/lib/mentor-directory";
 import { readVisiblePassport } from "@/lib/community-build-service";
+import { readJourney } from "@/lib/go-journey-service";
 
 export const dynamic = "force-dynamic";
 
@@ -172,6 +173,9 @@ export async function GET(request, { params }) {
 
     // Default-deny Passport projection: private/unpublished profiles trigger no stamp or contribution reads.
     publicProfile.passport = await readVisiblePassport(userId, { owner: isOwnProfile, hasCv: cvDoc.exists, publicCv: isPublicCv, profilePrivacy: userData.profilePrivacy });
+    publicProfile.goJourney = typeof getProductConfig === "function" && getProductConfig().featureFlags.goDevelopmentJourney
+      ? await readJourney(userId, { owner: isOwnProfile })
+      : null;
     publicProfile.mentorReferences = [];
     if (userData.mentorStatus === "approved" && userData.mentorPublicProfileEnabled === true) {
       const product = getProductConfig();
@@ -300,6 +304,17 @@ export async function PUT(request, { params }) {
         nextSkills: filteredUpdateData.skills,
         userId,
       });
+      if (typeof getProductConfig === "function" && getProductConfig().featureFlags.goMatchmaking) {
+        const matchmakingRef = adminDb.collection("go_matchmaking_profiles").doc(userId);
+        try {
+          const matchmaking = await matchmakingRef.get();
+          if (matchmaking.exists && matchmaking.data().optedIn === true) {
+            await matchmakingRef.update({ skills: filteredUpdateData.skills, updatedAt: now });
+          }
+        } catch (error) {
+          console.error("profile_matchmaking_skills_sync_failed", { userId, code: error?.code || "unknown" });
+        }
+      }
     }
 
     if (filteredUpdateData.profilePrivacy !== undefined) {

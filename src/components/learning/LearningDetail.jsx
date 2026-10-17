@@ -116,10 +116,11 @@ export function LearningDetail({ slug }) {
       <Button variant="ghost" asChild className="mb-6"><Link href="/education">Back to learning</Link></Button>
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
         <div>
-          <div className="flex flex-wrap gap-2"><Badge className="capitalize">{item.learningType}</Badge><Badge variant="outline">{item.status.replaceAll("_", " ")}</Badge><Badge variant="secondary">{item.level}</Badge></div>
+          <div className="flex flex-wrap gap-2"><Badge className="capitalize">{item.learningType}</Badge>{item.isGameJam ? <Badge>GO Game Jam</Badge> : null}<Badge variant="outline">{item.status.replaceAll("_", " ")}</Badge><Badge variant="secondary">{item.level}</Badge></div>
           <h1 className="mt-4 text-4xl font-bold">{item.title}</h1>
           <p className="mt-3 text-muted-foreground">Led by {item.instructorName}</p>
           <p className="mt-7 whitespace-pre-wrap leading-7 text-muted-foreground">{item.description}</p>
+          {item.isGameJam ? <section className="mt-8 rounded-lg border border-primary/30 bg-primary/5 p-5"><h2 className="font-semibold">GO Game Jam</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Register here, then attend the jam. A GO organizer verifies attendance after the event; registration alone does not earn the Passport badge.</p>{item.skillTags?.length ? <div className="mt-3 flex flex-wrap gap-2" aria-label="Jam skill tags">{item.skillTags.map((skill) => <Badge key={skill} variant="outline">{skill}</Badge>)}</div> : null}</section> : null}
           {item.expectedOutcome && <section className="mt-8"><h2 className="text-xl font-semibold">Expected outcome</h2><p className="mt-2 text-muted-foreground">{item.expectedOutcome}</p></section>}
           {item.prerequisites && <section className="mt-8"><h2 className="text-xl font-semibold">Prerequisites</h2><p className="mt-2 text-muted-foreground">{item.prerequisites}</p></section>}
           {item.accessibilityInformation && <section className="mt-8"><h2 className="text-xl font-semibold">Accessibility</h2><p className="mt-2 text-muted-foreground">{item.accessibilityInformation}</p></section>}

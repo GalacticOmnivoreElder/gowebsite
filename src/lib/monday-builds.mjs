@@ -67,6 +67,14 @@ export function publicStamp(id, data = {}) {
   return { id, title: String(data.title || "Official GO stamp").slice(0, 120), kind: data.kind, issuedAt: Number.isFinite(date.getTime()) ? date.toISOString() : null, sourceTitle: String(data.sourceTitle || "").slice(0, 160), spritePath: spritePath(data.spritePath) };
 }
 
+export function displayedPassportStamps(stamps = [], hiddenStampIds = [], { owner = false } = {}) {
+  const hidden = new Set(hiddenStampIds);
+  return stamps.filter((stamp) => owner || !hidden.has(stamp.id)).map((stamp) => ({
+    ...stamp,
+    ...(owner ? { displayed: !hidden.has(stamp.id) } : {}),
+  }));
+}
+
 
 export function passportIsVisible({ owner = false, hasCv = false, publicCv = false, profilePrivacy } = {}) {
   if (owner) return true;
@@ -74,5 +82,5 @@ export function passportIsVisible({ owner = false, hasCv = false, publicCv = fal
 }
 export async function visiblePassport(read, uid, visibility) {
   if (!passportIsVisible(visibility)) return null;
-  return read(uid);
+  return read(uid, { owner: visibility.owner === true });
 }

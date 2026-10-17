@@ -15,6 +15,12 @@ export const learningNavigation = Object.freeze([
   },
   mentorshipNavigationItem,
   {
+    label: "Team Matchmaking",
+    href: "/matchmaking",
+    path: "/matchmaking",
+    description: "Find opt-in collaborators for GO game jams and projects.",
+  },
+  {
     label: "Courses",
     href: "/education?format=course",
     path: "/education",

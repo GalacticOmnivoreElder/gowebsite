@@ -103,7 +103,10 @@ export async function claimDiscordIdentity(uid, identity, config) {
 async function syncConnection(uid, config) {
   const ref = connectionRef(uid);
   const snap = await ref.get();
-  if (!snap.exists) return;
+  if (!snap.exists) {
+    await syncSharedAppetite(uid, null);
+    return;
+  }
   const connection = snap.data();
   if (millis(connection.retryNotBefore) > Date.now()) {
     throw discordError("rate_limited", 429, Math.ceil((millis(connection.retryNotBefore) - Date.now()) / 1000));
@@ -135,12 +138,27 @@ async function syncConnection(uid, config) {
       managedRoleId: wantedRole, appetiteStatus,
       appetiteRoleMapHash: config.appetiteEnabled ? appetiteConfigHash(config.appetiteRoleIds) : null,
       lastError: null, retryNotBefore: null, lastSyncedAt: new Date(), nextSyncAt: new Date(Date.now() + 300000) });
+    await syncSharedAppetite(uid, member.pending ? null : appetiteStatus);
   } catch (error) {
     await ref.update({ status: error.code === "not_in_server" ? "join_required" : "sync_pending",
       memberAccess: false, lastError: error.code || "sync_failed",
       retryNotBefore: error.code === "rate_limited" ? new Date(Date.now() + (error.retryAfter || 60) * 1000) : null,
       nextSyncAt: new Date(Date.now() + Math.max(60000, (error.retryAfter || 0) * 1000)) });
+    await syncSharedAppetite(uid, null);
     if (error.code !== "not_in_server") throw error;
+  }
+}
+
+async function syncSharedAppetite(uid, appetiteStatus) {
+  try {
+    const matchmakingRef = adminDb.collection("go_matchmaking_profiles").doc(uid);
+    const matchmaking = await matchmakingRef.get();
+    if (matchmaking.exists && matchmaking.data().shareAppetite === true) {
+      await matchmakingRef.update({ sharedAppetite: appetiteStatus, updatedAt: new Date() });
+    }
+  } catch (error) {
+    // Matchmaking is optional and must not change Discord membership sync outcomes.
+    console.error("discord_matchmaking_appetite_sync_failed", { code: error?.code || "unknown" });
   }
 }
 
@@ -183,7 +201,10 @@ export async function disconnectDiscord(uid) {
   return withConnectionLock(uid, async () => {
     const ref = connectionRef(uid);
     const snap = await ref.get();
-    if (!snap.exists) return;
+    if (!snap.exists) {
+      await syncSharedAppetite(uid, null);
+      return;
+    }
     const data = snap.data();
     const roles = new Set([data.managedRoleId, data.guildId === config.guildId ? config.memberRoleId : null].filter(Boolean));
     for (const role of roles) {
@@ -198,6 +219,7 @@ export async function disconnectDiscord(uid) {
     batch.delete(ref);
     batch.delete(adminDb.collection("discord_identities").doc(data.discordId));
     await batch.commit();
+    await syncSharedAppetite(uid, null);
   });
 }
 

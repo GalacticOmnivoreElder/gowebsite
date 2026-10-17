@@ -4,6 +4,8 @@ import { getRequestUser } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
 import { cleanLearningItem, serializeLearningDate } from "@/lib/learning-items";
 import { hasMentorToolAccess } from "@/lib/content-entitlements";
+import { getSkillCatalog } from "@/lib/skill-catalog";
+import { getSkillKey } from "@/lib/skills";
 
 async function requireAdmin(request) {
   const user = await getRequestUser(request);
@@ -54,6 +56,15 @@ export async function POST(request) {
     const previous = previousDoc.exists ? previousDoc.data() : {};
     if (body.courseId || previous.courseId) return Response.json({ error: "Manage flagship cohorts in the flagship course editor" }, { status: 400 });
     const clean = cleanLearningItem({ ...previous, ...body, confirmedCount: previous.confirmedCount, reservedCount: previous.reservedCount, waitlistCount: previous.waitlistCount });
+    if (clean.isGameJam) {
+      const catalog = await getSkillCatalog();
+      const canonicalSkills = new Map(catalog.map((skill) => [getSkillKey(skill.name), skill.name]));
+      const requestedSkills = clean.skillTags.map((skill) => getSkillKey(skill));
+      if (requestedSkills.some((skill) => !canonicalSkills.has(skill))) {
+        throw Object.assign(new Error("GO game jam skill tags must use active skills from the GO catalogue"), { code: "validation_error" });
+      }
+      clean.skillTags = [...new Set(requestedSkills)].map((skill) => canonicalSkills.get(skill));
+    }
     const now = new Date();
     const data = {
       ...clean,

@@ -1,5 +1,10 @@
-import { permanentRedirect } from "next/navigation";
+import MatchmakingWorkspace from "@/components/matchmaking/MatchmakingWorkspace";
 
-export default function MentorshipRedirectPage() {
-  permanentRedirect("/mentorship");
+export const metadata = {
+  title: "GO Team Matchmaking",
+  description: "Find opt-in collaborators for GO game jams and game development projects.",
+};
+
+export default function MatchmakingPage() {
+  return <MatchmakingWorkspace />;
 }

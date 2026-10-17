@@ -4,7 +4,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { getEffectiveMembership } from "@/lib/auth-utils";
 import { getDiscordConfig } from "@/lib/discord-api";
 import { appetiteConfigHash, summarizeAppetite } from "@/lib/discord-appetite.mjs";
-import { currentBuildPeriod, periodForKey, shiftDate, officiallyPublishedPack, votingEligibility, cleanCandidates, publicPoll, publicStamp, spritePath, visiblePassport, problem } from "@/lib/monday-builds.mjs";
+import { currentBuildPeriod, periodForKey, shiftDate, officiallyPublishedPack, votingEligibility, cleanCandidates, publicPoll, publicStamp, spritePath, visiblePassport, displayedPassportStamps, problem } from "@/lib/monday-builds.mjs";
 
 const hash = (value) => createHash("sha256").update(value).digest("hex");
 const active = (data, now = new Date()) => getEffectiveMembership(data || {}, { admin: false, now }).activeMember === true;
@@ -97,9 +97,17 @@ export async function manageBuildPoll(admin, body) {
   return { weekId: period.key };
 }
 
-export async function readPassport(uid) {
-  const [stamps, packs] = await Promise.all([adminDb.collection("passport_stamps").where("userId", "==", uid).get(), ownedPacks(uid).get()]);
-  return { stamps: stamps.docs.filter((doc) => doc.data().status === "issued").map((doc) => publicStamp(doc.id, doc.data())).sort((a, b) => String(b.issuedAt).localeCompare(String(a.issuedAt))), contributions: packs.docs.filter((doc) => officiallyPublishedPack(doc.data())).map((doc) => ({ id: doc.id, title: doc.data().title || "GO asset pack" })) };
+export async function readPassport(uid, { owner = false } = {}) {
+  const [stamps, packs, preferences] = await Promise.all([
+    adminDb.collection("passport_stamps").where("userId", "==", uid).get(),
+    ownedPacks(uid).get(),
+    adminDb.collection("passport_preferences").doc(uid).get(),
+  ]);
+  const hidden = new Set(preferences.data()?.hiddenStampIds || []);
+  const earned = stamps.docs.filter((doc) => doc.data().status === "issued").map((doc) => publicStamp(doc.id, doc.data()));
+  const visibleStamps = displayedPassportStamps(earned, [...hidden], { owner })
+    .sort((a, b) => String(b.issuedAt).localeCompare(String(a.issuedAt)));
+  return { stamps: visibleStamps, contributions: packs.docs.filter((doc) => officiallyPublishedPack(doc.data())).map((doc) => ({ id: doc.id, title: doc.data().title || "GO asset pack" })) };
 }
 
 export async function readVisiblePassport(uid, visibility) {

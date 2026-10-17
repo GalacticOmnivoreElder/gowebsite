@@ -11,6 +11,7 @@ import { addProductNotificationToBatch, createProductNotification } from "@/lib/
 import { enqueueEmailEventForUsers } from "@/lib/email";
 import { getProductConfig } from "@/lib/product-config";
 import { courseSeatCount, courseUsesSeat } from "@/lib/learning-courses";
+import { appendJourneyEvent, journeyEventId } from "@/lib/go-journey-service";
 
 async function context(request, slug) {
   const user = await getRequestUser(request);
@@ -75,6 +76,7 @@ export async function PATCH(request, { params }) {
   const { slug } = await params;
   const gate = await context(request, slug);
   if (gate.response) return gate.response;
+  if (gate.item.isGameJam && !getProductConfig().featureFlags.goGameJams) return Response.json({ error: "Game jam attendance management is not enabled." }, { status: 503 });
   const body = await request.json().catch(() => ({}));
   const enrollmentId = String(body.enrollmentId || "").trim();
   const state = String(body.state || "").trim();
@@ -101,6 +103,17 @@ export async function PATCH(request, { params }) {
       if (!currentDoc.exists || !itemDoc.exists) throw new Error("Enrollment unavailable");
       const current = currentDoc.data();
       const item = itemDoc.data();
+      const stampRef = item.isGameJam ? adminDb.collection("passport_stamps").doc(
+        crypto.createHash("sha256").update(`go-stamp:v1:${current.userId}:game_jam:${gate.item.id}`).digest("hex")
+      ) : null;
+      const previousStamp = stampRef ? await transaction.get(stampRef) : null;
+      const hadVerifiedAttendance = previousStamp?.data()?.status === "issued";
+      const journeyPreference = item.isGameJam
+        ? await transaction.get(adminDb.collection("go_journey_preferences").doc(current.userId))
+        : null;
+      const journeyIsHidden = journeyPreference?.data()?.hiddenEventIds?.includes(
+        journeyEventId(current.userId, "game_jam_attended", gate.item.id)
+      ) === true;
       if (item.courseId && (state === "completed" || current.badge || (current.attendanceMode === "online" && state === "waitlisted"))) throw Object.assign(new Error("Use the course assessment to change completion. Online attendees do not need a waitlist."), { code: "invalid_transition" });
       const auditRef = adminDb.collection("admin_audit_events").doc();
       const now = new Date();
@@ -154,6 +167,48 @@ export async function PATCH(request, { params }) {
           ? { waitlistOfferStatus: null, waitlistOfferExpiresAt: null }
           : {}),
       });
+      if (item.isGameJam && state === "attended") {
+        transaction.set(stampRef, {
+          userId: current.userId,
+          kind: "game_jam",
+          sourceId: item.id,
+          sourceTitle: item.title,
+          title: "GO Game Jam Participant",
+          status: "issued",
+          issuedAt: previousStamp?.data()?.issuedAt || now,
+          issuedBy: previousStamp?.data()?.issuedBy || gate.user.uid,
+          spritePath: null,
+          attendanceEnrollmentId: enrollmentId,
+          updatedAt: now,
+        }, { merge: true });
+        if (!hadVerifiedAttendance && getProductConfig().featureFlags.goDevelopmentJourney) {
+          appendJourneyEvent(transaction, {
+            uid: current.userId,
+            type: "game_jam_attended",
+            sourceId: gate.item.id,
+            title: "GO game jam attendance verified",
+            summary: `Attendance at ${item.title} was verified by a GO event organizer.`,
+            publicTitle: "Attended a GO game jam",
+            publicSummary: `Attendance at ${item.title} was verified by a GO event organizer.`,
+            occurredAt: now,
+            publicDelta: journeyIsHidden ? 0 : 1,
+          });
+        }
+      } else if (item.isGameJam && hadVerifiedAttendance && state !== "completed") {
+        transaction.update(stampRef, { status: "revoked", revokedAt: now, revokedBy: gate.user.uid, revokeReason: String(body.reason || "Attendance record corrected").trim().slice(0, 300), updatedAt: now });
+        if (getProductConfig().featureFlags.goDevelopmentJourney) appendJourneyEvent(transaction, {
+          uid: current.userId,
+          type: "game_jam_attended",
+          sourceId: gate.item.id,
+          title: "GO game jam attendance record corrected",
+          summary: "An organizer corrected the attendance record.",
+          publicTitle: "GO game jam attendance record corrected",
+          publicSummary: "A GO organizer corrected an attendance record.",
+          occurredAt: now,
+          status: "corrected",
+          publicDelta: journeyIsHidden ? 0 : -1,
+        });
+      }
       if (["attended", "did_not_attend", "completed"].includes(state) || ["attended", "did_not_attend", "completed"].includes(current.state)) {
         transaction.create(auditRef, {
           action: "learning_enrollment.attendance_or_completion_updated",
