@@ -2,26 +2,31 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ImpactMetrics } from "@/components/impact/ImpactMetrics";
 import { createMetadata } from "@/lib/seo";
-import impact from "@/data/go-impact.json";
 import projects from "@/data/go-public-projects.json";
 
 export const metadata = createMetadata({
-  title: "GO in numbers & our public pitch",
-  description: "Explore Galactic Omnivore's mission, recorded activity, public projects and the evidence behind our impact figures.",
+  title: "Meet Galactic Omnivore | GO's mission & projects",
+  description: "Meet the Galactic Omnivore, explore GO's creator community and discover projects feeding the galaxy with games.",
   path: "/impact",
 });
 
 const pitch = [
-  { title: "The challenge", text: "Learning a game engine is only one part of becoming a creator. People also need collaborators, feedback, a place to show their work and a practical route to their next opportunity. Those steps can feel disconnected." },
-  { title: "The GO approach", text: "Galactic Omnivore brings learning, collaboration, project visibility and community support into a shared journey. We help a creator identify a useful next step, find people to work with and move toward a playable milestone." },
-  { title: "Who we are here for", text: "Students, hobbyists, emerging creators and independent teams, starting in North Macedonia and connecting with people across the region and beyond. GOHQ gives this online community a place to meet and work together." },
-  { title: "How the journey works", text: "Learn a practical skill. Apply it to a clear project brief. Collaborate with visible roles and credit. Share the result, ask for feedback and prepare the next milestone. Mentorship and publishing preparation support that journey where available." },
-  { title: "How support creates value", text: "Members contribute knowledge, time and creative work. Partners can support workshops, mentorship, community projects and access to tools. Membership and suitable professional services help sustain the work; current terms are published on the website." },
-  { title: "What we want to grow", text: "More creators able to show what they can do, more dependable collaboration and more projects reaching useful outcomes. We will extend this record as completion evidence, attendance and website analytics become available." },
+  { title: "The challenge", text: "Game development takes more than a good idea. Creators need practical skills, helpful collaborators, useful feedback and a place to show what they are making." },
+  { title: "The GO approach", text: "Galactic Omnivore connects learning, collaboration, project visibility and community support. Creators can find a next step, meet people to build with and share their progress." },
+  { title: "Who we are here for", text: "Students, hobbyists, emerging creators and independent teams, starting in North Macedonia and connecting with people across the region and beyond. GOHQ and our online community give creators a place to meet." },
+  { title: "The creator journey", text: "Learn a practical skill. Put it to work on a project. Share progress, get feedback and take the next step. Mentorship, events and publishing preparation support that journey where available." },
+  { title: "A community effort", text: "Creators bring their knowledge, time and ideas. Partners can add tools, learning opportunities and support for community projects. Together, we make more room for game creators to grow." },
+  { title: "What we want to grow", text: "A stronger creative community, more dependable collaboration and more projects reaching the people who will play, learn from and remember them. Every published game adds another world to the galaxy." },
 ];
 
 function SectionTitle({ id, eyebrow, children }) {
   return <header className="mb-7 max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">{eyebrow}</p><h2 id={id} className="mt-3 text-3xl font-bold sm:text-4xl">{children}</h2></header>;
+}
+
+function projectStatus(status) {
+  if (status === "hiring") return "Recruiting";
+  if (status === "completed") return "Completed";
+  return "Live";
 }
 
 export default function ImpactPage() {
@@ -29,35 +34,36 @@ export default function ImpactPage() {
     <main className="overflow-x-clip">
       <section className="border-b border-primary/25 bg-[radial-gradient(ellipse_at_top_right,rgba(202,34,128,0.17),transparent_60%)] px-4 py-16 sm:px-6 sm:py-24">
         <div className="mx-auto max-w-7xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Galactic Omnivore · Open record</p>
-          <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight sm:text-6xl">A community built<br className="hidden sm:block" /> through doing.</h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">I am the Galactic Omnivore: cosmic patron of game development, sustained by games brought all the way to publication. GO gives creators a practical route from first skill to shared project, playable milestone and public release. This is my pitch, and the open record behind it.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Galactic Omnivore · Impact & community</p>
+          <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight sm:text-6xl">Feed the galaxy<br className="hidden sm:block" /> with games.</h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">I am the Galactic Omnivore, cosmic patron of game development. Published games are my favorite sustenance. GO brings creators together to learn, build, share progress and carry ambitious ideas toward release. Every project adds another world to the galaxy, and every published game makes my appetite grow.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg"><a href="#public-pitch">Read the public pitch</a></Button>
-            <Button asChild size="lg" variant="outline"><a href="/documents/go-impact-2026-10-17.md" download>Download the report · Markdown</a></Button>
+            <Button asChild size="lg"><Link href="#portfolio">Explore GO projects</Link></Button>
+            <Button asChild size="lg" variant="outline"><a href="/documents/go-impact-2026-10-17.md" download>Download the public report</a></Button>
           </div>
-          <p className="mt-6 text-sm text-muted-foreground">Reviewed 17 October 2026 · A dated snapshot, updated as evidence grows</p>
+          <p className="mt-6 text-sm text-muted-foreground">Portfolio snapshot checked 17 October 2026 · Page reviewed 18 October 2026</p>
         </div>
       </section>
 
       <div className="mx-auto max-w-7xl space-y-20 px-4 py-16 sm:px-6">
         <section aria-labelledby="numbers-heading">
-          <SectionTitle id="numbers-heading" eyebrow="The evidence">GO in numbers</SectionTitle>
-          <p className="mb-7 max-w-3xl leading-7 text-muted-foreground">Our three-year activity window is {impact.window.label}, in {impact.window.timezone}. Task records cover only part of that window; project figures show the current public portfolio. These figures describe GO activity, not website visitor traffic.</p>
+          <SectionTitle id="numbers-heading" eyebrow="A growing portfolio">Projects feeding the galaxy</SectionTitle>
+          <p className="mb-7 max-w-3xl leading-7 text-muted-foreground">Explore the work GO makes visible: games, learning, cultural projects and community initiatives. These figures reflect the current public project listings.</p>
           <ImpactMetrics />
+          <p className="mt-5 max-w-3xl text-sm leading-6 text-muted-foreground">Project labels describe their current status on the GO website. A listing marked completed is not, by itself, proof that a game has been released.</p>
         </section>
 
         <section id="public-pitch" aria-labelledby="pitch-heading" className="scroll-mt-24">
-          <SectionTitle id="pitch-heading" eyebrow="Our public pitch">From learning to a playable milestone.</SectionTitle>
-          <p className="mb-8 max-w-3xl leading-7 text-muted-foreground">A public edition of GO&apos;s April 2025 platform pitch, adapted on 17 October 2026. It preserves the mission and creator journey, with measured activity replacing unverified traction claims. Historical funding targets, prices and market forecasts are not current offers.</p>
+          <SectionTitle id="pitch-heading" eyebrow="Our public pitch">From first skill to next milestone.</SectionTitle>
+          <p className="mb-8 max-w-3xl leading-7 text-muted-foreground">Game creators deserve a path that connects what they learn with what they make. GO is building a place where people can practice, collaborate, show their work and keep moving forward.</p>
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {pitch.map((item, index) => <article key={item.title} className="rounded-xl border bg-card p-6"><p className="font-mono text-sm text-primary">0{index + 1}</p><h3 className="mt-4 text-xl font-semibold">{item.title}</h3><p className="mt-4 leading-7 text-muted-foreground">{item.text}</p></article>)}
           </div>
           <div className="mt-7 flex flex-wrap gap-3">
             <Button asChild variant="outline"><Link href="/education">Explore learning</Link></Button>
             <Button asChild variant="outline"><Link href="/projects">Explore projects</Link></Button>
-            <Button asChild variant="outline"><Link href="/membership">Membership options</Link></Button>
-            <Button asChild><Link href="/contact">Support or partner with GO</Link></Button>
+            <Button asChild variant="outline"><Link href="/membership">Join the community</Link></Button>
+            <Button asChild><Link href="/contact">Partner with GO</Link></Button>
           </div>
         </section>
 
@@ -67,57 +73,19 @@ export default function ImpactPage() {
           <div className="mt-7 flex flex-wrap gap-3"><Button asChild><Link href="/community-builds">Choose my next bite</Link></Button><Button asChild variant="outline"><Link href="/games">Explore GO games</Link></Button></div>
         </section>
 
-        <section aria-labelledby="history-heading">
-          <SectionTitle id="history-heading" eyebrow="Our history">What the records establish</SectionTitle>
-          <ol className="grid gap-6 border-l-2 border-primary/40 pl-6 md:grid-cols-3 md:border-l-0 md:border-t-2 md:pl-0 md:pt-6">
-            <li><p className="font-mono text-xl text-primary">2022</p><h3 className="mt-2 text-lg font-semibold">Early work is recorded</h3><p className="mt-3 leading-7 text-muted-foreground">The Jira archive contains completed GO work from 2022. That establishes an early activity record, without asserting an exact founding date.</p></li>
-            <li><p className="font-mono text-xl text-primary">2025</p><h3 className="mt-2 text-lg font-semibold">A platform vision and consolidated statute</h3><p className="mt-3 leading-7 text-muted-foreground">The April pitch describes a connected creator journey. The supplied consolidated statute names an assembly on 20 August 2025. This document date does not settle GO&apos;s earlier origin.</p></li>
-            <li><p className="font-mono text-xl text-primary">2026</p><h3 className="mt-2 text-lg font-semibold">An open activity record</h3><p className="mt-3 leading-7 text-muted-foreground">This snapshot brings calendar records, archived completions and the public project portfolio together. Original founding and registration documents will complete the timeline.</p></li>
-          </ol>
-          <Link href="/about" className="mt-6 inline-flex min-h-11 items-center font-semibold text-primary underline-offset-4 hover:underline">Read about GO and its statute →</Link>
-        </section>
-
         <section id="portfolio" aria-labelledby="portfolio-heading" className="scroll-mt-24">
-          <SectionTitle id="portfolio-heading" eyebrow="The public portfolio">13 listings. Different kinds of progress.</SectionTitle>
-          <p className="mb-7 max-w-3xl leading-7 text-muted-foreground">As of 17 October 2026, seven listings are marked completed, five are live and one is recruiting. This portfolio includes games, educational work, cultural projects and community initiatives. A completed listing is a recorded status; it is not by itself evidence of a released game or a completion date within the three-year window.</p>
+          <SectionTitle id="portfolio-heading" eyebrow="The public portfolio">{projects.length} projects. More worlds in progress.</SectionTitle>
+          <p className="mb-7 max-w-3xl leading-7 text-muted-foreground">From original games to cultural experiences and community projects, each listing shows a different way creators bring ideas to life. Find a project that sparks your curiosity.</p>
           <div className="grid gap-3 sm:grid-cols-2">
-            {projects.map((project) => <Link key={project.id} href={`/project/${project.id}`} className="group flex min-h-24 items-center justify-between gap-4 rounded-lg border bg-card p-5 transition-colors hover:border-primary/70"><span className="font-medium leading-6 group-hover:text-primary">{project.title}</span><span className="shrink-0 rounded-full border border-primary/30 px-3 py-1 text-xs text-muted-foreground">{project.status === "hiring" ? "Recruiting" : project.status === "completed" ? "Completed" : "Live"}</span></Link>)}
+            {projects.map((project) => <Link key={project.id} href={`/project/${project.id}`} className="group flex min-h-24 items-center justify-between gap-4 rounded-lg border bg-card p-5 transition-colors hover:border-primary/70"><span className="font-medium leading-6 group-hover:text-primary">{project.title}</span><span className="shrink-0 rounded-full border border-primary/30 px-3 py-1 text-xs text-muted-foreground">{projectStatus(project.status)}</span></Link>)}
           </div>
+          <div className="mt-7 flex flex-wrap gap-3"><Button asChild><Link href="/projects">See every project</Link></Button><Button asChild variant="outline"><Link href="/community-builds">Show us what you are building</Link></Button></div>
         </section>
 
-        <section aria-labelledby="method-heading">
-          <SectionTitle id="method-heading" eyebrow="Definitions & coverage">How we count</SectionTitle>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <article id="calendar-method" className="scroll-mt-24 rounded-xl border bg-card p-6 sm:p-8">
-              <h3 className="text-2xl font-semibold">Meetings and appointments</h3>
-              <p className="mt-4 leading-7 text-muted-foreground">Three GO-maintained Google Calendar exports supplied 11 calendars and 809 source event records. We expanded 34 recurring series and applied 36 detached-instance changes to produce 1,185 scheduled occurrence copies in the reporting window. Times were normalized to Europe/Warsaw.</p>
-              <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-6 text-muted-foreground">
-                <li>Removing 53 duplicate copies leaves 1,132 unique entries across the exports.</li>
-                <li>351 clearly named meetings, calls, appointments, interviews, mentoring sessions and coordination sessions fall within the window.</li>
-                <li>343 ambiguous entries remain outside the headline count. Another 419 all-day entries and 19 clearly non-meeting records are excluded.</li>
-                <li>178 counted entries are recurring occurrences. A calendar entry or invitation response does not verify attendance.</li>
-                <li>The exports include shared and account calendars; the records do not prove personal attendance or that every meeting directly involved GO.</li>
-              </ul>
-              <table className="mt-6 w-full text-left text-sm"><caption className="mb-3 text-left font-semibold">Recorded meetings by calendar year</caption><thead><tr className="border-b"><th scope="col" className="py-2">Year</th><th scope="col" className="py-2 text-right">Count</th></tr></thead><tbody>{impact.calendar.byYear.map((row) => <tr key={row.year} className="border-b border-border/50"><th scope="row" className="py-3 font-normal">{row.year}{row.year === 2026 ? " (through 16 Oct)" : ""}</th><td className="py-3 text-right">{row.count}</td></tr>)}</tbody></table>
-              <p className="mt-4 text-sm leading-6 text-muted-foreground">The earliest dated event in these exports is 3 April 2023. Calendar coverage before that date is unknown.</p>
-            </article>
-
-            <article id="work-method" className="scroll-mt-24 rounded-xl border bg-card p-6 sm:p-8">
-              <h3 className="text-2xl font-semibold">Completed work</h3>
-              <p className="mt-4 leading-7 text-muted-foreground">The 29 January 2025 export, “All Jira Tasks Done Until Now,” contains 637 unique items with both status and resolution set to Done. We use resolution dates, rather than creation dates, to select the reporting window.</p>
-              <table className="mt-6 w-full text-left text-sm"><caption className="mb-3 text-left font-semibold">Completed work items within the window</caption><thead><tr className="border-b"><th scope="col" className="py-2">Type</th><th scope="col" className="py-2 text-right">Count</th></tr></thead><tbody>{impact.work.types.map((row) => <tr key={row.label} className="border-b border-border/50"><th scope="row" className="py-3 font-normal">{row.label}</th><td className="py-3 text-right">{row.count}</td></tr>)}</tbody><tfoot><tr><th scope="row" className="pt-3">Total</th><td className="pt-3 text-right font-semibold">558</td></tr></tfoot></table>
-              <p className="mt-5 leading-7 text-muted-foreground">A further 13 completed epics bring the window total to 571 Jira items. Epics can describe milestones or organizational work, so they are kept separate from completed projects. Parent stories and their subtasks are separate issue records, not independent delivered outcomes.</p>
-              <p className="mt-4 leading-7 text-muted-foreground">Across the full archive from 2022 to January 2025, there are 622 completed work items and 15 completed epics. The April 2025 export contains 110 open items and adds no verified completions.</p>
-              <p className="mt-4 text-sm leading-6 text-muted-foreground">Task completions after 29 January 2025 are missing from this snapshot. Historical Done status does not establish that an issue has never been reopened.</p>
-            </article>
-          </div>
-        </section>
-
-        <section aria-labelledby="gaps-heading" className="rounded-xl border border-primary/30 bg-primary/5 p-6 sm:p-9">
-          <SectionTitle id="gaps-heading" eyebrow="An expanding record">What we will add next</SectionTitle>
-          <dl className="grid gap-6 md:grid-cols-2">{impact.gaps.map((gap) => <div key={gap.title}><dt className="text-lg font-semibold">{gap.title}</dt><dd className="mt-2 leading-7 text-muted-foreground">{gap.detail}</dd></div>)}</dl>
-          <p className="mt-8 text-sm leading-6 text-muted-foreground">Public reporting uses aggregate figures and already-public project listings. Calendar participants, private meeting links, task descriptions and internal notes are not part of this public report.</p>
-          <Button asChild className="mt-6"><Link href="/contact">Contribute a correction or missing record</Link></Button>
+        <section aria-labelledby="reporting-heading" className="rounded-xl border bg-card p-6 sm:p-8">
+          <SectionTitle id="reporting-heading" eyebrow="Clear, public reporting">Built on work you can explore.</SectionTitle>
+          <p className="max-w-3xl leading-7 text-muted-foreground">This snapshot focuses on GO&apos;s public project portfolio. We publish activity measures when they can be verified consistently, and describe project status as it appears on the website. Portfolio totals are not website traffic, event attendance or a count of released games.</p>
+          <Button asChild variant="outline" className="mt-6"><Link href="/contact">Share a project or correction</Link></Button>
         </section>
       </div>
     </main>
