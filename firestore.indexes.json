@@ -231,12 +231,6 @@
       "indexes": []
     },
     {
-      "collectionGroup": "merch_requests",
-      "fieldPath": "reservationExpiresAt",
-      "ttl": true,
-      "indexes": []
-    },
-    {
       "collectionGroup": "merch_suggestions",
       "fieldPath": "expiresAt",
       "ttl": true,

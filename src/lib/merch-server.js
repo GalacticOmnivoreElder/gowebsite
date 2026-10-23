@@ -3,7 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { addEmailEventToBatch, createEmailOutboxJob, processEmailOutbox } from "@/lib/email/outbox";
 import { hashValue } from "@/lib/email/utils";
 import { consumeNewsletterRateLimit, newsletterFingerprint } from "@/lib/email/newsletter";
-import { merchReservationSchema, createMerchReservation, suggestionSchema, MERCH_CONSENT, MERCH_LEGACY_CONSENT } from "@/lib/merch-core";
+import { merchReservationSchema, createMerchReservation, merchRequestExpiry, suggestionSchema, MERCH_CONSENT, MERCH_LEGACY_CONSENT } from "@/lib/merch-core";
 import { readMerchToken } from "@/lib/merch-tokens";
 
 export const merchResponse = { message: "Your T-shirt reservation is saved. We’ll email you when there’s an update." };
@@ -94,10 +94,7 @@ export async function submitMerchReservation(body) {
       manageVersion: pendingManageVersion,
     };
     const status = ["reserved", "confirmed"].includes(previous.status) ? previous.status : "pending";
-    const previousExpiry = previous.reservationExpiresAt?.toDate?.() || previous.reservationExpiresAt;
-    const reservationExpiresAt = status === "pending"
-      ? null
-      : new Date(Math.max(previousExpiry ? new Date(previousExpiry).getTime() : 0, now + 30 * 24 * 60 * 60 * 1000));
+    const requestExpiresAt = merchRequestExpiry({ previousExpiry: status === "pending" ? null : previous.pendingExpiresAt || previous.reservationExpiresAt, now });
     event.data.expires = pending.expires;
     event.data.manageVersion = pending.manageVersion;
     transaction.set(ref, {
@@ -106,8 +103,9 @@ export async function submitMerchReservation(body) {
       status,
       pending,
       manageVersion: previous.manageVersion || pending.manageVersion,
-      pendingExpiresAt: status === "pending" ? new Date(now + 30 * 24 * 60 * 60 * 1000) : FieldValue.delete(),
-      ...(reservationExpiresAt ? { reservationExpiresAt } : {}),
+      // Reuse the existing TTL field: Firestore permits one TTL field per collection group.
+      pendingExpiresAt: requestExpiresAt,
+      reservationExpiresAt: FieldValue.delete(),
       createdAt: previous.createdAt || now, updatedAt: now,
     }, { merge: true });
     if (sameSubmission) return createEmailOutboxJob(event, new Date(now)).id;
@@ -161,12 +159,13 @@ export async function merchAction(body) {
           reservationSubmissionHash: submissionHash,
           manageVersion,
           pending: null,
-          pendingExpiresAt: FieldValue.delete(),
+          pendingExpiresAt: merchRequestExpiry({ confirmed: true, now: confirmedAt }),
           status: "reserved",
           confirmedVersion: token.version,
           confirmedAt,
           updatedAt: confirmedAt,
-          reservationExpiresAt: new Date(confirmedAt + 365 * 24 * 60 * 60 * 1000),
+          reservationExpiresAt: FieldValue.delete(),
+          active: FieldValue.delete(),
           consent: { text: MERCH_CONSENT, version: "merch-v2", confirmedAt },
         });
         return { message: "Your GO T-shirt reservation is confirmed. We’ll email you when it’s available." };

@@ -70,6 +70,13 @@ export function createMerchReservation(data) {
 
 export const suggestionSchema = z.object({ title: text(120).min(2), details: text(1000).default("") });
 
+export function merchRequestExpiry({ confirmed = false, previousExpiry = null, now = Date.now() } = {}) {
+  if (confirmed) return new Date(now + 365 * 24 * 60 * 60 * 1000);
+  const previous = previousExpiry?.toDate?.() || previousExpiry;
+  const previousTime = previous ? new Date(previous).getTime() : 0;
+  return new Date(Math.max(Number.isFinite(previousTime) ? previousTime : 0, now + 30 * 24 * 60 * 60 * 1000));
+}
+
 export const availabilitySchema = z.object({
   productId: z.literal("tshirt"),
   design: z.enum(["all", ...MERCH_DESIGNS.map((item) => item.id)]).default("all"),

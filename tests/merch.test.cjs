@@ -5,7 +5,7 @@ const { loadSourceModule: load } = require("./helpers/load-source-module.cjs");
 
 const catalog = load("src/lib/merch-catalog.js", ["MERCH_DESIGNS", "MERCH_OFFERS", "getReservationItems", "describeMerchItem"]);
 function core() {
-  return load("src/lib/merch-core.js", ["merchReservationSchema", "createMerchReservation", "matchesAvailability", "summarizeMerch", "availabilitySchema"], {
+  return load("src/lib/merch-core.js", ["merchReservationSchema", "createMerchReservation", "merchRequestExpiry", "matchesAvailability", "summarizeMerch", "availabilitySchema"], {
     stripImports: true,
     transform: (source) => source.replace(/^export \{.*\} from .*;\r?\n/gm, ""),
     sandbox: { z, ...catalog },
@@ -16,6 +16,19 @@ const shirt = { design: "main", fit: "male", size: "L" };
 const second = { design: "alternate", fit: "female", size: "XS" };
 const input = (patch = {}) => ({ submissionId: "a04689ed-443a-49e2-91b4-44a987007075", email: "Person@example.com", phone: "+38970000000", offerId: "duo", items: [shirt, second], quantity: 2, proposedTotalPrice: 2300, location: "skopje", fulfillment: "pickup", consent: true, ...patch });
 const reserved = (reservation) => ({ status: "reserved", consent: { version: "merch-v2" }, reservation });
+
+test("one TTL field supports pending and confirmed request retention", () => {
+  const now = Date.parse("2026-10-23T12:00:00Z");
+  const pending = api.merchRequestExpiry({ now });
+  const confirmed = api.merchRequestExpiry({ now, confirmed: true });
+  assert.equal(pending.getTime() - now, 30 * 86400000);
+  assert.equal(confirmed.getTime() - now, 365 * 86400000);
+  assert.equal(api.merchRequestExpiry({ now: now + 86400000, previousExpiry: { toDate: () => confirmed } }).getTime(), confirmed.getTime());
+  assert.equal(api.merchRequestExpiry({ now, previousExpiry: new Date(now - 86400000) }).getTime(), pending.getTime());
+  const fields = require("../firestore.indexes.json").fieldOverrides.filter((field) => field.collectionGroup === "merch_requests" && field.ttl);
+  assert.equal(fields.length, 1);
+  assert.equal(fields[0].fieldPath, "pendingExpiresAt");
+});
 
 test("mixed packages retain both choices and the customer's proposed total", () => {
   const data = api.merchReservationSchema.parse(input({ totalPrice: 1, unitPrice: 1 }));
