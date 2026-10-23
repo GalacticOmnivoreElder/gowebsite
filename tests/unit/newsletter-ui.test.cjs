@@ -103,14 +103,14 @@ test("landing and footer restore their distinct audited sources", () => {
 });
 
 test("landing close uses the approved CTA copy and verified destinations", () => {
-  assert.match(ctaSource, /Find your place in Galactic Omnivore/);
-  assert.match(ctaSource, /Whether you want to learn, contribute to a project/);
-  assert.match(ctaSource, /Join Our Discord/);
+  assert.match(ctaSource, /Feed the Galactic Omnivore/);
+  assert.match(ctaSource, /Learn a craft, join a project, share an offering/);
+  assert.match(ctaSource, /Join the GO Discord/);
   assert.match(ctaSource, /https:\/\/discord\.gg\/ZbSShxu6K4/);
   assert.match(ctaSource, /href="\/membership"/);
   assert.match(ctaSource, /Review Membership/);
   assert.match(ctaSource, /href="\/projects"/);
-  assert.match(ctaSource, /Explore Projects/);
+  assert.match(ctaSource, /Bring a Game to Life/);
   assert.doesNotMatch(ctaSource, /Level up your game development journey/i);
   assert.doesNotMatch(ctaSource, /ENGAGE/);
 });

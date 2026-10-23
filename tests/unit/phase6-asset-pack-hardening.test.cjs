@@ -64,7 +64,8 @@ test("final product presentation includes approved asset packs without overstati
   const membership = read("src/app/membership/page.js");
   const assetPage = read("src/app/asset-packs/page.js");
 
-  assert.match(home, /approved community asset packs/i);
+  assert.match(home, /<ExploreGo \/>/);
+  assert.match(read("src/components/landing/ExploreGo.js"), /href: "\/resources"/);
   assert.match(membership, /approved asset packs/i);
   assert.match(membership, /Contribute asset packs when community submissions are enabled/);
   assert.doesNotMatch(assetPage, /Coming Soon/i);

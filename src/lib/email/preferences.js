@@ -10,6 +10,7 @@ export function getEmailPreferenceDecision({
   merchBatch = null,
   merchVersion = null,
   merchManageVersion = null,
+  merchReservationId = null,
 }) {
   const { category } = getEmailEventDefinition(eventType);
   const settings = userData?.settings || {};
@@ -19,9 +20,13 @@ export function getEmailPreferenceDecision({
 
   switch (category) {
     case EMAIL_CATEGORIES.MERCH: {
-      const allowed = !isHardSuppressed && (eventType === "merch.confirm"
-        ? merchRequest?.pending?.version === merchVersion && merchRequest.pending.expires > Date.now()
-        : Boolean(merchBatch && merchRequest?.manageVersion === merchManageVersion && matchesAvailability(merchRequest, merchBatch)));
+      const allowed = !isHardSuppressed && (
+        eventType === "merch.confirm"
+          ? merchRequest?.pending?.version === merchVersion && merchRequest.pending.expires > Date.now()
+          : eventType === "merch.reservation_received"
+            ? merchRequest?.pending?.reservationId === merchReservationId && merchRequest?.pending?.version === merchVersion && merchRequest?.pending?.expires > Date.now() && merchRequest?.pending?.manageVersion === merchManageVersion
+            : Boolean(merchBatch && merchRequest?.manageVersion === merchManageVersion && matchesAvailability(merchRequest, merchBatch))
+      );
       return { allowed, category, reason: allowed ? null : "merch_consent_or_request_inactive" };
     }
     case EMAIL_CATEGORIES.ESSENTIAL:

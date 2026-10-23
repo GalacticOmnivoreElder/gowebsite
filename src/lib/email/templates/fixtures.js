@@ -41,6 +41,9 @@ export const EMAIL_TEMPLATE_FIXTURES = Object.freeze(
         ...(eventType === "merch.confirm"
           ? { requestId: "a".repeat(64), version: "fixture-version", manageVersion: "fixture-manage", expires: Date.now() + 48 * 60 * 60 * 1000, confirmationUrl: "https://example.invalid/merch/confirm#token=fake", manageUrl: "https://example.invalid/merch/manage#token=fake" }
           : {}),
+        ...(eventType === "merch.reservation_received"
+          ? { requestId: "a".repeat(64), reservationId: "fixture-reservation", version: "fixture-reservation", expires: Date.now() + 48 * 60 * 60 * 1000, manageVersion: "fixture-manage", confirmationUrl: "https://example.invalid/merch/confirm#token=fake", manageUrl: "https://example.invalid/merch/manage#token=fake", reservation: { design: "main", designName: "Main · Black", size: "M", fit: "male", quantity: 2, pricingMode: "customer_proposed", proposedTotalPrice: 2000, currency: "MKD", city: "Skopje", fulfillment: "kiimo" } }
+          : {}),
         ...(eventType === "merch.available"
           ? { requestId: "a".repeat(64), manageVersion: "fixture-manage", manageUrl: "https://example.invalid/merch/manage#token=fake", productName: "GO T-shirt", batch: { details: "Demo price and order instructions; this is fictional sample content only." } }
           : {}),

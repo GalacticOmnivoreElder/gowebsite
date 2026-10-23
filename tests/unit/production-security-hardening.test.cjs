@@ -99,7 +99,7 @@ test("server-owned external requests have explicit timeouts", () => {
 
 test("production dependencies use patched security lines", () => {
   const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-  assert.equal(pkg.dependencies.next, "16.4.0");
+  assert.equal(pkg.dependencies.next, "16.4.3");
   assert.match(pkg.dependencies.firebase, /^\^12\./);
   assert.match(pkg.dependencies["firebase-admin"], /^\^14\./);
   assert.match(pkg.dependencies.dompurify, /^\^3\.4\./);

@@ -32,7 +32,7 @@ const routes = [
   {
     title: "GO Merch",
     eyebrow: "Shape the collection",
-    description: "Join the GO merch waitlist or suggest what we should make next. Starting in Skopje.",
+    description: "Reserve the first GO T-shirt collection or suggest future GO merchandise.",
     href: "/merch",
     icon: ShoppingBag,
   },

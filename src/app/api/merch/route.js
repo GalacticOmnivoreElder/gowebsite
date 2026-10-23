@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { limitMerch, readMerchBody, submitMerch, saveMerchSuggestion, merchAction } from "@/lib/merch-server";
+import { limitMerch, readMerchBody, submitMerchReservation, saveMerchSuggestion, merchAction } from "@/lib/merch-server";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
 export async function POST(request) {
   try {
     const body = await readMerchBody(request);
@@ -10,7 +11,7 @@ export async function POST(request) {
       return NextResponse.json(await merchAction(body), { headers: { "Cache-Control": "no-store" } });
     }
     await limitMerch(request, typeof body.email === "string" ? body.email : "");
-    const result = body.action === "suggest" ? await saveMerchSuggestion(body) : await submitMerch(body);
+    const result = body.action === "suggest" ? await saveMerchSuggestion(body) : await submitMerchReservation(body);
     return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return NextResponse.json({ error: error.status ? error.message : "We could not save your request. Please try again." }, { status: error.status || 500 });

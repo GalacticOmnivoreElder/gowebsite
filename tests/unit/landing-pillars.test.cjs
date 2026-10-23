@@ -12,21 +12,24 @@ const pillars = fs.readFileSync(
   "utf8"
 );
 
-test("landing page presents the six approved product routes", () => {
-  assert.match(source, /const orbitRoutes = \[/);
-  for (const title of ["Find a Project", "Create a Project", "Find a Mentor", "Learn", "Video Bundles", "Community Resources"]) {
-    assert.match(source, new RegExp(`title: "${title}"`));
+test("landing page presents current exploration destinations", () => {
+  const explore = fs.readFileSync(path.resolve(__dirname, "../../src/components/landing/ExploreGo.js"), "utf8");
+  assert.match(source, /<ExploreGo \/>/);
+  for (const destination of ["blog", "games", "resources", "membership"]) {
+    assert.match(explore, new RegExp(`href: "/${destination}"`));
   }
-  assert.match(source, /orbitRoutes\.map\(\(orbit, index\)/);
-  assert.equal((source.match(/id="orbits"/g) || []).length, 1);
+  assert.match(explore, /items\.map/);
 });
 
-test("the GO pillars are a separate non-navigational progression before the orbits", () => {
-  for (const title of ["Learn", "Portfolio", "Business"]) {
+test("the GO pillars expose accessible intent paths before exploration", () => {
+  for (const title of ["Learn", "Portfolio", "Outsource"]) {
     assert.match(pillars, new RegExp(`title: "${title}"`));
   }
   assert.match(pillars, /The GO path/);
-  assert.match(pillars, /Learn\. Build your portfolio\. Move toward business\./);
-  assert.doesNotMatch(pillars, /<Link|<Button|href=/);
-  assert.ok(source.indexOf("<GoPillars />") < source.indexOf('id="orbits"'));
+  assert.match(pillars, /Learn\. Build your portfolio\. Find work or hire talent\./);
+  assert.match(pillars, /aria-expanded=\{isActive\}/);
+  assert.match(pillars, /aria-controls=\{pathsId\}/);
+  assert.match(pillars, /href=\{path.href\}/);
+  assert.match(pillars, /rememberGoIntent\(path.id\)/);
+  assert.ok(source.indexOf("<GoPillars />") < source.indexOf("<ExploreGo />"));
 });

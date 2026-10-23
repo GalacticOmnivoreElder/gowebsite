@@ -1,13 +1,12 @@
-import crypto from "crypto";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
-import { addEmailEventToBatch } from "@/lib/email/outbox";
+import { addEmailEventToBatch, createEmailOutboxJob, processEmailOutbox } from "@/lib/email/outbox";
 import { hashValue } from "@/lib/email/utils";
 import { consumeNewsletterRateLimit, newsletterFingerprint } from "@/lib/email/newsletter";
-import { merchRequestSchema, suggestionSchema, MERCH_CONSENT } from "@/lib/merch-core";
+import { merchReservationSchema, createMerchReservation, suggestionSchema, MERCH_CONSENT, MERCH_LEGACY_CONSENT } from "@/lib/merch-core";
 import { readMerchToken } from "@/lib/merch-tokens";
 
-export const merchResponse = { message: "Check your inbox to confirm your request. If you have already confirmed, a new confirmation will update your choices. Please allow a few minutes and check your spam folder." };
+export const merchResponse = { message: "Your T-shirt reservation is saved. We’ll email you when there’s an update." };
 export function merchError(message, status = 400) { return Object.assign(new Error(message), { status }); }
 export function requireMerchEmail() {
   if (!process.env.RESEND_API_KEY || !process.env.NEWSLETTER_TOKEN_SECRET || !process.env.EMAIL_FROM_TRANSACTIONAL || process.env.EMAIL_DISABLE_SEND === "true") throw merchError("The waitlist is temporarily unavailable. Please try again later.", 503);
@@ -35,33 +34,98 @@ export async function limitMerch(request, email = "") {
     if (!await consumeNewsletterRateLimit(fingerprint)) throw merchError("Too many requests. Please try again in an hour.", 429);
   }
 }
-export async function submitMerch(body) {
+export async function submitMerchReservation(body) {
   if (body.company) return merchResponse;
-  const parsed = merchRequestSchema.safeParse(body);
+  const parsed = merchReservationSchema.safeParse(body);
   if (!parsed.success) throw merchError(parsed.error.issues[0].message);
   requireMerchEmail();
-  const data = parsed.data; const id = hashValue(data.email);
+  const data = parsed.data;
+  const id = hashValue(data.email);
   const ref = adminDb.collection("merch_requests").doc(id);
-  const now = Date.now(); const version = crypto.randomUUID();
-  const expires = now + 48 * 60 * 60 * 1000;
+  const now = Date.now();
   const suppression = await adminDb.collection("email_suppressions").doc(id).get();
-  if (["bounced", "complained", "suppressed"].includes(suppression.data()?.status)) return merchResponse;
-  await adminDb.runTransaction(async (transaction) => {
+  if (["bounced", "complained", "suppressed"].includes(suppression.data()?.status)) {
+    throw merchError("This email address cannot receive updates. Use another email address.");
+  }
+
+  const reservation = createMerchReservation(data);
+  const pendingManageVersion = hashValue(`${id}:${data.submissionId}:manage`);
+  const submissionHash = hashValue(JSON.stringify({ email: data.email, phone: data.phone, reservation }));
+  const emailJobId = await adminDb.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(ref); const previous = snapshot.data() || {};
-    const retained = { ...previous };
-    delete retained.pendingExpiresAt;
-    const manageVersion = previous.manageVersion || crypto.randomUUID();
-    if (previous.pending && now - previous.pending.createdAt < 5 * 60 * 1000) return;
+    const samePendingSubmission = previous.pending?.reservationId === data.submissionId;
+    const sameActiveSubmission = previous.reservationId === data.submissionId && !previous.pending && ["reserved", "confirmed"].includes(previous.status);
+    const priorHash = samePendingSubmission ? previous.pending.submissionHash : sameActiveSubmission ? previous.reservationSubmissionHash : null;
+    if (priorHash && priorHash !== submissionHash) throw merchError("Your choices changed. Please submit the form again.");
+    const event = {
+      type: "merch.reservation_received",
+      eventId: `${id}:${data.submissionId}`,
+      recipient: data.email,
+      data: {
+        requestId: id,
+        reservationId: data.submissionId,
+        version: data.submissionId,
+        expires: samePendingSubmission ? previous.pending.expires : now + 48 * 60 * 60 * 1000,
+        manageVersion: samePendingSubmission ? previous.pending.manageVersion : sameActiveSubmission ? previous.manageVersion : pendingManageVersion,
+        reservation: {
+          offerId: reservation.offerId,
+          offerName: reservation.offerName,
+          packageQuantity: reservation.packageQuantity,
+          items: reservation.items,
+          quantity: reservation.quantity,
+          pricingMode: reservation.pricingMode,
+          proposedTotalPrice: reservation.proposedTotalPrice,
+          currency: reservation.currency,
+          city: reservation.city,
+          fulfillment: reservation.fulfillment,
+        },
+      },
+    };
+    if (sameActiveSubmission) return createEmailOutboxJob(event, new Date(now)).id;
+    const sameSubmission = samePendingSubmission;
+    const pending = {
+      reservation,
+      phone: data.phone,
+      reservationId: data.submissionId,
+      submissionHash,
+      version: data.submissionId,
+      expires: sameSubmission ? previous.pending.expires : now + 48 * 60 * 60 * 1000,
+      createdAt: sameSubmission ? previous.pending.createdAt : now,
+      manageVersion: pendingManageVersion,
+    };
+    const status = ["reserved", "confirmed"].includes(previous.status) ? previous.status : "pending";
+    const previousExpiry = previous.reservationExpiresAt?.toDate?.() || previous.reservationExpiresAt;
+    const reservationExpiresAt = status === "pending"
+      ? null
+      : new Date(Math.max(previousExpiry ? new Date(previousExpiry).getTime() : 0, now + 30 * 24 * 60 * 60 * 1000));
+    event.data.expires = pending.expires;
+    event.data.manageVersion = pending.manageVersion;
     transaction.set(ref, {
-      ...retained, email: data.email, status: previous.status === "confirmed" ? "confirmed" : "pending",
-      manageVersion,
-      pending: { ...data, version, expires, createdAt: now },
-      ...(previous.status === "confirmed" ? {} : { pendingExpiresAt: new Date(now + 30 * 24 * 60 * 60 * 1000) }),
+      ...previous,
+      email: data.email,
+      status,
+      pending,
+      manageVersion: previous.manageVersion || pending.manageVersion,
+      pendingExpiresAt: status === "pending" ? new Date(now + 30 * 24 * 60 * 60 * 1000) : FieldValue.delete(),
+      ...(reservationExpiresAt ? { reservationExpiresAt } : {}),
       createdAt: previous.createdAt || now, updatedAt: now,
-    });
-    addEmailEventToBatch(transaction, { type: "merch.confirm", eventId: `${id}:${version}`, recipient: data.email, data: { requestId: id, version, expires, manageVersion } });
+    }, { merge: true });
+    if (sameSubmission) return createEmailOutboxJob(event, new Date(now)).id;
+    return addEmailEventToBatch(transaction, event, new Date(now)).id;
   });
-  return merchResponse;
+
+  const delivery = await processEmailOutbox({ jobIds: [emailJobId] });
+  const emailJob = await adminDb.collection("email_outbox").doc(emailJobId).get();
+  const emailStatus = emailJob.data()?.status;
+  return {
+    message: delivery.failed || ["pending", "processing"].includes(emailStatus)
+      ? "Your request is saved. We couldn’t send the confirmation email just now, but we’ll retry automatically."
+      : emailStatus === "sent"
+        ? "Check your email and confirm the request to join the GO T-shirt waitlist. The confirmation email has been sent."
+        : delivery.suppressed || emailStatus === "suppressed"
+        ? "Your request is saved, but we couldn’t send a confirmation to this email address. Check it or contact GO."
+        : "Your request is saved, but we couldn’t send the confirmation email. Contact GO for help.",
+  };
 }
 export async function saveMerchSuggestion(body) {
   if (body.company) return { message: "Thank you. Your suggestion has been sent to GO." };
@@ -85,20 +149,40 @@ export async function merchAction(body) {
     const snapshot = await transaction.get(ref); const data = snapshot.data();
     if (!data) throw merchError("This request is no longer available.");
     if (body.action === "confirm") {
-      if (data.confirmedVersion === token.version && data.status === "confirmed") return { message: "Your GO merch request is confirmed." };
+      if (data.confirmedVersion === token.version && ["confirmed", "reserved"].includes(data.status)) return { message: data.status === "reserved" ? "Your GO T-shirt reservation is confirmed." : "Your GO merch request is confirmed." };
       if (data.pending?.version !== token.version || data.pending.expires <= Date.now()) throw merchError("This confirmation has expired or been replaced. Submit your choices again.");
+      if (data.pending.reservation) {
+        const { reservation, phone, reservationId, submissionHash, manageVersion } = data.pending;
+        const confirmedAt = Date.now();
+        transaction.update(ref, {
+          reservation,
+          phone,
+          reservationId,
+          reservationSubmissionHash: submissionHash,
+          manageVersion,
+          pending: null,
+          pendingExpiresAt: FieldValue.delete(),
+          status: "reserved",
+          confirmedVersion: token.version,
+          confirmedAt,
+          updatedAt: confirmedAt,
+          reservationExpiresAt: new Date(confirmedAt + 365 * 24 * 60 * 60 * 1000),
+          consent: { text: MERCH_CONSENT, version: "merch-v2", confirmedAt },
+        });
+        return { message: "Your GO T-shirt reservation is confirmed. We’ll email you when it’s available." };
+      }
       const { version, expires, createdAt, ...active } = data.pending;
-      transaction.update(ref, { active, pending: null, pendingExpiresAt: FieldValue.delete(), status: "confirmed", confirmedVersion: version, confirmedAt: Date.now(), updatedAt: Date.now(), consent: { text: MERCH_CONSENT, version: "merch-v1", confirmedAt: Date.now() } });
+      transaction.update(ref, { active, pending: null, pendingExpiresAt: FieldValue.delete(), status: "confirmed", confirmedVersion: version, confirmedAt: Date.now(), updatedAt: Date.now(), consent: { text: MERCH_LEGACY_CONSENT, version: "merch-v1", confirmedAt: Date.now() } });
       return { message: "Your GO merch request is confirmed. We’ll email you when your selected merchandise is available." };
     }
-    if (data.manageVersion !== token.version) throw merchError("This link is no longer valid.");
+    if (data.manageVersion !== token.version && data.pending?.manageVersion !== token.version) throw merchError("This link is no longer valid.");
     if (body.action === "withdraw") {
       // Deleting the request removes every stored choice and contact field in a
       // single operation. Any queued merch job is re-checked against this
       // document before delivery, so deletion also suppresses pending mail and
       // invalidates every previously issued management token.
       transaction.delete(ref);
-      return { message: "You have left the merch waitlist. Your request details have been removed." };
+      return { message: "Your GO T-shirt reservation has been cancelled and your contact and delivery details have been removed." };
     }
     throw merchError("Unknown action.");
   });

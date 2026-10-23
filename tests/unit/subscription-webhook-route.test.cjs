@@ -2,10 +2,6 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs");
-const subscriptionStateHelpers = loadSourceModule(
-  "src/lib/subscription-state.js",
-  ["normalizeRefundTransition", "normalizeSubscriptionTransition"]
-);
 
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
@@ -26,6 +22,12 @@ class FixedDate extends Date {
     return fixedNow.getTime();
   }
 }
+
+const subscriptionStateHelpers = loadSourceModule(
+  "src/lib/subscription-state.js",
+  ["normalizeRefundTransition", "normalizeSubscriptionTransition"],
+  { sandbox: { Date: FixedDate } }
+);
 
 function createAdminDb(seed = {}) {
   const docs = {

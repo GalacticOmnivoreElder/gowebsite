@@ -3,7 +3,7 @@ import MerchPage from "@/components/merch/MerchPage";
 
 export const metadata = createMetadata({
   title: "GO Merch",
-  description: "Join the GO merch waitlist. Request T-shirts, hoodies, tote bags and stickers, or suggest something new. Starting in Skopje.",
+  description: "Reserve the first GO T-shirt collection. Choose a design, size and fit, then select Skopje pickup or delivery.",
   path: "/merch",
 });
 

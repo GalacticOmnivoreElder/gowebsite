@@ -275,6 +275,7 @@ async function loadPreferenceContext(job) {
       merchBatch: job.templateData.batch || null,
       merchVersion: job.templateData.version || null,
       merchManageVersion: job.templateData.manageVersion || null,
+      merchReservationId: job.templateData.reservationId || null,
     } : {}),
   };
 }
@@ -319,7 +320,7 @@ function enrichJobFromCurrentState(job, context) {
   };
 }
 
-async function claimJob(ref) {
+async function claimJob(ref, { forceDue = false } = {}) {
   return adminDb.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists) return null;
@@ -329,7 +330,7 @@ async function claimJob(ref) {
 
     if (
       job.status !== "pending" ||
-      (nextAttempt && new Date(nextAttempt) > now) ||
+      (!forceDue && nextAttempt && new Date(nextAttempt) > now) ||
       Number(job.attempts || 0) >= MAX_ATTEMPTS
     ) {
       return null;
@@ -364,15 +365,19 @@ async function finishJob(ref, update) {
   });
 }
 
-export async function processEmailOutbox({ limit = 25 } = {}) {
+export async function processEmailOutbox({ limit = 25, jobIds } = {}) {
   const now = new Date();
   const boundedLimit = Math.min(Math.max(Number(limit) || 25, 1), 100);
-  const snapshot = await loadDuePendingJobs(now, boundedLimit);
+  const immediate = Array.isArray(jobIds);
+  const uniqueJobIds = immediate ? [...new Set(jobIds.filter((id) => typeof id === "string" && id))].slice(0, boundedLimit) : [];
+  const snapshot = immediate
+    ? { docs: (await Promise.all(uniqueJobIds.map((id) => adminDb.collection("email_outbox").doc(id).get()))).filter((doc) => doc.exists && doc.data()?.status === "pending"), empty: uniqueJobIds.length === 0 }
+    : await loadDuePendingJobs(now, boundedLimit);
 
   const summary = { claimed: 0, sent: 0, failed: 0, suppressed: 0 };
 
   for (const candidate of snapshot.docs) {
-    const job = await claimJob(candidate.ref);
+    const job = await claimJob(candidate.ref, { forceDue: immediate });
     if (!job) continue;
     summary.claimed += 1;
 

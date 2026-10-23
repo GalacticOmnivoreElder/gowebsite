@@ -144,7 +144,7 @@ export async function sendEmailJob(job) {
     templateData = {
       ...templateData,
       manageUrl: absoluteSiteUrl(`/merch/manage#token=${encodeURIComponent(managementToken)}`),
-      ...(job.eventType === "merch.confirm" ? {
+      ...(["merch.confirm", "merch.reservation_received"].includes(job.eventType) ? {
         confirmationUrl: absoluteSiteUrl(`/merch/confirm#token=${encodeURIComponent(merchToken(templateData.requestId, templateData.version, "confirm", templateData.expires))}`),
       } : {}),
     };

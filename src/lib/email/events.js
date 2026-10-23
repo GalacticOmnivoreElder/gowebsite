@@ -9,6 +9,7 @@ export const EMAIL_CATEGORIES = Object.freeze({
 });
 
 export const EMAIL_EVENTS = Object.freeze({
+  "merch.reservation_received": { category: EMAIL_CATEGORIES.MERCH },
   "merch.confirm": { category: EMAIL_CATEGORIES.MERCH },
   "merch.available": { category: EMAIL_CATEGORIES.MERCH },
   "account.welcome": { category: EMAIL_CATEGORIES.ESSENTIAL },

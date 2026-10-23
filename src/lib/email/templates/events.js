@@ -2,6 +2,7 @@ import { EMAIL_CATEGORIES, getEmailEventDefinition } from "../events";
 import { MEMBERSHIP_PLANS } from "@/constants/membership";
 import { absoluteSiteUrl, escapeHtml, firestoreDateToDate } from "../utils";
 import { renderEmailLayout } from "./base";
+import { describeMerchItem, getReservationItems } from "@/lib/merch-catalog";
 
 function paragraph(value) {
   return `<p style="margin:0 0 16px;">${escapeHtml(value)}</p>`;
@@ -621,6 +622,37 @@ function eventCopy(type, data) {
         ctaUrl: absoluteSiteUrl("/profile?tab=asset-packs"),
       };
     }
+    case "merch.reservation_received": {
+      const reservation = data.reservation || {};
+      const fulfillment = reservation.fulfillment === "pickup"
+        ? "Pick up from the GO office in Skopje"
+        : reservation.fulfillment === "kiimo"
+          ? "Kiimo delivery in Skopje"
+          : "Cargo delivery by arrangement";
+      const rows = [
+        { label: "Offer", value: reservation.offerName || "One T-shirt" },
+        ...getReservationItems(reservation).map((item, index) => ({ label: `T-shirt ${index + 1}`, value: describeMerchItem(item) })),
+        { label: reservation.offerId === "duo" ? "Packages" : "Quantity", value: reservation.packageQuantity || reservation.quantity },
+        { label: "Total T-shirts", value: reservation.quantity },
+        ...(reservation.proposedTotalPrice != null
+          ? [{ label: "Your suggested total (excluding delivery)", value: `${Number(reservation.proposedTotalPrice).toLocaleString("en-US")} MKD` }]
+          : reservation.totalPrice != null ? [{ label: "Previously quoted total", value: `${Number(reservation.totalPrice).toLocaleString("en-US")} MKD` }] : []),
+        { label: "Location", value: reservation.city },
+        { label: "Collection", value: fulfillment },
+      ];
+      const message = "Confirm your email to add this T-shirt request to the GO waitlist. This is not a completed order or a stock reservation, and no payment is due now. We’ll email you when the T-shirt is available.";
+      const payment = `${reservation.proposedTotalPrice != null ? "Your suggested price helps us plan the collection; it is not a confirmed purchase price. " : ""}We’ll email purchase details when your T-shirts are available. Delivery fees are separate and paid to the courier. For cargo outside Skopje, we’ll agree the delivery fee with you before dispatch.`;
+      return {
+        subject: "Confirm your GO T-shirt request",
+        heading: "Confirm your T-shirt request",
+        preheader: "Confirm your email to join the GO T-shirt waitlist.",
+        body: paragraph(message) + detailTable(rows) + paragraph(payment) + paragraph("If you didn’t make this request, ignore this email or cancel it using the link below."),
+        text: `${message}\n\n${plainDetails(rows)}\n\n${payment}\n\nIf you didn’t make this request, ignore this email or cancel it using the link below.`,
+        ctaLabel: "Confirm T-shirt request",
+        ctaUrl: data.confirmationUrl,
+        secondaryCtas: [{ label: "Cancel request", url: data.manageUrl }],
+      };
+    }
     case "merch.confirm":
       return {
         subject: "Confirm your GO merch request",
@@ -634,9 +666,11 @@ function eventCopy(type, data) {
       return {
         subject: `${data.productName || "GO merchandise"} is available`,
         heading: `${data.productName || "GO merchandise"} is available`,
-        body: paragraph(data.batch?.details || "") + paragraph("Your waitlist request is not an order or reservation. Follow the instructions above to arrange your purchase."),
-        text: `${data.batch?.details || ""}\n\nYour waitlist request is not an order or reservation. Follow the instructions above to arrange your purchase.`,
-        ctaLabel: "Leave the merch waitlist", ctaUrl: data.manageUrl,
+        body: paragraph(data.batch?.details || "") + paragraph("This is an availability update; your request does not secure stock and no payment has been taken. Follow the instructions above to arrange your order."),
+        text: `${data.batch?.details || ""}\n\nThis is an availability update; your request does not secure stock and no payment has been taken. Follow the instructions above to arrange your order.`,
+        ctaLabel: data.batch?.checkoutUrl ? "Purchase your T-shirts" : "Cancel reservation",
+        ctaUrl: data.batch?.checkoutUrl || data.manageUrl,
+        secondaryCtas: data.batch?.checkoutUrl ? [{ label: "Cancel reservation", url: data.manageUrl }] : [],
       };
     case "newsletter.confirm":
       return {

@@ -2,12 +2,13 @@ import LegalPageLayout from "@/components/legal/LegalPageLayout";
 
 export default function PrivacyPage() {
   return (
-    <LegalPageLayout title="Privacy Policy" lastUpdated="October 7, 2026">
+    <LegalPageLayout title="Privacy Policy" lastUpdated="October 23, 2026">
       <h2>1. Information We Collect</h2>
       <p>We collect information that you provide directly to us, including:</p>
       <ul>
         <li>Account information (name, email, password)</li>
         <li>Payment information</li>
+        <li>GO T-shirt reservation contact, selection, and delivery details</li>
         <li>Usage data and preferences</li>
         <li>Communications with our support team</li>
         <li>
@@ -18,18 +19,25 @@ export default function PrivacyPage() {
 
       <h2>2. How We Use Your Information</h2>
       <p>
-        For the GO merch waitlist, we store your email, optional first name,
-        merchandise choices, quantities, city, fulfillment preference, and
-        email consent to plan production and send relevant availability updates.
-        Email confirmation is required; merch consent is separate from newsletter
-        consent. Firebase stores requests and Resend delivers emails. We do not
-        collect delivery addresses or payment details at this stage. Suggestions
-        are reviewed privately by staff; please do not include personal details.
-        You can replace your choices by submitting and confirming a new request,
-        or use the leave-waitlist link in a merch email to remove your request
-        details and stop future availability updates. Contact GO for other data
-        requests. Email delivery records follow the platform’s email retention
-        policy; leaving the waitlist does not erase historical delivery records.
+        For GO T-shirt reservations, we store your email, telephone number,
+        selected designs, sizes, fits, quantity, suggested total price, city, collection or delivery
+        preference, and consent. If you choose delivery, we also collect your
+        delivery address. We use these details to estimate demand, contact you
+        when the item is available, and arrange fulfilment. We ask you to confirm
+        your email address before counting the request in the waitlist. Firebase
+        stores the request and Resend sends transactional email. If you choose delivery
+        and place an order, we share the delivery details needed with Kiimo in
+        Skopje or the cargo provider agreed with you outside Skopje. T-shirt
+        suggestions are reviewed by staff and are not linked to reservation
+        contact details. You can cancel using the link in your reservation email
+        to remove your reservation and contact details. A new unconfirmed
+        request expires after 30 days. An unconfirmed change to an existing
+        reservation is retained with that record until its expiry, at least 30
+        days after the change request. Confirmed reservations expire after one
+        year, and confirmation links expire after 48 hours. Email delivery
+        records follow the platform’s
+        email retention policy; cancelling does not erase historical delivery
+        records.
       </p>
       <p>We use the collected information to:</p>
       <ul>
@@ -63,9 +71,10 @@ export default function PrivacyPage() {
       <p>
         These providers include Firebase for authentication, application data,
         and consented analytics; Microsoft Clarity for consented, masked UX
-        recordings on selected public pages; Polar for membership billing; and
-        Resend for transactional and newsletter delivery. Each provider
-        processes only the information needed for its role.
+        recordings on selected public pages; Polar for membership billing;
+        Resend for transactional and newsletter delivery; and Kiimo or a cargo
+        provider only when needed to fulfil a delivery you selected. Each
+        provider processes only the information needed for its role.
       </p>
 
       <h2>4. Data Security</h2>
