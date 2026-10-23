@@ -13,23 +13,37 @@
 
 ## Access blockers
 
-1. Firebase CLI has no authenticated login. The existing local service-account credentials are rejected with `Invalid JWT Signature`. Do not copy that rejected key into production. Use a Firebase login or valid approved deployment credentials for project `go-platform-7960b`.
-2. GitHub's connected app can read repository metadata but creating a PR returns HTTP 403, `Resource not accessible by integration`. Git push works; the release branch is already published. A maintainer can create and merge the PR from the compare link using their own account. Do not bypass required branch protections.
+1. Firebase CLI has no authenticated login. The existing local service-account credentials are rejected with `Invalid JWT Signature`. This only establishes a local credential failure, not a production failure. Do not copy that rejected key into production. Firebase configuration deployment can be deferred for the limited release described below.
+2. GitHub's connected app can read repository metadata but creating a PR returns HTTP 403, `Resource not accessible by integration`. The branch was published through `b7bf5ec`; later local commits still need pushing because Git's credential manager subsequently required login. A maintainer can push the latest local branch and create and merge the PR from the compare link using their own account. Do not bypass required branch protections.
 3. Vercel can report deployment status, but environment-variable metadata access returns HTTP 403. Authenticated preview fetch also fails at Vercel SSO. An authorized project member must validate the preview and production configuration. Do not disable protection to test it.
 
 ## Developer steps
 
-From the repository with the latest release branch checked out:
+### Limited website release without a new Firestore deployment
+
+The only new composite indexes relative to `prod` are for `go_journey_events`, `go_matchmaking_profiles` and `go_skill_evidence`. Keep `GO_MATCHMAKING_ENABLED`, `GO_GAME_JAMS_ENABLED` and `GO_DEVELOPMENT_JOURNEY_ENABLED` disabled; verify production has no overrides enabling them. Defer enabling those features until the database configuration is deployed and their flows are validated.
+
+Merch reuses the existing `merch_requests.pendingExpiresAt` policy and existing server-only collections. Its final configuration adds no new TTL policy. Community-build APIs use the Admin SDK; the new explicit deny rules duplicate the existing default-deny behavior for browser access. Therefore deploying the new rules/indexes is not a prerequisite for the limited release. Existing production Firebase credentials, existing retention configuration and email delivery still need a safe operational check. Keep the retention correction and security patches in the website release.
+
+From the local repository containing the latest commits, authenticate Git and push them first:
 
 ```powershell
 git fetch origin
 git switch codex/aurora-qa-remediation-local
 git pull --ff-only
+git push origin codex/aurora-qa-remediation-local
 npm ci
 npm run lint
 npm run typecheck
 npm run test:unit
 npm run build
+```
+
+### Deferred Firestore deployment
+
+Before enabling the gated features, use approved credentials for the project:
+
+```powershell
 npx firebase login
 npx firebase deploy --only firestore --project go-platform-7960b
 ```
@@ -40,7 +54,7 @@ Verify production Firebase credentials with a safe read; only replace them if in
 
 With Java available, also run `npm run test:rules` against the demo emulator project. Java is absent in the current environment, so emulator tests could not run here.
 
-Create the PR targeting `prod`, review the full branch diff, validate the exact preview commit, and merge after the Firebase/configuration checks. Vercel's Git integration should create the production deployment. Confirm `READY`, the matching commit and domain assignment to https://www.galacticomnivore.com. Smoke-test `/`, `/merch`, `/community-builds`, `/impact`, `/projects`, assets and response headers, and inspect runtime errors. Avoid real customer submissions or billing mutations.
+Create the PR targeting `prod`, review the full branch diff, validate the exact preview commit, and merge after the applicable configuration checks. For the limited release, leave the gated features disabled and defer the new Firestore deployment. Vercel's Git integration should create the production deployment. Confirm `READY`, the matching commit and domain assignment to https://www.galacticomnivore.com. Smoke-test `/`, `/merch`, `/community-builds`, `/impact`, `/projects`, assets and response headers, and inspect runtime errors. Avoid real customer submissions or billing mutations.
 
 ## Validation and deployment references
 
