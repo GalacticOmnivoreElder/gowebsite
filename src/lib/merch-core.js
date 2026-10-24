@@ -81,9 +81,9 @@ export const availabilitySchema = z.object({
   productId: z.literal("tshirt"),
   design: z.enum(["all", ...MERCH_DESIGNS.map((item) => item.id)]).default("all"),
   offerId: z.enum(["all", "single", "duo"]).default("all"),
-  sizes: z.array(z.enum(MERCH_AVAILABILITY_SIZES)).min(1).max(MERCH_AVAILABILITY_SIZES.length),
+  sizes: z.array(z.enum(MERCH_AVAILABILITY_SIZES)).min(1, "Select at least one T-shirt size.").max(MERCH_AVAILABILITY_SIZES.length),
   location: z.enum(["skopje", "macedonia", "all"]),
-  details: text(2000).min(20),
+  details: z.string().trim().min(20, "Enter at least 20 characters of availability and ordering instructions.").max(2000, "Keep availability and ordering instructions within 2,000 characters."),
   checkoutUrl: z.union([z.literal(""), z.string().trim().max(2083).url().refine((value) => {
     try {
       const url = new URL(value);
@@ -91,7 +91,7 @@ export const availabilitySchema = z.object({
     } catch { return false; }
   }, "Use a secure checkout URL.")]).default(""),
 }).superRefine((value, context) => {
-  if (value.checkoutUrl && value.offerId === "all") context.addIssue({ code: "custom", path: ["offerId"], message: "Choose the specific offer sold at this checkout link." });
+  if (value.checkoutUrl && value.offerId === "all") context.addIssue({ code: "custom", path: ["offerId"], message: "For a checkout link, select One T-shirt or Any two T-shirts in Offer. To notify all offers, remove the checkout link." });
 });
 
 export function matchesAvailability(request, batch) {

@@ -103,3 +103,61 @@ test("checkout links accept HTTPS and reject executable or credential-bearing UR
   for (const checkoutUrl of ["invalid", "javascript:alert(1)", "http://checkout.example.com", "https://user:password@checkout.example.com"]) assert.equal(api.availabilitySchema.safeParse({ ...batch, checkoutUrl }).success, false);
   assert.equal(api.availabilitySchema.safeParse({ ...batch, offerId: "all", checkoutUrl: "https://checkout.example.com" }).success, false);
 });
+
+function adminRoute() {
+  const { createHash, randomUUID } = require("node:crypto");
+  const records = new Map();
+  const sent = [];
+  const context = { user: { uid: "admin-fixture", email: "admin@example.com", admin: true, claims: { email_verified: true } } };
+  const reservation = api.createMerchReservation(api.merchReservationSchema.parse(input()));
+  const snapshot = (id) => ({ exists: records.has(id), data: () => records.get(id) });
+  const adminDb = {
+    collection(name) {
+      if (name === "merch_batches") return { doc: (id) => ({ id, get: async () => snapshot(id) }) };
+      assert.equal(name, "merch_requests");
+      return { orderBy: () => ({ limit: () => ({ get: async () => ({ size: 1, docs: [{ id: "request", data: () => reserved(reservation) }] }) }) }) };
+    },
+    async runTransaction(fn) { return fn({ get: async (ref) => snapshot(ref.id), create: (ref, data) => records.set(ref.id, data) }); },
+  };
+  const route = load("src/app/api/admin/merch/route.js", ["POST"], { stripImports: true, sandbox: {
+    ...api, ...catalog, adminDb, randomUUID,
+    NextResponse: require("./helpers/route-test-utils.cjs").NextResponse,
+    getRequestUser: async () => context.user,
+    readMerchBody: async (request) => request.body,
+    merchError: (message, status = 400) => Object.assign(new Error(message), { status }),
+    requireMerchEmail: () => {}, hashValue: (value) => createHash("sha256").update(value).digest("hex"),
+    sendEmailJob: async (job) => { sent.push(job); return { status: "sent" }; },
+  } });
+  return { post: (body) => route.POST({ body }), records, sent, context };
+}
+
+test("admin preview explains the exact checkout/offer conflict and accepts corrected inputs", async () => {
+  const admin = adminRoute();
+  const body = { action: "prepare", productId: "tshirt", offerId: "all", design: "all", sizes: ["XS", "L"], location: "skopje", details: "T-shirts are ready. Review your selected shirts at checkout.", checkoutUrl: "https://checkout.example.com/shirts" };
+  const invalid = await admin.post(body);
+  assert.equal(invalid.status, 400);
+  assert.match(invalid.body.error, /select One T-shirt or Any two T-shirts/);
+  assert.equal(invalid.body.fieldErrors.offerId.length, 1);
+  assert.equal(admin.records.size, 0);
+  const corrected = await admin.post({ ...body, offerId: "duo" });
+  assert.equal(corrected.status, 200);
+  assert.equal(corrected.body.count, 1);
+  assert.equal(corrected.body.checkoutUrl, body.checkoutUrl);
+  assert.equal((await admin.post({ ...body, checkoutUrl: "" })).status, 200);
+});
+
+test("each admin test click sends only to the verified admin with a fresh delivery key", async () => {
+  const admin = adminRoute();
+  const prepared = await admin.post({ action: "prepare", productId: "tshirt", sizes: ["L"], location: "all", details: "This is a controlled email delivery test." });
+  for (let i = 0; i < 2; i++) assert.equal((await admin.post({ action: "test", id: prepared.body.id })).status, 200);
+  assert.equal(admin.sent.length, 2);
+  assert.equal(admin.sent[0].recipient, "admin@example.com");
+  assert.notEqual(admin.sent[0].idempotencyKey, admin.sent[1].idempotencyKey);
+  admin.context.user.claims.email_verified = false;
+  const unverified = await admin.post({ action: "test", id: prepared.body.id });
+  assert.equal(unverified.status, 400);
+  assert.match(unverified.body.error, /Verify your admin account/);
+  assert.equal(admin.sent.length, 2);
+  admin.context.user.admin = false;
+  assert.equal((await admin.post({ action: "test", id: prepared.body.id })).status, 403);
+});

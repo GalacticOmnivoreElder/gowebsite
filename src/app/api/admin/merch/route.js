@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
 import { availabilitySchema, matchesAvailability, summarizeMerch, MERCH_DESIGNS } from "@/lib/merch-core";
@@ -60,7 +61,7 @@ export async function POST(request) {
     }
     if (body.action === "prepare") {
       const parsed = availabilitySchema.safeParse(body);
-      if (!parsed.success) throw merchError("Choose T-shirt sizes, offer, design, location, availability instructions (20–2,000 characters), and a valid HTTPS checkout link if provided.");
+      if (!parsed.success) return json({ error: parsed.error.issues[0].message, fieldErrors: parsed.error.flatten().fieldErrors }, 400);
       const batch = { ...parsed.data, sizes: [...new Set(parsed.data.sizes)].sort() };
       const id = hashValue(JSON.stringify(batch));
       const ref = adminDb.collection("merch_batches").doc(id);
@@ -77,8 +78,9 @@ export async function POST(request) {
     const ref = adminDb.collection("merch_batches").doc(body.id);
     if (body.action === "test") {
       const snapshot = await ref.get(); const batch = snapshot.data();
-      if (!batch || !user.email || user.claims?.email_verified !== true) throw merchError("A verified admin email is required for a test.");
-      const result = await sendEmailJob({ eventType: "merch.available", category: "merch", recipient: user.email, idempotencyKey: `merch-test-${body.id}-${user.uid}`, templateData: { requestId: hashValue(user.email), manageVersion: "test-link-no-request-access", productName: productName(batch), batch } });
+      if (!batch) throw merchError("Prepare the notification before sending a test.");
+      if (!user.email || user.claims?.email_verified !== true) throw merchError("Verify your admin account’s email address before sending a test.");
+      const result = await sendEmailJob({ eventType: "merch.available", category: "merch", recipient: user.email, idempotencyKey: `merch-test-${body.id}-${randomUUID()}`, templateData: { requestId: hashValue(user.email), manageVersion: "test-link-no-request-access", productName: productName(batch), batch } });
       return json({ message: result.status === "sent" ? "Test sent to your admin email (or configured preview test mailbox). The leave link is intentionally inactive." : "Test delivery is disabled." });
     }
     const result = await adminDb.runTransaction(async (transaction) => {

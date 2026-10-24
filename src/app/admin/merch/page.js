@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { goFetch } from "@/lib/go-client";
-import { MERCH_AVAILABILITY_SIZES, MERCH_DESIGNS } from "@/lib/merch-core";
+import { availabilitySchema, MERCH_AVAILABILITY_SIZES, MERCH_DESIGNS } from "@/lib/merch-core";
 import { MERCH_OFFERS, describeMerchItem, getReservationItems } from "@/lib/merch-catalog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,8 @@ export default function MerchAdmin() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [prepared, setPrepared] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [notificationError, setNotificationError] = useState("");
   const [demandFilter, setDemandFilter] = useState("");
   const [reservationFilter, setReservationFilter] = useState("");
 
@@ -27,25 +29,32 @@ export default function MerchAdmin() {
   useEffect(() => { load(); }, [load]);
 
   async function prepare(event) {
-    event.preventDefault(); setBusy(true); setError(""); setMessage("");
-    const form = new FormData(event.currentTarget);
+    event.preventDefault(); setNotificationError(""); setMessage(""); setPrepared(null);
+    const element = event.currentTarget;
+    const form = new FormData(element);
+    const parsed = availabilitySchema.safeParse({
+      productId: "tshirt", offerId: form.get("offerId"), design: form.get("design"),
+      sizes: form.getAll("sizes"), location: form.get("location"),
+      details: form.get("details"), checkoutUrl: form.get("checkoutUrl"),
+    });
+    if (!parsed.success) {
+      setFieldErrors(parsed.error.flatten().fieldErrors);
+      const name = parsed.error.issues[0].path[0];
+      element.querySelector(`[name="${name}"]`)?.focus();
+      return;
+    }
+    setFieldErrors({}); setBusy(true);
     try {
       setPrepared(await goFetch("/api/admin/merch", {
         action: "prepare",
-        productId: "tshirt",
-        offerId: form.get("offerId"),
-        design: form.get("design"),
-        sizes: form.getAll("sizes"),
-        location: form.get("location"),
-        details: form.get("details"),
-        checkoutUrl: form.get("checkoutUrl"),
+        ...parsed.data,
       }));
-    } catch (requestError) { setError(requestError.message); }
+    } catch (requestError) { setNotificationError(requestError.message); }
     finally { setBusy(false); }
   }
 
   async function send(id) {
-    setBusy(true); setError("");
+    setBusy(true); setNotificationError(""); setMessage("");
     try {
       let result;
       do {
@@ -53,14 +62,14 @@ export default function MerchAdmin() {
         setMessage(`${result.delivery?.sent || 0} availability emails sent now; ${result.delivery?.failed || 0} temporary delivery failures will retry. ${result.queued} matching reservations queued so far.`);
       } while (!result.done);
       setPrepared(null); await load();
-    } catch (requestError) { setError(requestError.message); await load(); }
+    } catch (requestError) { setNotificationError(requestError.message); await load(); }
     finally { setBusy(false); }
   }
 
   async function sendTest(id) {
-    setBusy(true); setError("");
+    setBusy(true); setNotificationError(""); setMessage("");
     try { const result = await goFetch("/api/admin/merch", { action: "test", id }); setMessage(result.message); }
-    catch (requestError) { setError(requestError.message); }
+    catch (requestError) { setNotificationError(requestError.message); }
     finally { setBusy(false); }
   }
 
@@ -85,7 +94,6 @@ export default function MerchAdmin() {
     <div className="mx-auto max-w-6xl space-y-8">
       <header><h1 className="text-3xl font-bold">GO T-shirt reservations</h1><p className="mt-2 text-muted-foreground">Reservations help plan production. No online payments or orders are taken.</p></header>
       {error && <p role="alert" className="text-red-400">{error}</p>}
-      {message && <p role="status" className="text-sm">{message}</p>}
       <Button onClick={load} disabled={busy} variant="outline">Refresh</Button>
       {!data ? <p>Loading reservations…</p> : <>
         {data.truncated && <p role="alert" className="rounded border border-amber-500/50 bg-amber-500/10 p-3 text-sm">Dashboard totals are partial because the safe 5,000-request read limit was reached.</p>}
@@ -111,18 +119,24 @@ export default function MerchAdmin() {
         <section className="rounded-lg border p-5">
           <h2 className="text-xl font-bold">Notify matching reservations</h2>
           <p className="my-3 text-sm text-muted-foreground">Send an availability update after stock and ordering details are confirmed. Emails are attempted immediately; temporary delivery failures retry automatically.</p>
-          <form onSubmit={prepare} onChange={() => setPrepared(null)}><fieldset disabled={busy} className="space-y-4">
+          <form onSubmit={prepare} onChange={() => { setPrepared(null); setFieldErrors({}); setNotificationError(""); setMessage(""); }}><fieldset disabled={busy} className="space-y-4">
             <div className="flex flex-wrap gap-4">
-              <label className="grid gap-2">Offer<select className={control} name="offerId"><option value="all">All offers</option>{MERCH_OFFERS.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+              <label className="grid gap-2">Offer<select className={control} name="offerId" aria-invalid={Boolean(fieldErrors.offerId)} aria-describedby={fieldErrors.offerId ? "merch-offer-help merch-offer-error" : "merch-offer-help"}><option value="all">All offers</option>{MERCH_OFFERS.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
               <label className="grid gap-2">Design<select className={control} name="design"><option value="all">All designs</option>{MERCH_DESIGNS.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
               <label className="grid gap-2">Location<select className={control} name="location"><option value="skopje">Skopje</option><option value="macedonia">Elsewhere in North Macedonia</option><option value="all">All locations</option></select></label>
             </div>
-            <fieldset><legend>T-shirt sizes</legend><div className="flex flex-wrap gap-4 py-2">{MERCH_AVAILABILITY_SIZES.map((item) => <label key={item}><input type="checkbox" name="sizes" value={item} className="mr-2" />{item === "unsure" ? "Not sure (legacy requests)" : item}</label>)}</div></fieldset>
+            <p id="merch-offer-help" className="text-xs text-muted-foreground">A checkout link requires one specific offer. Leave it empty to notify all offers.</p>
+            {fieldErrors.offerId && <p id="merch-offer-error" role="alert" className="text-sm text-red-400">{fieldErrors.offerId[0]}</p>}
+            <fieldset aria-describedby={fieldErrors.sizes ? "merch-sizes-error" : undefined}><legend>T-shirt sizes</legend><div className="flex flex-wrap gap-4 py-2">{MERCH_AVAILABILITY_SIZES.map((item) => <label key={item}><input type="checkbox" name="sizes" value={item} className="mr-2" />{item === "unsure" ? "Not sure (legacy requests)" : item}</label>)}</div>{fieldErrors.sizes && <p id="merch-sizes-error" role="alert" className="text-sm text-red-400">{fieldErrors.sizes[0]}</p>}</fieldset>
             <p className="text-xs text-muted-foreground">Both shirts in a package must match the selected designs and sizes. Use all designs for mixed packages.</p>
-            <label className="grid gap-2">Checkout link (optional)<input className={control} type="url" name="checkoutUrl" maxLength={2083} placeholder="https://" /><span className="text-xs text-muted-foreground">Use a provider that supports physical merchandise. Match the offer and designs above to the product at checkout.</span></label>
-            <label className="block">Confirmed availability and ordering instructions<Textarea name="details" required minLength={20} maxLength={2000} rows={4} className="mt-2" placeholder="Include stock availability, next steps, payment, and any confirmed delivery fees." /></label>
+            <label className="grid gap-2">Checkout link (optional)<input className={control} type="url" name="checkoutUrl" aria-invalid={Boolean(fieldErrors.checkoutUrl)} aria-describedby={fieldErrors.checkoutUrl ? "merch-checkout-error" : undefined} maxLength={2083} placeholder="https://" /><span className="text-xs text-muted-foreground">Use a provider that supports physical merchandise. Match the offer and designs above to the product at checkout.</span></label>
+            {fieldErrors.checkoutUrl && <p id="merch-checkout-error" role="alert" className="text-sm text-red-400">{fieldErrors.checkoutUrl[0]}</p>}
+            <label className="block">Confirmed availability and ordering instructions<Textarea name="details" aria-invalid={Boolean(fieldErrors.details)} aria-describedby={fieldErrors.details ? "merch-details-error" : undefined} required minLength={20} maxLength={2000} rows={4} className="mt-2" placeholder="Include stock availability, next steps, payment, and any confirmed delivery fees." /></label>
+            {fieldErrors.details && <p id="merch-details-error" role="alert" className="text-sm text-red-400">{fieldErrors.details[0]}</p>}
             <Button type="submit" disabled={busy}>Preview recipients</Button>
           </fieldset></form>
+          {notificationError && <p role="alert" className="mt-3 text-sm text-red-400">{notificationError}</p>}
+          {message && <p role="status" className="mt-3 text-sm">{message}</p>}
           {prepared && <div className="mt-5 space-y-3 rounded-md border p-4"><p className="font-semibold">{prepared.productName} is available</p><p className="whitespace-pre-wrap">{prepared.details}</p>{prepared.checkoutUrl && <a className="block break-all text-sm underline" href={prepared.checkoutUrl} target="_blank" rel="noopener noreferrer">Review checkout link</a>}<p className="text-sm">{prepared.count}{prepared.countIsMinimum ? "+" : ""} matching people before delivery suppression checks.</p><Button variant="outline" disabled={busy} onClick={() => sendTest(prepared.id)}>Send test to my email</Button> <Button disabled={busy || !prepared.count || prepared.countIsMinimum} onClick={() => send(prepared.id)}>{busy ? "Sending…" : "Send availability emails"}</Button></div>}
         </section>
 
