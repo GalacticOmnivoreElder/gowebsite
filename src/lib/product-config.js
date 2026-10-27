@@ -19,7 +19,7 @@ export function getProductConfig(env = process.env) {
     communityAssetSubmissions: parseBooleanEnv(env.COMMUNITY_ASSET_SUBMISSIONS_ENABLED, env.NODE_ENV === "production"),
     under18Mentorship: parseBooleanEnv(env.UNDER_18_MENTORSHIP_ENABLED, false),
     individuallyPaidCourses: parseBooleanEnv(env.INDIVIDUALLY_PAID_COURSES_ENABLED, false),
-    goMatchmaking: parseBooleanEnv(env.GO_MATCHMAKING_ENABLED, false),
+    goMatchmaking: parseBooleanEnv(env.GO_MATCHMAKING_ENABLED, env.NODE_ENV === "production"),
     goGameJams: parseBooleanEnv(env.GO_GAME_JAMS_ENABLED, false),
     goDevelopmentJourney: parseBooleanEnv(env.GO_DEVELOPMENT_JOURNEY_ENABLED, false),
   };
