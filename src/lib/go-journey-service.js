@@ -8,6 +8,7 @@ import { getSkillCatalog } from "@/lib/skill-catalog";
 import { normalizeMatchmakingProfile, publicJourneyEvent, scoreMatch } from "@/lib/go-journey.mjs";
 import { getDiscordConfig } from "@/lib/discord-api";
 import { appetiteConfigHash } from "@/lib/discord-appetite.mjs";
+import { hasCommunityContentAccess } from "@/lib/content-entitlements";
 
 const digest = (value) => createHash("sha256").update(value).digest("hex");
 const pairIdFor = (a, b) => digest(`go-match:v1:${[a, b].sort().join(":")}`);
@@ -170,11 +171,9 @@ export async function getMatchmakingCandidates(uid) {
   const user = userSnap.data() || {};
   const profile = profileBits(user, cvSnap.data() || {}, userProfileSnap.data() || {});
   const settings = settingsSnap.exists ? normalizeMatchmakingProfile(settingsSnap.data()) : normalizeMatchmakingProfile();
-  const own = { ...profile, ...settings, skills: profile.skills };
-  if (!settings.optedIn) return { profile: { ...settings, skills: profile.skills }, suggestions: [], requests: [], matches: [], configured: true };
-
+  const own = { ...settings, ...profile, timeZone: settings.timeZone || profile.timeZone };
   const [candidatesSnap, pairsSnap] = await Promise.all([
-    adminDb.collection("go_matchmaking_profiles").where("optedIn", "==", true).orderBy("updatedAt", "desc").limit(100).get(),
+    settings.optedIn ? adminDb.collection("go_matchmaking_profiles").where("optedIn", "==", true).orderBy("updatedAt", "desc").limit(100).get() : Promise.resolve({ docs: [] }),
     adminDb.collection("go_matchmaking_pairs").where("participants", "array-contains", uid).limit(100).get(),
   ]);
   const pairByPeer = new Map();
@@ -183,29 +182,35 @@ export async function getMatchmakingCandidates(uid) {
     const peer = (data.participants || []).find((id) => id !== uid);
     if (peer) pairByPeer.set(peer, { id: doc.id, ...data });
   }
-  const peers = candidatesSnap.docs
-    .filter((doc) => doc.id !== uid)
-    .map((doc) => {
-      const candidate = normalizeMatchmakingProfile(doc.data());
-      const match = scoreMatch(own, candidate);
-      return { uid: doc.id, candidate, ...match, pair: pairByPeer.get(doc.id) || null };
-    })
-    .filter((entry) => entry.eligible && entry.pair?.state !== "blocked" && entry.pair?.state !== "declined")
-    .sort((a, b) => b.score - a.score || a.uid.localeCompare(b.uid));
-  const userSnaps = await Promise.all(peers.slice(0, 30).map((entry) => adminDb.collection("users").doc(entry.uid).get()));
-  const labels = new Map(userSnaps.map((doc, index) => [peers[index].uid, String(doc.data()?.username || doc.data()?.displayName || "GO creator").slice(0, 80)]));
+  const profileDocs = new Map(candidatesSnap.docs.filter((doc) => doc.id !== uid).map((doc) => [doc.id, doc]));
+  const peerIds = [...new Set([...profileDocs.keys(), ...pairByPeer.keys()])].filter((id) => id !== uid);
+  const peers = await Promise.all(peerIds.map(async (peerUid) => {
+    const [settingsDoc, userDoc, profileDoc] = await Promise.all([
+      profileDocs.get(peerUid) || adminDb.collection("go_matchmaking_profiles").doc(peerUid).get(),
+      adminDb.collection("users").doc(peerUid).get(),
+      adminDb.collection("user_profiles").doc(peerUid).get(),
+    ]);
+    const peerUser = userDoc.data() || {};
+    const peerSettings = settingsDoc.exists ? normalizeMatchmakingProfile(settingsDoc.data()) : normalizeMatchmakingProfile();
+    const bits = profileBits(peerUser, {}, profileDoc.data() || {});
+    const candidate = { ...peerSettings, ...bits, timeZone: peerSettings.timeZone || bits.timeZone };
+    const visible = settings.optedIn && userDoc.exists && peerSettings.optedIn && hasCommunityContentAccess(peerUser, { admin: peerUser.admin === true });
+    const match = visible ? scoreMatch(own, candidate) : { eligible: false, score: 0, reasons: [] };
+    return { uid: peerUid, candidate, ...match, visible, name: String(peerUser.username || peerUser.displayName || "GO creator").slice(0, 80), pair: pairByPeer.get(peerUid) || null };
+  }));
+  peers.sort((a, b) => b.score - a.score || a.uid.localeCompare(b.uid));
   const safePeer = (entry) => ({
     id: entry.uid,
-    name: labels.get(entry.uid) || "GO creator",
-    profileUrl: `/user/${encodeURIComponent(entry.uid)}`,
-    skills: entry.candidate.skills,
-    seekingSkills: entry.candidate.seekingSkills,
-    interests: entry.candidate.interests,
-    goal: entry.candidate.goal,
-    timeZone: entry.candidate.timeZone,
-    availability: entry.candidate.availability,
+    name: entry.visible ? entry.name : "Creator unavailable",
+    profileUrl: entry.visible ? `/user/${encodeURIComponent(entry.uid)}` : null,
+    skills: entry.visible ? entry.candidate.skills : [],
+    seekingSkills: entry.visible ? entry.candidate.seekingSkills : [],
+    interests: entry.visible ? entry.candidate.interests : [],
+    goal: entry.visible ? entry.candidate.goal : "",
+    timeZone: entry.visible ? entry.candidate.timeZone : "",
+    availability: entry.visible ? entry.candidate.availability : "unspecified",
   });
-  const suggestions = peers.filter((entry) => !entry.pair).slice(0, 5).map((entry) => ({
+  const suggestions = peers.filter((entry) => entry.eligible && !entry.pair).slice(0, 5).map((entry) => ({
     ...safePeer(entry),
     score: entry.score,
     reasons: entry.reasons,
@@ -214,6 +219,7 @@ export async function getMatchmakingCandidates(uid) {
     id: entry.pair.id,
     state: entry.pair.state,
     acceptedByMe: (entry.pair.acceptedBy || []).includes(uid),
+    canAccept: entry.eligible,
     peer: safePeer(entry),
     reasons: entry.reasons,
   }));
@@ -225,7 +231,7 @@ export async function getMatchmakingCandidates(uid) {
     reasons: entry.reasons,
   }));
   return {
-    profile: { ...settings, skills: profile.skills },
+    profile: own,
     suggestions,
     requests,
     matches,
@@ -274,7 +280,7 @@ export async function saveMatchmakingProfile(uid, body) {
   return value;
 }
 
-export async function actOnMatch(uid, body) {
+export async function actOnMatch(uid, body, { admin = false } = {}) {
   const action = String(body.action || "");
   const peerUid = String(body.peerId || "");
   if (!/^[A-Za-z0-9:_-]{1,160}$/.test(peerUid) || peerUid === uid) throw Object.assign(new Error("Choose a valid creator."), { status: 400 });
@@ -284,12 +290,13 @@ export async function actOnMatch(uid, body) {
   const ownProfileRef = adminDb.collection("go_matchmaking_profiles").doc(uid);
   const peerProfileRef = adminDb.collection("go_matchmaking_profiles").doc(peerUid);
   const result = await adminDb.runTransaction(async (transaction) => {
-    const [pairSnap, ownProfileSnap, peerProfileSnap] = await Promise.all([
+    const [pairSnap, ownProfileSnap, peerProfileSnap, ownUserSnap, peerUserSnap] = await Promise.all([
       transaction.get(pairRef),
       transaction.get(ownProfileRef),
       transaction.get(peerProfileRef),
+      transaction.get(adminDb.collection("users").doc(uid)),
+      transaction.get(adminDb.collection("users").doc(peerUid)),
     ]);
-    if (!ownProfileSnap.data()?.optedIn || !peerProfileSnap.data()?.optedIn) throw Object.assign(new Error("Both creators must be opted in to matchmaking."), { status: 409 });
     const previous = pairSnap.data() || { participants: [uid, peerUid].sort(), acceptedBy: [], declinedBy: [], blockedBy: [], state: "pending", createdAt: new Date() };
     if ((previous.blockedBy || []).length || previous.state === "blocked") throw Object.assign(new Error("This match is unavailable."), { status: 409 });
     if (action === "block") {
@@ -297,17 +304,35 @@ export async function actOnMatch(uid, body) {
       return { id: pairId, state: "blocked" };
     }
     if (action === "decline") {
-      transaction.set(pairRef, { ...previous, declinedBy: [...new Set([...(previous.declinedBy || []), uid])], state: "declined", updatedAt: new Date() });
+      transaction.set(pairRef, { ...previous, acceptedBy: [], declinedBy: [...new Set([...(previous.declinedBy || []), uid])], state: "declined", updatedAt: new Date() });
       return { id: pairId, state: "declined" };
+    }
+    if (!ownProfileSnap.data()?.optedIn || !peerProfileSnap.data()?.optedIn) throw Object.assign(new Error("Both creators must be opted in to matchmaking."), { status: 409 });
+    const ownUser = ownUserSnap.data() || {};
+    const peerUser = peerUserSnap.data() || {};
+    if (!ownUserSnap.exists || !peerUserSnap.exists || !hasCommunityContentAccess(ownUser, { admin }) || !hasCommunityContentAccess(peerUser, { admin: peerUser.admin === true })) {
+      throw Object.assign(new Error("Both creators need an active GO Community membership."), { status: 409 });
+    }
+    const [ownDetailsSnap, peerDetailsSnap] = await Promise.all([
+      transaction.get(adminDb.collection("user_profiles").doc(uid)),
+      transaction.get(adminDb.collection("user_profiles").doc(peerUid)),
+    ]);
+    const ownAvailability = normalizeAvailability({ availability: ownDetailsSnap.data() || {}, profile: ownUser });
+    const peerAvailability = normalizeAvailability({ availability: peerDetailsSnap.data() || {}, profile: peerUser });
+    if (ownAvailability.status === "unavailable" || peerAvailability.status === "unavailable") {
+      throw Object.assign(new Error("Both creators must be available for matchmaking."), { status: 409 });
     }
     if ((previous.declinedBy || []).some((id) => id !== uid)) throw Object.assign(new Error("This creator declined the match."), { status: 409 });
     const acceptedBy = [...new Set([...(previous.acceptedBy || []), uid])];
     const matched = acceptedBy.length === 2;
     const now = new Date();
-    transaction.set(pairRef, { ...previous, participants: [uid, peerUid].sort(), acceptedBy, state: matched ? "matched" : "pending", ...(matched ? { matchedAt: previous.matchedAt || now } : {}), updatedAt: now }, { merge: true });
+    const [ownEvent, peerEvent] = matched && previous.state !== "matched"
+      ? await Promise.all([transaction.get(refForEvent(uid, "match_accepted", pairId)), transaction.get(refForEvent(peerUid, "match_accepted", pairId))])
+      : [null, null];
+    transaction.set(pairRef, { ...previous, participants: [uid, peerUid].sort(), acceptedBy, declinedBy: (previous.declinedBy || []).filter((id) => id !== uid), state: matched ? "matched" : "pending", ...(matched ? { matchedAt: previous.matchedAt || now } : {}), updatedAt: now }, { merge: true });
     if (matched && previous.state !== "matched") {
-      appendJourneyEvent(transaction, { uid, type: "match_accepted", sourceId: pairId, title: "GO collaboration match accepted", summary: "A mutual GO collaboration match was confirmed.", publicTitle: "Matched with a GO collaborator", publicSummary: "A collaboration match was accepted by both creators.", occurredAt: now });
-      appendJourneyEvent(transaction, { uid: peerUid, type: "match_accepted", sourceId: pairId, title: "GO collaboration match accepted", summary: "A mutual GO collaboration match was confirmed.", publicTitle: "Matched with a GO collaborator", publicSummary: "A collaboration match was accepted by both creators.", occurredAt: now });
+      if (!ownEvent.exists) appendJourneyEvent(transaction, { uid, type: "match_accepted", sourceId: pairId, title: "GO collaboration match accepted", summary: "A mutual GO collaboration match was confirmed.", publicTitle: "Matched with a GO collaborator", publicSummary: "A collaboration match was accepted by both creators.", occurredAt: now });
+      if (!peerEvent.exists) appendJourneyEvent(transaction, { uid: peerUid, type: "match_accepted", sourceId: pairId, title: "GO collaboration match accepted", summary: "A mutual GO collaboration match was confirmed.", publicTitle: "Matched with a GO collaborator", publicSummary: "A collaboration match was accepted by both creators.", occurredAt: now });
     }
     return { id: pairId, state: matched ? "matched" : "pending" };
   });
