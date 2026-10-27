@@ -24,6 +24,9 @@ test("Community matchmaking is enabled in production and can be disabled explici
   assert.equal(configModule.getProductConfig({ NODE_ENV: "production" }).featureFlags.goMatchmaking, true);
   assert.equal(configModule.getProductConfig({ NODE_ENV: "production", GO_MATCHMAKING_ENABLED: "false" }).featureFlags.goMatchmaking, false);
   assert.equal(configModule.getProductConfig({ NODE_ENV: "development" }).featureFlags.goMatchmaking, false);
+  assert.equal(configModule.getProductConfig({ NODE_ENV: "production", VERCEL_ENV: "production" }).featureFlags.goMatchmaking, true);
+  assert.equal(configModule.getProductConfig({ NODE_ENV: "production", VERCEL_ENV: "preview" }).featureFlags.goMatchmaking, false);
+  assert.equal(configModule.getProductConfig({ NODE_ENV: "production", VERCEL_ENV: "preview", GO_MATCHMAKING_ENABLED: "true" }).featureFlags.goMatchmaking, true);
 });
 
 test("feedback deadline defaults safely", () => {

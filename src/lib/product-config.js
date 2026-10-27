@@ -9,6 +9,7 @@ export function parseBooleanEnv(value, fallback = false) {
 
 export function getProductConfig(env = process.env) {
   const runtimeDefaults = env === process.env;
+  const productionRuntime = env.VERCEL_ENV ? env.VERCEL_ENV === "production" : env.NODE_ENV === "production";
   const featureFlags = {
     productNavigation: parseBooleanEnv(env.PRODUCT_NAVIGATION_ENABLED, true),
     courseEnrollment: parseBooleanEnv(env.COURSE_ENROLLMENT_ENABLED, false),
@@ -19,7 +20,7 @@ export function getProductConfig(env = process.env) {
     communityAssetSubmissions: parseBooleanEnv(env.COMMUNITY_ASSET_SUBMISSIONS_ENABLED, env.NODE_ENV === "production"),
     under18Mentorship: parseBooleanEnv(env.UNDER_18_MENTORSHIP_ENABLED, false),
     individuallyPaidCourses: parseBooleanEnv(env.INDIVIDUALLY_PAID_COURSES_ENABLED, false),
-    goMatchmaking: parseBooleanEnv(env.GO_MATCHMAKING_ENABLED, env.NODE_ENV === "production"),
+    goMatchmaking: parseBooleanEnv(env.GO_MATCHMAKING_ENABLED, productionRuntime),
     goGameJams: parseBooleanEnv(env.GO_GAME_JAMS_ENABLED, false),
     goDevelopmentJourney: parseBooleanEnv(env.GO_DEVELOPMENT_JOURNEY_ENABLED, false),
   };
