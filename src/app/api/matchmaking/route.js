@@ -1,6 +1,7 @@
 import { getRequestUser } from "@/lib/auth-utils";
 import { actOnMatch, getMatchmakingCandidates, saveMatchmakingProfile } from "@/lib/go-journey-service";
 import { getProductConfig } from "@/lib/product-config";
+import { hasCommunityContentAccess } from "@/lib/content-entitlements";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -18,6 +19,7 @@ export async function GET(request) {
   if (!getProductConfig().featureFlags.goMatchmaking) return json({ error: "GO matchmaking is not enabled." }, 503);
   const user = await authenticated(request);
   if (!user) return json({ error: "Sign in to use GO matchmaking." }, 401);
+  if (!hasCommunityContentAccess(user.userData || {}, { admin: user.admin })) return json({ error: "An active GO Community membership is required for matchmaking.", code: "membership_required" }, 403);
   try {
     return json(await getMatchmakingCandidates(user.uid));
   } catch {
@@ -29,6 +31,7 @@ export async function PUT(request) {
   if (!getProductConfig().featureFlags.goMatchmaking) return json({ error: "GO matchmaking is not enabled." }, 503);
   const user = await authenticated(request);
   if (!user) return json({ error: "Sign in to update matchmaking preferences." }, 401);
+  if (!hasCommunityContentAccess(user.userData || {}, { admin: user.admin })) return json({ error: "An active GO Community membership is required for matchmaking.", code: "membership_required" }, 403);
   const text = await request.text();
   if (text.length > 12000) return json({ error: "Matchmaking preferences are too large." }, 413);
   let body;
@@ -45,12 +48,13 @@ export async function POST(request) {
   if (!getProductConfig().featureFlags.goMatchmaking) return json({ error: "GO matchmaking is not enabled." }, 503);
   const user = await authenticated(request);
   if (!user) return json({ error: "Sign in to respond to a match." }, 401);
+  if (!hasCommunityContentAccess(user.userData || {}, { admin: user.admin })) return json({ error: "An active GO Community membership is required for matchmaking.", code: "membership_required" }, 403);
   const text = await request.text();
   if (text.length > 4000) return json({ error: "The match request is too large." }, 413);
   let body;
   try { body = JSON.parse(text); } catch { return json({ error: "A valid JSON object is required." }, 400); }
   try {
-    return json(await actOnMatch(user.uid, body || {}));
+    return json(await actOnMatch(user.uid, body || {}, { admin: user.admin }));
   } catch (error) {
     return json({ error: error.status ? error.message : "The match response could not be saved." }, error.status || 503);
   }

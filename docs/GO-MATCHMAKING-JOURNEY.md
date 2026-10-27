@@ -25,7 +25,7 @@ The implementation reuses the platform's existing sources of truth:
 
 ### Matchmaking
 
-`/matchmaking` and `/api/matchmaking` provide opt-in, preference editing, ranked suggestions, and accept/decline/block actions. Each pair needs both creators to accept before the system records a match. A match reveals only the opted-in profile fields and a GO profile link; GO does not message either person. The current candidate scan considers the 100 most recently updated opted-in profiles, and suggestions show the match factors used. Hunger is included only after the member separately enables hunger sharing; `full` does not improve a match score.
+`/matchmaking` and `/api/matchmaking` provide opt-in, preference editing, ranked suggestions, and accept/decline/block actions. Access follows the existing active GO Community entitlement, which also covers Mentor and Business members and platform administrators; canceled subscriptions remain eligible through their paid-through date. Both candidate discovery and acceptance recheck membership and opt-in. The page explains the membership requirement to ineligible users. Each pair needs both creators to accept before the system records a match. A match reveals only the opted-in profile fields and a GO profile link; GO does not message either person. The current candidate scan considers the 100 most recently updated opted-in profiles, and suggestions show the match factors used. Existing requests and matches are loaded independently of that scan. A creator who opts out or loses eligibility is shown as unavailable in existing relationships without sharing their profile, and the other participant can still block the relationship. Hunger is included only after the member separately enables hunger sharing; `full` does not improve a match score.
 
 ### Game jams and Passport
 
@@ -43,7 +43,7 @@ The profile shows each existing GO skill tag, self-reported status, validated pr
 
 Private server-side collections are `go_matchmaking_profiles`, `go_matchmaking_pairs`, `go_journey_events`, `go_journey_preferences`, `go_journey_stats`, `go_skill_evidence`, and `passport_preferences`. `firestore.rules` denies direct browser reads and writes. Authenticated routes validate owner, opt-in, event manager, project member, or active mentor authorization before mutation. The existing `passport_stamps` server-only collection remains the stamp source of truth. The journal event IDs, pair IDs, evidence IDs, and jam stamp IDs are deterministic to prevent duplicate issuance for the same source. Each creator can have at most 20 pending skill validation requests, and no validation requests trigger outbound contact.
 
-All three features default off and are controlled independently with local environment flags:
+Matchmaking defaults on in production and off elsewhere; game jams and the development journey default off. Each feature is controlled independently with environment flags:
 
 ```text
 GO_MATCHMAKING_ENABLED=true
@@ -51,7 +51,7 @@ GO_GAME_JAMS_ENABLED=true
 GO_DEVELOPMENT_JOURNEY_ENABLED=true
 ```
 
-Enable them only in a local environment with test accounts and fixtures. Do not enable them in production as part of this change. Rollback is to turn the flags off; this hides the new flows without changing existing entitlements. No production migration, backfill, deployment, external calendar mutation, or real contact is part of the implementation.
+Enable only the features that have passed their own rollout checks. Matchmaking requires the `go_matchmaking_profiles` composite index and the active Community entitlement; game jams and the development journey do not need to be enabled for matchmaking. To roll back matchmaking, set `GO_MATCHMAKING_ENABLED=false` and redeploy; this hides the flow without erasing existing records. Matching does not perform external calendar changes or send messages.
 
 Records currently follow the account's existing data lifecycle; there is no new time-based deletion job. Attendance corrections are retained as audit history. Before production rollout, connect these collections to the platform's account deletion and retention policy, and determine whether match and journal records need a user-driven deletion/export workflow.
 

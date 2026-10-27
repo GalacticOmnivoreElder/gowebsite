@@ -25,18 +25,23 @@ export default function MatchmakingWorkspace() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const [membershipRequired, setMembershipRequired] = useState(false);
 
   const token = useCallback(async () => auth.currentUser?.getIdToken(), []);
   const load = useCallback(async () => {
     const idToken = await token();
-    if (!idToken) { setSignedIn(false); setData(null); return; }
+    if (!idToken) { setSignedIn(false); setData(null); setForm(null); setMembershipRequired(false); return; }
     setSignedIn(true);
     const [response, skillsResponse] = await Promise.all([
       fetch("/api/matchmaking", { headers: { Authorization: `Bearer ${idToken}` }, cache: "no-store" }),
       fetch("/api/skills", { cache: "no-store" }),
     ]);
     const [result, catalog] = await Promise.all([response.json(), skillsResponse.json()]);
+    if (response.status === 403 && result.code === "membership_required") {
+      setData(null); setForm(null); setMembershipRequired(true); setMessage(""); return;
+    }
     if (!response.ok) throw new Error(result.error || "Matchmaking could not be loaded.");
+    setMembershipRequired(false);
     setData(result);
     setSkills((catalog.skills || []).filter((skill) => skill.active).map((skill) => skill.name));
     setForm({
@@ -86,6 +91,7 @@ export default function MatchmakingWorkspace() {
   }
 
   if (!signedIn) return <main className="container max-w-4xl px-4 py-12"><Card><CardHeader><CardTitle>GO Team Matchmaking</CardTitle></CardHeader><CardContent className="space-y-4"><p className="text-muted-foreground">Sign in to opt in, set your team goals, and review compatible creators.</p><Button asChild><Link href="/login?returnTo=%2Fmatchmaking">Sign in to continue</Link></Button></CardContent></Card></main>;
+  if (membershipRequired) return <main className="container max-w-4xl px-4 py-12"><Card><CardHeader><CardTitle>GO Team Matchmaking</CardTitle></CardHeader><CardContent className="space-y-4"><p className="text-muted-foreground">An active GO Community membership is required to find collaborators.</p><Button asChild><Link href="/membership">Explore membership</Link></Button></CardContent></Card></main>;
   if (!form || !data) return <main className="container max-w-5xl space-y-4 px-4 py-12" aria-labelledby="matchmaking-loading-heading">
     <h1 id="matchmaking-loading-heading" className="sr-only">GO Team Matchmaking</h1>
     {message ? <p role="alert" className="rounded-lg border p-4 text-sm">{message}</p> : <p role="status">Loading GO matchmaking…</p>}
@@ -124,11 +130,11 @@ export default function MatchmakingWorkspace() {
       <section className="space-y-4" aria-labelledby="match-suggestions-heading"><div><h2 id="match-suggestions-heading" className="text-2xl font-bold">Suggested creators</h2><p className="mt-1 text-sm text-muted-foreground">Choose Accept to send a match request. Your contact details stay private unless you have separately made them public.</p></div>
         {data.suggestions?.length ? <div className="grid gap-4 md:grid-cols-2">{data.suggestions.map((person) => <Card key={person.id}><CardHeader><CardTitle>{person.name}</CardTitle></CardHeader><CardContent className="space-y-3"><p className="text-sm">{GOALS.find(([goal]) => goal === person.goal)?.[1] || "Open to collaboration"}</p><p className="text-sm text-muted-foreground">Skills: {person.skills.join(" · ") || "Not listed"}</p><p className="text-sm text-muted-foreground">Looking for: {person.seekingSkills.join(" · ") || "Open to ideas"}</p><ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">{person.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul><div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={() => respond("accept", person.id)}>Accept match</Button><Button variant="outline" disabled={busy} onClick={() => respond("decline", person.id)}>Show someone else</Button><Button variant="ghost" disabled={busy} onClick={() => respond("block", person.id)}>Block</Button></div></CardContent></Card>)}</div> : <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">No suitable opted-in creators are available right now. Keep your preferences updated and check again later.</p>}
       </section>
-
-      {data.requests?.length ? <section className="space-y-4"><h2 className="text-2xl font-bold">Match requests</h2><div className="grid gap-4 md:grid-cols-2">{data.requests.map((request) => <Card key={request.id}><CardHeader><CardTitle>{request.peer.name}</CardTitle></CardHeader><CardContent className="space-y-3"><p className="text-sm text-muted-foreground">{request.acceptedByMe ? "You accepted. Waiting for the other creator." : "This creator accepted your suggested match."}</p><ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">{request.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>{!request.acceptedByMe ? <Button disabled={busy} onClick={() => respond("accept", request.peer.id)}>Accept match</Button> : null}<Button className="ml-2" variant="outline" disabled={busy} onClick={() => respond("decline", request.peer.id)}>Decline</Button><Button className="ml-2" variant="ghost" disabled={busy} onClick={() => respond("block", request.peer.id)}>Block</Button></CardContent></Card>)}</div></section> : null}
-
-      {data.matches?.length ? <section className="space-y-4"><h2 className="text-2xl font-bold">Your accepted matches</h2><div className="grid gap-4 md:grid-cols-2">{data.matches.map((match) => <Card key={match.id}><CardHeader><CardTitle>{match.peer.name}</CardTitle></CardHeader><CardContent className="space-y-3"><p className="text-sm text-muted-foreground">Both creators accepted. You can now review each other’s GO profiles.</p><ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">{match.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul><Button asChild variant="outline"><Link href={match.peer.profileUrl}>View GO profile</Link></Button><Button className="ml-2" variant="ghost" disabled={busy} onClick={() => respond("block", match.peer.id)}>End match and block</Button></CardContent></Card>)}</div></section> : null}
     </> : <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">You are currently hidden from new suggestions. Opt in above whenever you’re ready.</p>}
+
+      {data.requests?.length ? <section className="space-y-4"><h2 className="text-2xl font-bold">Match requests</h2><div className="grid gap-4 md:grid-cols-2">{data.requests.map((request) => <Card key={request.id}><CardHeader><CardTitle>{request.peer.name}</CardTitle></CardHeader><CardContent className="space-y-3"><p className="text-sm text-muted-foreground">{!request.peer.profileUrl ? "This creator is no longer available for matchmaking." : request.acceptedByMe ? "You accepted. Waiting for the other creator." : "This creator accepted your suggested match."}</p><ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">{request.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>{!request.acceptedByMe && request.canAccept ? <Button disabled={busy} onClick={() => respond("accept", request.peer.id)}>Accept match</Button> : null}<Button className="ml-2" variant="outline" disabled={busy} onClick={() => respond("decline", request.peer.id)}>Decline</Button><Button className="ml-2" variant="ghost" disabled={busy} onClick={() => respond("block", request.peer.id)}>Block</Button></CardContent></Card>)}</div></section> : null}
+
+      {data.matches?.length ? <section className="space-y-4"><h2 className="text-2xl font-bold">Your accepted matches</h2><div className="grid gap-4 md:grid-cols-2">{data.matches.map((match) => <Card key={match.id}><CardHeader><CardTitle>{match.peer.name}</CardTitle></CardHeader><CardContent className="space-y-3"><p className="text-sm text-muted-foreground">{match.peer.profileUrl ? "Both creators accepted. You can now review each other’s GO profiles." : "This creator is no longer available for matchmaking."}</p><ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">{match.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>{match.peer.profileUrl ? <Button asChild variant="outline"><Link href={match.peer.profileUrl}>View GO profile</Link></Button> : null}<Button className="ml-2" variant="ghost" disabled={busy} onClick={() => respond("block", match.peer.id)}>End match and block</Button></CardContent></Card>)}</div></section> : null}
     {message ? <p className="text-sm" role="status">{message}</p> : null}
   </main>;
 }

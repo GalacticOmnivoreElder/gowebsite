@@ -78,14 +78,14 @@ test("GO game jam markers are workshop-only and public in event summaries", () =
 });
 
 test("match action requires both participants opted in and mutual acceptance", async () => {
-  const docs = new Map([["go_matchmaking_profiles/alex", { optedIn: true }], ["go_matchmaking_profiles/beck", { optedIn: true }], ["go_matchmaking_profiles/closed", { optedIn: false }]]);
+  const docs = new Map([["go_matchmaking_profiles/alex", { optedIn: true }], ["go_matchmaking_profiles/beck", { optedIn: true }], ["go_matchmaking_profiles/closed", { optedIn: false }], ["users/alex", { activeMember: true }], ["users/beck", { activeMember: true }], ["users/closed", { activeMember: true }]]);
   const events = [];
   const ref = (collection, id) => ({ id, path: collection + "/" + id });
   const db = { collection: (name) => ({ doc: (id) => ref(name, id) }), runTransaction: async (fn) => fn({
     get: async (r) => { const value = docs.get(r.path); return { exists: value !== undefined, id: r.id, data: () => value }; },
     set: (r, value, options = {}) => docs.set(r.path, { ...(options.merge ? docs.get(r.path) : {}), ...value }),
   }) };
-  const service = loadSourceModule("src/lib/go-journey-service.js", ["actOnMatch"], { stripImports: true, sandbox: { createHash, FieldValue: { increment: (v) => ({ increment: v }) }, adminDb: db, appendJourneyEvent: (_transaction, event) => events.push(event) } });
+  const service = loadSourceModule("src/lib/go-journey-service.js", ["actOnMatch"], { stripImports: true, sandbox: { createHash, FieldValue: { increment: (v) => ({ increment: v }) }, adminDb: db, hasCommunityContentAccess: (user) => user.activeMember === true, normalizeAvailability: () => ({ status: "available" }), appendJourneyEvent: (_transaction, event) => events.push(event) } });
   await assert.rejects(service.actOnMatch("alex", { peerId: "closed", action: "accept" }), { status: 409 });
   assert.equal((await service.actOnMatch("alex", { peerId: "beck", action: "accept" })).state, "pending");
   assert.equal(events.length, 0);

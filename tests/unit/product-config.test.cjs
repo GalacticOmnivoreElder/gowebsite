@@ -20,6 +20,15 @@ test("product flags use safe defaults", () => {
   assert.equal(configModule.getProductConfig({ MENTOR_CHECKOUT_ENABLED: "false" }).mentorCheckoutEnabled, false);
 });
 
+test("Community matchmaking is enabled in production and can be disabled explicitly", () => {
+  assert.equal(configModule.getProductConfig({ NODE_ENV: "production" }).featureFlags.goMatchmaking, true);
+  assert.equal(configModule.getProductConfig({ NODE_ENV: "production", GO_MATCHMAKING_ENABLED: "false" }).featureFlags.goMatchmaking, false);
+  assert.equal(configModule.getProductConfig({ NODE_ENV: "development" }).featureFlags.goMatchmaking, false);
+  assert.equal(configModule.getProductConfig({ NODE_ENV: "production", VERCEL_ENV: "production" }).featureFlags.goMatchmaking, true);
+  assert.equal(configModule.getProductConfig({ NODE_ENV: "production", VERCEL_ENV: "preview" }).featureFlags.goMatchmaking, false);
+  assert.equal(configModule.getProductConfig({ NODE_ENV: "production", VERCEL_ENV: "preview", GO_MATCHMAKING_ENABLED: "true" }).featureFlags.goMatchmaking, true);
+});
+
 test("feedback deadline defaults safely", () => {
   assert.equal(configModule.getMentorshipFeedbackConfig({}).feedbackDeadlineDays, 14);
   assert.equal(configModule.getMentorshipFeedbackConfig({ MENTOR_FEEDBACK_DEADLINE_DAYS: "30" }).feedbackDeadlineDays, 30);
