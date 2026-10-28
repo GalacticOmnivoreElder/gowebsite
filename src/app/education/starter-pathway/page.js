@@ -13,7 +13,7 @@ export const metadata = createMetadata({
 export default function StarterCoursePage() {
   return (
     <main className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
-      <Link href="/education" className="text-primary underline underline-offset-4">Back to courses</Link>
+      <Link href="/education?format=course" className="text-primary underline underline-offset-4">Back to courses</Link>
       <h1 className="my-6 text-3xl font-bold md:text-4xl">{learningCatalog.starterPathway.title}</h1>
       <LearningCategoryNav activeItem="Courses" className="mb-10" />
       <StarterPathway />

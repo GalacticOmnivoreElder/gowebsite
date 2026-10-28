@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LearningCategoryNav } from "@/components/learning/LearningCategoryNav";
 import { LearningPageHeader } from "@/components/learning/LearningPageHeader";
+import { EducationDirectory } from "@/components/learning/EducationDirectory";
 import { learningCatalog } from "@/content/evergreen-curriculum.mjs";
 
 const STREAMS = Object.freeze({
@@ -22,12 +23,13 @@ function EducationContent() {
   const requestedFormat = searchParams.get("format");
   const activeFormat = Object.hasOwn(STREAMS, requestedFormat)
     ? requestedFormat
-    : "course";
+    : null;
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!activeFormat) return;
     let active = true;
     async function load() {
       setStatus("loading");
@@ -55,12 +57,14 @@ function EducationContent() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [activeFormat]);
 
   const visibleItems = useMemo(
     () => items.filter((item) => item.learningType === activeFormat && item.courseId !== "from-idea-to-playable"),
     [activeFormat, items],
   );
+
+  if (!activeFormat) return <EducationDirectory />;
 
   return (
     <main className="container mx-auto max-w-6xl px-4 py-12 md:py-16">

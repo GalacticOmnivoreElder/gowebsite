@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { BookOpen, Clapperboard, FileText, Workflow, Compass, HeartHandshake } from "lucide-react";
+import { BookOpen, Clapperboard, FileText, Workflow, Compass, HeartHandshake, Users } from "lucide-react";
 import { learningNavigation } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 const learningIcons = {
   "Ask the Omnivore": Compass,
   Mentorship: HeartHandshake,
+  "Team Matchmaking": Users,
   Courses: BookOpen,
   Workshops: Workflow,
   "Video Bundles": Clapperboard,
@@ -17,12 +18,12 @@ export function LearningCategoryNav({ activeItem, className }) {
     <nav
       aria-label="Learning categories"
       className={cn(
-        "mx-auto grid w-full max-w-6xl grid-cols-2 gap-2 rounded-lg border border-primary/20 bg-card/50 p-2 lg:grid-cols-6",
+        "mx-auto grid w-full max-w-6xl grid-cols-2 gap-2 rounded-lg border border-primary/20 bg-card/50 p-2 md:grid-cols-4 lg:grid-cols-7",
         className
       )}
     >
       {learningNavigation.map((item) => {
-        const ItemIcon = learningIcons[item.label];
+        const ItemIcon = learningIcons[item.label] || BookOpen;
         const active = item.label === activeItem;
         const classes = cn(
           "flex min-h-14 items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",

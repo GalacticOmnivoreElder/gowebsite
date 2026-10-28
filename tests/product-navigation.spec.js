@@ -53,6 +53,33 @@ async function expectLearningCategoryNav(page, activeLabel) {
   }
 }
 
+test("education directory and learning routes render without crashing", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.route("**/api/learning-items", (route) => route.fulfill({
+    json: [
+      { id: "course", slug: "sample-course", title: "Sample course", learningType: "course", placesRemaining: null },
+      { id: "workshop", slug: "sample-workshop", title: "Sample workshop", learningType: "workshop", placesRemaining: null },
+    ],
+  }));
+
+  await page.goto("/education", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { level: 1, name: "Learn, make, and grow with GO." })).toBeVisible();
+  await page.getByRole("link", { name: "Explore Courses" }).click();
+  await expectLearningCategoryNav(page, "Courses");
+  await expect(page.getByRole("heading", { name: "Sample course" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sample workshop" })).toHaveCount(0);
+  await page.locator('nav[aria-label="Learning categories"]').getByRole("link", { name: "Workshops" }).click();
+  await expectLearningCategoryNav(page, "Workshops");
+  await expect(page.getByRole("heading", { name: "Sample workshop" })).toBeVisible();
+  for (const [path, label] of [["/video-bundles", "Video Bundles"], ["/resources", "Resources"]]) {
+    await page.goto(path, { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { level: 1, name: label })).toBeVisible();
+    await expectLearningCategoryNav(page, label);
+  }
+  expect(pageErrors).toEqual([]);
+});
+
 test("homepage separates the GO pillars from the actionable orbits", async ({
   page,
 }, testInfo) => {
@@ -125,6 +152,19 @@ test("learning destinations use the shared hierarchy and customer copy", async (
 }, testInfo) => {
   const browserErrors = watchBrowserErrors(page);
 
+  await page.goto("/education", { waitUntil: "domcontentloaded" });
+  await expectHealthyPage(page);
+  await expect(page.getByRole("heading", { level: 1, name: "Learn, make, and grow with GO." })).toBeVisible();
+  for (const [label, href] of [
+    ["Courses", "/education?format=course"],
+    ["Workshops", "/education?format=workshop"],
+    ["Video Bundles", "/video-bundles"],
+    ["Resources", "/resources"],
+    ["Starter Pathway", "/education/starter-pathway"],
+  ]) {
+    await expect(page.getByRole("link", { name: `Explore ${label}` })).toHaveAttribute("href", href);
+  }
+
   await page.goto("/video-bundles", { waitUntil: "domcontentloaded" });
   await expectHealthyPage(page);
   await expect(page.getByRole("heading", { level: 1, name: "Video Bundles" })).toBeVisible();
@@ -162,10 +202,7 @@ test("learning destinations use the shared hierarchy and customer copy", async (
     waitUntil: "domcontentloaded",
   });
   await expectHealthyPage(page);
-  await expect(page.getByRole("tab", { name: "Workshops" })).toHaveAttribute(
-    "data-state",
-    "active"
-  );
+  await expect(page.getByRole("heading", { name: "Available workshops" })).toBeVisible();
   await expectLearningCategoryNav(page, "Workshops");
   await page.locator('nav[aria-label="Learning categories"]').screenshot({
     path: testInfo.outputPath("learning-category-nav-workshops.png"),
