@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
 function contentSecurityPolicy(nonce, development) {
+  // Firebase popup sign-in also needs its cross-origin auth helper iframe.
+  const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
+  const authFrameSource = authDomain
+    ? ` ${new URL(`https://${authDomain}`).origin}`
+    : "";
   const directives = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://www.clarity.ms${
@@ -10,7 +15,7 @@ function contentSecurityPolicy(nonce, development) {
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.clarity.ms https://c.bing.com",
-    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+    `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com${authFrameSource}`,
     "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",

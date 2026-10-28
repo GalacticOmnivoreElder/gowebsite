@@ -29,6 +29,8 @@ require("./production-security-hardening.test.cjs");
 require("./password-reset.test.cjs");
 require("./auth-utils.test.cjs");
 require("./auth-profile.test.cjs");
+require("./google-auth-csp.test.cjs");
+require("./google-sign-in.test.cjs");
 require("./go-events-core.test.cjs");
 require("./go-events-route.test.cjs");
 require("./billing-orders-route.test.cjs");
