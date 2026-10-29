@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/firebase";
+import Link from "next/link";
 
 export function ProtectedResourceOpenButton({ assetIndex, resourceId }) {
   const [opening, setOpening] = useState(false);
@@ -16,6 +17,7 @@ export function ProtectedResourceOpenButton({ assetIndex, resourceId }) {
     if (popup) popup.opener = null;
 
     try {
+      await auth.authStateReady();
       const user = auth.currentUser;
       if (!user) throw new Error("Please sign in again to open this resource.");
       const token = await user.getIdToken();
@@ -52,6 +54,7 @@ export function ProtectedResourceOpenButton({ assetIndex, resourceId }) {
         {opening ? "Opening..." : "Open resource"}
       </Button>
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
+      {error && <div className="flex gap-3 text-sm"><Link href="/login?redirect=%2Fresources" className="underline">Sign in</Link><Link href="/membership" className="underline">Review membership</Link></div>}
     </div>
   );
 }

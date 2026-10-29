@@ -42,11 +42,12 @@ export function PassportWorkspace() {
   }
   return <div className="rounded-xl border bg-card p-6 sm:p-8">
     <h1 className="text-3xl font-bold">Your GameDev Passport</h1>
-    <p className="mt-4 max-w-3xl leading-7 text-muted-foreground">I remember the creators who help bring new worlds to life. Your Passport is free; official GO stamps mark published asset contributions and GO event participation verified while you are a member. Your earned history stays with your Passport.</p>
+    <p className="mt-4 max-w-3xl leading-7 text-muted-foreground">I remember the creators who help bring new worlds to life. Your Passport is free; official GO stamps mark published asset contributions and verified GO event participation. Your earned history stays with your Passport.</p>
     <div className="mt-6 flex flex-wrap gap-3">
       <Button asChild variant="outline"><Link href="/profile/cv">Edit your free Passport</Link></Button>
       <Button asChild variant="outline"><Link href="/community-builds">Choose my next build</Link></Button>
-      {data?.activeMember ? <Button disabled={busy} onClick={reconcile}>Check published contribution stamps</Button> : <Button asChild><Link href="/membership">Explore GO membership</Link></Button>}
+      {data && <Button disabled={busy} onClick={reconcile}>Check published contribution stamps</Button>}
+      {!data?.activeMember && <Button asChild><Link href="/membership">Explore GO membership</Link></Button>}
     </div>
     {data?.activeMember && data.contributions?.length ? <p className="mt-5 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm font-semibold">Your published offering has earned a seat at my build table: one feature vote each week while your membership and contribution qualify.</p> : null}
     <p className="mt-4 text-sm text-muted-foreground">Your existing profile and Passport visibility settings control public display.</p>

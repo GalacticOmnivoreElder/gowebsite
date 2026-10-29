@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase";
@@ -15,25 +15,25 @@ const statusLabels = {
   sync_pending: "Your account is connected. We are waiting to confirm your server access.",
 };
 
-export default function DiscordConnection({ callback = false }) {
+export default function DiscordConnection({ callback = false, returnTo = "/discord" }) {
   const [account, setAccount] = useState(undefined);
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const callbackPromise = useRef(null);
 
-  async function request(action) {
+  const request = useCallback(async (action) => {
     const token = await auth.currentUser?.getIdToken();
     if (!token) throw new Error("Sign in to GO to connect your Discord account.");
     const response = await fetch("/api/discord", {
       method: action ? "POST" : "GET", cache: "no-store",
       headers: { Authorization: `Bearer ${token}`, ...(action ? { "Content-Type": "application/json" } : {}) },
-      ...(action ? { body: JSON.stringify({ action }) } : {}),
+      ...(action ? { body: JSON.stringify({ action, ...(action === "connect" ? { returnTo } : {}) }) } : {}),
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Discord connection failed.");
     return result;
-  }
+  }, [returnTo]);
 
   useEffect(() => onAuthStateChanged(auth, setAccount), []);
 
@@ -46,7 +46,9 @@ export default function DiscordConnection({ callback = false }) {
         if (callback) {
           if (!callbackPromise.current) {
             const result = new URL(window.location.href).searchParams.get("discord");
-            window.history.replaceState(null, "", "/discord");
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete("discord");
+            window.history.replaceState(null, "", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
             callbackPromise.current = result === "complete" ? request("complete") : Promise.resolve();
             if (result === "cancelled") setError("Discord authorization was cancelled. You can connect whenever you are ready.");
             if (result === "failed") setError("This connection attempt could not be verified. Please connect again.");
@@ -62,7 +64,7 @@ export default function DiscordConnection({ callback = false }) {
     }
     load();
     return () => { active = false; };
-  }, [account, callback]);
+  }, [account, callback, request]);
 
   async function act(action) {
     setBusy(true);
@@ -88,7 +90,8 @@ export default function DiscordConnection({ callback = false }) {
         {connection && <div className="space-y-2" aria-live="polite">
           <p className="font-medium">Connected as @{connection.username}</p>
           <p className="text-sm">{statusLabels[connection.status] || "Your Discord account is connected."}</p>
-          {connection.status === "joined" && <p className="text-sm text-muted-foreground">{connection.memberAccess ? "Member channel access is active." : "Member channel access depends on your GO membership."}</p>}
+          {connection.status === "joined" && <p className="text-sm text-muted-foreground">{connection.memberAccess ? "Paid member role confirmed in the GO server." : "Paid member role is not active. It is granted when your GO membership is active."}</p>}
+          {connection.lastSyncedAt && <p className="text-xs text-muted-foreground">Last checked: {new Date(connection.lastSyncedAt).toLocaleString()}</p>}
           <Button asChild variant="outline"><a href={connection.serverUrl} target="_blank" rel="noreferrer">Open GO Discord</a></Button>
         </div>}
         {data?.available && <div className="flex flex-wrap gap-3">

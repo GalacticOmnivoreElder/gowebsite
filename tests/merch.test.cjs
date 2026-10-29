@@ -12,6 +12,18 @@ function core() {
   });
 }
 const api = core();
+const sizeGuide = load("src/lib/merch-size-guide.js", ["getMerchSizeGuide", "merchChestRange"]);
+
+test("Roly chest measurements use the selected fit and never fall back to a different chart", () => {
+  assert.equal(sizeGuide.merchChestRange("M", "male"), "95–98");
+  assert.equal(sizeGuide.merchChestRange("M", "female"), "83–88");
+  assert.equal(sizeGuide.merchChestRange("XXL", "female"), "101–106");
+  for (const fit of ["male", "female"]) {
+    assert.equal(sizeGuide.getMerchSizeGuide(fit).map((entry) => entry.size).join(","), "XS,S,M,L,XL,XXL");
+  }
+  assert.equal(sizeGuide.merchChestRange("M", "unknown"), "");
+  assert.equal(sizeGuide.merchChestRange("M", "toString"), "");
+});
 const shirt = { design: "main", fit: "male", size: "L" };
 const second = { design: "alternate", fit: "female", size: "XS" };
 const input = (patch = {}) => ({ submissionId: "a04689ed-443a-49e2-91b4-44a987007075", email: "Person@example.com", phone: "+38970000000", offerId: "duo", items: [shirt, second], quantity: 2, proposedTotalPrice: 2300, location: "skopje", fulfillment: "pickup", consent: true, ...patch });

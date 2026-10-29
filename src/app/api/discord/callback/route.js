@@ -10,13 +10,14 @@ export async function GET(request) {
   try { config = requireDiscordConfig(); }
   catch { return new NextResponse("Discord connection is not configured.", { status: 503 }); }
   const url = new URL(request.url);
-  const destination = new URL("/discord", config.redirectUri);
+  let destination = new URL("/discord", config.redirectUri);
   let result = "failed";
   if (url.searchParams.get("error")) result = "cancelled";
   else {
     try {
-      await captureDiscordCode(url.searchParams.get("state"), request.cookies.get(DISCORD_COOKIE)?.value,
+      const returnTo = await captureDiscordCode(url.searchParams.get("state"), request.cookies.get(DISCORD_COOKIE)?.value,
         url.searchParams.get("code"));
+      destination = new URL(returnTo, config.redirectUri);
       result = "complete";
     } catch { /* Fail closed; the UI offers a new connection attempt. */ }
   }

@@ -40,7 +40,7 @@ export const HeroSection = () => (
       </h1>
 
       <p className="mx-auto mt-6 max-w-3xl text-pretty text-base leading-7 text-white/80 sm:text-lg sm:leading-8 md:text-xl">
-        Galactic Omnivore is a nonprofit game-development community and
+        Galactic Omnivore is a non-profit game-development community and
         platform from North Macedonia. Learn practical skills, find
         collaborators and projects, share your work, and move toward your next
         playable milestone.

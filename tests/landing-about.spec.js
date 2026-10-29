@@ -40,7 +40,7 @@ test("landing About section is readable and separated from its storefront logos"
 
   const highlights = await about.locator("strong").allTextContents();
   expect(highlights.map((text) => text.trim())).toEqual([
-    "independent nonprofit",
+    "independent non-profit",
     "useful signals become practical routes",
     "next playable milestone",
     "clear terms, proper credit, and fair collaboration",

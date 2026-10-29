@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,6 @@ import {
   Video,
   ArrowLeft,
   Lock,
-  ShoppingCart,
   Loader2,
   Palette,
   Gamepad2,
@@ -25,14 +24,13 @@ import Link from "next/link";
 import { auth } from "@/firebase";
 import { ProtectedResourceOpenButton } from "@/components/packages/ProtectedResourceOpenButton";
 
-export default function PackageDetailPage({ params }) {
+export default function PackageDetailPage() {
   const [packageData, setPackageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [permissionsLoading, setPermissionsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCurrentMonth, setIsCurrentMonth] = useState(false);
-  const router = useRouter();
-  const { slug } = params;
+  const { slug } = useParams();
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -190,9 +188,9 @@ export default function PackageDetailPage({ params }) {
     } else {
       return (
         <Button asChild variant="secondary" className="w-full">
-          <Link href="/shop">
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            Buy in Shop
+          <Link href="/membership">
+            <Lock className="h-4 w-4 mr-2" />
+            Review membership access
           </Link>
         </Button>
       );

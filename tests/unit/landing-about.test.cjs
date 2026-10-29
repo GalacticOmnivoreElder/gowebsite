@@ -12,7 +12,7 @@ test("landing About section uses the approved three-paragraph copy", () => {
   assert.match(source, /<h2[^>]*>\s*About Galactic Omnivore\s*<\/h2>/);
   assert.match(
     source,
-    /Galactic Omnivore is an[\s\S]*independent nonprofit[\s\S]*game-development community and platform based in Skopje and active\s+across North Macedonia and beyond\./
+    /Galactic Omnivore is an[\s\S]*independent non-profit[\s\S]*game-development community and platform based in Skopje and active\s+across North Macedonia and beyond\./
   );
   assert.match(
     source,

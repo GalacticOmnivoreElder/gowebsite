@@ -5,11 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Check } from "lucide-react";
 import { MERCH_OFFERS, MERCH_VARIANTS, describeMerchItem } from "@/lib/merch-catalog";
+import { getMerchSizeGuide, MERCH_SIZE_GUIDE_URL, merchChestRange } from "@/lib/merch-size-guide";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 const controlClass = "flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 
@@ -46,6 +46,7 @@ export default function MerchPage() {
   const submissionIdRef = useRef(null);
   const offer = MERCH_OFFERS.find((item) => item.id === offerId) || MERCH_OFFERS[0];
   const selectedShirt = shirts[activeShirt];
+  const selectedFitLabel = selectedShirt.fit === "female" ? "Female" : "Male";
   const count = Math.max(1, Number(quantity) || 1);
 
   const maxQuantity = Math.floor(10 / offer.shirtCount);
@@ -124,7 +125,7 @@ export default function MerchPage() {
             </fieldset>
 
             {offer.shirtCount === 2 && <div className="grid grid-cols-2 gap-3" role="group" aria-label="Choose which shirt to customise">
-              {shirts.map((shirt, index) => <button key={index} type="button" aria-pressed={activeShirt === index} onClick={() => setActiveShirt(index)} className={`rounded-lg border px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${activeShirt === index ? "border-pink-400 bg-pink-400/5" : "border-border"}`}><span className="block font-semibold">Shirt {index + 1}</span><span className="mt-0.5 block text-xs text-muted-foreground">{describeMerchItem(shirt)}</span></button>)}
+              {shirts.map((shirt, index) => <button key={index} type="button" aria-pressed={activeShirt === index} onClick={() => setActiveShirt(index)} className={`rounded-lg border px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${activeShirt === index ? "border-pink-400 bg-pink-400/5" : "border-border"}`}><span className="block font-semibold">Shirt {index + 1}</span><span className="mt-0.5 block text-xs text-muted-foreground">{describeMerchItem(shirt)} · chest {merchChestRange(shirt.size, shirt.fit)} cm</span></button>)}
             </div>}
 
             <fieldset>
@@ -143,9 +144,14 @@ export default function MerchPage() {
             </fieldset>
 
             <div className="grid grid-cols-2 items-end gap-3 sm:grid-cols-3">
-              <Field id="merch-size" label={offer.shirtCount === 2 ? `Size · shirt ${activeShirt + 1}` : "Size"}><select id="merch-size" name="size" className={controlClass} value={selectedShirt.size} onChange={(event) => updateShirt({ size: event.target.value })}>{sizes.map((size) => <option key={size}>{size}</option>)}</select></Field>
+              <Field id="merch-size" label={`Size · ${selectedFitLabel}${offer.shirtCount === 2 ? ` · shirt ${activeShirt + 1}` : ""}`}><select id="merch-size" name="size" aria-describedby="merch-size-guide-help" className={controlClass} value={selectedShirt.size} onChange={(event) => updateShirt({ size: event.target.value })}>{getMerchSizeGuide(selectedShirt.fit).map(({ size, chestCm }) => <option key={size} value={size}>{size} · {chestCm} cm</option>)}</select></Field>
               <Field id="merch-quantity" label={offer.shirtCount === 2 ? "Quantity · packages" : "Quantity"}><Input id="merch-quantity" name="quantity" type="number" inputMode="numeric" min="1" max={maxQuantity} step="1" required className="min-h-11" value={quantity} onChange={(event) => setQuantity(event.target.value)} /></Field>
               <div className="col-span-2 sm:col-span-1"><Field id="merch-price" label="Your total price (MKD)"><Input id="merch-price" name="proposedTotalPrice" type="number" inputMode="numeric" min="1" max="1000000" step="1" required aria-describedby="merch-price-help" className="min-h-11" /></Field></div>
+            </div>
+
+            <div id="merch-size-guide-help" className="text-sm leading-6">
+              <p><strong>{selectedFitLabel} body chest circumference: {merchChestRange(selectedShirt.size, selectedShirt.fit)} cm</strong> · {selectedShirt.size}{offer.shirtCount === 2 ? `, shirt ${activeShirt + 1}` : ""}</p>
+              <p className="text-xs text-muted-foreground">Measure around your chest. These are general body measurements; garment fit varies by model. <a href={MERCH_SIZE_GUIDE_URL} target="_blank" rel="noopener noreferrer" className="font-medium text-pink-700 underline underline-offset-2 dark:text-pink-300">Roly size guide</a></p>
             </div>
 
             <p id="merch-price-help" className="text-xs text-muted-foreground">Suggest a total for all {count * offer.shirtCount} selected T-shirt{count * offer.shirtCount === 1 ? "" : "s"}, excluding delivery. This is a price suggestion, not a confirmed purchase price.</p>

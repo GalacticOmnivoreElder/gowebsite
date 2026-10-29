@@ -27,7 +27,7 @@ test("landing hero is responsive, accessible, and uses the verified CTAs", async
     page.getByText("From game creators, for game creators-and more.")
   ).toBeVisible();
   await expect(hero).toContainText(
-    "Galactic Omnivore is a nonprofit game-development community and platform from North Macedonia."
+    "Galactic Omnivore is a non-profit game-development community and platform from North Macedonia."
   );
 
   const discord = page.getByRole("link", { name: "Join Our Discord" });

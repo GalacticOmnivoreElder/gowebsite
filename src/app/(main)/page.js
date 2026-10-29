@@ -207,7 +207,7 @@ const About = () => {
           <p>
             Galactic Omnivore is an{" "}
             <strong className="font-semibold text-primary">
-              independent nonprofit
+              independent non-profit
             </strong>{" "}
             game-development community and platform based in Skopje and active
             across North Macedonia and beyond.

@@ -139,7 +139,7 @@ export default function AboutPage() {
             About Galactic Omnivore
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-muted-foreground sm:text-xl">
-            Galactic Omnivore is an independent, nonpartisan, nonprofit
+            Galactic Omnivore is an independent, nonpartisan, non-profit
             game-development community and platform based in Skopje and active
             across North Macedonia.
           </p>

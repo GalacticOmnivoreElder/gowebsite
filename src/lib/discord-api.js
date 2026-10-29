@@ -33,7 +33,7 @@ export function getDiscordConfig() {
   config.enabled = process.env.DISCORD_ENABLED === "true" && validRedirect &&
     /^\d{17,20}$/.test(config.clientId || "") && /^\d{17,20}$/.test(config.guildId || "") &&
     !!config.clientSecret && !!config.botToken &&
-    (!config.memberRoleId || (/^\d{17,20}$/.test(config.memberRoleId) && config.memberRoleId !== config.guildId));
+    /^\d{17,20}$/.test(config.memberRoleId || "") && config.memberRoleId !== config.guildId;
   config.appetiteEnabled = config.enabled && validAppetiteRoles;
   return config;
 }

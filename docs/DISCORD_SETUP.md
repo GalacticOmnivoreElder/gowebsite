@@ -3,7 +3,7 @@
 GO users can connect Discord in onboarding, profile settings, or `/discord`.
 OAuth requests `identify guilds.join`. GO verifies the Discord user ID, reserves
 it for one GO account, and adds the user to the configured server using the bot.
-Existing server members can connect too. The first release manages one optional
+Existing server members can connect too. The integration manages one dedicated
 paid-member role; mentor, business, and project-specific roles are not included.
 The public GO appetite signal can also summarize three optional self-selected
 roles: Hungry (green), One More Bite (yellow), and Full (red). It uses only the
@@ -31,7 +31,7 @@ do not use that as the paid-member role while reaction-based granting is enabled
 5. Ensure this application's bot is installed in that server with **Create Invite**.
    For paid-role management it also needs **Manage Roles**, with its highest role
    above the managed role. Administrator permission is unnecessary.
-6. Optionally create a dedicated GO Member role, restrict the member categories
+6. Create or select a dedicated GO Member role, restrict the member categories
    to it, and set `DISCORD_MEMBER_ROLE_ID`. Audit other roles and channel overrides
    for alternate access paths. Do not use a staff, moderator, integration-managed,
    or self-assignable role. GO owns assignment/removal of the configured role.
@@ -75,6 +75,14 @@ Polar webhooks mark linked users due for synchronization. Every sync reads the
 latest server-side membership and paid-through date. The periodic pass also
 catches expiry without a webhook and heals missed jobs. Temporary failures stay
 queued; HTTP 429 honors `retry_after` and stops the current batch.
+
+There is no seven-day grace period in the website's Discord role policy. Access
+is removed on the next successful reconciliation after the paid period ends or
+Polar reports revocation, unpaid status, or a full refund. Scheduled cancellation
+retains access until the paid-through date. A seven-day maximum depends on the
+scheduler, webhook delivery, bot permissions, and Discord being operational;
+monitor failures and the due backlog. Renewal restores the role on the next
+successful sync. No role is granted to users who have never had active access.
 
 The worker and user actions serialize operations per GO user. Only the dedicated
 role is managed; other Discord roles are preserved. Previous role IDs are retained

@@ -89,7 +89,7 @@ export default function Footer() {
               Galactic Omnivore
             </Link>
             <p className="mt-2 text-muted-foreground max-w-md">
-              A North Macedonian nonprofit community and platform helping game
+              A North Macedonian non-profit community and platform helping game
               creators move toward the next playable milestone.
             </p>
             <div className="flex gap-4 mt-4">

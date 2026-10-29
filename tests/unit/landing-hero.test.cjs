@@ -19,7 +19,7 @@ test("landing hero uses the approved hierarchy and Voice of GO copy", () => {
   );
   assert.match(
     source,
-    /Galactic Omnivore is a nonprofit game-development community and\s+platform from North Macedonia\. Learn practical skills, find\s+collaborators and projects, share your work, and move toward your next\s+playable milestone\./
+    /Galactic Omnivore is a non-profit game-development community and\s+platform from North Macedonia\. Learn practical skills, find\s+collaborators and projects, share your work, and move toward your next\s+playable milestone\./
   );
   assert.match(source, /aria-labelledby="landing-hero-heading"/);
   assert.equal(

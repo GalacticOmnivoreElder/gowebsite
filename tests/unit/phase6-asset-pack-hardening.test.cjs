@@ -52,7 +52,7 @@ test("asset-pack access failures lead to sign-in or Membership without exposing 
   const publicRoute = read("src/app/api/asset-packs/route.js");
 
   assert.match(directory, /login\?redirect=/);
-  assert.match(directory, /window\.location\.assign\("\/membership"\)/);
+  assert.match(directory, /router\.push\("\/membership"\)/);
   assert.match(openRoute, /hasAssetPackAccess/);
   assert.match(openRoute, /currentVersionId !== data\.versionId/);
   assert.match(openRoute, /Referrer-Policy.*no-referrer/s);

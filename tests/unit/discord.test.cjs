@@ -66,6 +66,30 @@ test("expired authorization and repeated starts are rejected", async () => {
   await assert.rejects(h.consumeDiscordCode("u1", state), { code: "invalid_state" });
 });
 
+test("OAuth returns to the onboarding step only for allowed destinations", async () => {
+  for (const [requested, expected] of [
+    ["/onboarding", "/onboarding?step=discord"],
+    ["/onboarding?edit=1", "/onboarding?edit=1&step=discord"],
+    ["https://evil.example/", "/discord"],
+  ]) {
+    const h = harness({ seed: { "users/u1": {} } });
+    const { state } = await h.startDiscordConnection("u1", requested);
+    assert.equal(await h.captureDiscordCode(state, state, "code"), expected);
+  }
+});
+
+test("Discord is unavailable until a valid paid role is configured", () => {
+  const env = { DISCORD_ENABLED: "true", DISCORD_CLIENT_ID: config.clientId,
+    DISCORD_CLIENT_SECRET: config.clientSecret, DISCORD_BOT_TOKEN: config.botToken,
+    DISCORD_GUILD_ID: config.guildId, DISCORD_REDIRECT_URI: config.redirectUri };
+  const api = loadSourceModule("src/lib/discord-api.js", ["getDiscordConfig"], { sandbox: { process: { env } } });
+  assert.equal(api.getDiscordConfig().enabled, false);
+  env.DISCORD_MEMBER_ROLE_ID = config.memberRoleId;
+  assert.equal(api.getDiscordConfig().enabled, true);
+  env.DISCORD_MEMBER_ROLE_ID = config.guildId;
+  assert.equal(api.getDiscordConfig().enabled, false);
+});
+
 test("a Discord identity cannot be claimed by two GO users or silently switched", async () => {
   const h = harness();
   await h.claimDiscordIdentity("u1", identity, config);
@@ -115,6 +139,17 @@ test("screening must finish before granting a paid role", async () => {
   await h.syncDiscordConnection("u1");
   assert.equal(h.calls.filter((c) => c.method === "PUT").length, 0);
   assert.equal(h.docs.get("discord_connections/u1").status, "screening_required");
+});
+
+test("revocation removes the role and renewal restores it", async () => {
+  const h = harness({ seed: { "users/u1": { activeMember: false, subscriptionStatus: "revoked", subscriptionEndsAt: new Date(Date.now() + 60000) }, "discord_connections/u1": linked() }, request: async () => member({ roles: [config.memberRoleId] }) });
+  await h.syncDiscordConnection("u1");
+  assert.ok(h.calls.some((call) => call.method === "DELETE"));
+  h.docs.set("users/u1", { activeMember: true, subscriptionStatus: "active", subscriptionEndsAt: new Date(Date.now() + 60000) });
+  const refreshed = harness({ seed: Object.fromEntries(h.docs), request: async () => member() });
+  await refreshed.syncDiscordConnection("u1");
+  assert.ok(refreshed.calls.some((call) => call.method === "PUT"));
+  assert.equal(refreshed.docs.get("discord_connections/u1").memberAccess, true);
 });
 
 test("leavers are never automatically rejoined; 429 delays retries", async () => {

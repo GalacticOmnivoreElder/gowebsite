@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 const accessOptions = [
   ["community", "Community and Business"],
   ["public", "Public"],
-  ["individual", "Individually granted"],
+  ["individual", "Community and individual grants"],
 ];
 
 export default function AdminAssetPacksPage() {

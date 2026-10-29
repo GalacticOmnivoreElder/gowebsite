@@ -53,7 +53,7 @@ async function service(db) {
     },
   };
   const source = fs.readFileSync("src/lib/community-build-service.js", "utf8").replace(/^import .*;\r?\n/gm, "").replace(/^export /gm, "");
-  return new Function(...Object.keys(deps), source + "\nreturn { castBuildVote, awardAssetPackStamp, managePassportStamp, readPassport };")(...Object.values(deps));
+  return new Function(...Object.keys(deps), source + "\nreturn { castBuildVote, awardAssetPackStamp, reconcileAssetStamps, managePassportStamp, readPassport };")(...Object.values(deps));
 }
 const seed = () => ({
   "users/member": { activeMember: true },
@@ -92,12 +92,13 @@ test("publication creates one official asset stamp; new versions cannot farm ext
   assert.equal(await api.awardAssetPackStamp("pack"), false);
   assert.equal([...db.records.keys()].filter((key) => key.startsWith("passport_stamps/")).length, 1);
 });
-test("inactive members cannot receive new official asset or event stamps", async () => {
+test("published contributors retain asset recognition even if membership expires before review", async () => {
   const data = seed(); data["users/member"].activeMember = false;
   const db = database(data); const api = await service(db);
+  assert.equal((await api.reconcileAssetStamps("member")).awarded, 1);
   assert.equal(await api.awardAssetPackStamp("pack"), false);
   await assert.rejects(api.managePassportStamp({ uid: "staff" }, { action: "issue", userId: "member", sourceId: "lan-2026", sourceTitle: "GO LAN", kind: "lan_party", reason: "Attendance checked" }), { status: 403 });
-  assert.equal([...db.records.keys()].filter((key) => key.startsWith("passport_stamps/")).length, 0);
+  assert.equal((await api.readPassport("member", { owner: true })).stamps[0].sourceTitle, "Original assets");
 });
 
 

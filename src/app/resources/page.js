@@ -1,213 +1,63 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpen,
-  FileText,
-  Package,
-  Sparkles,
-  Workflow,
-} from "lucide-react";
+import { FileText, PackageOpen } from "lucide-react";
 import { adminDb } from "@/lib/firebase-admin";
 import { getProductConfig } from "@/lib/product-config";
-import {
-  isPublicResourceStatus,
-  toPublicResourceDto,
-} from "@/lib/content-visibility";
+import { isPublicResourceStatus, toPublicResourceDto } from "@/lib/content-visibility";
+import { AssetPackDirectory } from "@/components/asset-packs/AssetPackDirectory";
 import { LearningCategoryNav } from "@/components/learning/LearningCategoryNav";
 import { LearningPageHeader } from "@/components/learning/LearningPageHeader";
-import FeaturedPackageCardWrapper from "@/components/packages/FeaturedPackageCardWrapper";
-import PackageList from "@/components/packages/PackageList";
-import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
-import { FullCTA } from "@/components/landing/FullCTA";
+import { ProtectedResourceOpenButton } from "@/components/packages/ProtectedResourceOpenButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createMetadata } from "@/lib/seo";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 export const metadata = createMetadata({
   title: "Game Development Resources",
-  description:
-    "Explore practical game-development material shared or selected by Galactic Omnivore.",
+  description: "Discover community-created assets and practical game-development resources available through Galactic Omnivore.",
   path: "/resources",
 });
 
 async function getResources() {
   try {
-    const resourcesSnapshot = await adminDb.collection("packages").get();
-    return resourcesSnapshot.docs
+    const snapshot = await adminDb.collection("packages").get();
+    const resources = snapshot.docs
       .filter((doc) => isPublicResourceStatus(doc.data().status))
       .map((doc) => toPublicResourceDto({ id: doc.id, ...doc.data() }));
+    return { resources, failed: false };
   } catch (error) {
     console.error("resource_list_failed", { code: error?.code || "unknown" });
-    return [];
+    return { resources: [], failed: true };
   }
 }
 
-function resourceDate(resource) {
-  const monthIndex = resource.month
-    ? new Date(Date.parse(`${resource.month} 1, 2012`)).getMonth()
-    : -1;
-  const year = Number(resource.year) || 0;
-  const date = new Date(year, monthIndex);
-  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
-}
-
 export default async function ResourcesPage() {
-  const resources = await getResources();
-  const assetPacksEnabled =
-    getProductConfig().featureFlags.communityAssetSubmissions;
-  const sortedResources = [...resources].sort(
-    (left, right) => resourceDate(right) - resourceDate(left)
-  );
-  const featuredResource = sortedResources[0] || null;
-  const otherResources = featuredResource
-    ? sortedResources.filter((resource) => resource.id !== featuredResource.id)
-    : [];
-
+  const { resources, failed } = await getResources();
+  const assetPacksEnabled = getProductConfig().featureFlags.communityAssetSubmissions;
   return (
     <main className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
-      <LearningPageHeader
-        icon={FileText}
-        title="Resources"
-        description="Explore practical game-development material shared or selected by Galactic Omnivore. Review each resource for its format, access requirements, usage terms, and supporting details."
-      />
-
+      <LearningPageHeader icon={FileText} title="Resources" description="Explore practical game-development material shared or selected by Galactic Omnivore. Community members can access published resources with an active membership." />
       <LearningCategoryNav activeItem="Resources" className="mt-10" />
-
-      {featuredResource ? (
-        <section
-          className="mt-12 md:mt-16"
-          aria-labelledby="featured-resource-heading"
-        >
-          <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-                Published resource
-              </p>
-              <h2
-                id="featured-resource-heading"
-                className="mt-1 text-3xl font-semibold"
-              >
-                Latest published resource
-              </h2>
-            </div>
-          </div>
-          <FeaturedPackageCardWrapper package={featuredResource} />
-        </section>
-      ) : (
-        <section
-          className="mt-12 md:mt-16"
-          aria-labelledby="published-resources-heading"
-        >
-          <h2 id="published-resources-heading" className="text-3xl font-semibold">
-            Published resources
-          </h2>
-          <Card className="mt-6 border-primary/20">
-            <CardContent className="p-8 text-center text-muted-foreground">
-              No published resources are available right now.
-            </CardContent>
-          </Card>
-        </section>
-      )}
-
-      <section
-        className="mt-12 grid gap-6 md:mt-16 md:grid-cols-2"
-        aria-label="Resource information"
-      >
-        <Card className="overflow-hidden border bg-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-2xl md:text-3xl">
-              <Package className="h-8 w-8 text-primary" aria-hidden="true" />
-              Community asset packs
-            </CardTitle>
-            <CardDescription>
-              {assetPacksEnabled
-                ? "Review community-contributed game-development assets selected by GO."
-                : "Community asset-pack submissions are not currently available."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-6 text-muted-foreground">
-              Every published pack states its contributor, licence, manifest,
-              compatibility, version, and access requirements.
-            </p>
-            <div className="mb-6 flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-2">
-                <FileText className="h-4 w-4" aria-hidden="true" /> Guides
-              </span>
-              <span className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" aria-hidden="true" /> Books
-              </span>
-              <span className="flex items-center gap-2">
-                <Package className="h-4 w-4" aria-hidden="true" /> Asset packs
-              </span>
-              <span className="flex items-center gap-2">
-                <Workflow className="h-4 w-4" aria-hidden="true" /> Pipelines
-              </span>
-            </div>
-            {assetPacksEnabled ? (
-              <Button asChild variant="outline">
-                <Link href="/asset-packs">
-                  Browse asset packs
-                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                </Link>
-              </Button>
-            ) : (
-              <Badge variant="secondary">Not currently available</Badge>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="overflow-hidden border border-primary/30 bg-gradient-to-br from-primary/10 to-background">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-2xl md:text-3xl">
-              <Sparkles className="h-8 w-8 text-primary" aria-hidden="true" />
-              Resource access and details
-            </CardTitle>
-            <CardDescription>
-              Check the information attached to each published item before use.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-6 text-muted-foreground">
-              Open a resource to review its contents and any available access,
-              usage, licence, compatibility, version, and file details. Some
-              resources may require a GO account or membership.
-            </p>
-            <Button asChild>
-              <Link href="/membership">
-                Review membership
-                <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <section className="mt-12" aria-labelledby="community-resources-heading">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Made by the community</p><h2 id="community-resources-heading" className="mt-2 text-3xl font-bold">Community asset packs</h2></div>
+          <Button variant="outline" asChild><Link href="/asset-packs">About contributing <PackageOpen className="ml-2 h-4 w-4" aria-hidden="true" /></Link></Button>
+        </div>
+        <p className="mt-3 max-w-3xl text-muted-foreground">Discover reviewed assets from GO creators. Check each pack’s licence and compatibility before using it in your project.</p>
+        <div className="mt-6">{assetPacksEnabled ? <AssetPackDirectory returnTo="/resources" /> : <Card><CardContent className="p-8 text-muted-foreground">Community asset packs are not currently available.</CardContent></Card>}</div>
       </section>
-
-      {otherResources.length > 0 && (
-        <section
-          className="mt-12 md:mt-16"
-          aria-labelledby="earlier-resources-heading"
-        >
-          <h2
-            id="earlier-resources-heading"
-            className="mb-6 text-center text-3xl font-semibold md:text-left"
-          >
-            Other listed resources
-          </h2>
-          <PackageList packages={otherResources} />
-        </section>
-      )}
-
-      <LandingTestimonials />
-      <FullCTA />
+      <section className="mt-16" aria-labelledby="go-resources-heading">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">From the GO library</p>
+        <h2 id="go-resources-heading" className="mt-2 text-3xl font-bold">GO resources</h2>
+        <p className="mt-3 max-w-3xl text-muted-foreground">Browse published GO resources and open their files with an active Community membership.</p>
+        {failed ? <Card className="mt-6"><CardContent className="p-8"><p role="alert">GO resources could not be loaded. Please try again later.</p></CardContent></Card> : resources.length ? (
+          <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {resources.map((resource) => <Card key={resource.id} className="flex flex-col"><CardHeader><Badge variant="outline" className="w-fit">Member resource</Badge><CardTitle className="mt-3">{resource.title}</CardTitle>{(resource.month || resource.year) && <p className="text-sm text-muted-foreground">{[resource.month, resource.year].filter(Boolean).join(" ")}</p>}</CardHeader><CardContent className="flex flex-1 flex-col gap-4"><p className="text-sm leading-6 text-muted-foreground">{resource.shortDescription || resource.description}</p>{resource.assets.length ? <ul className="space-y-4">{resource.assets.map((asset) => <li key={asset.assetIndex} className="rounded-lg border p-4"><h3 className="font-semibold">{asset.title}</h3>{asset.description && <p className="mt-1 text-sm text-muted-foreground">{asset.description}</p>}<div className="mt-3"><ProtectedResourceOpenButton resourceId={resource.id} assetIndex={asset.assetIndex} /></div></li>)}</ul> : <p className="text-sm text-muted-foreground">No downloadable files are listed for this resource.</p>}</CardContent></Card>)}
+          </div>
+        ) : <Card className="mt-6"><CardContent className="p-8 text-muted-foreground">No GO resources are published right now.</CardContent></Card>}
+      </section>
+      <section className="mt-16 rounded-lg border border-primary/30 bg-primary/5 p-6 md:p-8"><h2 className="text-2xl font-bold">Ready to explore?</h2><p className="mt-3 max-w-2xl text-muted-foreground">Sign in to access resources included with your active membership, or learn more about joining the GO community.</p><div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/login?redirect=%2Fresources">Sign in</Link></Button><Button variant="outline" asChild><Link href="/membership">Review membership</Link></Button></div></section>
     </main>
   );
 }

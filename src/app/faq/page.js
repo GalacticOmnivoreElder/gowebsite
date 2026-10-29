@@ -18,7 +18,7 @@ const faqs = [
   {
     question: "What is Galactic Omnivore?",
     answer:
-      "Galactic Omnivore (GO) is an independent, nonpartisan, nonprofit game-development association and platform based in Skopje and active across North Macedonia. GO helps creators learn practical skills, find collaborators and suitable project roles, publish clear project needs, build visible experience, and move work toward the next playable milestone.",
+      "Galactic Omnivore (GO) is an independent, nonpartisan, non-profit game-development association and platform based in Skopje and active across North Macedonia. GO helps creators learn practical skills, find collaborators and suitable project roles, publish clear project needs, build visible experience, and move work toward the next playable milestone.",
   },
   {
     question: "What can I do on the platform?",

@@ -85,11 +85,12 @@ export function isPublicAssetPack(pack = {}) {
 
 export function hasAssetPackAccess(pack, user, { individuallyGranted = false, now = new Date() } = {}) {
   if (!isPublicAssetPack(pack)) return false;
-  if (pack.accessType === "public") return true;
+  const accessType = pack.accessType || "community";
+  if (accessType === "public") return true;
   if (!user) return false;
   if (user.admin) return true;
-  if (pack.accessType === "community") return hasCommunityContentAccess(user.userData || {}, { admin: user.admin, now });
-  return pack.accessType === "individual" && individuallyGranted;
+  if (["community", "individual"].includes(accessType) && hasCommunityContentAccess(user.userData || {}, { admin: user.admin, now })) return true;
+  return accessType === "individual" && individuallyGranted;
 }
 
 export function toPublicAssetPackDto(id, pack = {}) {

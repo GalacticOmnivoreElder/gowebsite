@@ -122,7 +122,7 @@ export async function awardAssetPackStamp(packId) {
     const data = pack.data();
     const [member, existing] = await Promise.all([transaction.get(adminDb.collection("users").doc(data.contributorId)), transaction.get(adminDb.collection("passport_stamps").doc(stampId(data.contributorId, "asset_pack", packId)))]);
     const now = new Date();
-    if (!member.exists || !active(member.data(), now) || existing.exists) return false;
+    if (!member.exists || existing.exists) return false;
     transaction.create(adminDb.collection("passport_stamps").doc(stampId(data.contributorId, "asset_pack", packId)), { userId: data.contributorId, kind: "asset_pack", sourceId: packId, sourceTitle: data.title || "GO asset pack", title: "Official GO Asset Contributor", status: "issued", issuedAt: now, issuedBy: data.lastReviewedBy, spritePath: null });
     return true;
   });
@@ -130,7 +130,7 @@ export async function awardAssetPackStamp(packId) {
 
 export async function reconcileAssetStamps(uid) {
   const member = await adminDb.collection("users").doc(uid).get();
-  if (!active(member.data())) throw problem("Active GO membership is required to receive official stamps", 403);
+  if (!member.exists) throw problem("Account not found", 404);
   const packs = await ownedPacks(uid).get();
   let awarded = 0;
   for (const pack of packs.docs.filter((doc) => officiallyPublishedPack(doc.data()))) if (await awardAssetPackStamp(pack.id)) awarded++;

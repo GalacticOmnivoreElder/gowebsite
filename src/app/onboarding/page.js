@@ -68,6 +68,7 @@ const OnboardingContent = observer(() => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editCompletedOnboarding = searchParams.get("edit") === "1";
+  const returnToDiscordStep = searchParams.get("step") === "discord";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
@@ -99,21 +100,21 @@ const OnboardingContent = observer(() => {
 
         if (data.onboardingCompleted && data.session) {
           setDraft(data.session.draft_data_json || {});
-          setStepIndex(0);
+          setStepIndex(returnToDiscordStep ? ONBOARDING_STEPS.indexOf("discord") : 0);
           return;
         }
 
         const started = await authedFetch("/api/onboarding", "POST");
         setDraft(started.draft_data_json || {});
         const idx = ONBOARDING_STEPS.indexOf(started.current_step);
-        setStepIndex(idx >= 0 ? idx : 0);
+        setStepIndex(returnToDiscordStep ? ONBOARDING_STEPS.indexOf("discord") : idx >= 0 ? idx : 0);
       } catch (e) {
         setError(e.message);
       } finally {
         setLoading(false);
       }
     })();
-  }, [authReady, currentUserId, editCompletedOnboarding, router]);
+  }, [authReady, currentUserId, editCompletedOnboarding, returnToDiscordStep, router]);
 
   const stepData = draft[step] || {};
   const setField = (key, val) =>
@@ -283,7 +284,7 @@ const OnboardingContent = observer(() => {
             )}
 
             {step === "discord" && (
-              <DiscordConnection />
+              <DiscordConnection callback returnTo={editCompletedOnboarding ? "/onboarding?edit=1" : "/onboarding"} />
             )}
 
             {step === "role-skills" && (

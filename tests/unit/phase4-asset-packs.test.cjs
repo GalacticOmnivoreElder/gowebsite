@@ -66,13 +66,38 @@ test("public asset-pack records and version serialization never expose protected
   assert.equal(versionDto.publishedAt, "2026-08-03T12:00:00.000Z");
 });
 
+test("the public directory queries published packs rather than truncating the full collection", async () => {
+  const calls = [];
+  const docs = Array.from({ length: 205 }, (_, index) => ({ id: `pack-${index}`, data: () => ({ title: `Pack ${index}`, status: "published", currentVersionId: "v1", downloadUrl: "https://drive.google.com/private" }) }));
+  const route = loadSourceModule("src/app/api/asset-packs/route.js", ["GET"], {
+    stripImports: true,
+    sandbox: {
+      Response,
+      getProductConfig: () => ({ featureFlags: { communityAssetSubmissions: true } }),
+      getRequestUser: async () => null,
+      isPublicAssetPack: (pack) => pack.status === "published" && !!pack.currentVersionId,
+      toPublicAssetPackDto: assetPacks.toPublicAssetPackDto,
+      adminDb: { collection: () => ({ where: (...args) => { calls.push(args); return { get: async () => ({ docs }) }; } }) },
+    },
+  });
+  const response = await route.GET({});
+  const result = await response.json();
+  assert.deepEqual(calls, [["status", "==", "published"]]);
+  assert.equal(result.publicPacks.length, 205);
+  assert.doesNotMatch(JSON.stringify(result), /downloadUrl|drive\.google/);
+});
+
 test("asset-pack entitlements support public, Community, Business, individual, and admin access", () => {
   const base = { status: "published", currentVersionId: "version-1" };
   assert.equal(assetPacks.hasAssetPackAccess({ ...base, accessType: "public" }, null), true);
   assert.equal(assetPacks.hasAssetPackAccess({ ...base, accessType: "community" }, { uid: "free", userData: {} }), false);
   assert.equal(assetPacks.hasAssetPackAccess({ ...base, accessType: "community" }, { uid: "member", userData: { activeMember: true, membershipTier: "member" } }), true);
+  assert.equal(assetPacks.hasAssetPackAccess(base, { uid: "member", userData: { activeMember: true, membershipTier: "member" } }), true);
+  assert.equal(assetPacks.hasAssetPackAccess(base, null), false);
   assert.equal(assetPacks.hasAssetPackAccess({ ...base, accessType: "community" }, { uid: "business", userData: { activeMember: true, membershipTier: "company" } }), true);
   assert.equal(assetPacks.hasAssetPackAccess({ ...base, accessType: "individual" }, { uid: "user", userData: {} }, { individuallyGranted: true }), true);
+  assert.equal(assetPacks.hasAssetPackAccess({ ...base, accessType: "individual" }, { uid: "member", userData: { activeMember: true, membershipTier: "member" } }), true);
+  assert.equal(assetPacks.hasAssetPackAccess({ ...base, accessType: "individual" }, { uid: "free", userData: {} }), false);
   assert.equal(assetPacks.hasAssetPackAccess({ ...base, accessType: "individual" }, { uid: "admin", admin: true, userData: {} }), true);
   assert.equal(assetPacks.hasAssetPackAccess({ ...base, status: "removed", accessType: "public" }, null), false);
 });

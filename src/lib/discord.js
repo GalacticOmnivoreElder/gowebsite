@@ -13,7 +13,7 @@ export function discordCookieOptions(config) {
   return { httpOnly: true, secure: new URL(config.redirectUri).protocol === "https:", sameSite: "lax", path: "/api/discord", maxAge: 600 };
 }
 
-export async function startDiscordConnection(uid) {
+export async function startDiscordConnection(uid, returnTo) {
   const config = requireDiscordConfig();
   const user = await adminDb.collection("users").doc(uid).get();
   if (!user.exists) throw discordError("account_missing", 403);
@@ -26,6 +26,8 @@ export async function startDiscordConnection(uid) {
     tx.set(rateRef, { nextStartAt: new Date(Date.now() + 10000) });
     tx.set(adminDb.collection("discord_oauth_states").doc(hash(state)), {
       uid, expiresAt: new Date(Date.now() + 600000), code: null,
+      returnTo: returnTo === "/onboarding?edit=1" ? "/onboarding?edit=1&step=discord" :
+        returnTo === "/onboarding" ? "/onboarding?step=discord" : "/discord",
     });
   });
   const url = new URL("https://discord.com/oauth2/authorize");
@@ -45,10 +47,11 @@ export async function captureDiscordCode(state, cookie, code) {
     throw discordError("invalid_state");
   }
   const ref = oauthRef(state);
-  await adminDb.runTransaction(async (tx) => {
+  return adminDb.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists || millis(snap.data().expiresAt) <= Date.now() || snap.data().code) throw discordError("invalid_state");
     tx.update(ref, { code });
+    return snap.data().returnTo || "/discord";
   });
 }
 
@@ -228,7 +231,8 @@ export async function discordConnectionStatus(uid) {
   if (!snap.exists) return null;
   const data = snap.data();
   return { username: data.username, status: data.status, memberAccess: data.memberAccess === true,
-    lastError: data.lastError || null, serverUrl: `https://discord.com/channels/${data.guildId}` };
+    lastError: data.lastError || null, lastSyncedAt: millis(data.lastSyncedAt) > 0 ? new Date(millis(data.lastSyncedAt)).toISOString() : null,
+    serverUrl: `https://discord.com/channels/${data.guildId}` };
 }
 
 export async function processDiscordSyncs() {

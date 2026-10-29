@@ -42,7 +42,7 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   try {
     if (body.action === "connect") {
-      const result = await startDiscordConnection(user.uid);
+      const result = await startDiscordConnection(user.uid, body.returnTo);
       const response = json({ url: result.url });
       response.cookies.set(DISCORD_COOKIE, result.state, discordCookieOptions(getDiscordConfig()));
       return response;

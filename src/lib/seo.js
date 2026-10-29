@@ -5,7 +5,7 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://www.galacticomnivore.com"
 ).replace(/\/$/, "");
 export const DEFAULT_DESCRIPTION =
-  "Galactic Omnivore is a North Macedonian nonprofit community and platform helping game creators learn, find projects, and move toward a playable milestone.";
+  "Galactic Omnivore is a North Macedonian non-profit community and platform helping game creators learn, find projects, and move toward a playable milestone.";
 export const DEFAULT_OG_IMAGE = "/opengraph-image";
 export const DEFAULT_KEYWORDS = [
   "Galactic Omnivore",

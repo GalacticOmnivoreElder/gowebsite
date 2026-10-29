@@ -13,7 +13,7 @@ function unavailable() {
 export async function GET(request) {
   if (!getProductConfig().featureFlags.communityAssetSubmissions) return unavailable();
   const user = await getRequestUser(request);
-  const publicSnapshot = await adminDb.collection("asset_packs").limit(200).get();
+  const publicSnapshot = await adminDb.collection("asset_packs").where("status", "==", "published").get();
   const publicPacks = publicSnapshot.docs.filter((doc) => isPublicAssetPack(doc.data())).map((doc) => toPublicAssetPackDto(doc.id, doc.data()));
   if (!user) return Response.json({ publicPacks, ownedPacks: [], ownedVersions: [], canSubmit: false }, { headers: { "Cache-Control": "no-store" } });
   const [ownedPacks, ownedVersions] = await Promise.all([

@@ -33,6 +33,7 @@ export default function ContactPage() {
                 Support Omnidesk
               </a>
             </Button>
+            <p className="mt-4 text-sm">Found a bug? <a className="underline" href="/bugs">Report it to GO</a>.</p>
           </CardContent>
         </Card>
 

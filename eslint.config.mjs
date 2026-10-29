@@ -24,5 +24,11 @@ export default defineConfig([
     "build/**",
     "next-env.d.ts",
     ".tmp-npm-cli/**",
+    ".playwright-artifacts/**",
+    ".playwright-*/**",
+    "playwright-report/**",
+    "test-results/**",
+    "tmp/**",
+    "outputs/**",
   ]),
 ]);
