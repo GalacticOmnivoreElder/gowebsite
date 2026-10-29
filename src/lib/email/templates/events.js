@@ -113,35 +113,32 @@ function eventCopy(type, data) {
               ? `With GO Mentor, you can use member resources and learning activities. ${plan.verificationNotice}`
             : data.tier === "member"
               ? "With GO Community, you can apply to open community projects, access periodic resource drops, and use member learning resources."
-              : "Your account is ready. You can browse public projects now and choose a membership whenever you are ready to apply or create a project.";
+              : "Your GO account is ready. Explore public projects now, and choose a membership when you are ready to apply to projects or start your own.";
+        const introduction =
+          "Welcome to Galactic Omnivore - a community where creators can share their skills, find collaborators, and build projects together.";
         const steps = [
-          "Finish onboarding to create your GO profile and a draft GameDev Passport.",
-          "Complete or update your profile so collaborators can understand your skills and experience.",
-          "Review and update your GameDev Passport before publishing it.",
-          "Explore projects and opportunities across the community.",
-          "Browse member resources and packages.",
+          "Set up your GO profile to introduce yourself and share your skills and experience.",
+          "Review the GameDev Passport created during setup, then publish it when you are ready.",
+          "Explore community projects and resources. Access to member resources depends on your membership.",
         ];
         return {
           subject: "Welcome to Galactic Omnivore",
           heading: "Welcome to Galactic Omnivore",
           preheader:
-            "Start with your profile, GameDev Passport, projects, and member resources.",
+            "Your GO account is ready. Set up your profile and explore the community.",
           body:
             greeting(data) +
-            paragraph(
-              "Welcome to Galactic Omnivore-a community where creators can share their skills, find collaborators, and build projects together."
-            ) +
+            paragraph(introduction) +
             paragraph(planParagraph) +
-            `<p style="margin:0 0 12px;color:#f5f5f5;font-weight:700;">Useful first steps</p>` +
+            `<p style="margin:0 0 12px;color:#f5f5f5;font-weight:700;">Get started</p>` +
             bulletList(steps),
-          text: `${data.firstName ? `Hi ${data.firstName},` : "Hello,"}\n\nWelcome to Galactic Omnivore-a community where creators can share their skills, find collaborators, and build projects together.\n\n${planParagraph}\n\nUseful first steps\n${steps
+          text: `${data.firstName ? `Hi ${data.firstName},` : "Hello,"}\n\n${introduction}\n\n${planParagraph}\n\nGet started\n${steps
             .map((step, index) => `${index + 1}. ${step}`)
             .join("\n")}${plan ? `\n\nMembership: ${plan.name}` : ""}`,
-          ctaLabel: "Finish onboarding",
+          ctaLabel: "Set up your GO profile",
           ctaUrl: onboardingUrl,
           secondaryCtas: [
-            { label: "Complete your profile", url: profileUrl },
-            { label: "Build or update your GameDev Passport", url: cvUrl },
+            { label: "Review your GameDev Passport", url: cvUrl },
             { label: "Explore projects", url: projectsUrl },
             { label: "Browse member resources", url: resourcesUrl },
           ],
