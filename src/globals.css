@@ -494,3 +494,28 @@
 .group:hover [class~="group-hover:text-primary"] {
   color: hsl(var(--primary-text));
 }
+
+/* Member-selected artwork stays behind the readable, dark profile panels. */
+.mission-hub-shell[data-profile-art] {
+  background:
+    radial-gradient(circle at 12% 6%, hsl(var(--primary) / 0.2), transparent 30rem),
+    linear-gradient(145deg, rgb(0 0 0 / 0.82), rgb(0 0 0 / 0.72)),
+    var(--profile-background);
+}
+.mission-hub-shell[data-profile-art="cosmic"]::before {
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.7) 1px, transparent 1.5px), radial-gradient(circle, rgb(255 255 255 / 0.4) 1px, transparent 1.5px);
+  background-size: 53px 53px, 89px 89px;
+  background-position: 0 0, 24px 31px;
+  opacity: 0.55;
+}
+.mission-hub-shell[data-profile-art="grid"]::before {
+  background-image: linear-gradient(hsl(var(--primary) / 0.25) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary) / 0.25) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.45;
+}
+.mission-hub-shell[data-profile-art="aurora"]::before {
+  background-image: radial-gradient(ellipse at 15% 10%, hsl(var(--primary) / 0.6), transparent 40%), radial-gradient(ellipse at 85% 25%, hsl(var(--primary) / 0.35), transparent 36%);
+  background-size: 100% 100%;
+  opacity: 0.6;
+}
+.mission-hub-shell[data-profile-art="minimal"]::before { background-image: none; }

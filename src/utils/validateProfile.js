@@ -111,6 +111,22 @@ export function validateProfileData(data) {
     }
   }
 
+  if (data.profileAppearance !== undefined && data.profileAppearance !== null) {
+    const appearance = data.profileAppearance;
+    if (
+      typeof appearance !== "object" ||
+      Array.isArray(appearance) ||
+      !["cosmic", "grid", "aurora", "minimal"].includes(appearance.style) ||
+      !/^#[0-9a-f]{6}$/i.test(appearance.backgroundColor || "") ||
+      !/^#[0-9a-f]{6}$/i.test(appearance.accentColor || "") ||
+      Object.keys(appearance).some((key) =>
+        !["style", "backgroundColor", "accentColor"].includes(key)
+      )
+    ) {
+      errors.profileAppearance = "Choose a valid profile style and colors";
+    }
+  }
+
   if (
     data.profilePrivacy !== undefined &&
     !["public", "private"].includes(data.profilePrivacy)

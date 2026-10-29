@@ -48,6 +48,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CvDownloadButton } from "@/components/profile/CvDownloadButton";
 import { buildMissionProfile } from "@/lib/profile-mission";
+import { getProfileAppearanceProps } from "@/lib/profile-appearance";
 
 function initials(name) {
   return String(name || "GO")
@@ -555,6 +556,7 @@ export default function MissionHub({
   return (
     <section
       className="mission-hub-shell relative isolate overflow-hidden rounded-2xl border border-white/10 px-4 py-5 sm:px-6 sm:py-7 lg:px-8"
+      {...getProfileAppearanceProps(profile?.profileAppearance)}
       aria-labelledby="mission-hub-title"
     >
       <div className="pointer-events-none absolute -right-28 -top-32 h-80 w-80 rounded-full border border-primary/20" aria-hidden="true">

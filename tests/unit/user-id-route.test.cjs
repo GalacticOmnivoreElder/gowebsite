@@ -89,6 +89,32 @@ function loadRoute({ decodedToken = null, seed = {}, passportRead = async () => 
   return { ...route, adminDb };
 }
 
+test("profile appearance persists, respects privacy, validates input, and resets", async () => {
+  const appearance = { style: "aurora", backgroundColor: "#14213d", accentColor: "#67e8f9" };
+  const route = loadRoute({ decodedToken: { uid: "user-1" }, seed: { users: { "user-1": { username: "Creator" } } } });
+  const params = { params: { id: "user-1" } };
+  const update = (profileAppearance) => route.PUT(createRequest({ headers: { Authorization: "Bearer owner-token" }, jsonBody: { profileAppearance } }), params);
+  const saved = await update(appearance);
+  assert.equal(saved.status, 200);
+  assert.deepEqual(plain(saved.body.profileAppearance), appearance);
+  const visitor = loadRoute({ seed: { users: route.adminDb.docs.users } });
+  const visible = await visitor.GET(createRequest(), params);
+  assert.deepEqual(plain(visible.body.profileAppearance), appearance);
+  visitor.adminDb.docs.users["user-1"].profilePrivacy = "private";
+  const privateProfile = await visitor.GET(createRequest(), params);
+  assert.equal(privateProfile.body.isPrivate, true);
+  assert.equal(privateProfile.body.profileAppearance, undefined);
+  for (const invalid of [
+    { ...appearance, backgroundColor: "url(https://example.com)" },
+    { ...appearance, style: "unknown" },
+    { ...appearance, extra: "value" },
+  ]) {
+    assert.equal((await update(invalid)).status, 400);
+  }
+  assert.equal((await update(null)).status, 200);
+  assert.equal(route.adminDb.docs.users["user-1"].profileAppearance, null);
+});
+
 test("profile updates trim usernames before writing them", async () => {
   const { PUT } = loadRoute({
     decodedToken: { uid: "user-1" },

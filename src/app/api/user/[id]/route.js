@@ -144,6 +144,7 @@ export async function GET(request, { params }) {
       memberSince,
       profilePrivacy: "public",
       isPrivate: false,
+      profileAppearance: userData.profileAppearance || null,
       cv: canViewCv ? serializeCv(viewerSafeCv) : null,
     };
 
@@ -226,6 +227,7 @@ export async function PUT(request, { params }) {
       "socialLinks",
       "socialVisibility",
       "profilePrivacy",
+      "profileAppearance",
       "avatar",
     ];
 
@@ -358,6 +360,7 @@ export async function PUT(request, { params }) {
       socialLinks: updatedData.socialLinks,
       socialVisibility: updatedData.socialVisibility,
       profilePrivacy: updatedData.profilePrivacy,
+      profileAppearance: updatedData.profileAppearance || null,
       avatar: updatedData.avatar,
       profileEditedAt:
         updatedData.profileEditedAt?.toDate?.()?.toISOString() ||

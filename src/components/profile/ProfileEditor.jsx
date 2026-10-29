@@ -41,6 +41,7 @@ import {
   validateProfileData,
 } from "@/utils/validateProfile";
 import { SkillSelector } from "@/components/profile/SkillSelector";
+import ProfileAppearanceEditor from "@/components/profile/ProfileAppearanceEditor";
 
 const ProfileEditor = observer(({ onSave }) => {
   const [formData, setFormData] = useState({
@@ -51,6 +52,7 @@ const ProfileEditor = observer(({ onSave }) => {
     socialLinks: {},
     socialVisibility: {},
     profilePrivacy: "public",
+    profileAppearance: null,
   });
 
   const [saving, setSaving] = useState(false);
@@ -87,6 +89,7 @@ const ProfileEditor = observer(({ onSave }) => {
             socialLinks: profileData.socialLinks || {},
             socialVisibility: profileData.socialVisibility || {},
             profilePrivacy: profileData.profilePrivacy || "public",
+            profileAppearance: profileData.profileAppearance || null,
           });
         }
       } catch (error) {
@@ -455,6 +458,11 @@ const ProfileEditor = observer(({ onSave }) => {
           </div>
         </CardContent>
       </Card>
+
+      <ProfileAppearanceEditor
+        value={formData.profileAppearance}
+        onChange={(value) => handleInputChange("profileAppearance", value)}
+      />
 
       {/* Save Button */}
       <div className="flex justify-end">
