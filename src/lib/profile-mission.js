@@ -270,8 +270,7 @@ export function buildMissionProfile({
     hasExplicitAvailability: availabilityState.hasExplicitSelection,
     intro: profile.bio || "",
     joinedAt: formatJoinedAt(
-      profile.memberSince ||
-        profile.joinedAt ||
+      profile.joinedAt ||
         profile.createdAt ||
         currentUser.createdAt
     ),

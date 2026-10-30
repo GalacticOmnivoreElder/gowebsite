@@ -40,6 +40,7 @@ export function Sidebar() {
 
   const navItems = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { name: "Community timeline", href: "/admin/community-timeline", icon: LayoutDashboard },
     { name: "Users", href: "/admin/users", icon: Users },
     { name: "Projects", href: "/admin/projects", icon: FolderOpen },
     { name: "Project access & releases", href: "/admin/project-access", icon: FolderOpen },

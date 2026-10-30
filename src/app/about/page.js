@@ -18,6 +18,12 @@ const STATUTE_DOWNLOAD_URL =
 
 const routes = [
   {
+    title: "GO timeline and roadmap",
+    description: "Explore verified milestones, current work, and future proposals.",
+    href: "/timeline",
+    cta: "Explore the timeline",
+  },
+  {
     title: "Learn",
     description:
       "Build practical game-development skills through resources, education, feedback, and shared experience.",

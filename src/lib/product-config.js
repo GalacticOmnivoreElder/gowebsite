@@ -22,7 +22,7 @@ export function getProductConfig(env = process.env) {
     individuallyPaidCourses: parseBooleanEnv(env.INDIVIDUALLY_PAID_COURSES_ENABLED, false),
     goMatchmaking: parseBooleanEnv(env.GO_MATCHMAKING_ENABLED, productionRuntime),
     goGameJams: parseBooleanEnv(env.GO_GAME_JAMS_ENABLED, false),
-    goDevelopmentJourney: parseBooleanEnv(env.GO_DEVELOPMENT_JOURNEY_ENABLED, false),
+      goDevelopmentJourney: parseBooleanEnv(env.GO_DEVELOPMENT_JOURNEY_ENABLED, true),
   };
 
   return {

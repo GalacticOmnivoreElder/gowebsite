@@ -19,7 +19,7 @@ const KPI_FIELDS = Object.freeze({ game_jam_attended: "gameJamsAttended", match_
 
 export function appendJourneyEvent(transaction, {
   uid, type, sourceId, title, summary, publicTitle = title, publicSummary = summary,
-  occurredAt = new Date(), visibility = "public", status = "active", metadata = {}, publicDelta,
+  occurredAt = new Date(), visibility = "private", status = "active", metadata = {}, publicDelta,
 }) {
   const ref = refForEvent(uid, type, sourceId);
   transaction.set(ref, {
@@ -52,21 +52,24 @@ export function appendJourneyEvent(transaction, {
 
 export async function recordJourneyEvent(input) {
   const ref = refForEvent(input.uid, input.type, input.sourceId);
-  await ref.set({
-    userId: input.uid,
-    type: input.type,
-    sourceId: String(input.sourceId).slice(0, 180),
-    title: String(input.title).slice(0, 120),
-    summary: String(input.summary || "").slice(0, 500),
-    publicTitle: String(input.publicTitle || input.title).slice(0, 120),
-    publicSummary: String(input.publicSummary || input.summary || "").slice(0, 240),
-    occurredAt: input.occurredAt || new Date(),
-    visibility: input.visibility || "public",
-    status: input.status || "active",
-    metadata: input.metadata || {},
-    stardateVersion: "go-cosmic-v1",
-    updatedAt: new Date(),
-  }, { merge: true });
+  await adminDb.runTransaction(async (transaction) => {
+    const previous = await transaction.get(ref);
+    transaction.set(ref, {
+      userId: input.uid,
+      type: input.type,
+      sourceId: String(input.sourceId).slice(0, 180),
+      title: String(input.title).slice(0, 120),
+      summary: String(input.summary || "").slice(0, 500),
+      publicTitle: String(input.publicTitle || input.title).slice(0, 120),
+      publicSummary: String(input.publicSummary || input.summary || "").slice(0, 240),
+      occurredAt: input.occurredAt || new Date(),
+      visibility: previous.exists ? (previous.data().visibility || "private") : (input.visibility || "private"),
+      status: input.status || "active",
+      metadata: input.metadata || {},
+      stardateVersion: "go-cosmic-v1",
+      updatedAt: new Date(),
+    }, { merge: true });
+  });
   return ref.id;
 }
 
@@ -83,7 +86,7 @@ function safeJourneyEntry(doc, hiddenIds = [], owner = false) {
       summary: String(data.summary || "").slice(0, 240),
       occurredAt: date.toISOString(),
       stardate: publicJourneyEvent({ ...data, occurredAt: date, visibility: "public", status: "active" })?.stardate || null,
-      visibility: hiddenIds.includes(doc.id) ? "private" : "public",
+      visibility: data.visibility === "public" && !hiddenIds.includes(doc.id) ? "public" : "private",
       status: data.status,
       privateSummary: String(data.summary || "").slice(0, 240),
     };
@@ -92,7 +95,7 @@ function safeJourneyEntry(doc, hiddenIds = [], owner = false) {
   if (!publicValue) return null;
   return owner ? {
     ...publicValue,
-    visibility: hiddenIds.includes(doc.id) ? "private" : "public",
+    visibility: data.visibility === "public" && !hiddenIds.includes(doc.id) ? "public" : "private",
     status: data.status || "active",
     privateSummary: String(data.summary || "").slice(0, 240),
   } : publicValue;
@@ -139,11 +142,12 @@ export async function updateJourneyVisibility(uid, body) {
     const prefsSnap = await transaction.get(prefsRef);
     if (!eventSnap.exists || eventSnap.data().userId !== uid) throw Object.assign(new Error("Log entry not found."), { status: 404 });
     const current = prefsSnap.exists && Array.isArray(prefsSnap.data().hiddenEventIds) ? prefsSnap.data().hiddenEventIds : [];
-    const wasHidden = current.includes(eventId);
-    const hiddenEventIds = body.isPublic ? current.filter((id) => id !== eventId) : [...new Set([...current, eventId])].slice(-1000);
+    const wasPublic = eventSnap.data().visibility === "public" && !current.includes(eventId);
+    const hiddenEventIds = current.filter((id) => id !== eventId);
+    transaction.update(eventRef, { visibility: body.isPublic ? "public" : "private", updatedAt: new Date() });
     transaction.set(prefsRef, { hiddenEventIds, updatedAt: new Date() }, { merge: true });
     const kpiField = KPI_FIELDS[eventSnap.data().type];
-    if (kpiField && (eventSnap.data().status || "active") === "active" && wasHidden !== !body.isPublic) {
+    if (kpiField && (eventSnap.data().status || "active") === "active" && wasPublic !== body.isPublic) {
       const statsRef = adminDb.collection("go_journey_stats").doc(uid);
       transaction.set(statsRef, { [`public_${kpiField}`]: FieldValue.increment(body.isPublic ? 1 : -1), updatedAt: new Date() }, { merge: true });
     }

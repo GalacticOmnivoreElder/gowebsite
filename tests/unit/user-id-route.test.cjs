@@ -282,7 +282,7 @@ test("published public GO CV supplies the public profile data", async () => {
   assert.equal(body.bio, "Legacy bio");
   assert.deepEqual(body.skills, ["Game Designer", "Programmer", "Unity"]);
   assert.equal(body.joinedAt, "2025-07-10T12:27:56.098Z");
-  assert.equal(body.memberSince, "2025-07-10T12:27:56.098Z");
+  assert.equal(body.memberSince, undefined);
   assert.equal(body.cv.published_at, "2026-07-14T11:00:00.000Z");
 });
 
@@ -386,7 +386,7 @@ test("legacy long biographies remain available as About Me", async () => {
   const response = await GET(createRequest(), { params: { id: "user-1" } });
   assert.equal(response.body.bio, "");
   assert.equal(response.body.aboutMe, legacyBiography);
-  assert.equal(response.body.memberSince, "2026-01-02T09:30:00.000Z");
+  assert.equal(response.body.memberSince, undefined);
 });
 
 test("explicit profile edits override generated CV display fields", async () => {

@@ -3,6 +3,8 @@ import StarterAchievements from "./StarterAchievements";
 import { PassportStamps } from "@/components/community/PassportStamps";
 import SkillEvidencePanel from "@/components/profile/SkillEvidencePanel";
 import GoDevelopmentLog from "@/components/profile/GoDevelopmentLog";
+import PersonalProjectTimeline from "@/components/profile/PersonalProjectTimeline";
+import SharedGoMilestones from "@/components/profile/SharedGoMilestones";
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
@@ -724,7 +726,7 @@ export default function MissionHub({
           <StatCard
             label="Projects"
             value={`${model.platformProjects.length} projects`}
-            hint={model.joinedAt ? `Member since ${model.joinedAt}` : "Project record"}
+            hint={model.joinedAt ? `Account since ${model.joinedAt}` : "Project record"}
             icon={Orbit}
           />
           <StatCard
@@ -840,7 +842,9 @@ export default function MissionHub({
 
         <StarterAchievements record={profile?.cv?.starterPathway} />
         <PassportStamps passport={profile?.passport} />
+        {profile?.id ? <PersonalProjectTimeline userId={profile.id} isOwner={isOwner} /> : null}
         {profile?.goJourney ? <GoDevelopmentLog journey={profile.goJourney} isOwner={isOwner} userId={profile?.id} /> : null}
+        {isOwner ? <SharedGoMilestones /> : null}
         <OfficialMentorPanel mentor={profile?.mentorSummary} programme={profile?.mentorProgramme} isOwner={isOwner} />
 
         <MentorReferences items={profile?.mentorReferences} />

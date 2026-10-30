@@ -40,6 +40,49 @@ test("public journal projection excludes private and corrected entries", () => {
   assert.deepEqual(plain(journey.summarizeJourney([{ type: "game_jam_attended", status: "active" }, { type: "game_jam_attended", status: "corrected" }, { type: "match_accepted", status: "active" }, { type: "skill_validated", status: "active" }])), { gameJamsAttended: 1, collaborationsAccepted: 1, skillsValidated: 1 });
 });
 
+test("new journey events default private and owners can change visibility without changing legacy choices", async () => {
+  const id = "a".repeat(64);
+  const docs = new Map([[`go_journey_events/${id}`, { userId: "owner", type: "game_jam_attended", visibility: "private", status: "active" }], ["go_journey_preferences/owner", { hiddenEventIds: [] }]]);
+  const writes = [];
+  const db = { collection: (name) => ({ doc: (key) => ({ id: key, path: `${name}/${key}` }) }), runTransaction: async (fn) => fn({
+    get: async (ref) => ({ exists: docs.has(ref.path), data: () => docs.get(ref.path) }),
+    set: (ref, value, options) => { docs.set(ref.path, { ...(options?.merge ? docs.get(ref.path) : {}), ...value }); writes.push([ref.path, value]); },
+    update: (ref, value) => { docs.set(ref.path, { ...docs.get(ref.path), ...value }); writes.push([ref.path, value]); },
+  }) };
+  const service = loadSourceModule("src/lib/go-journey-service.js", ["appendJourneyEvent", "updateJourneyVisibility", "safeJourneyEntry"], { stripImports: true, sandbox: { createHash, FieldValue: { increment: (value) => value }, adminDb: db, publicJourneyEvent: journey.publicJourneyEvent } });
+  const written = [];
+  service.appendJourneyEvent({ set: (ref, value) => written.push([ref.path, value]) }, { uid: "owner", type: "other", sourceId: "1", title: "New event" });
+  assert.equal(written[0][1].visibility, "private");
+  const doc = { id, data: () => ({ ...docs.get(`go_journey_events/${id}`), occurredAt: new Date(), title: "Event" }) };
+  assert.equal(service.safeJourneyEntry(doc, [], true).visibility, "private");
+  assert.equal(service.safeJourneyEntry(doc, [], false), null);
+  await service.updateJourneyVisibility("owner", { eventId: id, isPublic: true });
+  assert.equal(docs.get(`go_journey_events/${id}`).visibility, "public");
+  assert.equal(writes.at(-1)[1].public_gameJamsAttended, 1);
+  await service.updateJourneyVisibility("owner", { eventId: id, isPublic: false });
+  assert.equal(writes.at(-1)[1].public_gameJamsAttended, -1);
+  await assert.rejects(service.updateJourneyVisibility("other", { eventId: id, isPublic: true }), { status: 404 });
+});
+
+test("re-recording registration preserves an existing public or private choice", async () => {
+  let previous = null;
+  let saved;
+  const db = { collection: () => ({ doc: (id) => ({ id }) }), runTransaction: async (fn) => fn({
+    get: async () => ({ exists: !!previous, data: () => previous }),
+    set: (_ref, value) => { saved = value; },
+  }) };
+  const service = loadSourceModule("src/lib/go-journey-service.js", ["recordJourneyEvent"], { stripImports: true, sandbox: { createHash, adminDb: db } });
+  const input = { uid: "owner", type: "game_jam_registered", sourceId: "jam", title: "Registered" };
+  await service.recordJourneyEvent(input);
+  assert.equal(saved.visibility, "private");
+  previous = { visibility: "public" };
+  await service.recordJourneyEvent(input);
+  assert.equal(saved.visibility, "public");
+  previous = { visibility: "private" };
+  await service.recordJourneyEvent({ ...input, visibility: "public" });
+  assert.equal(saved.visibility, "private");
+});
+
 test("Passport display controls hide public stamps and retain owner history", () => {
   const stamps = [{ id: "stamp-a" }, { id: "stamp-b" }];
   assert.deepEqual(plain(passport.displayedPassportStamps(stamps, ["stamp-a"])), [{ id: "stamp-b" }]);

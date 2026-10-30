@@ -141,7 +141,6 @@ export async function GET(request, { params }) {
       aboutMe: userData.aboutMe || priorAboutMe,
       joinedAt:
         serializeDate(userData.createdAt),
-      memberSince,
       profilePrivacy: "public",
       isPrivate: false,
       profileAppearance: userData.profileAppearance || null,
@@ -160,6 +159,7 @@ export async function GET(request, { params }) {
 
     // If viewing own profile, include private data and project arrays
     if (isOwnProfile) {
+      publicProfile.memberSince = memberSince;
       publicProfile.email = userData.email;
       publicProfile.profilePrivacy = userData.profilePrivacy || "public";
       publicProfile.socialVisibility = userData.socialVisibility || {};

@@ -114,6 +114,10 @@ export async function PATCH(request, { params }) {
       const journeyIsHidden = journeyPreference?.data()?.hiddenEventIds?.includes(
         journeyEventId(current.userId, "game_jam_attended", gate.item.id)
       ) === true;
+      const journeyRef = item.isGameJam ? adminDb.collection("go_journey_events").doc(journeyEventId(current.userId, "game_jam_attended", gate.item.id)) : null;
+      const journeyDoc = journeyRef ? await transaction.get(journeyRef) : null;
+      const journeyVisibility = journeyDoc?.exists ? journeyDoc.data().visibility : "private";
+      const journeyIsPublic = journeyVisibility === "public" && !journeyIsHidden;
       if (item.courseId && (state === "completed" || current.badge || (current.attendanceMode === "online" && state === "waitlisted"))) throw Object.assign(new Error("Use the course assessment to change completion. Online attendees do not need a waitlist."), { code: "invalid_transition" });
       const auditRef = adminDb.collection("admin_audit_events").doc();
       const now = new Date();
@@ -191,7 +195,8 @@ export async function PATCH(request, { params }) {
             publicTitle: "Attended a GO game jam",
             publicSummary: `Attendance at ${item.title} was verified by a GO event organizer.`,
             occurredAt: now,
-            publicDelta: journeyIsHidden ? 0 : 1,
+            visibility: journeyVisibility,
+            publicDelta: journeyIsPublic ? 1 : 0,
           });
         }
       } else if (item.isGameJam && hadVerifiedAttendance && state !== "completed") {
@@ -206,7 +211,8 @@ export async function PATCH(request, { params }) {
           publicSummary: "A GO organizer corrected an attendance record.",
           occurredAt: now,
           status: "corrected",
-          publicDelta: journeyIsHidden ? 0 : -1,
+          visibility: journeyVisibility,
+          publicDelta: journeyIsPublic ? -1 : 0,
         });
       }
       if (["attended", "did_not_attend", "completed"].includes(state) || ["attended", "did_not_attend", "completed"].includes(current.state)) {
