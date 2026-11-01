@@ -15,7 +15,10 @@ export async function GET(request) {
   try {
     const snapshot = await adminDb.collection("community_timeline").get();
     return Response.json({ entries: snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) });
-  } catch { return Response.json({ error: "Could not load entries." }, { status: 500 }); }
+  } catch (error) {
+    console.error("Community timeline: failed to load entries", error);
+    return Response.json({ error: "Could not load timeline entries. Please retry." }, { status: 500 });
+  }
 }
 
 export async function POST(request) {
@@ -24,22 +27,28 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const entry = cleanTimelineEntry(body);
-    const reason = String(body.reason || "").trim().slice(0, 1000);
-    if (!reason) return Response.json({ error: "A correction or publication reason is required." }, { status: 400 });
+    const note = String(body.reason || "").trim().slice(0, 1000);
     const id = String(body.id || "");
     if (id && !/^[A-Za-z0-9_-]{1,100}$/.test(id)) return Response.json({ error: "Invalid entry ID." }, { status: 400 });
-    const ref = id ? adminDb.collection("community_timeline").doc(id) : adminDb.collection("community_timeline").doc();
+    const reviewKey = String(body.reviewKey || "");
+    if (reviewKey && !/^[A-Za-z0-9_-]{1,80}$/.test(reviewKey)) return Response.json({ error: "Invalid review reference." }, { status: 400 });
+    const ref = id ? adminDb.collection("community_timeline").doc(id) : reviewKey ? adminDb.collection("community_timeline").doc(`review-${reviewKey}`) : adminDb.collection("community_timeline").doc();
     await adminDb.runTransaction(async (tx) => {
       const previous = await tx.get(ref);
       if (id && !previous.exists) throw Object.assign(new Error("Entry not found."), { status: 404 });
+      if (!id && previous.exists) throw Object.assign(new Error("This prepared entry has already been saved. Reload the page to edit it."), { status: 409 });
       const now = new Date();
-      tx.set(ref, { ...entry, createdAt: previous.data()?.createdAt || now, updatedAt: now, updatedBy: gate.user.uid });
-      tx.create(adminDb.collection("admin_audit_events").doc(), { action: "community_timeline.saved", actorId: gate.user.uid, target: { type: "community_timeline", id: ref.id }, previousValue: previous.exists ? previous.data() : null, newValue: entry, reason, createdAt: now });
+      const prior = previous.exists ? previous.data() : null;
+      const reason = note || (entry.published ? (prior?.published ? "Updated published timeline entry" : "Approved timeline entry for publication") : (prior?.published ? "Unpublished timeline entry" : "Saved timeline draft"));
+      const saved = { ...entry, reviewKey: reviewKey || prior?.reviewKey || "" };
+      tx.set(ref, { ...saved, createdAt: prior?.createdAt || now, updatedAt: now, updatedBy: gate.user.uid });
+      tx.create(adminDb.collection("admin_audit_events").doc(), { action: "community_timeline.saved", actorId: gate.user.uid, target: { type: "community_timeline", id: ref.id }, previousValue: prior, newValue: saved, reason, createdAt: now });
     });
     return Response.json({ id: ref.id });
   } catch (error) {
     const validation = error.message?.includes("Provide") || error.message?.includes("Links") || error.message?.includes("source");
     const status = error.status || (validation || error instanceof SyntaxError ? 400 : 500);
+    if (status === 500) console.error("Community timeline: failed to save entry", error);
     return Response.json({ error: status === 500 ? "Could not save entry." : error instanceof SyntaxError ? "Invalid request." : error.message }, { status });
   }
 }

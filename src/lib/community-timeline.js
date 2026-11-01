@@ -8,7 +8,9 @@ export function cleanTimelineEntry(input) {
   const date = text(input.date, 10);
   const category = text(input.category, 40);
   const state = text(input.state, 40);
-  if (!title || !description || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`)) || new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date || !TIMELINE_CATEGORIES.includes(category) || !TIMELINE_STATES.includes(state)) throw new Error("Provide a title, description, valid date, category and state.");
+  const published = input.published === true;
+  if (!title || !description || !TIMELINE_CATEGORIES.includes(category) || !TIMELINE_STATES.includes(state)) throw new Error("Provide a title, description, category and state.");
+  if ((!date && published) || (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`)) || new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date))) throw new Error("Provide a valid date before publication.");
   const url = (value) => {
     const result = text(value, 1000);
     if (!result) return "";
@@ -19,7 +21,6 @@ export function cleanTimelineEntry(input) {
   const image = url(input.image);
   const imageAlt = text(input.imageAlt, 240);
   if (image && !imageAlt) throw new Error("Provide image alternative text.");
-  const published = input.published === true;
   if (published && state === "completed" && !source) throw new Error("Published completed history requires a source link.");
   return { title, description, date, category, state, organization: text(input.organization, 160), relationship: text(input.relationship, 500), project: text(input.project, 160), image, imageAlt, link: url(input.link), source, published };
 }
