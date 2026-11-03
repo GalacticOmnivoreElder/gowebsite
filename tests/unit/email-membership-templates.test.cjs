@@ -152,3 +152,17 @@ test("Mentor welcome and activation emails explain interview verification before
     }
   }
 });
+
+test("mentorship scheduling email links to the public schedule flow", () => {
+  const rendered = templates.renderEmailEventTemplate("mentorship.scheduling", {
+    firstName: "Ivan",
+    title: "Schedule your GO mentorship call",
+    message: "GO would like to speak with you.",
+    scheduleUrl: "https://calendar.app.google/Ge6GvfiaaaMhAHHf6",
+  });
+
+  assert.match(rendered.html, /Schedule your GO mentorship call/);
+  assert.match(rendered.text, /Schedule a call: https:\/\/calendar\.app\.google/);
+  assert.match(rendered.text, /Open GO events: https:\/\/www\.galacticomnivore\.com\/events/);
+  assert.match(rendered.text, /Open mentorship dashboard: https:\/\/www\.galacticomnivore\.com\/profile\?tab=mentorships/);
+});

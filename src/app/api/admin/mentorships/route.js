@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { deleteMentorApplication, forwardRequestToRequestedMentor, getMentorshipAdminDashboard, resolveMentorshipReport, reviewMentorApplication, reviewMentorshipRequest, sendMentorSuggestions, updateMentorshipEngagement } from "@/lib/mentorship-service";
+import { deleteMentorApplication, forwardRequestToRequestedMentor, getMentorshipAdminDashboard, resolveMentorshipReport, reviewMentorApplication, reviewMentorshipRequest, sendMentorSchedulingInvite, sendMentorSuggestions, updateMentorshipEngagement } from "@/lib/mentorship-service";
 import { requireMentorshipAdmin, routeError } from "@/lib/mentorship-route";
 
 export async function GET(request) {
@@ -19,6 +19,7 @@ export async function PATCH(request) {
   try {
     const body = await request.json().catch(() => ({}));
     if (body.action === "review_mentor") return Response.json(await reviewMentorApplication({ actor: gate.user, userId: String(body.userId || ""), decision: String(body.decision || ""), internalNotes: body.internalNotes, customerMessage: body.customerMessage }));
+    if (body.action === "send_mentor_scheduling_email") return Response.json(await sendMentorSchedulingInvite({ actor: gate.user, userId: String(body.userId || "") }));
     if (body.action === "delete_mentor_application") return Response.json(await deleteMentorApplication({ actor: gate.user, userId: String(body.userId || ""), reason: body.reason }));
     if (body.action === "review_request") return Response.json(await reviewMentorshipRequest({ actor: gate.user, requestId: String(body.requestId || ""), decision: String(body.decision || ""), customerMessage: body.customerMessage, internalNotes: body.internalNotes }));
     if (body.action === "send_suggestions") return Response.json(await sendMentorSuggestions({ actor: gate.user, requestId: String(body.requestId || ""), suggestions: body.suggestions || [] }));

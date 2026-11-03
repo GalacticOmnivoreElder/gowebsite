@@ -233,7 +233,7 @@ export function serializeMentorProfile(id, data = {}, { admin = false } = {}) {
     createdAt: iso(data.createdAt),
     updatedAt: iso(data.updatedAt),
   };
-  return admin ? { ...publicFields, accessibilityInformation: data.accessibilityInformation || "", conflictOfInterestDeclaration: data.conflictOfInterestDeclaration || "", conductVersion: data.conductVersion || "", termsVersion: data.termsVersion || "", internalReviewNotes: data.internalReviewNotes || "", reviewedBy: data.reviewedBy || null, reviewedAt: iso(data.reviewedAt) } : publicFields;
+  return admin ? { ...publicFields, topicsNotOffered: data.topicsNotOffered || [], accessibilityInformation: data.accessibilityInformation || "", conflictOfInterestDeclaration: data.conflictOfInterestDeclaration || "", conductVersion: data.conductVersion || "", termsVersion: data.termsVersion || "", internalReviewNotes: data.internalReviewNotes || "", reviewedBy: data.reviewedBy || null, reviewedAt: iso(data.reviewedAt) } : publicFields;
 }
 
 export function mentorApplicationNextAction(status) {
@@ -258,6 +258,8 @@ export function serializeMentorApplicationSummary(id, application = {}, profile 
     submittedAt: iso(application.submittedAt || profile.submittedAt),
     updatedAt: iso(application.updatedAt || profile.updatedAt),
     customerMessage: application.customerMessage || profile.customerMessage || profile.informationRequest || "",
+    schedulingInviteSentAt: iso(application.schedulingInviteSentAt || profile.schedulingInviteSentAt),
+    schedulingInviteCount: Number(application.schedulingInviteCount || profile.schedulingInviteCount || 0),
     nextAction: mentorApplicationNextAction(status),
   };
 }

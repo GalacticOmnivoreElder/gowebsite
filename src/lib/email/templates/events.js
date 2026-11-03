@@ -591,7 +591,6 @@ function eventCopy(type, data) {
     }
     case "mentorship.request_received":
     case "mentorship.response":
-    case "mentorship.scheduling":
     case "mentorship.update":
     case "mentorship.feedback": {
       const heading = data.title || "Mentorship update";
@@ -604,6 +603,27 @@ function eventCopy(type, data) {
         text: message,
         ctaLabel: "Open mentorship dashboard",
         ctaUrl: absoluteSiteUrl("/profile?tab=mentorships"),
+      };
+    }
+    case "mentorship.scheduling": {
+      const heading = data.title || "Schedule your GO mentorship call";
+      const message = data.message || "GO would like to schedule a mentorship call with you.";
+      const scheduleUrl = data.scheduleUrl || absoluteSiteUrl("/events");
+      const eventsUrl = absoluteSiteUrl("/events");
+      const dashboardUrl = absoluteSiteUrl("/profile?tab=mentorships");
+      const schedulingInstruction = "When you are ready, use the public Schedule a call button to choose a time that works for you.";
+      return {
+        subject: heading,
+        heading,
+        preheader: message,
+        body: greeting(data) + paragraph(message) + paragraph(schedulingInstruction),
+        text: `${message}\n\n${schedulingInstruction}`,
+        ctaLabel: "Schedule a call",
+        ctaUrl: scheduleUrl,
+        secondaryCtas: [
+          { label: "Open GO events", url: eventsUrl },
+          { label: "Open mentorship dashboard", url: dashboardUrl },
+        ],
       };
     }
     case "asset_pack.review_update": {

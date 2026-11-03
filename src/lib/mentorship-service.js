@@ -2,7 +2,8 @@
 
 import crypto from "node:crypto";
 import { adminDb } from "@/lib/firebase-admin";
-import { enqueueEmailEventForUsers } from "@/lib/email";
+import { enqueueEmailEventForUsers, getEmailRecipientForUser } from "@/lib/email";
+import { GO_EVENTS_SCHEDULE_URL } from "@/lib/events";
 import { cleanProductNotification } from "@/lib/product-notifications";
 import { getMentorshipConfig } from "@/lib/product-config";
 import { hasMentorToolAccess } from "@/lib/content-entitlements";
@@ -85,7 +86,7 @@ function audit(transaction, db, { actor, action, entityType, entityId, previousS
   });
 }
 
-async function notify({ db = adminDb, recipientUserId, type, title, message, eventId, actionUrl = "/profile?tab=mentorships", emailType = "mentorship.update" }) {
+async function notify({ db = adminDb, recipientUserId, type, title, message, eventId, actionUrl = "/profile?tab=mentorships", emailType = "mentorship.update", data = {} }) {
   if (!recipientUserId) return;
   const now = new Date();
   const notification = cleanProductNotification({ recipientUserId, type, title, message, actionUrl }, now);
@@ -95,7 +96,7 @@ async function notify({ db = adminDb, recipientUserId, type, title, message, eve
   } catch (error) {
     if (error?.code !== 6 && error?.code !== "already-exists") console.error("Mentorship notification failed", error);
   }
-  await enqueueEmailEventForUsers({ type: emailType, eventId, userIds: [recipientUserId], data: { title, message }, scheduledFor: null }).catch(() => null);
+  await enqueueEmailEventForUsers({ type: emailType, eventId, userIds: [recipientUserId], data: { title, message, ...data }, scheduledFor: null }).catch(() => null);
 }
 
 function participant(engagement, user) {
@@ -206,6 +207,65 @@ export async function reviewMentorApplication({ actor, userId, decision, interna
   });
   await notify({ recipientUserId: userId, type: "mentorship_review", title: `Mentor application ${decision.replaceAll("_", " ")}`, message: cleanReason(customerMessage, 1200) || (decision === "approved" ? "Your mentor application was approved. Review your profile and availability in Profile → Mentor." : decision === "needs_information" ? "GO needs more information before it can finish reviewing your mentor application." : `Your mentor application was ${decision.replaceAll("_", " ")}.`), eventId: `mentor-application-review:${userId}:${decision}:${now.toISOString()}`, actionUrl: "/profile?tab=mentor" });
   return result;
+}
+
+const SCHEDULING_INVITE_BLOCKED_STATUSES = new Set(["rejected", "suspended", "archived"]);
+
+export async function sendMentorSchedulingInvite({ actor, userId, db = adminDb, now = new Date() }) {
+  if (!actor?.admin) throw workflowError("Platform admin access required", "staff_required", 403);
+  const cleanUserId = String(userId || "").trim();
+  if (!cleanUserId) throw workflowError("Mentor applicant is required");
+  const recipient = await getEmailRecipientForUser(cleanUserId);
+  if (!recipient) throw workflowError("The applicant does not have a reachable email address", "email_required", 409);
+
+  const profileRef = db.collection("mentor_profiles").doc(cleanUserId);
+  const applicationRef = db.collection("mentor_applications").doc(cleanUserId);
+  const result = await db.runTransaction(async (transaction) => {
+    const [userDoc, profileDoc, applicationDoc] = await Promise.all([
+      transaction.get(db.collection("users").doc(cleanUserId)),
+      transaction.get(profileRef),
+      transaction.get(applicationRef),
+    ]);
+    if (!userDoc.exists || (!profileDoc.exists && !applicationDoc.exists)) {
+      throw workflowError("Mentor application not found", "not_found", 404);
+    }
+    const profileData = profileDoc.exists ? profileDoc.data() : {};
+    const applicationData = applicationDoc.exists ? applicationDoc.data() : {};
+    const status = applicationData.status || profileData.status || "draft";
+    if (SCHEDULING_INVITE_BLOCKED_STATUSES.has(status)) {
+      throw workflowError("This mentor application is closed and cannot receive a scheduling invitation", "invalid_status", 409);
+    }
+    const inviteCount = Number(applicationData.schedulingInviteCount || profileData.schedulingInviteCount || 0) + 1;
+    transaction.set(applicationRef, {
+      schedulingInviteSentAt: now,
+      schedulingInviteSentBy: actor.uid,
+      schedulingInviteCount: inviteCount,
+      updatedAt: now,
+    }, { merge: true });
+    audit(transaction, db, {
+      actor,
+      action: "mentor_application.scheduling_invite_sent",
+      entityType: "mentor_profile",
+      entityId: cleanUserId,
+      previousStatus: status,
+      newStatus: status,
+      metadata: { inviteCount },
+    });
+    return { userId: cleanUserId, displayName: profileData.displayName || displayName(userDoc.data()), inviteCount };
+  });
+
+  const eventId = `mentor-scheduling-invite:${cleanUserId}:${now.toISOString()}`;
+  await notify({
+    recipientUserId: cleanUserId,
+    type: "mentorship_scheduling",
+    title: "Schedule your GO mentorship call",
+    message: "GO would like to schedule a mentorship call with you. When you are available, use the public Schedule a call button to choose a time that works for you.",
+    eventId,
+    actionUrl: "/events",
+    emailType: "mentorship.scheduling",
+    data: { scheduleUrl: GO_EVENTS_SCHEDULE_URL },
+  });
+  return { ...result, email: recipient.email, schedulingInviteSentAt: now.toISOString() };
 }
 
 const DELETABLE_MENTOR_APPLICATION_STATUSES = new Set([

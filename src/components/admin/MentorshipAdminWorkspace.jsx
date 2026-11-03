@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Eye, MessageSquare, ShieldAlert, Trash2, XCircle } from "lucide-react";
+import { CalendarClock, CheckCircle2, Eye, FileText, MessageSquare, ShieldAlert, Trash2, XCircle } from "lucide-react";
 import { auth } from "@/firebase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,25 @@ const mentorReviewOptions = ["approved", "needs_information", "rejected", "pause
 const requestReviewOptions = ["under_review", "needs_information", "ready_for_suggestions", "no_match_available", "closed"];
 const labelStatus = (value) => String(value || "unknown").replaceAll("_", " ");
 const defaultMentorDecision = (status) => status === "submitted" ? "approved" : mentorReviewOptions.includes(status) ? status : "needs_information";
+const formatDateTime = (value) => {
+  if (!value) return "Not available";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Not available" : date.toLocaleString();
+};
+const applicationText = (value) => {
+  if (Array.isArray(value)) return value.length ? value.join(", ") : "Not provided";
+  if (value === null || value === undefined || String(value).trim() === "") return "Not provided";
+  return String(value);
+};
+
+function ApplicationDetailField({ label, value, multiline = false }) {
+  return (
+    <div className="rounded-md border bg-muted/20 p-3">
+      <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className={`mt-1 text-sm ${multiline ? "whitespace-pre-wrap break-words" : "break-words"}`}>{applicationText(value)}</dd>
+    </div>
+  );
+}
 
 export function MentorshipAdminWorkspace() {
   const [data, setData] = useState(null);
@@ -32,6 +51,7 @@ export function MentorshipAdminWorkspace() {
   const [suggestions, setSuggestions] = useState({});
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteReason, setDeleteReason] = useState("");
+  const [applicationTarget, setApplicationTarget] = useState(null);
 
   const call = useCallback(async (options = {}) => {
     const token = await auth.currentUser?.getIdToken();
@@ -110,6 +130,7 @@ export function MentorshipAdminWorkspace() {
             const currentStatus = item.application?.status || item.profile?.status || "draft";
             const selectedDecision = mentorDecisions[item.id] || defaultMentorDecision(currentStatus);
             const publicDirectoryReady = item.publicDirectoryReady === true;
+            const schedulingBlocked = ["rejected", "suspended", "archived"].includes(currentStatus);
             return (
               <Card key={item.id}>
                 <CardContent className="space-y-4 p-5">
@@ -126,6 +147,11 @@ export function MentorshipAdminWorkspace() {
                   {item.profile ? <p className="text-sm">Expertise: {(item.profile.areasOfExpertise || []).join(", ") || "not provided"} · Capacity: {item.profile.maximumActiveMentees || 0} · Languages: {(item.profile.languages || []).join(", ") || "not provided"}</p> : null}
                   {item.profile?.internalReviewNotes ? <p className="rounded-md bg-muted p-3 text-sm">Private notes: {item.profile.internalReviewNotes}</p> : null}
 
+                  <div className="flex flex-wrap items-center gap-3 border-t pt-3">
+                    <Button variant="outline" size="sm" onClick={() => setApplicationTarget(item)}><FileText className="mr-2 h-4 w-4" />Open full application</Button>
+                    {item.application?.schedulingInviteSentAt ? <p className="text-xs text-muted-foreground">Scheduling email last sent {formatDateTime(item.application.schedulingInviteSentAt)} · {item.application.schedulingInviteCount || 0} sent</p> : <p className="text-xs text-muted-foreground">No scheduling email sent yet.</p>}
+                  </div>
+
                   <div className="rounded-md border border-primary/25 bg-primary/5 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -133,6 +159,7 @@ export function MentorshipAdminWorkspace() {
                         <p className="mt-1 text-xs text-muted-foreground">Approval validates the profile and publishes it to the member-facing mentor directory.</p>
                       </div>
                       <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" disabled={busy || schedulingBlocked} onClick={() => act({ action: "send_mentor_scheduling_email", userId: item.id }, item.application?.schedulingInviteSentAt ? "Scheduling email resent to the applicant." : "Scheduling email sent to the applicant.")}><CalendarClock className="mr-2 h-4 w-4" />{item.application?.schedulingInviteSentAt ? "Resend scheduling email" : "Email scheduling link"}</Button>
                         <Button disabled={busy} onClick={() => act({ action: "review_mentor", userId: item.id, decision: "approved", customerMessage: mentorDecisions[`${item.id}:message`] || "", internalNotes: mentorDecisions[`${item.id}:notes`] || "" }, "Mentor approved and published to the directory.")}><CheckCircle2 className="mr-2 h-4 w-4" />Approve & publish</Button>
                         <Button variant="outline" disabled={busy} onClick={() => act({ action: "review_mentor", userId: item.id, decision: "needs_information", customerMessage: mentorDecisions[`${item.id}:message`] || "", internalNotes: mentorDecisions[`${item.id}:notes`] || "" }, "Information request sent to the applicant.")}><MessageSquare className="mr-2 h-4 w-4" />Request info</Button>
                         <Button variant="destructive" disabled={busy} onClick={() => act({ action: "review_mentor", userId: item.id, decision: "rejected", customerMessage: mentorDecisions[`${item.id}:message`] || "", internalNotes: mentorDecisions[`${item.id}:notes`] || "" }, "Mentor application rejected.")}><XCircle className="mr-2 h-4 w-4" />Reject</Button>
@@ -225,6 +252,75 @@ export function MentorshipAdminWorkspace() {
           <DialogHeader><DialogTitle>Delete mentor submission?</DialogTitle><DialogDescription>This removes the mentor application and draft profile for {deleteTarget?.profile?.displayName || deleteTarget?.application?.displayName || deleteTarget?.id}. Current status: {labelStatus(deleteTarget?.application?.status || deleteTarget?.profile?.status)}.</DialogDescription></DialogHeader>
           <label className="space-y-2 text-sm"><span className="font-medium">Reason for deletion *</span><textarea autoFocus className="min-h-24 w-full rounded-md border bg-background px-3 py-2" value={deleteReason} onChange={(event) => setDeleteReason(event.target.value)} placeholder="Required for the private audit record" /></label>
           <DialogFooter><Button variant="outline" disabled={busy} onClick={() => { setDeleteTarget(null); setDeleteReason(""); }}>Cancel</Button><Button variant="destructive" disabled={busy || !deleteReason.trim()} onClick={confirmDelete}>{busy ? "Deleting…" : "Delete submission"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(applicationTarget)} onOpenChange={(open) => { if (!open) setApplicationTarget(null); }}>
+        <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Full mentor application</DialogTitle>
+            <DialogDescription>Review the complete submission from {applicationTarget?.profile?.displayName || applicationTarget?.id || "this applicant"}.</DialogDescription>
+          </DialogHeader>
+          {applicationTarget?.profile ? (
+            <div className="space-y-6">
+              <section>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">Profile and experience</h3>
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  <ApplicationDetailField label="Name" value={applicationTarget.profile.displayName} />
+                  <ApplicationDetailField label="Professional headline" value={applicationTarget.profile.professionalHeadline} />
+                  <ApplicationDetailField label="Experience level" value={applicationTarget.profile.experienceLevel} />
+                  <ApplicationDetailField label="Experience years" value={applicationTarget.profile.experienceYears} />
+                  <ApplicationDetailField label="Areas of expertise" value={applicationTarget.profile.areasOfExpertise} />
+                  <ApplicationDetailField label="Supported disciplines" value={applicationTarget.profile.supportedDisciplines} />
+                  <ApplicationDetailField label="Tools and technologies" value={applicationTarget.profile.toolsAndTechnologies} />
+                  <ApplicationDetailField label="Languages" value={applicationTarget.profile.languages} />
+                  <ApplicationDetailField label="Time zone" value={applicationTarget.profile.timeZone} />
+                  <ApplicationDetailField label="Available formats" value={applicationTarget.profile.availableFormats} />
+                  <ApplicationDetailField label="Preferred mentee levels" value={applicationTarget.profile.preferredMenteeLevels} />
+                  <ApplicationDetailField label="Maximum active mentees" value={applicationTarget.profile.maximumActiveMentees} />
+                </dl>
+                <div className="mt-3 grid gap-3">
+                  <ApplicationDetailField label="Biography" value={applicationTarget.profile.biography} multiline />
+                  <ApplicationDetailField label="General availability" value={applicationTarget.profile.generalAvailability} multiline />
+                  <ApplicationDetailField label="Mentorship topics" value={applicationTarget.profile.mentorshipTopics} multiline />
+                  <ApplicationDetailField label="Topics not offered" value={applicationTarget.profile.topicsNotOffered} multiline />
+                </div>
+              </section>
+
+              <section>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">Applicant messages and safeguards</h3>
+                <dl className="grid gap-3">
+                  <ApplicationDetailField label="Message shown to the applicant" value={applicationTarget.application?.customerMessage || applicationTarget.profile.customerMessage} multiline />
+                  <ApplicationDetailField label="Accessibility information" value={applicationTarget.profile.accessibilityInformation} multiline />
+                  <ApplicationDetailField label="Conflict of interest declaration" value={applicationTarget.profile.conflictOfInterestDeclaration} multiline />
+                  <ApplicationDetailField label="Private staff notes" value={applicationTarget.profile.internalReviewNotes} multiline />
+                </dl>
+              </section>
+
+              <section>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">Evidence and review metadata</h3>
+                {Array.isArray(applicationTarget.profile.evidenceLinks) && applicationTarget.profile.evidenceLinks.length ? (
+                  <div className="mb-3 rounded-md border bg-muted/20 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Evidence links</p>
+                    <ul className="mt-2 space-y-1 text-sm">
+                      {applicationTarget.profile.evidenceLinks.map((link) => <li key={link}><a className="break-all text-primary underline" href={link} target="_blank" rel="noreferrer">{link}</a></li>)}
+                    </ul>
+                  </div>
+                ) : <p className="mb-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">No evidence links provided.</p>}
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  <ApplicationDetailField label="Application status" value={labelStatus(applicationTarget.application?.status || applicationTarget.profile.status)} />
+                  <ApplicationDetailField label="Public profile consent" value={applicationTarget.profile.publicProfileConsent ? "Confirmed" : "Not confirmed"} />
+                  <ApplicationDetailField label="Conduct version" value={applicationTarget.profile.conductVersion} />
+                  <ApplicationDetailField label="Terms version" value={applicationTarget.profile.termsVersion} />
+                  <ApplicationDetailField label="Submitted" value={formatDateTime(applicationTarget.application?.submittedAt || applicationTarget.profile.submittedAt)} />
+                  <ApplicationDetailField label="Last updated" value={formatDateTime(applicationTarget.application?.updatedAt || applicationTarget.profile.updatedAt)} />
+                  <ApplicationDetailField label="Scheduling email last sent" value={formatDateTime(applicationTarget.application?.schedulingInviteSentAt)} />
+                  <ApplicationDetailField label="Scheduling emails sent" value={applicationTarget.application?.schedulingInviteCount || 0} />
+                </dl>
+              </section>
+            </div>
+          ) : <p className="text-sm text-muted-foreground">No profile text was submitted.</p>}
+          <DialogFooter><Button variant="outline" onClick={() => setApplicationTarget(null)}>Close</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

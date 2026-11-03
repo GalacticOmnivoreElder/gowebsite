@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const { test } = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
-const mentorship = loadSourceModule("src/lib/mentorship.js", ["MENTORSHIP_CONSENT_VERSION", "MENTOR_CONDUCT_VERSION", "MENTOR_TERMS_VERSION", "MENTOR_REVIEW_DECISIONS", "normalizeMentorReviewDecision", "authorizeMentorshipAction", "cleanMentorApplicationProfile", "cleanMentorshipRequest", "serializeMentorProfile", "serializeMentorshipApplication", "serializeMentorshipRequest"], { stripImports: true, sandbox: { hasCommunityContentAccess: (data, options = {}) => options.admin === true || data.activeMember === true } });
+const mentorship = loadSourceModule("src/lib/mentorship.js", ["MENTORSHIP_CONSENT_VERSION", "MENTOR_CONDUCT_VERSION", "MENTOR_TERMS_VERSION", "MENTOR_REVIEW_DECISIONS", "normalizeMentorReviewDecision", "authorizeMentorshipAction", "cleanMentorApplicationProfile", "cleanMentorshipRequest", "serializeMentorProfile", "serializeMentorApplicationSummary", "serializeMentorshipApplication", "serializeMentorshipRequest"], { stripImports: true, sandbox: { hasCommunityContentAccess: (data, options = {}) => options.admin === true || data.activeMember === true } });
 
 test("canonical access gates do not use allowlists", () => {
   const config = { featureFlags: { mentorshipSystem: true, publicMentorBrowsing: false, mentorshipRequests: true, mentorApplications: true } };
@@ -30,14 +30,29 @@ test("participant serializers exclude staff-only fields", () => {
   assert.doesNotMatch(JSON.stringify(mentorship.serializeMentorshipApplication("application-1", { internalNotes: "restricted" })), /restricted/);
 });
 
+test("admin mentor summaries expose scheduling invitation history", () => {
+  const summary = mentorship.serializeMentorApplicationSummary(
+    "mentor-1",
+    { status: "approved", schedulingInviteSentAt: "2026-11-03T10:00:00.000Z", schedulingInviteCount: 2 },
+    {}
+  );
+  assert.equal(summary.schedulingInviteSentAt, "2026-11-03T10:00:00.000Z");
+  assert.equal(summary.schedulingInviteCount, 2);
+});
+
 test("one canonical backend and public route are wired", () => {
   const service = fs.readFileSync("src/lib/mentorship-service.js", "utf8");
   const admin = fs.readFileSync("src/components/admin/MentorshipAdminWorkspace.jsx", "utf8");
   const page = fs.readFileSync("src/app/mentorship/page.js", "utf8");
   const requestRoute = fs.readFileSync("src/app/api/mentorship/requests/route.js", "utf8");
+  const adminRoute = fs.readFileSync("src/app/api/admin/mentorships/route.js", "utf8");
   for (const collection of ["mentorship_requests", "mentorship_suggestions", "mentorship_applications", "mentorship_engagements", "mentorship_checkins", "mentorship_reports", "mentorship_audit_events"]) assert.match(service, new RegExp(collection));
   assert.match(page, /MentorDirectory/);
   assert.match(admin, /Approve & publish/);
+  assert.match(admin, /Open full application/);
+  assert.match(admin, /send_mentor_scheduling_email/);
   assert.match(service, /mentorPublicProfileEnabled: publicProfileReady/);
+  assert.match(service, /mentor_application\.scheduling_invite_sent/);
+  assert.match(adminRoute, /sendMentorSchedulingInvite/);
   assert.match(requestRoute, /create_request/);
 });
