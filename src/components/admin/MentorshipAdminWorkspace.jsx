@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, Eye, MessageSquare, ShieldAlert, Trash2, XCircle } from "lucide-react";
 import { auth } from "@/firebase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ const deletableMentorStatuses = new Set(["draft", "submitted", "needs_informatio
 const mentorReviewOptions = ["approved", "needs_information", "rejected", "paused", "suspended", "archived"];
 const requestReviewOptions = ["under_review", "needs_information", "ready_for_suggestions", "no_match_available", "closed"];
 const labelStatus = (value) => String(value || "unknown").replaceAll("_", " ");
+const defaultMentorDecision = (status) => status === "submitted" ? "approved" : mentorReviewOptions.includes(status) ? status : "needs_information";
 
 export function MentorshipAdminWorkspace() {
   const [data, setData] = useState(null);
@@ -106,6 +108,8 @@ export function MentorshipAdminWorkspace() {
         <div className="space-y-3">
           {data.mentorApplications.map((item) => {
             const currentStatus = item.application?.status || item.profile?.status || "draft";
+            const selectedDecision = mentorDecisions[item.id] || defaultMentorDecision(currentStatus);
+            const publicDirectoryReady = item.publicDirectoryReady === true;
             return (
               <Card key={item.id}>
                 <CardContent className="space-y-4 p-5">
@@ -114,18 +118,36 @@ export function MentorshipAdminWorkspace() {
                       <p className="font-semibold">{item.profile?.displayName || item.application?.displayName || item.id}</p>
                       <p className="text-sm text-muted-foreground">{item.profile?.professionalHeadline || "No professional headline"} · {labelStatus(currentStatus)}</p>
                     </div>
-                    <Badge variant="outline">{labelStatus(item.profile?.status || currentStatus)}</Badge>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Badge variant={currentStatus === "approved" ? "success" : currentStatus === "submitted" ? "default" : "outline"}>{labelStatus(item.profile?.status || currentStatus)}</Badge>
+                      {publicDirectoryReady ? <Badge variant="success"><Eye className="mr-1 h-3 w-3" />Live on directory</Badge> : item.profile?.status === "approved" ? <Badge variant="outline"><ShieldAlert className="mr-1 h-3 w-3" />Not live</Badge> : null}
+                    </div>
                   </div>
                   {item.profile ? <p className="text-sm">Expertise: {(item.profile.areasOfExpertise || []).join(", ") || "not provided"} · Capacity: {item.profile.maximumActiveMentees || 0} · Languages: {(item.profile.languages || []).join(", ") || "not provided"}</p> : null}
                   {item.profile?.internalReviewNotes ? <p className="rounded-md bg-muted p-3 text-sm">Private notes: {item.profile.internalReviewNotes}</p> : null}
 
+                  <div className="rounded-md border border-primary/25 bg-primary/5 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium">Review action</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Approval validates the profile and publishes it to the member-facing mentor directory.</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button disabled={busy} onClick={() => act({ action: "review_mentor", userId: item.id, decision: "approved", customerMessage: mentorDecisions[`${item.id}:message`] || "", internalNotes: mentorDecisions[`${item.id}:notes`] || "" }, "Mentor approved and published to the directory.")}><CheckCircle2 className="mr-2 h-4 w-4" />Approve & publish</Button>
+                        <Button variant="outline" disabled={busy} onClick={() => act({ action: "review_mentor", userId: item.id, decision: "needs_information", customerMessage: mentorDecisions[`${item.id}:message`] || "", internalNotes: mentorDecisions[`${item.id}:notes`] || "" }, "Information request sent to the applicant.")}><MessageSquare className="mr-2 h-4 w-4" />Request info</Button>
+                        <Button variant="destructive" disabled={busy} onClick={() => act({ action: "review_mentor", userId: item.id, decision: "rejected", customerMessage: mentorDecisions[`${item.id}:message`] || "", internalNotes: mentorDecisions[`${item.id}:notes`] || "" }, "Mentor application rejected.")}><XCircle className="mr-2 h-4 w-4" />Reject</Button>
+                        {publicDirectoryReady ? <Button asChild variant="outline"><Link href={`/mentorship/${item.id}`} target="_blank" rel="noreferrer"><Eye className="mr-2 h-4 w-4" />View public profile</Link></Button> : null}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid gap-3 lg:grid-cols-[minmax(12rem,0.6fr)_1fr_1fr_auto]">
-                    <select aria-label={`Decision for mentor ${item.id}`} className="rounded-md border bg-background px-3 py-2 text-sm" value={mentorDecisions[item.id] || currentStatus} onChange={(event) => setMentorDecisions((current) => ({ ...current, [item.id]: event.target.value }))}>
+                    <select aria-label={`Decision for mentor ${item.id}`} className="rounded-md border bg-background px-3 py-2 text-sm" value={selectedDecision} onChange={(event) => setMentorDecisions((current) => ({ ...current, [item.id]: event.target.value }))}>
                       {mentorReviewOptions.map((option) => <option key={option} value={option}>{labelStatus(option)}</option>)}
                     </select>
                     <Input aria-label={`Message for mentor ${item.id}`} placeholder="Message shown to the applicant" value={mentorDecisions[`${item.id}:message`] || ""} onChange={(event) => setMentorDecisions((current) => ({ ...current, [`${item.id}:message`]: event.target.value }))} />
                     <Input aria-label={`Private notes for mentor ${item.id}`} placeholder="Private staff notes" value={mentorDecisions[`${item.id}:notes`] || ""} onChange={(event) => setMentorDecisions((current) => ({ ...current, [`${item.id}:notes`]: event.target.value }))} />
-                    <Button disabled={busy} onClick={() => act({ action: "review_mentor", userId: item.id, decision: mentorDecisions[item.id] || currentStatus, customerMessage: mentorDecisions[`${item.id}:message`] || "", internalNotes: mentorDecisions[`${item.id}:notes`] || "" }, "Mentor review saved.")}>Save review</Button>
+                    <Button variant="outline" disabled={busy} onClick={() => act({ action: "review_mentor", userId: item.id, decision: selectedDecision, customerMessage: mentorDecisions[`${item.id}:message`] || "", internalNotes: mentorDecisions[`${item.id}:notes`] || "" }, "Mentor review saved.")}>Save review</Button>
                   </div>
 
                   {deletableMentorStatuses.has(currentStatus) ? (

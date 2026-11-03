@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const { test } = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
-const mentorship = loadSourceModule("src/lib/mentorship.js", ["MENTORSHIP_CONSENT_VERSION", "MENTOR_CONDUCT_VERSION", "MENTOR_TERMS_VERSION", "authorizeMentorshipAction", "cleanMentorApplicationProfile", "cleanMentorshipRequest", "serializeMentorProfile", "serializeMentorshipApplication", "serializeMentorshipRequest"], { stripImports: true, sandbox: { hasCommunityContentAccess: (data, options = {}) => options.admin === true || data.activeMember === true } });
+const mentorship = loadSourceModule("src/lib/mentorship.js", ["MENTORSHIP_CONSENT_VERSION", "MENTOR_CONDUCT_VERSION", "MENTOR_TERMS_VERSION", "MENTOR_REVIEW_DECISIONS", "normalizeMentorReviewDecision", "authorizeMentorshipAction", "cleanMentorApplicationProfile", "cleanMentorshipRequest", "serializeMentorProfile", "serializeMentorshipApplication", "serializeMentorshipRequest"], { stripImports: true, sandbox: { hasCommunityContentAccess: (data, options = {}) => options.admin === true || data.activeMember === true } });
 
 test("canonical access gates do not use allowlists", () => {
   const config = { featureFlags: { mentorshipSystem: true, publicMentorBrowsing: false, mentorshipRequests: true, mentorApplications: true } };
@@ -18,6 +18,12 @@ test("mentor submissions require current terms and public profile consent", () =
   assert.throws(() => mentorship.cleanMentorApplicationProfile({ ...base, termsVersion: "outdated" }, { submitting: true }), /terms/);
 });
 
+test("mentor review decisions never reuse the submitted application status", () => {
+  assert.equal(mentorship.normalizeMentorReviewDecision(" approved "), "approved");
+  assert.equal(mentorship.normalizeMentorReviewDecision("submitted"), null);
+  assert.deepEqual(Array.from(mentorship.MENTOR_REVIEW_DECISIONS), ["approved", "needs_information", "rejected", "paused", "suspended", "archived"]);
+});
+
 test("participant serializers exclude staff-only fields", () => {
   assert.doesNotMatch(JSON.stringify(mentorship.serializeMentorshipRequest("request-1", { internalReviewNotes: "restricted" })), /restricted/);
   assert.doesNotMatch(JSON.stringify(mentorship.serializeMentorProfile("mentor-1", { internalReviewNotes: "restricted" })), /restricted/);
@@ -26,9 +32,12 @@ test("participant serializers exclude staff-only fields", () => {
 
 test("one canonical backend and public route are wired", () => {
   const service = fs.readFileSync("src/lib/mentorship-service.js", "utf8");
+  const admin = fs.readFileSync("src/components/admin/MentorshipAdminWorkspace.jsx", "utf8");
   const page = fs.readFileSync("src/app/mentorship/page.js", "utf8");
   const requestRoute = fs.readFileSync("src/app/api/mentorship/requests/route.js", "utf8");
   for (const collection of ["mentorship_requests", "mentorship_suggestions", "mentorship_applications", "mentorship_engagements", "mentorship_checkins", "mentorship_reports", "mentorship_audit_events"]) assert.match(service, new RegExp(collection));
   assert.match(page, /MentorDirectory/);
+  assert.match(admin, /Approve & publish/);
+  assert.match(service, /mentorPublicProfileEnabled: publicProfileReady/);
   assert.match(requestRoute, /create_request/);
 });

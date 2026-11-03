@@ -11,6 +11,8 @@ import {
   MENTOR_CONDUCT_VERSION,
   MENTOR_TERMS_VERSION,
   MENTOR_PROFILE_STATUSES,
+  MENTOR_REVIEW_DECISIONS,
+  normalizeMentorReviewDecision,
   MENTORSHIP_APPLICATION_STATUSES,
   MENTORSHIP_ENGAGEMENT_STATUSES,
   MENTORSHIP_REQUEST_STATUSES,
@@ -181,7 +183,9 @@ export async function saveMentorApplication({ user, input = {}, action = "save",
 
 export async function reviewMentorApplication({ actor, userId, decision, internalNotes = "", customerMessage = "", db = adminDb, now = new Date() }) {
   if (!actor?.admin) throw workflowError("Platform admin access required", "staff_required", 403);
-  if (!MENTOR_PROFILE_STATUSES.includes(decision) || !["approved", "needs_information", "rejected", "paused", "suspended", "archived"].includes(decision)) throw workflowError("Unsupported mentor review decision");
+  const normalizedDecision = normalizeMentorReviewDecision(decision);
+  if (!normalizedDecision || !MENTOR_PROFILE_STATUSES.includes(normalizedDecision) || !MENTOR_REVIEW_DECISIONS.includes(normalizedDecision)) throw workflowError("Unsupported mentor review decision");
+  decision = normalizedDecision;
   const profileRef = db.collection("mentor_profiles").doc(userId);
   const applicationRef = db.collection("mentor_applications").doc(userId);
   const result = await db.runTransaction(async (transaction) => {
@@ -191,10 +195,12 @@ export async function reviewMentorApplication({ actor, userId, decision, interna
     const previousStatus = previousProfile.status || "draft";
     const mappedUserStatus = decision === "approved" ? "approved" : decision === "paused" ? "temporarily_unavailable" : decision === "suspended" ? "suspended" : decision === "rejected" ? "rejected" : "applicant";
     const customerCopy = cleanReason(customerMessage, 1200);
+    const publicProfileReady = decision === "approved" && previousProfile.publicProfileConsent === true && isMentorProfileComplete(previousProfile);
+    if (decision === "approved" && !publicProfileReady) throw workflowError("Complete the mentor profile and confirm public profile consent before approving", "mentor_profile_incomplete", 409);
     const canonicalProfile = decision === "approved" ? canonicalMentorProfileFields(previousProfile) : {};
     transaction.set(profileRef, { ...canonicalProfile, status: decision, customerMessage: customerCopy, internalReviewNotes: cleanReason(internalNotes, 4000), reviewedBy: actor.uid, reviewedAt: now, updatedAt: now, ...(decision === "paused" ? { pausedAt: now } : {}), ...(decision === "archived" ? { archivedAt: now } : {}) }, { merge: true });
     transaction.set(applicationRef, { status: decision, customerMessage: customerCopy, internalReviewNotes: cleanReason(internalNotes, 4000), reviewedBy: actor.uid, reviewedAt: now, updatedAt: now }, { merge: true });
-    transaction.set(db.collection("users").doc(userId), { mentorStatus: mappedUserStatus, mentorStatusUpdatedBy: actor.uid, mentorStatusUpdatedAt: now, mentorPublicProfileEnabled: decision === "approved" && userDoc.data().mentorPublicProfileEnabled === true }, { merge: true });
+    transaction.set(db.collection("users").doc(userId), { mentorStatus: mappedUserStatus, mentorStatusUpdatedBy: actor.uid, mentorStatusUpdatedAt: now, mentorPublicProfileEnabled: publicProfileReady }, { merge: true });
     audit(transaction, db, { actor, action: `mentor_application.${decision}`, entityType: "mentor_profile", entityId: userId, previousStatus, newStatus: decision });
     return { userId, previousStatus, decision, applicationExists: applicationDoc.exists };
   });
@@ -781,9 +787,28 @@ export async function getMentorshipAdminDashboard({ actor, db = adminDb }) {
     db.collection("mentorship_audit_events").limit(1000).get(),
   ]);
   const profiles = await Promise.all(mentorApplications.docs.map((doc) => db.collection("mentor_profiles").doc(doc.id).get()));
-  const mentorRows = mentorApplications.docs.map((doc, index) => ({ id: doc.id, application: serializeMentorApplicationSummary(doc.id, doc.data(), profiles[index].exists ? profiles[index].data() : {}), profile: profiles[index].exists ? serializeMentorProfile(doc.id, profiles[index].data(), { admin: true }) : null }));
+  const mentorUsers = await Promise.all(mentorApplications.docs.map((doc) => db.collection("users").doc(doc.id).get()));
+  const mentorRows = mentorApplications.docs.map((doc, index) => {
+    const profileData = profiles[index].exists ? profiles[index].data() : {};
+    const userData = mentorUsers[index].exists ? mentorUsers[index].data() : {};
+    const profile = profiles[index].exists ? serializeMentorProfile(doc.id, profileData, { admin: true }) : null;
+    const publicProfileEnabled = userData.mentorPublicProfileEnabled === true;
+    const publicDirectoryReady = Boolean(
+      profile?.status === "approved" &&
+      publicProfileEnabled &&
+      hasMentorToolAccess(userData) &&
+      isMentorProfileComplete(profileData)
+    );
+    return {
+      id: doc.id,
+      application: serializeMentorApplicationSummary(doc.id, doc.data(), profileData),
+      profile,
+      publicProfileEnabled,
+      publicDirectoryReady,
+    };
+  });
   const config = getMentorshipConfig();
-  const counts = { approvedMentors: mentorRows.filter((row) => row.profile?.status === "approved").length, availableMentors: mentorRows.filter((row) => row.profile?.status === "approved" && row.profile?.publicProfileConsent).length, totalMentorCapacity: mentorRows.reduce((sum, row) => sum + (Number(row.profile?.maximumActiveMentees) || 0), 0), activeMentorships: engagements.docs.filter((doc) => ENGAGEMENT_CAPACITY_STATUSES.includes(doc.data().status)).length, openRequests: requests.docs.filter((doc) => REQUEST_ACTIVE_STATUSES.includes(doc.data().status)).length, requestsAwaitingReview: requests.docs.filter((doc) => ["submitted", "under_review", "needs_information"].includes(doc.data().status)).length, applicationsAwaitingResponse: applications.docs.filter((doc) => doc.data().status === "pending").length, engagementsRequiringAttention: engagements.docs.filter((doc) => ["paused", "completion_pending", "under_review"].includes(doc.data().status)).length };
+  const counts = { approvedMentors: mentorRows.filter((row) => row.profile?.status === "approved").length, availableMentors: mentorRows.filter((row) => row.publicDirectoryReady).length, totalMentorCapacity: mentorRows.filter((row) => row.profile?.status === "approved").reduce((sum, row) => sum + (Number(row.profile?.maximumActiveMentees) || 0), 0), activeMentorships: engagements.docs.filter((doc) => ENGAGEMENT_CAPACITY_STATUSES.includes(doc.data().status)).length, openRequests: requests.docs.filter((doc) => REQUEST_ACTIVE_STATUSES.includes(doc.data().status)).length, requestsAwaitingReview: requests.docs.filter((doc) => ["submitted", "under_review", "needs_information"].includes(doc.data().status)).length, applicationsAwaitingResponse: applications.docs.filter((doc) => doc.data().status === "pending").length, engagementsRequiringAttention: engagements.docs.filter((doc) => ["paused", "completion_pending", "under_review"].includes(doc.data().status)).length };
   return { config, counts, mentorApplications: mentorRows, requests: requests.docs.map((doc) => serializeMentorshipRequest(doc.id, doc.data(), { includeInternal: true })), suggestions: suggestions.docs.map((doc) => ({ ...serializeSuggestion(doc.id, doc.data()), privateStaffNotes: doc.data().privateStaffNotes || "" })), applications: applications.docs.map((doc) => serializeMentorshipApplication(doc.id, doc.data(), { includePrivate: true })), engagements: engagements.docs.map((doc) => serializeMentorshipEngagement(doc.id, doc.data(), { includePrivate: true })), reports: reports.docs.map((doc) => ({ id: doc.id, engagementId: doc.data().engagementId, category: doc.data().category, details: doc.data().details, status: doc.data().status, createdAt: asDate(doc.data().createdAt)?.toISOString() || null })), alerts: alerts.docs.map((doc) => ({ id: doc.id, ...doc.data(), createdAt: asDate(doc.data().createdAt)?.toISOString() || null })), audit: auditEvents.docs.map((doc) => ({ id: doc.id, ...doc.data(), createdAt: asDate(doc.data().createdAt)?.toISOString() || null })).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")) };
 }
 

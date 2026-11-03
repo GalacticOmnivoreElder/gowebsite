@@ -6,6 +6,9 @@ import { hasCommunityContentAccess } from "@/lib/content-entitlements";
 export const MENTOR_PROFILE_STATUSES = Object.freeze([
   "draft", "submitted", "needs_information", "approved", "paused", "rejected", "suspended", "archived",
 ]);
+export const MENTOR_REVIEW_DECISIONS = Object.freeze([
+  "approved", "needs_information", "rejected", "paused", "suspended", "archived",
+]);
 export const MENTORSHIP_REQUEST_STATUSES = Object.freeze([
   "draft", "submitted", "under_review", "needs_information", "ready_for_suggestions", "suggestions_sent",
   "application_submitted", "matched", "no_match_available", "withdrawn", "closed",
@@ -30,6 +33,11 @@ export const REQUEST_ACTIVE_STATUSES = Object.freeze([
 export const ENGAGEMENT_CAPACITY_STATUSES = Object.freeze([
   "awaiting_agreement", "ready_to_start", "active", "paused", "completion_pending", "under_review",
 ]);
+
+export function normalizeMentorReviewDecision(value) {
+  const decision = String(value ?? "").trim().toLowerCase();
+  return MENTOR_REVIEW_DECISIONS.includes(decision) ? decision : null;
+}
 
 function validationError(message) {
   return Object.assign(new Error(message), { code: "validation_error", status: 400 });
