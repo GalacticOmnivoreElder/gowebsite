@@ -39,7 +39,11 @@ export async function PATCH(request) {
     const profileRef = adminDb.collection("mentor_profiles").doc(access.user.uid);
     const previousDoc = await availabilityRef.get();
     const previous = previousDoc.exists ? previousDoc.data() : {};
-    const clean = cleanMentorAvailability({ ...previous, ...body });
+    const requested = cleanMentorAvailability({ ...previous, ...body });
+    const clean = {
+      ...requested,
+      currentlyAcceptingStudents: requested.availabilityStatus !== "unavailable" && requested.currentlyAcceptingStudents,
+    };
     const summary = publicAvailabilitySummary(clean);
     const now = new Date();
     const data = { ...clean, userId: access.user.uid, createdAt: previous.createdAt || now, updatedAt: now };
@@ -47,7 +51,7 @@ export async function PATCH(request) {
     batch.set(availabilityRef, data, { merge: true });
     batch.set(profileRef, {
       availabilitySummary: summary,
-      currentlyAcceptingStudents: clean.currentlyAcceptingStudents && !clean.temporaryPause,
+      currentlyAcceptingStudents: summary !== "unavailable",
       maximumActiveStudents: clean.maximumActiveStudents,
       timeZone: clean.timeZone,
       mentorshipFormats: clean.sessionFormats,

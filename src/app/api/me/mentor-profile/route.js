@@ -10,6 +10,7 @@ import {
   cleanMentorProfile,
   getMentorCapacity,
   isMentorProfileComplete,
+  mergeMentorAvailability,
   normalizeMentorProfile,
   serializeMentorDate,
   toPublicMentorProfileDto,
@@ -23,9 +24,15 @@ export async function GET(request) {
   if (!getProductConfig().featureFlags.mentorDirectory) return unavailable();
   const user = await getRequestUser(request);
   if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
-  const profileDoc = await adminDb.collection("mentor_profiles").doc(user.uid).get();
-  const profile = profileDoc.exists ? profileDoc.data() : null;
-  const normalized = profile ? normalizeMentorProfile(profile) : null;
+  const [profileDoc, availabilityDoc] = await Promise.all([
+    adminDb.collection("mentor_profiles").doc(user.uid).get(),
+    adminDb.collection("mentor_availability").doc(user.uid).get(),
+  ]);
+  const storedProfile = profileDoc.exists ? profileDoc.data() : null;
+  const availability = availabilityDoc.exists ? availabilityDoc.data() : null;
+  const profile = storedProfile ? mergeMentorAvailability(storedProfile, availability) : null;
+  const normalized = storedProfile ? normalizeMentorProfile(storedProfile) : null;
+  const publicNormalized = profile ? normalizeMentorProfile(profile) : null;
   const canManage = hasMentorToolAccess(user.userData || {}, { admin: user.admin });
   return Response.json({
     mentorStatus: user.userData?.mentorStatus || "none",
@@ -35,12 +42,12 @@ export async function GET(request) {
     availabilityEnabled: getProductConfig().featureFlags.mentorAvailability,
     profile: normalized ? {
       ...normalized,
-      createdAt: serializeMentorDate(profile.createdAt),
-      updatedAt: serializeMentorDate(profile.updatedAt),
+      createdAt: serializeMentorDate(storedProfile.createdAt),
+      updatedAt: serializeMentorDate(storedProfile.updatedAt),
     } : null,
-    capacity: normalized ? getMentorCapacity(normalized) : null,
-    publicProfilePreview: normalized && isMentorProfileComplete(normalized)
-      ? toPublicMentorProfileDto(user.uid, normalized)
+    capacity: publicNormalized ? getMentorCapacity(publicNormalized) : null,
+    publicProfilePreview: publicNormalized && isMentorProfileComplete(publicNormalized)
+      ? toPublicMentorProfileDto(user.uid, publicNormalized)
       : null,
   }, { headers: { "Cache-Control": "no-store" } });
 }
@@ -67,11 +74,15 @@ export async function PATCH(request) {
     };
     await ref.set(data, { merge: true });
     const normalized = normalizeMentorProfile(data);
+    const availabilityDoc = await adminDb.collection("mentor_availability").doc(user.uid).get();
+    const publicNormalized = normalizeMentorProfile(
+      mergeMentorAvailability(data, availabilityDoc.exists ? availabilityDoc.data() : null)
+    );
     return Response.json({
       profile: { ...normalized, createdAt: serializeMentorDate(data.createdAt), updatedAt: now.toISOString() },
-      capacity: getMentorCapacity(normalized),
-      publicProfilePreview: isMentorProfileComplete(normalized)
-        ? toPublicMentorProfileDto(user.uid, normalized)
+      capacity: getMentorCapacity(publicNormalized),
+      publicProfilePreview: isMentorProfileComplete(publicNormalized)
+        ? toPublicMentorProfileDto(user.uid, publicNormalized)
         : null,
       publicProfileEnabled: user.userData?.mentorPublicProfileEnabled === true,
     });

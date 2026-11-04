@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const { test } = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 
-const profiles = loadSourceModule("src/lib/mentor-profiles.js", ["cleanMentorAvailability", "cleanMentorProfile", "getMentorCapacity", "isMentorProfileComplete", "publicAvailabilitySummary", "toPublicMentorProfileDto"], { stripImports: true });
+const profiles = loadSourceModule("src/lib/mentor-profiles.js", ["cleanMentorAvailability", "cleanMentorProfile", "getMentorCapacity", "isMentorProfileComplete", "mergeMentorAvailability", "publicAvailabilitySummary", "toPublicMentorProfileDto"], { stripImports: true });
 const visibility = loadSourceModule("src/lib/content-visibility.js", ["isPublicMentorProfile"]);
 
 function completeProfile(overrides = {}) {
@@ -15,6 +15,7 @@ test("public mentor DTOs contain approved profile fields without private contact
   assert.equal(dto.displayName, "Alex Mentor");
   assert.equal(dto.availableSlots, 2);
   assert.doesNotMatch(JSON.stringify(dto), /private@example|recurringWindows|startsAt/);
+  assert.equal(profiles.toPublicMentorProfileDto("mentor-2", completeProfile({ availabilitySummary: "unavailable", currentlyAcceptingStudents: false })).availableSlots, 0);
 });
 
 test("mentor profile and availability validation accepts only supported values", () => {
@@ -23,6 +24,8 @@ test("mentor profile and availability validation accepts only supported values",
   assert.deepEqual(Array.from(profile.mentorshipFormats), ["online"]);
   const availability = profiles.cleanMentorAvailability({ timeZone: "Europe/Warsaw", sessionFormats: ["online"], subjectsCurrentlyAccepted: ["Lighting"], mentoringModes: ["individual"], maximumActiveStudents: 2, currentlyAcceptingStudents: true, availabilityStatus: "limited", recurringWindows: [{ dayOfWeek: 2, startsAt: "18:00", endsAt: "19:00", formats: ["online"] }] });
   assert.equal(profiles.publicAvailabilitySummary(availability), "limited");
+  assert.equal(profiles.publicAvailabilitySummary({ currentlyAcceptingStudents: true, availabilityStatus: "unavailable" }), "unavailable");
+  assert.equal(profiles.mergeMentorAvailability(completeProfile({ availabilitySummary: "accepting" }), { currentlyAcceptingStudents: true, availabilityStatus: "unavailable" }).availabilitySummary, "unavailable");
 });
 
 test("only approved enabled mentors are public", () => {

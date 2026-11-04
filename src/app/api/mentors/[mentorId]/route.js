@@ -16,7 +16,7 @@ export async function GET(_request, { params }) {
     const { mentorId } = await params;
     const mentor = await getPublicMentor(mentorId);
     if (!mentor) return Response.json({ error: "Mentor profile not found" }, { status: 404 });
-    return Response.json({ ...mentor, mentorReferences: [] }, { headers: { "Cache-Control": "public, max-age=60, s-maxage=300" } });
+    return Response.json({ ...mentor, mentorReferences: [] }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Mentor profile could not be loaded", error);
     return Response.json({ error: "Mentor profile could not be loaded" }, { status: 503 });

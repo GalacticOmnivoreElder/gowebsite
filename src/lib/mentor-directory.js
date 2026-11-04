@@ -1,6 +1,6 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { isPublicMentorProfile } from "@/lib/content-visibility";
-import { isMentorProfileComplete, toPublicMentorProfileDto } from "@/lib/mentor-profiles";
+import { isMentorProfileComplete, mergeMentorAvailability, toPublicMentorProfileDto } from "@/lib/mentor-profiles";
 import { hasMentorToolAccess } from "@/lib/content-entitlements";
 
 function matches(mentor, filters = {}) {
@@ -23,9 +23,15 @@ export async function listPublicMentors({ db = adminDb, filters = {} } = {}) {
   );
   const profiles = await Promise.all(
     eligibleUsers.map(async (userDoc) => {
-      const profileDoc = await db.collection("mentor_profiles").doc(userDoc.id).get();
+      const [profileDoc, availabilityDoc] = await Promise.all([
+        db.collection("mentor_profiles").doc(userDoc.id).get(),
+        db.collection("mentor_availability").doc(userDoc.id).get(),
+      ]);
       if (!profileDoc.exists) return null;
-      const profile = profileDoc.data();
+      const profile = mergeMentorAvailability(
+        profileDoc.data(),
+        availabilityDoc.exists ? availabilityDoc.data() : null
+      );
       if (!isPublicMentorProfile({ mentorStatus: userDoc.data().mentorStatus, publicProfileEnabled: true }) || !isMentorProfileComplete(profile)) return null;
       return toPublicMentorProfileDto(userDoc.id, profile);
     })
@@ -35,13 +41,17 @@ export async function listPublicMentors({ db = adminDb, filters = {} } = {}) {
 
 export async function getPublicMentor(mentorId, { db = adminDb } = {}) {
   if (!mentorId) return null;
-  const [userDoc, profileDoc] = await Promise.all([
+  const [userDoc, profileDoc, availabilityDoc] = await Promise.all([
     db.collection("users").doc(mentorId).get(),
     db.collection("mentor_profiles").doc(mentorId).get(),
+    db.collection("mentor_availability").doc(mentorId).get(),
   ]);
   if (!userDoc.exists || !profileDoc.exists) return null;
   const user = userDoc.data();
-  const profile = profileDoc.data();
+  const profile = mergeMentorAvailability(
+    profileDoc.data(),
+    availabilityDoc.exists ? availabilityDoc.data() : null
+  );
   if (!hasMentorToolAccess(user) || !isPublicMentorProfile({ mentorStatus: user.mentorStatus, publicProfileEnabled: user.mentorPublicProfileEnabled }) || !isMentorProfileComplete(profile)) return null;
   return toPublicMentorProfileDto(mentorId, profile);
 }

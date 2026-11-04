@@ -25,7 +25,7 @@ export async function GET(request) {
         accepting: search.get("accepting") || "",
       },
     });
-    return Response.json(mentors, { headers: { "Cache-Control": "public, max-age=60, s-maxage=300" } });
+    return Response.json(mentors, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Mentor directory could not be loaded", error);
     return Response.json({ error: "Mentor directory could not be loaded" }, { status: 503 });

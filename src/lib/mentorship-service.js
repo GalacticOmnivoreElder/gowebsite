@@ -38,6 +38,7 @@ import {
   canonicalMentorProfileFields,
   getMentorCapacity,
   isMentorProfileComplete,
+  mergeMentorAvailability,
   normalizeMentorProfile,
   toPublicMentorProfileDto,
 } from "@/lib/mentor-profiles";
@@ -116,9 +117,10 @@ function participant(engagement, user) {
 async function getAvailablePublicMentor(mentorId, db = adminDb) {
   const cleanId = String(mentorId || "").trim();
   if (!cleanId) return null;
-  const [userDoc, profileDoc] = await Promise.all([
+  const [userDoc, profileDoc, availabilityDoc] = await Promise.all([
     db.collection("users").doc(cleanId).get(),
     db.collection("mentor_profiles").doc(cleanId).get(),
+    db.collection("mentor_availability").doc(cleanId).get(),
   ]);
   if (
     !userDoc.exists ||
@@ -128,7 +130,10 @@ async function getAvailablePublicMentor(mentorId, db = adminDb) {
   ) {
     throw workflowError("The selected mentor is no longer available", "mentor_unavailable", 409);
   }
-  const profile = normalizeMentorProfile(profileDoc.data());
+  const profile = normalizeMentorProfile(mergeMentorAvailability(
+    profileDoc.data(),
+    availabilityDoc.exists ? availabilityDoc.data() : null
+  ));
   if (!isMentorProfileComplete(profile) || !getMentorCapacity(profile).accepting) {
     throw workflowError("The selected mentor has no available mentorship slots", "mentor_capacity_full", 409);
   }
@@ -485,10 +490,10 @@ export async function sendMentorSuggestions({ actor, requestId, suggestions = []
     if (!["ready_for_suggestions", "suggestions_sent", "application_submitted"].includes(request.status)) throw workflowError("This request is not ready for mentor suggestions", "invalid_status", 409);
     const created = [];
     for (const [index, item] of mentorDocs.entries()) {
-      const profile = normalizeMentorProfile({
-        ...(item.profileDoc.data() || {}),
-        ...(item.availabilityDoc.exists ? item.availabilityDoc.data() : {}),
-      });
+      const profile = normalizeMentorProfile(mergeMentorAvailability(
+        item.profileDoc.data() || {},
+        item.availabilityDoc.exists ? item.availabilityDoc.data() : null
+      ));
       const user = item.userDoc.data() || {};
       const accepting = hasMentorToolAccess(user) && (profile.publicProfileConsent === true || user.mentorPublicProfileEnabled === true) && getMentorCapacity(profile).accepting;
       if (!item.userDoc.exists || !item.profileDoc.exists || !accepting) throw workflowError(`Mentor ${item.mentorId} is not currently available`, "mentor_unavailable", 409);
@@ -554,10 +559,10 @@ export async function forwardRequestToRequestedMentor({ actor, requestId, custom
     ) {
       throw workflowError("The requested mentor is no longer available", "mentor_unavailable", 409);
     }
-    const profile = normalizeMentorProfile({
-      ...mentorProfileDoc.data(),
-      ...(mentorAvailabilityDoc.exists ? mentorAvailabilityDoc.data() : {}),
-    });
+    const profile = normalizeMentorProfile(mergeMentorAvailability(
+      mentorProfileDoc.data(),
+      mentorAvailabilityDoc.exists ? mentorAvailabilityDoc.data() : null
+    ));
     if (!isMentorProfileComplete(profile) || !getMentorCapacity(profile).accepting) {
       throw workflowError("The requested mentor has no available mentorship slots", "mentor_capacity_full", 409);
     }
@@ -722,7 +727,11 @@ export async function respondToMentorApplication({ user, applicationId, action, 
     const profileRef = db.collection("mentor_profiles").doc(application.mentorId);
     const profileDoc = await transaction.get(profileRef);
     if (!profileDoc.exists) throw workflowError("Mentor profile not found", "mentor_unavailable", 409);
-    const profile = normalizeMentorProfile(profileDoc.data());
+    const availabilityDoc = await transaction.get(db.collection("mentor_availability").doc(application.mentorId));
+    const profile = normalizeMentorProfile(mergeMentorAvailability(
+      profileDoc.data(),
+      availabilityDoc.exists ? availabilityDoc.data() : null
+    ));
     const capacity = getMentorCapacity(profile);
     if (!capacity.accepting) throw workflowError("Mentor capacity is full", "mentor_capacity_full", 409);
     const engagementId = stableId("engagement", applicationId);

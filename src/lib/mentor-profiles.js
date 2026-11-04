@@ -279,10 +279,24 @@ export function cleanMentorAvailability(input = {}) {
 }
 
 export function publicAvailabilitySummary(availability = {}) {
-  if (availability.temporaryPause === true || availability.currentlyAcceptingStudents !== true) {
+  if (
+    availability.temporaryPause === true ||
+    availability.currentlyAcceptingStudents !== true ||
+    availability.availabilityStatus === "unavailable"
+  ) {
     return "unavailable";
   }
   return availability.availabilityStatus === "limited" ? "limited" : "accepting";
+}
+
+/** Merge the private availability source into a profile for availability calculations. */
+export function mergeMentorAvailability(profile = {}, availability = null) {
+  if (!availability || typeof availability !== "object" || !Object.keys(availability).length) return profile;
+  return {
+    ...profile,
+    ...availability,
+    availabilitySummary: publicAvailabilitySummary(availability),
+  };
 }
 
 export function availabilityLabel(status) {
@@ -313,7 +327,7 @@ export function toPublicMentorProfileDto(id, profile = {}) {
     generalAvailabilityLabel: availabilityLabel(capacity.accepting ? normalized.availabilitySummary : "unavailable"),
     timeZone: normalized.timeZone,
     maximumActiveStudents: capacity.maximum,
-    availableSlots: capacity.availableSlots,
+    availableSlots: capacity.accepting ? capacity.availableSlots : 0,
     hasAvailableSlots: capacity.accepting,
     currentlyAcceptingStudents: capacity.accepting,
     portfolioLinks: normalized.portfolioLinks,
