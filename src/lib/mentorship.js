@@ -285,12 +285,13 @@ export function serializeMentorshipRequest(id, data = {}, { includeInternal = fa
     requestedMentorProfile: data.requestedMentorProfile || null,
     status: data.status || "draft",
     customerMessage: data.customerMessage || "",
+    submittedAt: iso(data.submittedAt),
     reviewDueAt: iso(data.reviewDueAt),
     createdAt: iso(data.createdAt),
     updatedAt: iso(data.updatedAt),
     closedAt: iso(data.closedAt),
   };
-  if (includeInternal) return { ...value, reviewedBy: data.reviewedBy || null, internalReviewNotes: data.internalReviewNotes || "", consentVersion: data.consentVersion || "", dataSharingConsent: data.dataSharingConsent === true };
+  if (includeInternal) return { ...value, menteeDisplayName: data.menteeDisplayName || "", reviewedBy: data.reviewedBy || null, internalReviewNotes: data.internalReviewNotes || "", consentVersion: data.consentVersion || "", dataSharingConsent: data.dataSharingConsent === true, expectationsAcknowledged: data.expectationsAcknowledged === true };
   return value;
 }
 

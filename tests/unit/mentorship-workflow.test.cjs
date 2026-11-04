@@ -40,6 +40,21 @@ test("admin mentor summaries expose scheduling invitation history", () => {
   assert.equal(summary.schedulingInviteCount, 2);
 });
 
+test("admin mentorship request serializer exposes the full private submission", () => {
+  const request = mentorship.serializeMentorshipRequest("request-1", {
+    menteeDisplayName: "Test member",
+    submittedAt: "2026-11-04T10:00:00.000Z",
+    internalReviewNotes: "Staff-only note",
+    expectationsAcknowledged: true,
+    dataSharingConsent: true,
+  }, { includeInternal: true });
+  assert.equal(request.menteeDisplayName, "Test member");
+  assert.equal(request.submittedAt, "2026-11-04T10:00:00.000Z");
+  assert.equal(request.expectationsAcknowledged, true);
+  assert.equal(request.dataSharingConsent, true);
+  assert.equal(request.internalReviewNotes, "Staff-only note");
+});
+
 test("one canonical backend and public route are wired", () => {
   const service = fs.readFileSync("src/lib/mentorship-service.js", "utf8");
   const admin = fs.readFileSync("src/components/admin/MentorshipAdminWorkspace.jsx", "utf8");
@@ -50,6 +65,8 @@ test("one canonical backend and public route are wired", () => {
   assert.match(page, /MentorDirectory/);
   assert.match(admin, /Approve & publish/);
   assert.match(admin, /Open full application/);
+  assert.match(admin, /Open full request/);
+  assert.match(admin, /Full mentorship request/);
   assert.match(admin, /send_mentor_scheduling_email/);
   assert.match(admin, /Publish to directory/);
   assert.match(service, /mentorPublicProfileEnabled: publicProfileReady/);

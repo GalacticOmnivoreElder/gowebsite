@@ -52,6 +52,7 @@ export function MentorshipAdminWorkspace() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteReason, setDeleteReason] = useState("");
   const [applicationTarget, setApplicationTarget] = useState(null);
+  const [requestTarget, setRequestTarget] = useState(null);
 
   const call = useCallback(async (options = {}) => {
     const token = await auth.currentUser?.getIdToken();
@@ -205,6 +206,11 @@ export function MentorshipAdminWorkspace() {
                   ) : null}
                   <p className="text-xs text-muted-foreground">Private accessibility request: {item.accessibilityRequest || "none provided"}</p>
 
+                  <div className="flex flex-wrap items-center gap-3 border-t pt-3">
+                    <Button variant="outline" size="sm" onClick={() => setRequestTarget(item)}><FileText className="mr-2 h-4 w-4" />Open full request</Button>
+                    <p className="text-xs text-muted-foreground">Submitted {formatDateTime(item.submittedAt || item.createdAt)}</p>
+                  </div>
+
                   <div className="grid gap-3 lg:grid-cols-[minmax(12rem,0.6fr)_1fr_auto]">
                     <select aria-label={`Request decision for ${item.id}`} className="rounded-md border bg-background px-3 py-2 text-sm" value={requestDecisions[item.id] || item.status} onChange={(event) => setRequestDecisions((current) => ({ ...current, [item.id]: event.target.value }))}>
                       {requestReviewOptions.map((option) => <option key={option} value={option}>{labelStatus(option)}</option>)}
@@ -322,6 +328,88 @@ export function MentorshipAdminWorkspace() {
             </div>
           ) : <p className="text-sm text-muted-foreground">No profile text was submitted.</p>}
           <DialogFooter><Button variant="outline" onClick={() => setApplicationTarget(null)}>Close</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(requestTarget)} onOpenChange={(open) => { if (!open) setRequestTarget(null); }}>
+        <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Full mentorship request</DialogTitle>
+            <DialogDescription>
+              Review the complete submission from {requestTarget?.menteeDisplayName || requestTarget?.menteeUserId || "this member"}.
+            </DialogDescription>
+          </DialogHeader>
+          {requestTarget ? (
+            <div className="space-y-6">
+              <section>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">Request details</h3>
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  <ApplicationDetailField label="Applicant" value={requestTarget.menteeDisplayName || requestTarget.menteeUserId} />
+                  <ApplicationDetailField label="Applicant user ID" value={requestTarget.menteeUserId} />
+                  <ApplicationDetailField label="Request title" value={requestTarget.title} />
+                  <ApplicationDetailField label="Discipline" value={requestTarget.discipline} />
+                  <ApplicationDetailField label="Current level" value={requestTarget.currentLevel} />
+                  <ApplicationDetailField label="Preferred timeframe" value={requestTarget.preferredTimeframe} />
+                  <ApplicationDetailField label="Languages" value={requestTarget.languagePreferences} />
+                  <ApplicationDetailField label="Time zone" value={requestTarget.timeZone} />
+                  <ApplicationDetailField label="Preferred format" value={requestTarget.preferredFormat} />
+                  <ApplicationDetailField label="Availability" value={requestTarget.availability} />
+                </dl>
+                <div className="mt-3 grid gap-3">
+                  <ApplicationDetailField label="Goal" value={requestTarget.goal} multiline />
+                  <ApplicationDetailField label="Desired outcome" value={requestTarget.desiredOutcome} multiline />
+                  <ApplicationDetailField label="Timeframe details" value={requestTarget.timeframeDetails} multiline />
+                </div>
+              </section>
+
+              <section>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">Project and mentor context</h3>
+                {Array.isArray(requestTarget.projectLinks) && requestTarget.projectLinks.length ? (
+                  <div className="mb-3 rounded-md border bg-muted/20 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Project links</p>
+                    <ul className="mt-2 space-y-1 text-sm">
+                      {requestTarget.projectLinks.map((link, index) => {
+                        const label = typeof link === "string" ? `Project ${index + 1}` : link?.label || `Project ${index + 1}`;
+                        const url = typeof link === "string" ? link : link?.url;
+                        return <li key={`${url || label}-${index}`}>{url ? <a className="break-all text-primary underline" href={url} target="_blank" rel="noreferrer">{label}: {url}</a> : <span>{label}</span>}</li>;
+                      })}
+                    </ul>
+                  </div>
+                ) : <p className="mb-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">No project links provided.</p>}
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  <ApplicationDetailField label="Requested mentor" value={requestTarget.requestedMentorProfile?.displayName || requestTarget.requestedMentorId || "No specific mentor"} />
+                  <ApplicationDetailField label="Mentor headline" value={requestTarget.requestedMentorProfile?.professionalHeadline} />
+                </dl>
+              </section>
+
+              <section>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">Privacy and member notes</h3>
+                <dl className="grid gap-3">
+                  <ApplicationDetailField label="Message to GO" value={requestTarget.customerMessage} multiline />
+                  <ApplicationDetailField label="Accessibility request" value={requestTarget.accessibilityRequest} multiline />
+                </dl>
+                <dl className="mt-3 grid gap-3 sm:grid-cols-3">
+                  <ApplicationDetailField label="Data sharing consent" value={requestTarget.dataSharingConsent ? "Confirmed" : "Not confirmed"} />
+                  <ApplicationDetailField label="Expectations acknowledged" value={requestTarget.expectationsAcknowledged ? "Confirmed" : "Not confirmed"} />
+                  <ApplicationDetailField label="Consent version" value={requestTarget.consentVersion} />
+                </dl>
+              </section>
+
+              <section>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">Review metadata</h3>
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  <ApplicationDetailField label="Request status" value={labelStatus(requestTarget.status)} />
+                  <ApplicationDetailField label="Reviewed by" value={requestTarget.reviewedBy} />
+                  <ApplicationDetailField label="Submitted" value={formatDateTime(requestTarget.submittedAt || requestTarget.createdAt)} />
+                  <ApplicationDetailField label="Last updated" value={formatDateTime(requestTarget.updatedAt)} />
+                  <ApplicationDetailField label="Review due" value={formatDateTime(requestTarget.reviewDueAt)} />
+                  <ApplicationDetailField label="Closed" value={formatDateTime(requestTarget.closedAt)} />
+                  <ApplicationDetailField label="Private staff notes" value={requestTarget.internalReviewNotes} multiline />
+                </dl>
+              </section>
+            </div>
+          ) : <p className="text-sm text-muted-foreground">No request details were submitted.</p>}
+          <DialogFooter><Button variant="outline" onClick={() => setRequestTarget(null)}>Close</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
