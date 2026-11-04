@@ -50,6 +50,16 @@ function displayName(userData = {}) {
   return userData.displayName || userData.username || userData.name || "GO member";
 }
 
+function mentorDirectoryBlockers(profileData = {}, userData = {}) {
+  const blockers = [];
+  if (profileData.status !== "approved" || userData.mentorStatus !== "approved") blockers.push("GO approval is required");
+  if (profileData.publicProfileConsent !== true) blockers.push("public profile consent is required");
+  if (!isMentorProfileComplete(profileData)) blockers.push("the public mentor profile is incomplete");
+  if (!hasMentorToolAccess(userData)) blockers.push("an active verified GO Mentor membership is required");
+  if (userData.mentorPublicProfileEnabled !== true) blockers.push("admin publication is pending");
+  return blockers;
+}
+
 function asDate(value) {
   const date = value?.toDate?.() || (value instanceof Date ? value : new Date(value));
   return Number.isNaN(date.getTime()) ? null : date;
@@ -207,6 +217,32 @@ export async function reviewMentorApplication({ actor, userId, decision, interna
   });
   await notify({ recipientUserId: userId, type: "mentorship_review", title: `Mentor application ${decision.replaceAll("_", " ")}`, message: cleanReason(customerMessage, 1200) || (decision === "approved" ? "Your mentor application was approved. Review your profile and availability in Profile → Mentor." : decision === "needs_information" ? "GO needs more information before it can finish reviewing your mentor application." : `Your mentor application was ${decision.replaceAll("_", " ")}.`), eventId: `mentor-application-review:${userId}:${decision}:${now.toISOString()}`, actionUrl: "/profile?tab=mentor" });
   return result;
+}
+
+export async function publishMentorProfile({ actor, userId, db = adminDb, now = new Date() }) {
+  if (!actor?.admin) throw workflowError("Platform admin access required", "staff_required", 403);
+  const cleanUserId = String(userId || "").trim();
+  if (!cleanUserId) throw workflowError("Mentor applicant is required");
+  const userRef = db.collection("users").doc(cleanUserId);
+  const profileRef = db.collection("mentor_profiles").doc(cleanUserId);
+  return db.runTransaction(async (transaction) => {
+    const [userDoc, profileDoc] = await Promise.all([transaction.get(userRef), transaction.get(profileRef)]);
+    if (!userDoc.exists || !profileDoc.exists) throw workflowError("Mentor profile not found", "not_found", 404);
+    const userData = userDoc.data();
+    const profileData = profileDoc.data();
+    if (profileData.status !== "approved" || userData.mentorStatus !== "approved") {
+      throw workflowError("Only approved mentors can be published to the directory", "invalid_status", 409);
+    }
+    if (profileData.publicProfileConsent !== true || !isMentorProfileComplete(profileData)) {
+      throw workflowError("Complete the public mentor profile and confirm public profile consent before publishing", "mentor_profile_incomplete", 409);
+    }
+    if (!hasMentorToolAccess(userData)) {
+      throw workflowError("An active verified GO Mentor membership is required before publishing", "mentor_membership_required", 409);
+    }
+    transaction.set(userRef, { mentorPublicProfileEnabled: true, mentorPublicProfilePublishedBy: actor.uid, mentorPublicProfilePublishedAt: now }, { merge: true });
+    audit(transaction, db, { actor, action: "mentor_profile.published", entityType: "mentor_profile", entityId: cleanUserId, previousStatus: "private", newStatus: "public" });
+    return { userId: cleanUserId, mentorPublicProfileEnabled: true, publishedAt: now.toISOString() };
+  });
 }
 
 const SCHEDULING_INVITE_BLOCKED_STATUSES = new Set(["rejected", "suspended", "archived"]);
@@ -853,18 +889,15 @@ export async function getMentorshipAdminDashboard({ actor, db = adminDb }) {
     const userData = mentorUsers[index].exists ? mentorUsers[index].data() : {};
     const profile = profiles[index].exists ? serializeMentorProfile(doc.id, profileData, { admin: true }) : null;
     const publicProfileEnabled = userData.mentorPublicProfileEnabled === true;
-    const publicDirectoryReady = Boolean(
-      profile?.status === "approved" &&
-      publicProfileEnabled &&
-      hasMentorToolAccess(userData) &&
-      isMentorProfileComplete(profileData)
-    );
+    const publicDirectoryBlockers = mentorDirectoryBlockers(profileData, userData);
+    const publicDirectoryReady = publicDirectoryBlockers.length === 0;
     return {
       id: doc.id,
       application: serializeMentorApplicationSummary(doc.id, doc.data(), profileData),
       profile,
       publicProfileEnabled,
       publicDirectoryReady,
+      publicDirectoryBlockers,
     };
   });
   const config = getMentorshipConfig();

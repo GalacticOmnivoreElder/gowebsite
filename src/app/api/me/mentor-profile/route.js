@@ -26,10 +26,12 @@ export async function GET(request) {
   const profileDoc = await adminDb.collection("mentor_profiles").doc(user.uid).get();
   const profile = profileDoc.exists ? profileDoc.data() : null;
   const normalized = profile ? normalizeMentorProfile(profile) : null;
+  const canManage = hasMentorToolAccess(user.userData || {}, { admin: user.admin });
   return Response.json({
     mentorStatus: user.userData?.mentorStatus || "none",
     publicProfileEnabled: user.userData?.mentorPublicProfileEnabled === true,
-    canManage: hasMentorToolAccess(user.userData || {}, { admin: user.admin }),
+    canManage,
+    mentorAccessReason: canManage ? null : user.userData?.mentorStatus === "approved" ? "mentor_membership_required" : "approval_required",
     availabilityEnabled: getProductConfig().featureFlags.mentorAvailability,
     profile: normalized ? {
       ...normalized,

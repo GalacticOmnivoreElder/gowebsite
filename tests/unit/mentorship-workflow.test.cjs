@@ -51,8 +51,12 @@ test("one canonical backend and public route are wired", () => {
   assert.match(admin, /Approve & publish/);
   assert.match(admin, /Open full application/);
   assert.match(admin, /send_mentor_scheduling_email/);
+  assert.match(admin, /Publish to directory/);
   assert.match(service, /mentorPublicProfileEnabled: publicProfileReady/);
   assert.match(service, /mentor_application\.scheduling_invite_sent/);
+  assert.match(service, /publishMentorProfile/);
+  assert.match(service, /mentor_membership_required/);
   assert.match(adminRoute, /sendMentorSchedulingInvite/);
+  assert.match(adminRoute, /publishMentorProfile/);
   assert.match(requestRoute, /create_request/);
 });
