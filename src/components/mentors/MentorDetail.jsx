@@ -7,6 +7,7 @@ import { ExternalLink, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MentorAvailabilityWindows } from "@/components/mentors/MentorAvailabilityWindows";
 
 export function MentorDetail({ mentorId }) {
   const [mentor, setMentor] = useState(null);
@@ -57,7 +58,8 @@ export function MentorDetail({ mentorId }) {
             <div><p className="font-medium">Supported levels</p><p className="capitalize text-muted-foreground">{mentor.supportedStudentLevels.map((value) => value.replaceAll("_", " ")).join(", ")}</p></div>
             <div><p className="font-medium">Languages</p><p className="text-muted-foreground">{mentor.languages.join(", ")}</p></div>
             <div><p className="font-medium">Time zone</p><p className="text-muted-foreground">{mentor.timeZone}</p></div>
-            <p className="rounded-md bg-muted/30 p-3 text-xs text-muted-foreground">Exact availability and private contact information are shared only inside an authorized mentorship engagement.</p>
+            <MentorAvailabilityWindows windows={mentor.availabilityWindows} timeZone={mentor.timeZone} />
+            <p className="rounded-md bg-muted/30 p-3 text-xs text-muted-foreground">These recurring hours help you choose a mentor. GO and the mentor confirm the specific session after review.</p>
             {mentor.hasAvailableSlots ? <Button asChild className="w-full"><Link href={`/profile?tab=mentorships&view=request&mentor=${encodeURIComponent(mentor.id || mentorId)}`}>Request mentorship</Link></Button> : <Button className="w-full" disabled>Currently unavailable</Button>}
           </CardContent>
         </Card>

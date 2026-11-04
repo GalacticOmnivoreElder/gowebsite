@@ -10,10 +10,11 @@ function completeProfile(overrides = {}) {
   return { displayName: "Alex Mentor", profileImage: "https://example.com/alex.png", professionalHeadline: "Environment artist", biography: "Environment artist and practical mentor.", disciplines: ["Art"], skills: ["Lighting"], supportedStudentLevels: ["beginner"], languages: ["English"], mentorshipFormats: ["online"], locationPreference: "online", timeZone: "Europe/Skopje", availabilitySummary: "limited", currentlyAcceptingStudents: true, maximumActiveStudents: 3, activeEngagementCount: 1, portfolioLinks: [{ label: "Portfolio", url: "https://example.com/work" }], ...overrides };
 }
 
-test("public mentor DTOs contain approved profile fields without private contact or schedules", () => {
-  const dto = profiles.toPublicMentorProfileDto("mentor-1", completeProfile({ email: "private@example.com", recurringWindows: [{ startsAt: "18:00" }] }));
+test("public mentor DTOs contain approved profile fields and published recurring hours without private contact or raw schedules", () => {
+  const dto = profiles.toPublicMentorProfileDto("mentor-1", completeProfile({ email: "private@example.com", recurringWindows: [{ dayOfWeek: 1, startsAt: "18:00", endsAt: "20:00", formats: ["online"] }] }));
   assert.equal(dto.displayName, "Alex Mentor");
   assert.equal(dto.availableSlots, 2);
+  assert.equal(JSON.stringify(dto.availabilityWindows), JSON.stringify([{ dayOfWeek: 1, startTime: "18:00", endTime: "20:00", formats: ["online"] }]));
   assert.doesNotMatch(JSON.stringify(dto), /private@example|recurringWindows|startsAt/);
   assert.equal(profiles.toPublicMentorProfileDto("mentor-2", completeProfile({ availabilitySummary: "unavailable", currentlyAcceptingStudents: false })).availableSlots, 0);
 });

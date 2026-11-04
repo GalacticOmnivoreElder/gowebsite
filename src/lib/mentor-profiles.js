@@ -307,6 +307,13 @@ export function availabilityLabel(status) {
       : "Currently unavailable";
 }
 
+function publicAvailabilityWindows(profile = {}) {
+  if (!Array.isArray(profile.recurringWindows)) return [];
+  return profile.recurringWindows
+    .filter((window) => Number.isInteger(Number(window?.dayOfWeek)) && Number(window.dayOfWeek) >= 0 && Number(window.dayOfWeek) <= 6 && /^([01]\d|2[0-3]):[0-5]\d$/.test(window?.startsAt || "") && /^([01]\d|2[0-3]):[0-5]\d$/.test(window?.endsAt || ""))
+    .map((window) => ({ dayOfWeek: Number(window.dayOfWeek), startTime: window.startsAt, endTime: window.endsAt, formats: Array.isArray(window.formats) ? window.formats : [] }));
+}
+
 export function toPublicMentorProfileDto(id, profile = {}) {
   const normalized = normalizeMentorProfile(profile);
   const capacity = getMentorCapacity(normalized);
@@ -330,6 +337,7 @@ export function toPublicMentorProfileDto(id, profile = {}) {
     availableSlots: capacity.accepting ? capacity.availableSlots : 0,
     hasAvailableSlots: capacity.accepting,
     currentlyAcceptingStudents: capacity.accepting,
+    availabilityWindows: capacity.accepting ? publicAvailabilityWindows(normalized) : [],
     portfolioLinks: normalized.portfolioLinks,
     relatedLearningSlugs: normalized.relatedLearningSlugs,
     relatedVideoBundleSlugs: normalized.relatedVideoBundleSlugs,

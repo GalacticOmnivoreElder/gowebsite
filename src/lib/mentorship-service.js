@@ -499,7 +499,7 @@ export async function sendMentorSuggestions({ actor, requestId, suggestions = []
       if (!item.userDoc.exists || !item.profileDoc.exists || !accepting) throw workflowError(`Mentor ${item.mentorId} is not currently available`, "mentor_unavailable", 409);
       const suggestionId = stableId("suggestion", requestId, item.mentorId);
       const ref = db.collection("mentorship_suggestions").doc(suggestionId);
-      const data = { id: suggestionId, requestId, mentorId: item.mentorId, createdBy: actor.uid, mentorProfile: serializeMentorProfile(item.mentorId, profile), reasonSummary: cleanReason(suggestions[index]?.reasonSummary, 500), privateStaffNotes: cleanReason(suggestions[index]?.privateStaffNotes, 3000), status: "visible", shownAt: now, expiresAt: addDays(now, config.applicationResponseTargetWorkingDays * 2), createdAt: now, updatedAt: now };
+      const data = { id: suggestionId, requestId, mentorId: item.mentorId, createdBy: actor.uid, mentorProfile: toPublicMentorProfileDto(item.mentorId, profile), reasonSummary: cleanReason(suggestions[index]?.reasonSummary, 500), privateStaffNotes: cleanReason(suggestions[index]?.privateStaffNotes, 3000), status: "visible", shownAt: now, expiresAt: addDays(now, config.applicationResponseTargetWorkingDays * 2), createdAt: now, updatedAt: now };
       if (!data.reasonSummary) throw workflowError("A customer-facing reason is required for every suggestion");
       transaction.set(ref, data, { merge: true });
       audit(transaction, db, { actor, action: "mentor_suggestions.sent", entityType: "mentorship_suggestion", entityId: suggestionId, newStatus: "visible", metadata: { requestId, position: index + 1 } });
@@ -567,7 +567,7 @@ export async function forwardRequestToRequestedMentor({ actor, requestId, custom
       throw workflowError("The requested mentor has no available mentorship slots", "mentor_capacity_full", 409);
     }
 
-    const mentorProfile = serializeMentorProfile(mentorId, profile);
+    const mentorProfile = toPublicMentorProfileDto(mentorId, profile);
     const suggestion = {
       id: suggestionId,
       requestId,

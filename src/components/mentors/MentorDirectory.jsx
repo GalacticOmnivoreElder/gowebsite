@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trackEvent } from "@/lib/analytics/client";
+import { MentorAvailabilityWindows } from "@/components/mentors/MentorAvailabilityWindows";
 
 const initialFilters = { search: "", discipline: "", skill: "", level: "", language: "", format: "", availability: "", accepting: "" };
 
@@ -92,6 +93,7 @@ export function MentorDirectory() {
                 <p className="line-clamp-4 text-sm text-muted-foreground">{mentor.biography}</p>
                 <div className="mt-4 flex flex-wrap gap-2">{[...(mentor.disciplines || []), ...(mentor.mentorshipTopics || [])].slice(0, 4).map((value) => <Badge key={value} variant="outline">{value}</Badge>)}</div>
                 <p className="mt-4 text-sm font-medium">{mentor.availableSlots} available slot{mentor.availableSlots === 1 ? "" : "s"}</p>
+                <MentorAvailabilityWindows compact windows={mentor.availabilityWindows} timeZone={mentor.timeZone} />
                 <div className="mt-6 grid gap-2 sm:grid-cols-2"><Button asChild variant="outline"><Link href={`/mentorship/${mentor.id}`}>View profile</Link></Button>{mentor.hasAvailableSlots ? <Button asChild><Link href={`/profile?tab=mentorships&view=request&mentor=${encodeURIComponent(mentor.id)}`}>Request mentorship</Link></Button> : <Button disabled>Unavailable</Button>}</div>
               </CardContent>
             </Card>

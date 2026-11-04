@@ -226,6 +226,9 @@ export function serializeMentorProfile(id, data = {}, { admin = false } = {}) {
     preferredMenteeLevels: data.preferredMenteeLevels?.length ? data.preferredMenteeLevels : data.supportedStudentLevels || [],
     maximumActiveMentees: data.maximumActiveMentees || data.maximumActiveStudents || 1,
     mentorshipTopics: data.mentorshipTopics || [],
+    availabilityWindows: Array.isArray(data.recurringWindows)
+      ? data.recurringWindows.map((window) => ({ dayOfWeek: window.dayOfWeek, startTime: window.startsAt, endTime: window.endsAt, formats: window.formats || [] }))
+      : [],
     status: data.status || "draft",
     customerMessage: data.customerMessage || "",
     informationRequest: data.informationRequest || "",
@@ -300,7 +303,7 @@ export function serializeSuggestion(id, data = {}) {
 }
 
 export function serializeMentorshipApplication(id, data = {}, { includePrivate = false } = {}) {
-  const result = { id, requestId: data.requestId, suggestionId: data.suggestionId, mentorId: data.mentorId, menteeUserId: data.menteeUserId, status: data.status || "pending", message: data.message || "", sharedRequest: data.sharedRequest || null, mentorResponse: data.mentorResponse || "", submittedAt: iso(data.submittedAt), respondedAt: iso(data.respondedAt), expiresAt: iso(data.expiresAt), createdAt: iso(data.createdAt) };
+  const result = { id, requestId: data.requestId, suggestionId: data.suggestionId, mentorId: data.mentorId, menteeUserId: data.menteeUserId, status: data.status || "pending", message: data.message || "", sharedRequest: data.sharedRequest || null, relevantProfileSnapshot: data.relevantProfileSnapshot || null, mentorResponse: data.mentorResponse || "", submittedAt: iso(data.submittedAt), respondedAt: iso(data.respondedAt), expiresAt: iso(data.expiresAt), createdAt: iso(data.createdAt) };
   if (includePrivate) result.internalNotes = data.internalNotes || "";
   return result;
 }
