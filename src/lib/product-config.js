@@ -13,7 +13,7 @@ export function getProductConfig(env = process.env) {
   const featureFlags = {
     productNavigation: parseBooleanEnv(env.PRODUCT_NAVIGATION_ENABLED, true),
     courseEnrollment: parseBooleanEnv(env.COURSE_ENROLLMENT_ENABLED, false),
-    userNotifications: parseBooleanEnv(env.USER_NOTIFICATIONS_ENABLED, false),
+    userNotifications: parseBooleanEnv(env.USER_NOTIFICATIONS_ENABLED, true),
     videoBundles: parseBooleanEnv(env.VIDEO_BUNDLES_ENABLED, false),
     mentorDirectory: parseBooleanEnv(env.MENTOR_DIRECTORY_ENABLED, runtimeDefaults),
     mentorAvailability: parseBooleanEnv(env.MENTOR_AVAILABILITY_ENABLED, runtimeDefaults),

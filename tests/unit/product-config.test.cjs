@@ -14,9 +14,11 @@ test("product flags use safe defaults", () => {
   const config = configModule.getProductConfig({});
   assert.equal(config.featureFlags.productNavigation, true);
   for (const [name, enabled] of Object.entries(config.featureFlags)) {
-    if (!["productNavigation", "goDevelopmentJourney"].includes(name)) assert.equal(enabled, false, name);
+    if (!["productNavigation", "goDevelopmentJourney", "userNotifications"].includes(name)) assert.equal(enabled, false, name);
   }
   assert.equal(config.featureFlags.goDevelopmentJourney, true);
+  assert.equal(config.featureFlags.userNotifications, true);
+  assert.equal(configModule.getProductConfig({ USER_NOTIFICATIONS_ENABLED: "false" }).featureFlags.userNotifications, false);
   assert.equal(configModule.getProductConfig({ GO_DEVELOPMENT_JOURNEY_ENABLED: "false" }).featureFlags.goDevelopmentJourney, false);
   assert.equal(config.mentorCheckoutEnabled, true);
   assert.equal(configModule.getProductConfig({ MENTOR_CHECKOUT_ENABLED: "false" }).mentorCheckoutEnabled, false);

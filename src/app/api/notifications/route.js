@@ -15,15 +15,15 @@ export async function GET(request) {
   if (!getProductConfig().featureFlags.userNotifications) return featureUnavailable();
   const user = await getRequestUser(request);
   if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
-  const snapshot = await adminDb.collection("product_notifications")
-    .where("recipientUserId", "==", user.uid)
-    .orderBy("createdAt", "desc")
-    .limit(100)
-    .get();
+  const collection = adminDb.collection("product_notifications");
+  const [snapshot, unreadSnapshot] = await Promise.all([
+    collection.where("recipientUserId", "==", user.uid).orderBy("createdAt", "desc").limit(100).get(),
+    collection.where("recipientUserId", "==", user.uid).where("readAt", "==", null).count().get(),
+  ]);
   const notifications = snapshot.docs.map((doc) => serializeProductNotification(doc.id, doc.data()));
   return Response.json({
     notifications,
-    unreadCount: notifications.filter((notification) => !notification.readAt).length,
+    unreadCount: unreadSnapshot.data().count,
   }, { headers: { "Cache-Control": "no-store" } });
 }
 
@@ -34,15 +34,21 @@ export async function PATCH(request) {
   const body = await request.json().catch(() => ({}));
   const now = new Date();
   if (body.all === true) {
-    const snapshot = await adminDb.collection("product_notifications")
-      .where("recipientUserId", "==", user.uid)
-      .where("readAt", "==", null)
-      .limit(100)
-      .get();
-    const batch = adminDb.batch();
-    snapshot.docs.forEach((doc) => batch.update(doc.ref, { readAt: now }));
-    await batch.commit();
-    return Response.json({ updated: snapshot.size });
+    let updated = 0;
+    let snapshot;
+    do {
+      snapshot = await adminDb.collection("product_notifications")
+        .where("recipientUserId", "==", user.uid)
+        .where("readAt", "==", null)
+        .limit(100)
+        .get();
+      if (snapshot.empty) break;
+      const batch = adminDb.batch();
+      snapshot.docs.forEach((doc) => batch.update(doc.ref, { readAt: now }));
+      await batch.commit();
+      updated += snapshot.size;
+    } while (snapshot.size === 100);
+    return Response.json({ updated });
   }
 
   const notificationId = String(body.notificationId || "").trim();
