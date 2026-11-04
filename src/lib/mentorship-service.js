@@ -7,6 +7,7 @@ import { GO_EVENTS_SCHEDULE_URL } from "@/lib/events";
 import { cleanProductNotification } from "@/lib/product-notifications";
 import { getMentorshipConfig } from "@/lib/product-config";
 import { hasMentorToolAccess } from "@/lib/content-entitlements";
+import { getPublicMentor } from "@/lib/mentor-directory";
 import {
   ENGAGEMENT_CAPACITY_STATUSES,
   MENTOR_CONDUCT_VERSION,
@@ -112,6 +113,22 @@ async function notify({ db = adminDb, recipientUserId, type, title, message, eve
 
 function participant(engagement, user) {
   return Boolean(user?.admin || user?.uid === engagement.mentorId || user?.uid === engagement.menteeUserId);
+}
+
+async function hydrateSuggestionMentorProfiles(suggestions, db) {
+  const mentorIds = [...new Set(suggestions.map((suggestion) => suggestion.mentorId).filter(Boolean))];
+  const profiles = await Promise.all(mentorIds.map(async (mentorId) => {
+    try {
+      return [mentorId, await getPublicMentor(mentorId, { db })];
+    } catch {
+      return [mentorId, null];
+    }
+  }));
+  const byMentorId = new Map(profiles);
+  return suggestions.map((suggestion) => {
+    const mentorProfile = byMentorId.get(suggestion.mentorId);
+    return mentorProfile ? { ...suggestion, mentorProfile } : suggestion;
+  });
 }
 
 async function getAvailablePublicMentor(mentorId, db = adminDb) {
@@ -641,7 +658,7 @@ export async function forwardRequestToRequestedMentor({ actor, requestId, custom
 export async function getMentorshipSuggestionsForUser({ user, db = adminDb }) {
   const requests = await db.collection("mentorship_requests").where("menteeUserId", "==", user.uid).limit(100).get();
   const suggestions = (await Promise.all(requests.docs.map((doc) => db.collection("mentorship_suggestions").where("requestId", "==", doc.id).limit(20).get()))).flatMap((snapshots) => snapshots.docs.map((doc) => serializeSuggestion(doc.id, doc.data())));
-  return suggestions;
+  return hydrateSuggestionMentorProfiles(suggestions, db);
 }
 
 export async function declineMentorSuggestion({ user, suggestionId, db = adminDb, now = new Date() }) {
@@ -872,7 +889,7 @@ export async function getMentorshipDashboard(user, { db = adminDb } = {}) {
     db.collection("mentor_applications").doc(user.uid).get(),
   ]);
   const requestDtos = requests.docs.map((doc) => serializeMentorshipRequest(doc.id, doc.data()));
-  const suggestions = (await Promise.all(requests.docs.map((doc) => db.collection("mentorship_suggestions").where("requestId", "==", doc.id).limit(20).get()))).flatMap((snapshots) => snapshots.docs.map((doc) => serializeSuggestion(doc.id, doc.data())));
+  const suggestions = await hydrateSuggestionMentorProfiles((await Promise.all(requests.docs.map((doc) => db.collection("mentorship_suggestions").where("requestId", "==", doc.id).limit(20).get()))).flatMap((snapshots) => snapshots.docs.map((doc) => serializeSuggestion(doc.id, doc.data()))), db);
   const appDocs = new Map([...menteeApplications.docs, ...mentorApplications.docs].map((doc) => [doc.id, doc]));
   const engagementDocs = new Map([...menteeEngagements.docs, ...mentorEngagements.docs].map((doc) => [doc.id, doc]));
   const checkIns = (await Promise.all([...engagementDocs.keys()].map((id) => db.collection("mentorship_checkins").where("engagementId", "==", id).limit(20).get()))).flatMap((snapshots) => snapshots.docs.map((doc) => serializeMentorshipCheckIn(doc.id, doc.data())));
