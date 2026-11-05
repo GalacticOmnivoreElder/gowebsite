@@ -155,8 +155,10 @@ async function getCalendarRequestOptions(source) {
   return { searchParams: { key: apiKey } };
 }
 
+const EVENT_FIELDS = "id,recurringEventId,summary,description,start,end,location,htmlLink,status,organizer,conferenceData,hangoutLink,extendedProperties";
+
 function buildFields() {
-  return "items(id,recurringEventId,summary,description,start,end,location,htmlLink,status,organizer,conferenceData,hangoutLink,extendedProperties),nextPageToken";
+  return `items(${EVENT_FIELDS}),nextPageToken`;
 }
 
 async function googleFetch(url, options = {}) {
@@ -206,7 +208,7 @@ async function fetchCalendarEvent(calendarId, source, eventId) {
   const url = new URL(
     `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`
   );
-  url.searchParams.set("fields", buildFields().replace(",nextPageToken", ""));
+  url.searchParams.set("fields", EVENT_FIELDS);
   Object.entries(options.searchParams || {}).forEach(([key, value]) => url.searchParams.set(key, value));
   return googleFetch(url, { headers: options.headers });
 }
