@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { observer } from "mobx-react";
-import { Menu, X } from "lucide-react";
+import { CalendarDays, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -193,6 +193,22 @@ const Header = observer(() => {
               >
                 Review membership
               </SubscribeButton>
+
+              <Button asChild variant={pathIsActive("/events") ? "default" : "ghost"} size="icon">
+                <Link
+                  href="/events"
+                  aria-label="Events"
+                  aria-current={pathIsActive("/events") ? "page" : undefined}
+                  title="Events"
+                  onClick={() => trackEvent("navigation_clicked", {
+                    cta_id: "header_events",
+                    destination_path: "/events",
+                    navigation_area: "header",
+                  })}
+                >
+                  <CalendarDays className="h-5 w-5" aria-hidden="true" />
+                </Link>
+              </Button>
 
               {user ? (
                 <>

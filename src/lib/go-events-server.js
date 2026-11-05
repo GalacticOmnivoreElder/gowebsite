@@ -16,10 +16,8 @@ const MEMBERS_CALENDAR_ID = process.env.GO_EVENTS_MEMBERS_CALENDAR_ID || "";
 const TIMEZONE = process.env.GO_EVENTS_TIMEZONE || "Europe/Skopje";
 const GOOGLE_CALENDAR_API = "https://www.googleapis.com/calendar/v3";
 const GOOGLE_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";
-const CACHE_TTL_MS = 5 * 60 * 1000;
 const EVENT_WINDOW_MS = 180 * 24 * 60 * 60 * 1000;
 
-const eventListCache = new Map();
 let serviceAccountTokenCache = null;
 
 function configurationError(message) {
@@ -178,10 +176,6 @@ async function googleFetch(url, options = {}) {
 }
 
 async function fetchCalendarEvents(calendarId, source, { timeMin, timeMax } = {}) {
-  const cacheKey = `${calendarId}:${source}:${timeMin}:${timeMax}`;
-  const cached = eventListCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) return cached.data;
-
   const options = await getCalendarRequestOptions(source);
   const url = new URL(`${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events`);
   const params = {
@@ -199,7 +193,6 @@ async function fetchCalendarEvents(calendarId, source, { timeMin, timeMax } = {}
 
   const data = await googleFetch(url, { headers: options.headers });
   const items = Array.isArray(data.items) ? data.items : [];
-  eventListCache.set(cacheKey, { data: items, expiresAt: Date.now() + CACHE_TTL_MS });
   return items;
 }
 

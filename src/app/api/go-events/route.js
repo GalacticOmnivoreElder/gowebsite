@@ -7,7 +7,7 @@ export async function GET() {
     const payload = await getUpcomingGoEvents();
     return Response.json(payload, {
       headers: {
-        "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+        "Cache-Control": "no-store, max-age=0",
       },
     });
   } catch (error) {
