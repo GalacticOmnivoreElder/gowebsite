@@ -177,6 +177,12 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
   const purchasablePlans = MEMBERSHIP_PLANS.filter(
     (plan) => plan.availableForPurchase !== false
   );
+  const pricingGridClass =
+    purchasablePlans.length === 1
+      ? "max-w-md grid-cols-1"
+      : purchasablePlans.length === 2
+      ? "max-w-5xl grid-cols-1 md:grid-cols-2"
+      : "max-w-7xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
 
   return (
     <div className="min-w-0 max-w-full space-y-8">
@@ -258,7 +264,10 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
         </div>
       )}
 
-      <div className="mx-auto grid min-w-0 max-w-7xl grid-cols-1 gap-6 lg:grid-cols-3">
+      <div
+        className={`mx-auto grid min-w-0 gap-6 ${pricingGridClass}`}
+        aria-label={`${purchasablePlans.length} membership plan${purchasablePlans.length === 1 ? "" : "s"}`}
+      >
         {purchasablePlans.map((plan) => {
           const Icon = planIcons[plan.id];
           const price = plan.pricing[interval];
