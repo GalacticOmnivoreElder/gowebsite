@@ -27,7 +27,10 @@ export function getProductConfig(env = process.env) {
 
   return {
     featureFlags,
-    mentorCheckoutEnabled: parseBooleanEnv(env.MENTOR_CHECKOUT_ENABLED, true),
+    // Polar checkout is intentionally paused while GO migrates payment
+    // providers. Existing subscriptions remain readable and manageable.
+    membershipCheckoutEnabled: parseBooleanEnv(env.MEMBERSHIP_CHECKOUT_ENABLED, false),
+    mentorCheckoutEnabled: parseBooleanEnv(env.MENTOR_CHECKOUT_ENABLED, false),
   };
 }
 
@@ -35,6 +38,7 @@ export function getSafeProductConfig(env = process.env) {
   const config = getProductConfig(env);
   return {
     featureFlags: config.featureFlags,
+    membershipCheckoutEnabled: config.membershipCheckoutEnabled,
     mentorCheckoutEnabled: config.mentorCheckoutEnabled,
   };
 }

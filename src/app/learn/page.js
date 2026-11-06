@@ -28,7 +28,9 @@ export default async function LearnPage({ searchParams }) {
                 Request mentorship for your next milestone
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                Ask GO a public learning question below, or browse reviewed mentors for ongoing, personal guidance. Structured mentorship is available to active GO members.
+                Ask GO a public learning question below, or review the separate
+                mentorship programme for ongoing, personal guidance. Any
+                mentorship request is subject to its own eligibility and review.
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-3">

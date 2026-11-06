@@ -442,7 +442,7 @@ const BillingPage = observer(() => {
                     pendingUpgrade.interval === "year"
                       ? "year"
                       : "month"}
-                    ; Polar confirms final discounts and taxes at renewal.
+                    ; the final renewal amount is confirmed by the billing provider.
                   </div>
                 </AlertDescription>
               </Alert>

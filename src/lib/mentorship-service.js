@@ -57,7 +57,7 @@ function mentorDirectoryBlockers(profileData = {}, userData = {}) {
   if (profileData.status !== "approved" || userData.mentorStatus !== "approved") blockers.push("GO approval is required");
   if (profileData.publicProfileConsent !== true) blockers.push("public profile consent is required");
   if (!isMentorProfileComplete(profileData)) blockers.push("the public mentor profile is incomplete");
-  if (!hasMentorToolAccess(userData)) blockers.push("an active verified GO Mentor membership is required");
+  if (!hasMentorToolAccess(userData)) blockers.push("an active verified mentor entitlement is required");
   if (userData.mentorPublicProfileEnabled !== true) blockers.push("admin publication is pending");
   return blockers;
 }
@@ -124,7 +124,8 @@ async function hydrateSuggestionMentorProfiles(suggestions, db) {
       return [mentorId, null];
     }
   }));
-  const byMentorId = new Map(profiles);
+  const byMentorId = new Map();
+  profiles.forEach(([mentorId, mentorProfile]) => byMentorId.set(mentorId, mentorProfile));
   return suggestions.map((suggestion) => {
     const mentorProfile = byMentorId.get(suggestion.mentorId);
     return mentorProfile ? { ...suggestion, mentorProfile } : suggestion;
@@ -259,7 +260,7 @@ export async function publishMentorProfile({ actor, userId, db = adminDb, now = 
       throw workflowError("Complete the public mentor profile and confirm public profile consent before publishing", "mentor_profile_incomplete", 409);
     }
     if (!hasMentorToolAccess(userData)) {
-      throw workflowError("An active verified GO Mentor membership is required before publishing", "mentor_membership_required", 409);
+      throw workflowError("An active verified mentor entitlement is required before publishing", "mentor_membership_required", 409);
     }
     transaction.set(userRef, { mentorPublicProfileEnabled: true, mentorPublicProfilePublishedBy: actor.uid, mentorPublicProfilePublishedAt: now }, { merge: true });
     audit(transaction, db, { actor, action: "mentor_profile.published", entityType: "mentor_profile", entityId: cleanUserId, previousStatus: "private", newStatus: "public" });
@@ -709,7 +710,7 @@ export async function applyToMentorSuggestion({ user, suggestionId, message = ""
 
 export async function respondToMentorApplication({ user, applicationId, action, response = "", db = adminDb, now = new Date() }) {
   if (!user?.admin && !hasMentorToolAccess(user?.userData || {}, { now })) {
-    throw workflowError("Active verified Mentor membership is required", "mentor_membership_required", 403);
+    throw workflowError("Active verified mentor entitlement is required", "mentor_membership_required", 403);
   }
   const applicationRef = db.collection("mentorship_applications").doc(applicationId);
   const result = await db.runTransaction(async (transaction) => {
@@ -782,7 +783,7 @@ export async function updateMentorshipEngagement({ user, engagementId, action, p
     if (!doc.exists || !participant(doc.data(), user)) throw workflowError("Mentorship engagement not found", "not_found", 404);
     const current = doc.data();
     if (!user?.admin && user?.uid === current.mentorId && !hasMentorToolAccess(user?.userData || {}, { now })) {
-      throw workflowError("Active verified Mentor membership is required", "mentor_membership_required", 403);
+      throw workflowError("Active verified mentor entitlement is required", "mentor_membership_required", 403);
     }
     if (!MENTORSHIP_ENGAGEMENT_STATUSES.includes(current.status)) throw workflowError("This engagement is no longer available", "invalid_status", 409);
     if (action === "confirm_agreement") {

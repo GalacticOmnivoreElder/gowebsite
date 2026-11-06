@@ -20,14 +20,12 @@ test("global navigation groups every learning destination under Learn", () => {
   assert.ok(header.indexOf("<NavigationMenu") < header.indexOf("primaryNavigation.slice(2)"));
 });
 
-test("membership presents four categories with Mentor pricing and separate applications", () => {
-  for (const title of ["Public / Free", "GO Community", "GO Mentor Membership", "GO Business"]) assert.match(membership, new RegExp(`title: "${title}"`));
+test("membership presents separate Mentor applications without Mentor pricing", () => {
+  for (const title of ["Public / Free", "GO Community", "GO Mentor programme", "GO Business"]) assert.match(membership, new RegExp(`title: "${title}"`));
   assert.doesNotMatch(membership, /badge: "Coming Soon"/);
-  assert.match(membership, /getMentorCheckoutStatus\("annual"\)/);
   const mentorBlock = membership.split('id: "mentor-programme"')[1].split('id: "business"')[0];
-  assert.match(mentorBlock, /href="#mentor-plan"/);
   assert.match(mentorBlock, /MentorApplicationButton/);
-  assert.match(mentorBlock, /Direct reviews shared only with author consent and mentor selection/);
+  assert.match(mentorBlock, /not a paid subscription/);
   assert.match(mentorApplicationButton, /if \(!applicationsOpen\) return null/);
   assert.doesNotMatch(mentorApplicationButton, /Applications closed/);
 });

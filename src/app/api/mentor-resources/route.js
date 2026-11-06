@@ -31,7 +31,7 @@ export async function POST(request) {
         tx.create(db.collection('admin_audit_events').doc(), { action: 'mentor_resource.reviewed', actorId: user.uid, resourceId: ref.id, status: body.status, createdAt: new Date() });
       });
     } else {
-      if (!hasMentorToolAccess(user.userData, { admin: user.admin })) return Response.json({ error: 'GO approval and active Mentor access are required. Business members need the mentor earning add-on.' }, { status: 403 });
+      if (!hasMentorToolAccess(user.userData, { admin: user.admin })) return Response.json({ error: 'GO approval and an active verified mentor entitlement are required.' }, { status: 403 });
       const title = String(body.title || '').trim();
       const content = String(body.content || '').trim();
       const materialUrl = String(body.materialUrl || '').trim();

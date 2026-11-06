@@ -22,6 +22,7 @@ export async function POST(request) {
     const action = body.action;
     if (['set_capacity', 'set_mentor_addon'].includes(action)) {
       if (!user.admin) return Response.json({ error: 'GO staff access required.' }, { status: 403 });
+      if (action === 'set_mentor_addon' && body.status === 'active') return Response.json({ error: 'Mentor earning add-ons are paused and cannot be activated.' }, { status: 410 });
       if (typeof body.userId !== 'string' || !body.userId || body.userId.includes('/')) return Response.json({ error: 'A valid account ID is required.' }, { status: 400 });
       if (typeof body.reason !== 'string' || body.reason.trim().length < 8) return Response.json({ error: 'Record the negotiated agreement or verified payment reference.' }, { status: 400 });
       let update;

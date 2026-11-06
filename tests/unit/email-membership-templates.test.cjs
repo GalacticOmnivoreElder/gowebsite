@@ -141,14 +141,13 @@ test("membership templates escape user-controlled names", () => {
   );
 });
 
-test("Mentor welcome and activation emails explain interview verification before production and mentorship connections", () => {
+test("Mentor welcome and activation emails keep the programme separate from subscriptions", () => {
   for (const type of ["account.welcome", "billing.membership_activated"]) {
     const rendered = templates.renderEmailEventTemplate(type, { tier: "mentor", firstName: "Ada" });
     for (const body of [rendered.text, rendered.html]) {
-      assert.match(body, /interview with GO and be verified/);
-      assert.match(body, /courses, workshops, video bundles, or assets/);
-      assert.match(body, /community members requesting mentorship/);
-      assert.match(body, /does not automatically verify you/);
+      assert.match(body, /Mentor applications are reviewed separately from GO subscriptions/);
+      assert.match(body, /An interview and GO verification are required/);
+      assert.match(body, /does not guarantee approval/);
     }
   }
 });

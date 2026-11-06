@@ -25,9 +25,11 @@ export function isMentorProductReady(product, productId, interval) {
 
 export async function getMentorCheckoutStatus(interval) {
   const productId = resolvePolarProductId("mentor", interval);
+  const config = getProductConfig();
   return {
     available:
-      getProductConfig().mentorCheckoutEnabled &&
+      config.membershipCheckoutEnabled &&
+      config.mentorCheckoutEnabled &&
       Boolean(productId) &&
       resolvePolarProductTier(productId) === "mentor",
     productId: productId || null,

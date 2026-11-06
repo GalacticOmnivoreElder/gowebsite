@@ -47,7 +47,7 @@ const formatPendingDate = (value) => {
   return new Intl.DateTimeFormat("en", { dateStyle: "long" }).format(date);
 };
 
-export const PricingDisplay = observer(({ mentorAvailability = {} }) => {
+export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
   const [interval, setInterval] = useState("monthly");
   const [upgradeInterval, setUpgradeInterval] = useState("monthly");
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
@@ -87,6 +87,7 @@ export const PricingDisplay = observer(({ mentorAvailability = {} }) => {
     const searchParams = new URLSearchParams(window.location.search);
     const selection = parseCheckoutPlanKey(searchParams.get("plan"));
     if (!selection) return;
+    if (!checkoutEnabled) return;
 
     setInterval(selection.interval);
     if (
@@ -171,7 +172,11 @@ export const PricingDisplay = observer(({ mentorAvailability = {} }) => {
       console.error("Could not resume membership checkout:", error);
       window.alert(error.message);
     });
-  }, [authLoading, currentTier, hasActiveSubscription, isAnonymous, user]);
+  }, [authLoading, checkoutEnabled, currentTier, hasActiveSubscription, isAnonymous, user]);
+
+  const purchasablePlans = MEMBERSHIP_PLANS.filter(
+    (plan) => plan.availableForPurchase !== false
+  );
 
   return (
     <div className="min-w-0 max-w-full space-y-8">
@@ -254,7 +259,7 @@ export const PricingDisplay = observer(({ mentorAvailability = {} }) => {
       )}
 
       <div className="mx-auto grid min-w-0 max-w-7xl grid-cols-1 gap-6 lg:grid-cols-3">
-        {MEMBERSHIP_PLANS.map((plan) => {
+        {purchasablePlans.map((plan) => {
           const Icon = planIcons[plan.id];
           const price = plan.pricing[interval];
           const isCurrentPlan =
@@ -373,6 +378,16 @@ export const PricingDisplay = observer(({ mentorAvailability = {} }) => {
                     <Check className="mr-2 h-4 w-4" />
                     Included with GO Business
                   </Button>
+                ) : !checkoutEnabled ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="w-full"
+                    disabled
+                  >
+                    New subscription checkout paused
+                  </Button>
                 ) : isUpgradeTarget ? (
                   <Button
                     type="button"
@@ -387,17 +402,6 @@ export const PricingDisplay = observer(({ mentorAvailability = {} }) => {
                     Review Business upgrade
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                ) : plan.tier === "mentor" && !mentorAvailability[interval] ? (
-                  <div className="w-full space-y-2">
-                    <Button className="w-full" size="lg" variant="outline" disabled>
-                      {interval === "annual" ? "Annual" : "Monthly"} checkout unavailable
-                    </Button>
-                    <p className="text-sm text-muted-foreground">
-                      {interval === "annual" && mentorAvailability.monthly
-                        ? "Monthly Mentor membership is available."
-                        : "Please contact support for help joining."}
-                    </p>
-                  </div>
                 ) : hasActiveSubscription && !canChooseMembershipPlan({
                     hasActiveSubscription,
                     currentTier,
@@ -433,8 +437,9 @@ export const PricingDisplay = observer(({ mentorAvailability = {} }) => {
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
-        Prices shown in MKD. Polar confirms the available regional price and
-        applicable taxes at secure checkout.
+        Prices are shown in MKD. New membership checkout is temporarily paused
+        while GO updates its payment provider; existing subscribers can use
+        Billing to manage their current subscription.
       </p>
 
       <BusinessUpgradeDialog

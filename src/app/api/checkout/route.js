@@ -6,6 +6,7 @@ import {
   getPolarServer,
   resolvePolarProductId,
 } from "@/lib/polar";
+import { getProductConfig } from "@/lib/product-config";
 
 /**
  * Create a Polar checkout session on the server.
@@ -37,6 +38,17 @@ export async function POST(request) {
     return NextResponse.json(
       { error: "Authentication required" },
       { status: 401 }
+    );
+  }
+
+  if (!getProductConfig().membershipCheckoutEnabled) {
+    return NextResponse.json(
+      {
+        error:
+          "New membership checkout is temporarily unavailable while GO updates its payment provider. Existing subscribers can manage their current subscription from Billing.",
+        code: "membership_checkout_unavailable",
+      },
+      { status: 503 }
     );
   }
 

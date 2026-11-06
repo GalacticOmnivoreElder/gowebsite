@@ -20,7 +20,9 @@ test("product flags use safe defaults", () => {
   assert.equal(config.featureFlags.userNotifications, true);
   assert.equal(configModule.getProductConfig({ USER_NOTIFICATIONS_ENABLED: "false" }).featureFlags.userNotifications, false);
   assert.equal(configModule.getProductConfig({ GO_DEVELOPMENT_JOURNEY_ENABLED: "false" }).featureFlags.goDevelopmentJourney, false);
-  assert.equal(config.mentorCheckoutEnabled, true);
+  assert.equal(config.membershipCheckoutEnabled, false);
+  assert.equal(config.mentorCheckoutEnabled, false);
+  assert.equal(configModule.getProductConfig({ MEMBERSHIP_CHECKOUT_ENABLED: "true" }).membershipCheckoutEnabled, true);
   assert.equal(configModule.getProductConfig({ MENTOR_CHECKOUT_ENABLED: "false" }).mentorCheckoutEnabled, false);
 });
 

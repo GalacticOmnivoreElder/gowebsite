@@ -7,7 +7,7 @@ const { BILLING_INTERVALS, MEMBERSHIP_PLANS } = loadSourceModule(
   ["BILLING_INTERVALS", "MEMBERSHIP_PLANS"]
 );
 
-test("membership catalogue matches the MKD launch prices", () => {
+test("membership catalogue matches the MKD launch prices without public checkout URLs", () => {
   assert.deepEqual(
     JSON.parse(JSON.stringify(BILLING_INTERVALS.map((option) => option.id))),
     ["monthly", "annual"]
@@ -29,27 +29,14 @@ test("membership catalogue matches the MKD launch prices", () => {
     mentor: { annual: 14999, monthly: 1499 },
   });
 
-  const checkoutUrls = Object.fromEntries(
-    MEMBERSHIP_PLANS.flatMap((plan) =>
-      Object.entries(plan.pricing).map(([interval, price]) => [
-        `${plan.tier}_${interval}`,
-        price.checkoutUrl,
-      ])
-    )
+  assert.equal(
+    MEMBERSHIP_PLANS.some((plan) =>
+      Object.values(plan.pricing).some((price) => "checkoutUrl" in price)
+    ),
+    false
   );
-
-  assert.deepEqual(JSON.parse(JSON.stringify(checkoutUrls)), {
-    mentor_annual:
-      "https://buy.polar.sh/polar_cl_qMaoqwArF92Nt3LxzvMy1oHVV14K2PT7YleYz1EaS5D",
-    mentor_monthly:
-      "https://buy.polar.sh/polar_cl_F7jYBdfopsZYvauWl8TbQjAoXTLOAh9MVIXid0Tyfpt",
-    company_annual:
-      "https://buy.polar.sh/polar_cl_UtMDVEYWTIf2MyIECvoclfxLXrXvXjwEcJZAO3i0SeK",
-    company_monthly:
-      "https://buy.polar.sh/polar_cl_jXCPPseL1ZnPUhkxY7JJBjUk5CdzsimvTqVum2zuJgz",
-    member_annual:
-      "https://buy.polar.sh/polar_cl_dXXa5BGsLP8ukTHL5uFn6Ly8ijgz3VFqYAnHr4EvUxI",
-    member_monthly:
-      "https://buy.polar.sh/polar_cl_3eQZAkgR7tt6AVntit4gkKMQJ6vM7p2jlwvLF0EyUMq",
-  });
+  assert.equal(
+    MEMBERSHIP_PLANS.find((plan) => plan.tier === "mentor").availableForPurchase,
+    false
+  );
 });

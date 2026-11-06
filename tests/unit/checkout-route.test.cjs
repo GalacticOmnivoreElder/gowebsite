@@ -35,6 +35,7 @@ function loadRoute({
   productId = "prod_member_monthly",
   polarCreate,
   mentorAvailable = true,
+  checkoutEnabled = true,
 } = {}) {
   const polarCalls = [];
   function createPolar(config) {
@@ -73,6 +74,7 @@ function loadRoute({
         createPolar,
         getPolarServer: () => "sandbox",
         getMentorCheckoutStatus: async () => ({ available: mentorAvailable }),
+        getProductConfig: () => ({ membershipCheckoutEnabled: checkoutEnabled }),
         getRequestUser: async () => user || null,
         resolvePolarProductId: () => productId,
       },
@@ -89,6 +91,23 @@ test("checkout route requires authentication", async () => {
 
   assert.equal(response.status, 401);
   assert.deepEqual(plain(response.body), { error: "Authentication required" });
+});
+
+test("checkout route stays closed while the subscription checkout gate is disabled", async () => {
+  const { POST, polarCalls } = loadRoute({
+    checkoutEnabled: false,
+    user: { email: "member@example.com", uid: "user-1" },
+  });
+
+  const response = await POST(createRequest({ jsonBody: { tier: "member" } }));
+
+  assert.equal(response.status, 503);
+  assert.deepEqual(plain(response.body), {
+    code: "membership_checkout_unavailable",
+    error:
+      "New membership checkout is temporarily unavailable while GO updates its payment provider. Existing subscribers can manage their current subscription from Billing.",
+  });
+  assert.deepEqual(polarCalls, []);
 });
 
 test("Community upgrade requires the in-app review flow without mutating checkout or Polar", async () => {

@@ -139,6 +139,11 @@ export default function ServicesPage() {
                 Choose a managed service delivered with GO, or use Projects to
                 hire community talent through a GO Business brief.
               </p>
+              <p className="mt-3 max-w-2xl text-xs leading-5 text-white/40">
+                These are separate, request-based services. They are not
+                included in GO subscription benefits or sold through the
+                current subscription checkout.
+              </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
               <Button asChild size="lg" className="min-h-12 w-full sm:flex-1 lg:flex-none">

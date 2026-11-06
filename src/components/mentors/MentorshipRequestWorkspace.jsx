@@ -79,7 +79,7 @@ export function MentorshipRequestWorkspace({ requestedMentorId = "" }) {
       if (!token) throw new Error("Sign in to request mentorship.");
       const response = await fetch("/api/mentorship/requests", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...form, requestId, mode, requestedMentorId: requestedMentorId || null, languagePreferences: csv(form.languagePreferences), projectLinks: csv(form.projectLinks) }) });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error === "mentorship_membership_required" ? "An active GO membership is required to request mentorship." : result.error || "Mentorship request could not be saved.");
+      if (!response.ok) throw new Error(result.error === "mentorship_membership_required" ? "An eligible active GO account is required to request this separate programme." : result.error || "Mentorship request could not be saved.");
       if (mode !== "draft") {
         trackEvent("mentorship_request_completed", {
           flow: "go_review",
@@ -92,8 +92,8 @@ export function MentorshipRequestWorkspace({ requestedMentorId = "" }) {
   };
 
   if (access.status === "checking") return <AccessCard icon={CreditCard} title="Checking mentorship access" description="We are checking your sign-in and active membership status." />;
-  if (access.status === "signed_out") return <AccessCard icon={LogIn} title="Sign in to request mentorship" description="Create an account or sign in to apply. An active GO subscription is required before you can submit a mentorship request." actions={<><Button asChild><Link href={`/signup?redirect=${authRedirect}`}><UserPlus className="mr-2 h-4 w-4" />Sign up</Link></Button><Button asChild variant="outline"><Link href={`/login?redirect=${authRedirect}`}><LogIn className="mr-2 h-4 w-4" />Sign in</Link></Button></>} />;
-  if (access.status === "membership_required") return <AccessCard icon={CreditCard} title="An active subscription is required" description="GO Mentorship is available to signed-in members with any active subscription. Review membership options, then return here to apply." actions={<Button asChild><Link href="/membership"><CreditCard className="mr-2 h-4 w-4" />Review membership</Link></Button>} />;
+  if (access.status === "signed_out") return <AccessCard icon={LogIn} title="Sign in to request mentorship" description="Create an account or sign in to apply. Eligibility is checked before a separate mentorship request can be submitted." actions={<><Button asChild><Link href={`/signup?redirect=${authRedirect}`}><UserPlus className="mr-2 h-4 w-4" />Sign up</Link></Button><Button asChild variant="outline"><Link href={`/login?redirect=${authRedirect}`}><LogIn className="mr-2 h-4 w-4" />Sign in</Link></Button></>} />;
+  if (access.status === "membership_required") return <AccessCard icon={CreditCard} title="Eligibility is required to apply" description="Mentorship is a separate GO programme, not a subscription benefit. Sign in with an eligible active account, review the programme details, and submit an application for GO review." actions={<Button asChild><Link href="/membership?intent=mentorship"><CreditCard className="mr-2 h-4 w-4" />Review programme details</Link></Button>} />;
   if (access.status === "error") return <AccessCard icon={LogIn} title="We could not verify your access" description={access.message || "Please refresh the page or sign in again before requesting mentorship."} actions={<Button asChild variant="outline"><Link href={`/login?redirect=${authRedirect}`}><LogIn className="mr-2 h-4 w-4" />Sign in again</Link></Button>} />;
 
   return <div className="space-y-6">

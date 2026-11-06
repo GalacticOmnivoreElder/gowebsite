@@ -16,8 +16,8 @@ import { createMetadata } from "@/lib/seo";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { getMentorCheckoutStatus } from "@/lib/mentor-checkout";
 import { getMentorApplicationState } from "@/lib/product-settings";
+import { getProductConfig } from "@/lib/product-config";
 import { MentorApplicationButton } from "@/components/pricing/MentorApplicationButton";
 import { GO_INTENTS, validGoIntent } from "@/lib/go-intents";
 
@@ -26,20 +26,20 @@ export const dynamic = "force-dynamic";
 export const metadata = createMetadata({
   title: "GO Membership",
   description:
-    "Compare GO Community, GO Mentor, and GO Business membership, pricing, billing, and access.",
+    "Review GO Community and GO Business subscription access, billing, and programme routes.",
   path: "/membership",
 });
 
 const checkoutNotes = [
   {
     icon: ShieldCheck,
-    title: "Secure checkout",
-    description: "Payments and recurring billing are handled by Polar.",
+    title: "Clear subscription access",
+    description: "Each plan describes the digital and community access attached to the subscription.",
   },
   {
     icon: RefreshCw,
-    title: "Flexible billing",
-    description: "Choose monthly access or save with an annual membership.",
+    title: "Billing status",
+    description: "Existing subscribers can review their current status and billing details from Billing.",
   },
   {
     icon: CreditCard,
@@ -49,30 +49,29 @@ const checkoutNotes = [
 ];
 
 const accessRows = [
-  ["Public learning, FAQ, and project browsing", "Yes", "Yes", "Yes", "Yes"],
-  ["Submit structured mentorship requests", "—", "Yes", "Yes", "Yes"],
-  ["Apply to projects", "Selected public briefs", "Per-project rules", "Per-project rules", "Per-project rules"],
-  ["Own unreleased creator projects", "—", "1 at a time", "1 at a time", "Negotiated capacity"],
-  ["Create hiring briefs", "—", "—", "—", "Within capacity"],
-  ["Create mentor resources", "—", "—", "After verification", "Add-on + verification"],
-  ["GO release and publishing guidance", "—", "Included", "Included", "Included"],
+  ["Public learning, FAQ, and project browsing", "Yes", "Yes", "Yes"],
+  ["Structured mentorship programme", "Separate application; not a subscription benefit", "Separate application; not a subscription benefit", "Separate application; not a subscription benefit"],
+  ["Apply to projects", "Selected public briefs", "Per-project rules", "Per-project rules"],
+  ["Own unreleased creator projects", "—", "1 at a time", "Negotiated capacity"],
+  ["Create hiring briefs", "—", "—", "Within capacity"],
+  ["GO project workspace and publishing tools", "—", "Included", "Included"],
 ];
 
 const intentContext = {
   mentorship: {
     eyebrow: "Learn / mentorship",
     title: "Get ongoing guidance for a real milestone",
-    body: "Active GO members can browse reviewed mentors and submit a private request for structured mentorship. Public learning questions remain available to everyone on Learn.",
+    body: "Mentorship is a separate GO application programme and is not included in a paid subscription. Public learning questions remain available to everyone on Learn; approved programme routes are reviewed separately.",
   },
   "become-mentor": {
     eyebrow: "Learn / mentor",
     title: "Share your experience with GO",
-    body: "Mentor membership includes the application, GO interview, and approval path required before you offer mentorship or create paid learning resources.",
+    body: "Mentor applications, interviews, and approval are handled separately from GO subscriptions. Applying does not create a paid membership or guarantee publication.",
   },
   "publish-solo": {
     eyebrow: "Portfolio / solo creator",
     title: "Build and publish your game with GO",
-    body: "Community and Mentor members can own one unreleased creator project at a time and receive guided release preparation subject to GO review and terms.",
+    body: "Community members can own one unreleased creator project at a time and use the project workspace subject to GO review and project terms.",
   },
   "find-team": {
     eyebrow: "Portfolio / collaboration",
@@ -96,11 +95,8 @@ export default async function MembershipPage({ searchParams }) {
   const creatorMembershipRequired = params?.reason === "creator";
   const selectedIntent = validGoIntent(params?.intent);
   const selectedPath = selectedIntent ? intentContext[selectedIntent] : null;
-  const [mentorMonthly, mentorAnnual, mentorApplicationState] = await Promise.all([
-    getMentorCheckoutStatus("monthly"),
-    getMentorCheckoutStatus("annual"),
-    getMentorApplicationState(),
-  ]);
+  const { membershipCheckoutEnabled } = getProductConfig();
+  const mentorApplicationState = await getMentorApplicationState();
 
   const membershipCategories = [
     {
@@ -116,23 +112,23 @@ export default async function MembershipPage({ searchParams }) {
       title: "GO Community",
       icon: User,
       description: "Individual creator access with the current Community membership.",
-      benefits: ["One creator project at a time; GO release approval unlocks the next", "Guided release preparation with GO", "Apply to open community projects", "Eligible courses, video bundles, member resources, and approved asset packs", "Contribute asset packs when community submissions are enabled", "Request an available official GO mentor"],
+      benefits: ["One creator project at a time; GO release approval unlocks the next", "Project workspace and publication workflow tools", "Apply to open community projects", "Eligible courses, video bundles, member resources, and approved asset packs", "Contribute asset packs when community submissions are enabled"],
       footer: <Button asChild variant="outline" className="w-full"><Link href="#paid-plans">See current pricing</Link></Button>,
     },
     {
       id: "mentor-programme",
-      title: "GO Mentor Membership",
+      title: "GO Mentor programme",
       icon: Users,
-      description: "Join as a mentor or educator. An interview with GO and verification are required before you can produce content or offer mentorship.",
-      benefits: ["Produce courses, workshops, video bundles, and assets after interview and GO verification", "Connect with community members requesting mentorship after interview and GO verification", "Direct reviews shared only with author consent and mentor selection; GO approval required"],
-      footer: <div className="w-full space-y-3"><Button asChild variant="outline" className="w-full"><Link href="#mentor-plan">See Mentor pricing</Link></Button><MentorApplicationButton applicationsOpen={mentorApplicationState.open} /></div>,
+      description: "A separate application and review route. It is not a paid subscription or a checkout option.",
+      benefits: ["Submit an application for GO review", "Complete an interview and verification process if invited", "Public profile publication is subject to approval", "Any future activity is governed by separate GO terms"],
+      footer: <MentorApplicationButton applicationsOpen={mentorApplicationState.open} />,
     },
     {
       id: "business",
       title: "GO Business",
       icon: Briefcase,
       description: "Project creation and team management for studios and project owners.",
-      benefits: ["Everything included in GO Community", "Project capacity negotiated with the GO Business team", "Review applicants and manage project teams", "Optional verified mentor earning access: +1,500 MKD/month"],
+      benefits: ["Everything included in GO Community", "Project capacity negotiated with the GO Business team", "Review applicants and manage project teams"],
       footer: <Button asChild variant="outline" className="w-full"><Link href="#paid-plans">See current pricing</Link></Button>,
     },
   ];
@@ -146,11 +142,12 @@ export default async function MembershipPage({ searchParams }) {
               Galactic Omnivore Membership
             </p>
             <h1 className="max-w-3xl break-words text-4xl font-bold md:text-5xl">
-              Four ways to take part in GO
+              Public access, memberships, and a separate mentor programme
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-              Start with public access or choose Community, Mentor, or Business
-              membership when their benefits fit.
+              Start with public access, choose a membership for the digital and
+              community access that fits, or apply separately to the mentor
+              programme.
             </p>
           </div>
         </section>
@@ -173,7 +170,7 @@ export default async function MembershipPage({ searchParams }) {
               <Briefcase className="h-4 w-4" />
               <AlertTitle>Choose your project access</AlertTitle>
               <AlertDescription>
-                Community and Mentor include one unreleased creator project. GO Business hiring capacity is agreed with the GO team.
+                Community includes one unreleased creator project. GO Business hiring capacity is agreed with the GO team.
               </AlertDescription>
             </Alert>
           )}
@@ -195,26 +192,19 @@ export default async function MembershipPage({ searchParams }) {
 
           <section className="mx-auto mt-14 max-w-7xl" aria-labelledby="access-overview-heading">
             <h2 id="access-overview-heading" className="mb-3 text-2xl font-bold">Access at a glance</h2>
-            <p className="mb-5 max-w-3xl text-sm text-muted-foreground">Benefits are subject to project terms, GO approval, and the paid-through period. Business capacity and the mentor earning add-on are recorded separately by GO.</p>
+            <p className="mb-5 max-w-3xl text-sm text-muted-foreground">Subscriptions provide only the digital and community access described below. Mentorship, consulting, custom production, and mentor earning arrangements are separate GO programmes or services and are not subscription benefits.</p>
             <div className="overflow-x-auto rounded-xl border">
               <table className="w-full min-w-[760px] text-left text-sm">
                 <caption className="sr-only">GO access by account type</caption>
-                <thead className="bg-muted/40"><tr><th scope="col" className="px-4 py-3 font-semibold">Capability</th><th scope="col" className="px-4 py-3 font-semibold">Public / Free</th><th scope="col" className="px-4 py-3 font-semibold">Community</th><th scope="col" className="px-4 py-3 font-semibold">Mentor</th><th scope="col" className="px-4 py-3 font-semibold">Business</th></tr></thead>
-                <tbody>{accessRows.map(([capability, free, community, mentor, business]) => <tr key={capability} className="border-t"><th scope="row" className="px-4 py-3 font-medium">{capability}</th><td className="px-4 py-3 text-muted-foreground">{free}</td><td className="px-4 py-3">{community}</td><td className="px-4 py-3">{mentor}</td><td className="px-4 py-3">{business}</td></tr>)}</tbody>
+                <thead className="bg-muted/40"><tr><th scope="col" className="px-4 py-3 font-semibold">Capability</th><th scope="col" className="px-4 py-3 font-semibold">Public / Free</th><th scope="col" className="px-4 py-3 font-semibold">Community</th><th scope="col" className="px-4 py-3 font-semibold">Business</th></tr></thead>
+                <tbody>{accessRows.map(([capability, free, community, business]) => <tr key={capability} className="border-t"><th scope="row" className="px-4 py-3 font-medium">{capability}</th><td className="px-4 py-3 text-muted-foreground">{free}</td><td className="px-4 py-3">{community}</td><td className="px-4 py-3">{business}</td></tr>)}</tbody>
               </table>
             </div>
           </section>
 
           <div id="paid-plans" className="scroll-mt-24 pt-14">
             <h2 className="mb-7 text-center text-3xl font-bold">Current paid membership pricing</h2>
-            <PricingDisplay mentorAvailability={{ monthly: mentorMonthly.available, annual: mentorAnnual.available }} />
-            <Alert className="mx-auto mt-8 max-w-4xl">
-              <Briefcase className="h-4 w-4" />
-              <AlertTitle>Optional Business mentor earning add-on</AlertTitle>
-              <AlertDescription>
-                GO Business members can request verified mentor earning access for an additional 1,500 MKD/month. GO approval, mentor verification, and payment confirmation are required; the add-on is recorded by GO separately from the Business subscription.
-              </AlertDescription>
-            </Alert>
+            <PricingDisplay checkoutEnabled={membershipCheckoutEnabled} />
           </div>
         </section>
 

@@ -154,7 +154,7 @@ const SubscriptionStatusOverview = ({ user }) => {
       status: "active",
       title: "Active membership",
       description: `${
-        user?.membershipTier === "company" ? "GO Business" : user?.membershipTier === "mentor" ? "GO Mentor Membership" : "GO Community"
+        user?.membershipTier === "company" ? "GO Business" : user?.membershipTier === "mentor" ? "GO Mentor access" : "GO Community"
       } is your current active membership`,
       icon: <CheckCircle className="h-5 w-5 text-green-500" />,
       variant: "default",
@@ -196,7 +196,7 @@ const SubscriptionStatusOverview = ({ user }) => {
               {user.pendingMembershipInterval === "annual"
                 ? "year"
                 : "month"}
-              ; Polar confirms final discounts and taxes at renewal.
+              ; the final renewal amount is confirmed by the billing provider.
             </div>
           </AlertDescription>
         </Alert>
