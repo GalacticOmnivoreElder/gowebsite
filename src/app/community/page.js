@@ -190,23 +190,23 @@ export default function CommunityPage() {
               <Card
                 key={title}
                 id={id}
-                className="group flex scroll-mt-24 flex-col overflow-hidden rounded-xl border-white/10 bg-[#111014]/90 text-white shadow-[0_18px_55px_rgba(0,0,0,0.24)] transition-colors hover:border-primary/55 hover:bg-primary/[0.06]"
+                className="group flex scroll-mt-24 flex-col overflow-hidden rounded-lg border-white/15 bg-card/75 text-white shadow-[0_20px_60px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.06)] transition-colors hover:border-primary/55"
               >
-                <CardHeader className="border-b border-white/10 p-5 sm:p-6">
+                <CardHeader className="p-6 pb-0 sm:p-7 sm:pb-0">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
+                      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-white/45">
                         {eyebrow}
                       </p>
-                      <CardTitle className="mt-3 text-xl text-white">{title}</CardTitle>
+                      <CardTitle className="mt-7 text-2xl font-bold uppercase leading-tight tracking-tight text-white">{title}</CardTitle>
                     </div>
-                    <Icon className="h-6 w-6 shrink-0 text-primary transition-transform duration-300 group-hover:-translate-y-1" aria-hidden="true" />
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/45 bg-primary/10 text-primary"><Icon className="h-5 w-5" aria-hidden="true" /></span>
                   </div>
                 </CardHeader>
-                <CardContent className="flex flex-1 flex-col p-5 sm:p-6">
-                  <p className="text-sm leading-7 text-white/60">{description}</p>
+                <CardContent className="flex flex-1 flex-col p-6 pt-4 sm:p-7 sm:pt-4">
+                  <p className="text-sm leading-7 text-white/70">{description}</p>
                   <Button
-                    className="mt-6 w-full rounded-sm border-white/15 bg-transparent text-white hover:border-primary hover:bg-primary/10 hover:text-white"
+                    className="mt-6 w-full border-primary/30 bg-transparent text-primary hover:border-primary hover:bg-primary/10 hover:text-white"
                     variant="outline"
                     asChild
                   >
