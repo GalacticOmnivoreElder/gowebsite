@@ -7,7 +7,7 @@ const { BILLING_INTERVALS, MEMBERSHIP_PLANS } = loadSourceModule(
   ["BILLING_INTERVALS", "MEMBERSHIP_PLANS"]
 );
 
-test("membership catalogue matches the MKD launch prices without public checkout URLs", () => {
+test("membership catalogue includes the visible Mentor tier without public checkout URLs", () => {
   assert.deepEqual(
     JSON.parse(JSON.stringify(BILLING_INTERVALS.map((option) => option.id))),
     ["monthly", "annual"]
@@ -35,7 +35,7 @@ test("membership catalogue matches the MKD launch prices without public checkout
     ),
     false
   );
-  assert.equal(
+  assert.notEqual(
     MEMBERSHIP_PLANS.find((plan) => plan.tier === "mentor").availableForPurchase,
     false
   );

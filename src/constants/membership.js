@@ -41,15 +41,15 @@ export const MEMBERSHIP_PLANS = [
     tier: "mentor",
     name: "GO Mentor",
     audience: "For mentors and educators",
-    availableForPurchase: false,
     description:
-      "A separate application and review programme, not a paid subscription benefit.",
+      "Mentor-focused membership access for educators and experienced creators. Mentor participation still requires separate GO review.",
     verificationNotice: MENTOR_VERIFICATION_NOTICE,
     benefits: [
-      "Submit a mentor application for GO review",
-      "Complete an interview and verification process if invited",
-      "Maintain a public mentor profile only after approval and publication",
-      "Any future mentor activity is governed by separate GO terms",
+      "Member resources and asset packs as they are released",
+      "Educational workshops and learning activities",
+      "Mentor profile and programme tools after approval",
+      "Member collaboration and networking channels",
+      "Separate interview and verification path for mentor participation",
     ],
     pricing: {
       monthly: {

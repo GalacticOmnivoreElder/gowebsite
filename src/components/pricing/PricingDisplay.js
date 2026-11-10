@@ -174,13 +174,11 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
     });
   }, [authLoading, checkoutEnabled, currentTier, hasActiveSubscription, isAnonymous, user]);
 
-  const purchasablePlans = MEMBERSHIP_PLANS.filter(
-    (plan) => plan.availableForPurchase !== false
-  );
+  const displayedPlans = MEMBERSHIP_PLANS;
   const pricingGridClass =
-    purchasablePlans.length === 1
+    displayedPlans.length === 1
       ? "max-w-md grid-cols-1"
-      : purchasablePlans.length === 2
+      : displayedPlans.length === 2
       ? "max-w-5xl grid-cols-1 md:grid-cols-2"
       : "max-w-7xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
 
@@ -266,9 +264,9 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
 
       <div
         className={`mx-auto grid min-w-0 gap-6 ${pricingGridClass}`}
-        aria-label={`${purchasablePlans.length} membership plan${purchasablePlans.length === 1 ? "" : "s"}`}
+        aria-label={`${displayedPlans.length} membership plan${displayedPlans.length === 1 ? "" : "s"}`}
       >
-        {purchasablePlans.map((plan) => {
+        {displayedPlans.map((plan) => {
           const Icon = planIcons[plan.id];
           const price = plan.pricing[interval];
           const isCurrentPlan =
@@ -395,7 +393,7 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
                     className="w-full"
                     disabled
                   >
-                    New subscription checkout paused
+                    Coming soon
                   </Button>
                 ) : isUpgradeTarget ? (
                   <Button
@@ -446,8 +444,8 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
-        Prices are shown in MKD. New membership checkout is temporarily paused
-        while GO updates its payment provider; existing subscribers can use
+        Prices are shown in MKD. Membership checkout is coming soon while GO
+        migrates to a new payment provider; existing subscribers can use
         Billing to manage their current subscription.
       </p>
 

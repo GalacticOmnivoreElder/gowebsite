@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
 export const metadata = createMetadata({
   title: "GO Membership",
   description:
-    "Review GO Community and GO Business subscription access, billing, and programme routes.",
+    "Review GO Community, GO Mentor, and GO Business membership access, pricing, billing, and programme routes.",
   path: "/membership",
 });
 
@@ -203,7 +203,7 @@ export default async function MembershipPage({ searchParams }) {
           </section>
 
           <div id="paid-plans" className="scroll-mt-24 pt-14">
-            <h2 className="mb-7 text-center text-3xl font-bold">Current paid membership pricing</h2>
+            <h2 className="mb-7 text-center text-3xl font-bold">Membership plans and pricing</h2>
             <PricingDisplay checkoutEnabled={membershipCheckoutEnabled} />
           </div>
         </section>

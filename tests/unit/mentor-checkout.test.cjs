@@ -11,9 +11,9 @@ test("Mentor monthly and annual checkout stay available from approved product id
   for (const interval of ["monthly", "annual"]) assert.equal((await loadGuard().getMentorCheckoutStatus(interval)).available, true);
 });
 
-test("the Mentor programme does not expose a paid checkout link", () => {
+test("the Mentor tier remains visible without a public checkout link", () => {
   const mentor = MEMBERSHIP_PLANS.find((plan) => plan.tier === "mentor");
-  assert.equal(mentor.availableForPurchase, false);
+  assert.notEqual(mentor.availableForPurchase, false);
   assert.equal("checkoutUrl" in mentor.pricing.annual, false);
 });
 
