@@ -53,7 +53,7 @@ export const MEMBERSHIP_PLANS = [
     ],
     pricing: {
       monthly: {
-        amount: 1499,
+        amount: 1500,
         period: "month",
         billingNote: "Billed monthly",
       },
@@ -61,7 +61,7 @@ export const MEMBERSHIP_PLANS = [
         amount: 14999,
         period: "year",
         billingNote: "Billed annually",
-        savings: "Save 2,989 MKD",
+        savings: "Save 3,001 MKD",
       },
     },
   },
@@ -86,10 +86,10 @@ export const MEMBERSHIP_PLANS = [
         billingNote: "Billed monthly",
       },
       annual: {
-        amount: 29000,
+        amount: 29999,
         period: "year",
-        billingNote: "Equivalent to 2,417 MKD/month",
-        savings: "Save 6,988 MKD",
+        billingNote: "Equivalent to approximately 2,500 MKD/month",
+        savings: "Save 5,989 MKD",
       },
     },
   },

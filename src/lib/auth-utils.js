@@ -1,5 +1,6 @@
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { createHash } from "node:crypto";
+import { resolveMembershipRecord } from "@/lib/membership-access.mjs";
 
 export function getTokenFromRequest(request) {
   const authHeader = request.headers.get("Authorization") || request.headers.get("authorization");
@@ -27,6 +28,7 @@ const NON_ENTITLED_SUBSCRIPTION_STATUSES = new Set([
 ]);
 
 export function getSubscriptionAccessEnd(userData = {}) {
+  if (userData.whopMembership) return resolveMembershipRecord(userData).endsAt;
   const value = userData?.subscriptionEndsAt;
   if (!value) return null;
 
@@ -35,6 +37,7 @@ export function getSubscriptionAccessEnd(userData = {}) {
 }
 
 export function hasActiveSubscription(userData = {}, now = new Date()) {
+  if (userData.whopMembership) return resolveMembershipRecord(userData, now).active;
   const status = String(userData?.subscriptionStatus || "")
     .trim()
     .toLowerCase();
@@ -54,7 +57,7 @@ export function hasActiveSubscription(userData = {}, now = new Date()) {
 
 export function getMembershipConfirmationId(userData = {}) {
   const activationKey = String(
-    userData?.membershipActivationPurchaseKey || ""
+    (userData.whopMembership ? resolveMembershipRecord(userData).activationKey : userData?.membershipActivationPurchaseKey) || ""
   ).trim();
   if (!activationKey || !hasActiveSubscription(userData)) return null;
 
@@ -70,7 +73,7 @@ export function getEffectiveMembership(userData = {}, { admin = false, now = new
   const membershipTier = activeMember
     ? admin
       ? "company"
-      : userData.membershipTier || "member"
+      : (userData.whopMembership ? resolveMembershipRecord(userData, now).tier : userData.membershipTier) || "member"
     : null;
 
   return {

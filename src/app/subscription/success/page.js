@@ -80,6 +80,9 @@ const SubscriptionSuccessPage = observer(() => {
           if (currentUser && userId) {
             try {
               const token = await currentUser.getIdToken();
+              if (attemptNumber === 0) {
+                await fetch("/api/billing/reconcile", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+              }
               const response = await fetch("/api/billing/subscription", {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -98,13 +101,13 @@ const SubscriptionSuccessPage = observer(() => {
                 setMembershipConfirmed(true);
                 const pendingAttempt =
                   getPendingSubscriptionConfirmationAttempt({ userId });
-                if (!conversionTracked.current) {
+                if (!conversionTracked.current && shouldShowSubscriptionConfirmation({ attempt: pendingAttempt, verification, userId })) {
                   conversionTracked.current = true;
                   trackEvent("checkout_completed", {
                     membership_tier:
                       pendingAttempt?.tier || verification.membershipTier || "member",
                     billing_interval: pendingAttempt?.interval || "unknown",
-                    provider: "polar",
+                    provider: verification.provider || "polar",
                     confirmation_source: "trusted_subscription_verification",
                   });
                 }
@@ -248,7 +251,7 @@ const SubscriptionSuccessPage = observer(() => {
             <p className="max-w-xl text-muted-foreground">
               {membershipConfirmed
                 ? "Your paid Galactic Omnivore membership has been verified. Choose what you’d like to do next."
-                : "We haven’t received the final Polar confirmation yet. You have not been shown a subscription confirmation."}
+                : "We haven’t received the final payment confirmation yet. You have not been shown a subscription confirmation."}
             </p>
           </CardHeader>
 
@@ -307,8 +310,8 @@ const SubscriptionSuccessPage = observer(() => {
             ) : (
               <div className="flex flex-col items-center gap-3 text-center">
                 <p className="max-w-lg text-sm text-muted-foreground">
-                  Polar webhooks can occasionally take a little longer. You
-                  can retry safely-this does not create another payment.
+                  Payment confirmation can occasionally take a little longer. You
+                  can retry safely—this does not create another payment. If you purchased directly on Whop, contact GO support to link your purchase after ownership verification.
                 </p>
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Button

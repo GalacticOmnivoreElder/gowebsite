@@ -77,7 +77,7 @@ export default function SubscriptionsPage() {
         <div>
           <h1 className="text-3xl font-bold">Billing Management</h1>
           <p className="text-muted-foreground">
-            Polar subscriptions, paid orders, and webhook events.
+            Whop and legacy Polar subscriptions, payments, and billing events.
           </p>
         </div>
         <Button onClick={fetchBillingData}>Refresh</Button>
@@ -116,19 +116,19 @@ export default function SubscriptionsPage() {
         </CardHeader>
         <CardContent>
           <Table>
-            <TableCaption>Users with Polar subscription/customer state.</TableCaption>
+            <TableCaption>Whop and legacy Polar subscription records.</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Renewal</TableHead>
                 <TableHead>Access Ends</TableHead>
-                <TableHead>Polar Customer</TableHead>
+                <TableHead>Provider / customer</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {billingData.subscriptions.map((subscription) => (
-                <TableRow key={subscription.userId}>
+                <TableRow key={`${subscription.provider}-${subscription.userId}`}>
                   <TableCell>
                     <div className="font-medium">{subscription.username}</div>
                     <div className="text-sm text-muted-foreground">
@@ -143,7 +143,7 @@ export default function SubscriptionsPage() {
                   <TableCell>{subscription.willRenew ? "Renews" : "Stops"}</TableCell>
                   <TableCell>{formatDate(subscription.subscriptionEndsAt)}</TableCell>
                   <TableCell className="font-mono text-xs">
-                    {subscription.polarCustomerId || "N/A"}
+                    {subscription.provider}: {subscription.providerCustomerId || subscription.polarCustomerId || "N/A"}
                   </TableCell>
                 </TableRow>
               ))}
@@ -158,7 +158,7 @@ export default function SubscriptionsPage() {
         </CardHeader>
         <CardContent>
           <Table>
-            <TableCaption>Latest 100 stored Polar orders.</TableCaption>
+            <TableCaption>Latest 100 stored Whop and Polar payments.</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
@@ -184,7 +184,7 @@ export default function SubscriptionsPage() {
                   </TableCell>
                   <TableCell>{formatAmount(order.amount, order.currency)}</TableCell>
                   <TableCell>{formatDate(order.paidAt || order.createdAt)}</TableCell>
-                  <TableCell className="font-mono text-xs">{order.polarOrderId}</TableCell>
+                  <TableCell className="font-mono text-xs">{order.whopPaymentId || order.polarOrderId}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

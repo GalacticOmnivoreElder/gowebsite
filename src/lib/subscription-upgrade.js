@@ -96,6 +96,12 @@ function normalizeDate(value) {
 export async function buildBusinessUpgradePreview(user, interval) {
   const normalizedInterval = interval === "annual" ? "annual" : "monthly";
   const userData = user?.userData || {};
+  if (userData.whopMembership) {
+    throw new SubscriptionUpgradeError(
+      "Whop plan changes at the next renewal are not available yet. Contact GO support to coordinate your Business upgrade without overlapping subscriptions.",
+      "whop_scheduled_upgrade_unavailable", 409
+    );
+  }
 
   if (!user?.activeMember || user?.membershipTier !== "member") {
     throw new SubscriptionUpgradeError(

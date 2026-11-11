@@ -12,6 +12,7 @@ import {
   resolvePolarProductTier,
 } from "@/lib/polar";
 import { getPendingSubscriptionUpdate } from "@/lib/subscription-upgrade";
+import { resolveMembershipRecord } from "@/lib/membership-access.mjs";
 
 export async function GET(request) {
   try {
@@ -44,6 +45,23 @@ export async function GET(request) {
     const confirmationData = membershipConfirmationId
       ? { membershipConfirmationId }
       : {};
+
+    const resolved = userData.whopMembership ? resolveMembershipRecord(userData) : null;
+    if (resolved?.provider === "whop" || (userData.whopMembership && !userData.subscriptionId)) {
+      const whop = userData.whopMembership;
+      return NextResponse.json({ hasSubscription: true, provider: "whop",
+        activeMember: membership.activeMember, membershipTier: membership.membershipTier,
+        hasPaidSubscription, ...confirmationData,
+        legacyPolarAvailable: Boolean(userData.polarCustomerId),
+        subscriptionStatus: whop.cancelAtPeriodEnd ? "canceled" : whop.status,
+        subscriptionEndsAt: whop.paidThrough,
+        subscription: { id: whop.id, status: whop.status, currentPeriodStart: whop.periodStart,
+          currentPeriodEnd: whop.paidThrough, cancelAtPeriodEnd: whop.cancelAtPeriodEnd,
+          price: { amount: whop.amount * 100 }, amount: whop.amount * 100,
+          currency: whop.currency, product: { name: `GO ${whop.tier === "company" ? "Business" : whop.tier === "mentor" ? "Mentor" : "Community"}` },
+          pendingUpdate: null },
+      });
+    }
 
     // If no subscription, return basic info
     if (!userData.subscriptionId) {

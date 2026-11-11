@@ -77,6 +77,7 @@ const BillingPage = observer(() => {
   const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [subscriptionDetails, setSubscriptionDetails] = useState(null);
+  const [legacyPolarAvailable, setLegacyPolarAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -126,6 +127,7 @@ const BillingPage = observer(() => {
       if (subscriptionResponse.ok) {
         const subData = await subscriptionResponse.json();
         setSubscriptionDetails(subData.subscription);
+        setLegacyPolarAvailable(subData.legacyPolarAvailable === true);
       }
     } catch (error) {
       console.error("Failed to fetch billing data:", error);
@@ -138,7 +140,10 @@ const BillingPage = observer(() => {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      console.log("🔄 Manually refreshing billing data...");
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        await fetch("/api/billing/reconcile", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+      }
 
       // Refresh user data first
       await MobxStore.checkAuth();
@@ -154,13 +159,13 @@ const BillingPage = observer(() => {
     }
   };
 
-  const handleManageSubscription = async () => {
+  const handleManageSubscription = async (provider) => {
     try {
       setLoading(true);
       const token = await auth.currentUser.getIdToken();
 
       // Make an authenticated request to get the portal URL
-      const response = await fetch("/api/subscription/portal", {
+      const response = await fetch(`/api/subscription/portal${provider === "polar" ? "?provider=polar" : ""}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -492,10 +497,11 @@ const BillingPage = observer(() => {
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex gap-2">
-            {MobxStore.hasActiveSubscription ? (
+          <CardFooter className="flex flex-wrap gap-2">
+            {legacyPolarAvailable && <Button variant="outline" onClick={() => handleManageSubscription("polar")}>Manage previous Polar subscription</Button>}
+            {MobxStore.hasActiveSubscription || subscriptionDetails?.id ? (
               <Button
-                onClick={handleManageSubscription}
+                onClick={() => handleManageSubscription()}
                 disabled={loading}
                 className="flex-1"
               >

@@ -27,8 +27,8 @@ export function getProductConfig(env = process.env) {
 
   return {
     featureFlags,
-    // Polar checkout is intentionally paused while GO migrates payment
-    // providers. Existing subscriptions remain readable and manageable.
+    // Enable Whop checkout only after credentials, catalog, webhooks and rules
+    // have been verified. Legacy Polar billing remains independently available.
     membershipCheckoutEnabled: parseBooleanEnv(env.MEMBERSHIP_CHECKOUT_ENABLED, false),
     mentorCheckoutEnabled: parseBooleanEnv(env.MENTOR_CHECKOUT_ENABLED, false),
   };

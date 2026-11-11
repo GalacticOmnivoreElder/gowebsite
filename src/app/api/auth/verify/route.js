@@ -11,6 +11,7 @@ import {
   getSubscriptionAccessEnd,
   hasActiveSubscription,
 } from "@/lib/auth-utils";
+import { resolveMembershipRecord } from "@/lib/membership-access.mjs";
 
 export async function GET(request) {
   try {
@@ -77,6 +78,7 @@ export async function GET(request) {
 
     if (
       userDoc.exists &&
+      !userData?.whopMembership &&
       typeof userData?.activeMember === "boolean" &&
       userData.activeMember !== hasPaidSubscription
     ) {
@@ -93,12 +95,19 @@ export async function GET(request) {
       }
     }
 
+    const resolved = userData?.whopMembership ? resolveMembershipRecord(userData, now) : null;
+    const billingData = resolved?.provider === "whop"
+      ? { ...userData, subscriptionId: resolved.id,
+        subscriptionStatus: resolved.willRenew ? resolved.status : "canceled",
+        subscriptionEndsAt: resolved.endsAt, willRenew: resolved.willRenew,
+        billingProvider: "whop" }
+      : userData;
     const subscriptionData = hasPaidSubscription
       ? {
-          subscriptionId: userData?.subscriptionId || null,
-          subscriptionStatus: userData?.subscriptionStatus || null,
+          subscriptionId: billingData?.subscriptionId || null,
+          subscriptionStatus: billingData?.subscriptionStatus || null,
           subscriptionEndsAt: endsAt,
-          willRenew: userData?.willRenew ?? null,
+          willRenew: billingData?.willRenew ?? null,
           polarCustomerId: userData?.polarCustomerId || null,
         }
       : null;
@@ -135,10 +144,11 @@ export async function GET(request) {
         unlockedPackages: userData?.unlockedPackages || [],
         activeMember: isMember,
         membershipTier,
+        billingProvider: billingData?.billingProvider || (userData?.subscriptionId ? "polar" : null),
         canCreateCreatorProjects,
-        subscriptionStatus: userData?.subscriptionStatus || null,
-        willRenew: userData?.willRenew ?? null,
-        subscriptionEndsAt: userData?.subscriptionEndsAt || null,
+        subscriptionStatus: billingData?.subscriptionStatus || null,
+        willRenew: billingData?.willRenew ?? null,
+        subscriptionEndsAt: billingData?.subscriptionEndsAt || null,
         polarCustomerId: userData?.polarCustomerId || null,
         pendingMembershipTier: userData?.pendingMembershipTier || null,
         pendingMembershipProductId:

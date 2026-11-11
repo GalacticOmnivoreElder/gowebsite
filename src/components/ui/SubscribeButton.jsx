@@ -121,7 +121,7 @@ const SubscribeButton = observer(
         trackEvent("checkout_started", {
           membership_tier: tier,
           billing_interval: interval,
-          provider: "polar",
+          provider: "whop",
         });
         beginSubscriptionConfirmationAttempt({
           baselineConfirmationId:
@@ -169,7 +169,7 @@ const SubscribeButton = observer(
           trackEvent("checkout_started", {
             membership_tier: tier,
             billing_interval: interval,
-            provider: "polar",
+            provider: "whop",
           });
           beginSubscriptionConfirmationAttempt({
             baselineConfirmationId:

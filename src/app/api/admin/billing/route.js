@@ -31,9 +31,18 @@ export async function GET(request) {
       const data = doc.data();
       usersById.set(doc.id, data);
 
+      if (data.whopMembership) {
+        const w = data.whopMembership;
+        subscriptions.push({ userId: doc.id, provider: 'whop', username: data.username || data.name || 'Unknown',
+          email: data.email || '', activeMember: w.activeMember && new Date(serializeFirestoreDate(w.paidThrough)) > new Date(),
+          subscriptionStatus: w.cancelAtPeriodEnd ? 'canceled' : w.status, willRenew: !w.cancelAtPeriodEnd,
+          providerCustomerId: w.userId, subscriptionId: w.id, subscriptionEndsAt: serializeFirestoreDate(w.paidThrough),
+          updatedAt: serializeFirestoreDate(w.syncedAt) });
+      }
       if (data.polarCustomerId || data.subscriptionId || data.activeMember) {
         subscriptions.push({
           userId: doc.id,
+          provider: "polar",
           username: data.username || data.name || "Unknown",
           email: data.email || "",
           activeMember: hasActiveSubscription(data),

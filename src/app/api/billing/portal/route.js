@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
 import { createPolarCustomerSession, getPolarPortalBase } from "@/lib/polar";
+import { whopBillingAction } from "@/lib/whop";
 
 export async function POST(request) {
   try {
@@ -26,6 +27,9 @@ export async function POST(request) {
     }
 
     const userData = userDoc.data();
+    if (userData.whopMembership && new URL(request.url).searchParams.get("provider") !== "polar") {
+      return NextResponse.json(await whopBillingAction(decodedToken.uid, "portal"));
+    }
 
     if (!userData.polarCustomerId) {
       return NextResponse.json(

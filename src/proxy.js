@@ -8,13 +8,13 @@ function contentSecurityPolicy(nonce, development) {
     : "";
   const directives = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://www.clarity.ms${
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'sha256-DCR/049eibSH8qxBwRO5SWuIpTjFwRySTFq9M7ATt4Q=' https://www.clarity.ms https://t.whop.tw${
       development ? " 'unsafe-eval'" : ""
     }`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.clarity.ms https://c.bing.com",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.clarity.ms https://c.bing.com https://t.whop.tw",
     `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com${authFrameSource}`,
     "worker-src 'self' blob:",
     "object-src 'none'",
