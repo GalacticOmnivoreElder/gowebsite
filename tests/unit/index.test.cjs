@@ -95,3 +95,4 @@ require("./welcome-email-route.test.cjs");
 require("./discord.test.cjs");
 
 require("./whop-webhook-route.test.cjs");
+require("./whop-checkout-switch.test.cjs");

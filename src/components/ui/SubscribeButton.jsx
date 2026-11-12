@@ -27,6 +27,7 @@ const SubscribeButton = observer(
     ...props
   }) => {
     const [loading, setLoading] = useState(false);
+    const [checkoutError, setCheckoutError] = useState("");
     const [mounted, setMounted] = useState(false);
     const router = useRouter();
     const canChoosePlan = canChooseMembershipPlan({
@@ -50,11 +51,7 @@ const SubscribeButton = observer(
       setMounted(true);
       setLoading(false);
 
-      const handlePageShow = (event) => {
-        if (event.persisted) {
-          setLoading(false);
-        }
-      };
+      const handlePageShow = () => setLoading(false);
 
       window.addEventListener("pageshow", handlePageShow);
       return () => window.removeEventListener("pageshow", handlePageShow);
@@ -80,6 +77,7 @@ const SubscribeButton = observer(
 
     const handleSubscribe = async () => {
       if (!mounted) return;
+      setCheckoutError("");
 
       trackEvent("membership_tier_selected", {
         membership_tier: tier,
@@ -187,9 +185,7 @@ const SubscribeButton = observer(
         window.location.href = data.url;
       } catch (error) {
         console.error("Failed to create checkout session:", error);
-        alert(
-          error.message || "Failed to start subscription. Please try again."
-        );
+        setCheckoutError(error.message || "Failed to start subscription. Please try again.");
         setLoading(false);
       }
     };
@@ -199,6 +195,7 @@ const SubscribeButton = observer(
     }
 
     return (
+      <>
       <Button
         onClick={handleSubscribe}
         disabled={
@@ -211,6 +208,8 @@ const SubscribeButton = observer(
       >
         {loading ? "Opening membership..." : children || "Review membership"}
       </Button>
+      {checkoutError && <p role="alert" className="mt-2 text-sm text-destructive">{checkoutError}</p>}
+      </>
     );
   }
 );

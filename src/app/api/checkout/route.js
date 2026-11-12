@@ -16,8 +16,10 @@ export async function POST(request) {
     console.error('whop_checkout_failed', { code: error.code || 'checkout_failed', providerStatus: error.providerStatus, fields: error.fields });
     return Response.json({ code: error.code || 'checkout_failed', error: error.code === 'active_membership'
       ? 'Manage your existing membership in Billing before starting another subscription.'
-      : error.code === 'pending_checkout_other_plan'
-      ? 'You already have an unfinished checkout for another plan. Contact GO support before changing it.'
+      : error.code === 'checkout_payment_pending'
+      ? 'Your previous payment is still being processed. Please wait for confirmation before choosing another plan.'
+      : error.code === 'pending_checkout_recovery'
+      ? 'Your previous checkout is being recovered. Reopen the plan you previously selected, then try changing plans.'
       : 'Checkout is temporarily unavailable. Please try again or contact GO support.' }, { status: error.status || 503 });
   }
 }

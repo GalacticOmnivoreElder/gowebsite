@@ -81,16 +81,62 @@ export async function createWhopCheckout(user, tier, interval) {
     }
     const pendingRef = adminDb.collection('whop_checkout_users').doc(scopedId(config, user.uid));
     let pending = (await pendingRef.get()).data();
+    if (pending?.requestId && !pending.checkoutId && (pending.tier !== tier || pending.interval !== interval)) {
+      // A previous request may have reached Whop before our database write.
+      // Recover its idempotent result so it can be closed and audited safely.
+      const previousPlan = configuredPlan(config, pending.tier, pending.interval);
+      const recovered = await whopRequest('/checkout_configurations', {
+        method: 'POST', config, idempotencyKey: pending.requestId,
+        body: { account_id: config.accountId, variant_id: previousPlan.variantId,
+          redirect_url: `${config.siteUrl}/subscription/success`, mode: 'payment' },
+      });
+      if (recovered.account_id !== config.accountId || recovered.variant?.id !== previousPlan.variantId || !/^ch_\w+$/.test(recovered.id)) throw whopError('whop_checkout_mismatch');
+      const url = trustedWhopUrl(recovered.purchase_url, config.environment);
+      const batch = adminDb.batch();
+      batch.set(adminDb.collection('whop_checkouts').doc(scopedId(config, recovered.id)), {
+        uid: user.uid, checkoutId: recovered.id, productId: previousPlan.productId,
+        variantId: previousPlan.variantId, tier: pending.tier, interval: pending.interval,
+        environment: config.environment, accountId: config.accountId,
+        createdAt: pending.createdAt, consumedMembershipId: null,
+      });
+      pending = { ...pending, checkoutId: recovered.id, url };
+      batch.set(pendingRef, pending);
+      await batch.commit();
+    }
     if (pending?.checkoutId) {
-      if (pending.tier !== tier || pending.interval !== interval) throw whopError('pending_checkout_other_plan', 409);
-      return { flow: 'checkout', provider: 'whop', url: trustedWhopUrl(pending.url, config.environment) };
+      if (pending.tier === tier && pending.interval === interval && !pending.closing) {
+        return { flow: 'checkout', provider: 'whop', url: trustedWhopUrl(pending.url, config.environment) };
+      }
+      // Close the old URL before making a replacement. Keep its checkout-to-user
+      // mapping permanently so a late webhook can still identify the buyer.
+      await pendingRef.set({ closing: true }, { merge: true });
+      try { await whopRequest(`/checkout_configurations/${pending.checkoutId}`, { method: 'DELETE', config }); }
+      catch (error) { if (error.providerStatus !== 404) throw error; }
+      const createdAt = accessDate(pending.createdAt);
+      if (!createdAt) throw whopError('whop_checkout_date_missing');
+      const payments = await whopList('/payments', {
+        account_id: config.accountId,
+        created_after: new Date(createdAt.getTime() - 300000).toISOString(),
+      }, config);
+      const relevant = payments.filter(payment => payment.checkout_configuration_id === pending.checkoutId);
+      const paid = relevant.find(payment => payment.status === 'paid');
+      if (paid?.membership_id) {
+        await syncWhopMembership(paid.membership_id, config);
+        throw whopError('active_membership', 409);
+      }
+      // Unknown, open, pending, or paid states are not evidence of abandonment.
+      if (relevant.some(payment => !['void', 'uncollectible'].includes(payment.status))) {
+        throw whopError('checkout_payment_pending', 409);
+      }
+      await pendingRef.delete();
+      pending = null;
     }
     // Persist key BEFORE remote creation. A retry after a crash uses the same key.
     if (!pending?.requestId) {
       pending = { requestId: randomUUID(), tier, interval, createdAt: new Date() };
       await pendingRef.set(pending);
     }
-    if (pending.tier !== tier || pending.interval !== interval) throw whopError('pending_checkout_other_plan', 409);
+    if (pending.tier !== tier || pending.interval !== interval) throw whopError('pending_checkout_recovery', 409);
     const checkout = await whopRequest('/checkout_configurations', {
       method: 'POST', config, idempotencyKey: pending.requestId,
       body: { account_id: config.accountId, variant_id: plan.variantId,
