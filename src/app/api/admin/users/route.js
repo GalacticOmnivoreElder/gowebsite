@@ -1,37 +1,13 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
 import { MENTOR_STATUSES } from "@/lib/mentor-profiles";
-
-const NON_ENTITLED_SUBSCRIPTION_STATUSES = new Set([
-  "incomplete",
-  "incomplete_expired",
-  "refunded",
-  "revoked",
-  "unpaid",
-]);
+import { resolveMembershipRecord } from "@/lib/membership-access.mjs";
 
 function toIso(value) {
   if (!value) return null;
   if (typeof value?.toDate === "function") return value.toDate().toISOString();
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
-}
-
-// Keep the admin list aligned with the server entitlement rule. This route is
-// loaded in isolation by its unit tests, so the small pure check stays local.
-function isActiveMember(userData) {
-  const status = String(userData?.subscriptionStatus || "")
-    .trim()
-    .toLowerCase();
-  if (NON_ENTITLED_SUBSCRIPTION_STATUSES.has(status)) return false;
-
-  const endsAt = userData?.subscriptionEndsAt;
-  if (endsAt) {
-    const date = typeof endsAt?.toDate === "function" ? endsAt.toDate() : new Date(endsAt);
-    if (!Number.isNaN(date.getTime())) return Date.now() < date.getTime();
-  }
-
-  return userData?.activeMember === true;
 }
 
 async function requireAdmin(request) {
@@ -43,9 +19,8 @@ async function requireAdmin(request) {
 
 // GET /api/admin/users
 // Returns every user in a single server-side read (adminDb bypasses client
-// Firestore rules). Membership is derived from the Polar fields written by the
-// subscription webhook onto users/{uid} - not from the prior `subscriptions`
-// collection, which was the source of the client-side N+1 query storm.
+// Firestore rules). Use the shared provider-aware access resolver so Whop,
+// legacy Polar, paid-through dates, and manual grants match site permissions.
 export async function GET(request) {
   try {
     const gate = await requireAdmin(request);
@@ -55,11 +30,13 @@ export async function GET(request) {
 
     const users = snapshot.docs.map((doc) => {
       const data = doc.data();
-      const isMember = isActiveMember(data);
+      const membership = resolveMembershipRecord(data);
+      const isMember = membership.active;
+      const displayedTier = membership.provider === "whop" ? membership.tier : data.membershipTier;
       const membershipTier = ["member", "mentor", "company"].includes(
-        data.membershipTier
+        displayedTier
       )
-        ? data.membershipTier
+        ? displayedTier
         : null;
       return {
         id: doc.id,
@@ -69,9 +46,11 @@ export async function GET(request) {
         isAdmin: data.admin === true,
         isMember,
         membershipTier,
-        subscriptionStatus: data.subscriptionStatus || null,
-        subscriptionEndsAt: toIso(data.subscriptionEndsAt),
-        willRenew: data.willRenew ?? null,
+        membershipProvider: membership.provider,
+        subscriptionStatus: membership.provider === "whop" && membership.willRenew === false
+          ? "canceled" : membership.status,
+        subscriptionEndsAt: toIso(membership.endsAt),
+        willRenew: membership.willRenew ?? null,
         mentorStatus: MENTOR_STATUSES.includes(data.mentorStatus) ? data.mentorStatus : "none",
         mentorPublicProfileEnabled: data.mentorPublicProfileEnabled === true,
       };
@@ -126,6 +105,9 @@ export async function PUT(request) {
     const existing = await userRef.get();
     if (!existing.exists) return Response.json({ error: "User not found" }, { status: 404 });
     const previous = existing.data();
+    if ((hasActiveMember || hasMembershipTier) && resolveMembershipRecord(previous).provider === "whop") {
+      return Response.json({ error: "This membership is managed by Whop. Use Billing or Whop support to change it; the manual controls only affect legacy or staff-granted access." }, { status: 409 });
+    }
     if (hasMentorVisibility && mentorPublicProfileEnabled) {
       const effectiveStatus = hasMentorStatus ? mentorStatus : previous.mentorStatus || "none";
       if (effectiveStatus !== "approved") {

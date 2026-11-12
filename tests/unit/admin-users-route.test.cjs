@@ -2,6 +2,10 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const { loadSourceModule } = require("../helpers/load-source-module.cjs");
 const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs");
+let resolveMembershipRecord;
+test.before(async () => {
+  ({ resolveMembershipRecord } = await import("../../src/lib/membership-access.mjs"));
+});
 
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
@@ -63,6 +67,7 @@ function loadRoute({ requestUser = null, seed = {} } = {}) {
         Response: NextResponse,
         adminDb,
         getRequestUser: async () => requestUser,
+        resolveMembershipRecord,
         MENTOR_STATUSES: ["none", "applicant", "approved", "temporarily_unavailable", "suspended", "inactive", "rejected"],
       },
     }
@@ -90,6 +95,29 @@ test("admin users keeps a missing membership tier visible", async () => {
   assert.equal(response.status, 200);
   assert.equal(response.body.users[0].isMember, true);
   assert.equal(response.body.users[0].membershipTier, null);
+});
+
+test("admin users displays Whop access, tier, and scheduled cancellation from the shared resolver", async () => {
+  const route = loadRoute({ requestUser: { admin: true, uid: "admin-1" }, seed: { users: {
+    paid: { activeMember: false, subscriptionStatus: "revoked", whopMembership: {
+      id: "mem_test", environment: "production", tier: "mentor", activeMember: true,
+      paymentVerified: true, status: "active", cancelAtPeriodEnd: true,
+      paidThrough: new Date(Date.now() + 86400000),
+    } },
+    expired: { whopMembership: { id: "mem_old", tier: "company", activeMember: true,
+      paymentVerified: true, status: "active", paidThrough: new Date(Date.now() - 1000) } },
+  } } });
+  const response = await route.GET(createRequest());
+  const paid = response.body.users.find(user => user.id === "paid");
+  assert.equal(paid.isMember, true);
+  assert.equal(paid.membershipTier, "mentor");
+  assert.equal(paid.membershipProvider, "whop");
+  assert.equal(paid.subscriptionStatus, "canceled");
+  assert.equal(paid.willRenew, false);
+  assert.equal(response.body.users.find(user => user.id === "expired").isMember, false);
+  const change = await route.PUT(createRequest({ jsonBody: { userId: "paid", activeMember: false, reason: "test" } }));
+  assert.equal(change.status, 409);
+  assert.equal(route.adminDb.users.paid.whopMembership.activeMember, true);
 });
 
 test("admin can assign Business creator membership", async () => {

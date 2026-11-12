@@ -50,7 +50,7 @@ export default function UsersPage() {
       && (filters.visibility === "all" || (user.mentorPublicProfileEnabled === true ? "public" : "hidden") === filters.visibility);
   });
 
-  // Single server-side read. Membership comes from the Polar user-doc model,
+  // Single server-side read. Membership comes from the server's shared resolver,
   // so there are no per-user client Firestore queries (that was an N+1 request
   // storm on the Firestore Listen channel).
   const fetchUsers = useCallback(async () => {
@@ -99,6 +99,32 @@ export default function UsersPage() {
       await fetchUsers();
     } catch (error) {
       console.error("Error toggling membership:", error);
+      setMessage(error.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const syncWhopMembership = async (userId) => {
+    try {
+      setActionLoading(`${userId}:sync`);
+      setMessage("");
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/billing/whop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ uid: userId }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error("Whop synchronization could not be completed. Check the webhook and provider configuration, then retry.");
+      setMessage(result.record
+        ? "Whop membership checked and synchronized."
+        : result.pending
+          ? "The checkout is still waiting for Whop payment confirmation."
+          : "No linked Whop membership or pending checkout was found for this GO account.");
+      await fetchUsers();
+    } catch (error) {
+      console.error("Whop synchronization failed:", error);
       setMessage(error.message);
     } finally {
       setActionLoading(null);
@@ -218,9 +244,15 @@ export default function UsersPage() {
                 <TableCell>
                   <Badge variant={user.isMember ? "success" : "secondary"}>
                     {user.isMember
-                      ? user.subscriptionStatus || "Active"
+                      ? user.willRenew === false
+                        ? "Active until period end"
+                        : user.subscriptionStatus || "Active"
                       : "Inactive"}
                   </Badge>
+                  {user.isMember && user.willRenew === false && user.subscriptionEndsAt && (
+                    <p className="mt-1 text-xs text-muted-foreground">Ends {formatJoined(user.subscriptionEndsAt)}</p>
+                  )}
+                  {user.membershipProvider === "whop" && <p className="mt-1 text-xs text-muted-foreground">Managed by Whop</p>}
                 </TableCell>
                 <TableCell className="min-w-52">
                   <Select
@@ -228,7 +260,7 @@ export default function UsersPage() {
                     onValueChange={(membershipTier) =>
                       updateMembershipTier(user.id, membershipTier)
                     }
-                    disabled={actionLoading?.startsWith(`${user.id}:`) || !reasons[user.id]?.trim()}
+                    disabled={user.membershipProvider === "whop" || actionLoading?.startsWith(`${user.id}:`) || !reasons[user.id]?.trim()}
                   >
                     <SelectTrigger className="h-9 w-48">
                       <SelectValue placeholder="Unassigned" />
@@ -281,6 +313,9 @@ export default function UsersPage() {
                 <TableCell className="text-right">
                   <div className="flex min-w-64 flex-col items-end gap-2">
                     <Input aria-label={`Administrative reason for ${user.name}`} placeholder="Reason required" value={reasons[user.id] || ""} onChange={(event) => setReasons((current) => ({ ...current, [user.id]: event.target.value }))} />
+                    <Button variant="outline" size="sm" onClick={() => syncWhopMembership(user.id)} disabled={actionLoading?.startsWith(`${user.id}:`)}>
+                      {actionLoading === `${user.id}:sync` ? "Syncing..." : "Sync Whop"}
+                    </Button>
                     <Button
                       variant={user.isMember ? "destructive" : "success"}
                       size="sm"
@@ -291,7 +326,7 @@ export default function UsersPage() {
                           user.membershipTier
                         )
                       }
-                      disabled={actionLoading?.startsWith(`${user.id}:`) || !reasons[user.id]?.trim()}
+                      disabled={user.membershipProvider === "whop" || actionLoading?.startsWith(`${user.id}:`) || !reasons[user.id]?.trim()}
                     >
                       {actionLoading === `${user.id}:status` ? (
                         <span className="animate-pulse">Processing...</span>
@@ -301,6 +336,7 @@ export default function UsersPage() {
                         "Activate"
                       )}
                     </Button>
+                    {user.membershipProvider === "whop" && <p className="max-w-64 text-xs text-muted-foreground">Manage this subscription in Whop or Billing.</p>}
                   </div>
                 </TableCell>
               </TableRow>
