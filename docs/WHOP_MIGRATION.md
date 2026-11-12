@@ -1,6 +1,8 @@
 # GO Whop integration and rollout
 
-Status: implementation in progress; checkout must stay disabled until the checks below pass. Verified 11 November 2026 against Whop's public Current API. No successful end-to-end Whop transaction, deployed webhook, account payout, or live bank receipt has been verified. The owner chose production configuration without a separate sandbox; that leaves live payment lifecycle testing unverified. No real charge, refund, or withdrawal is authorized by this implementation.
+**12 November 2026:** A minimal, emulator-tested update was deployed to the live Firebase rules to protect `whopMembership` and the other billing and privileged user fields. It was derived from the existing live rules to preserve unrelated behavior. The complete repository `firestore.rules` was not deployed and differs from production (including public package reads); compare and review these differences before any future full rules deployment. The production webhook route exists and rejected an unsigned POST; genuine signed delivery remains unverified.
+
+Status: implementation in progress; checkout must stay disabled until the checks below pass. Catalogue verified 11 November 2026 against Whop's public Current API. No successful end-to-end Whop transaction, genuine signed webhook delivery, account payout, or live bank receipt has been verified. The owner chose production configuration without a separate sandbox; that leaves live payment lifecycle testing unverified. No real charge, refund, or withdrawal is authorized by this implementation.
 
 ## Catalogue
 

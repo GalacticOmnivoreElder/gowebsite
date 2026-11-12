@@ -24,12 +24,31 @@ import { auth } from "@/firebase";
 import { format } from "date-fns";
 import { UserPlus } from "lucide-react";
 
+const emptyFilters = { name: "", email: "", joinedFrom: "", joinedTo: "", role: "all", status: "all", tier: "all", mentor: "all", visibility: "all" };
+
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [reasons, setReasons] = useState({});
   const [message, setMessage] = useState("");
+  const [filters, setFilters] = useState(emptyFilters);
+  const setFilter = (key, value) => setFilters((current) => ({ ...current, [key]: value }));
+  const statuses = [...new Set(users.map((user) => user.isMember ? (user.subscriptionStatus || "Active") : "Inactive"))].sort();
+  const filteredUsers = users.filter((user) => {
+    const joined = user.joined ? new Date(user.joined) : null;
+    const joinedDay = joined && !Number.isNaN(joined.getTime()) ? format(joined, "yyyy-MM-dd") : "";
+    const status = user.isMember ? (user.subscriptionStatus || "Active") : "Inactive";
+    return String(user.name || "").toLowerCase().includes(filters.name.trim().toLowerCase())
+      && String(user.email || "").toLowerCase().includes(filters.email.trim().toLowerCase())
+      && (!filters.joinedFrom || (joinedDay && joinedDay >= filters.joinedFrom))
+      && (!filters.joinedTo || (joinedDay && joinedDay <= filters.joinedTo))
+      && (filters.role === "all" || (user.isAdmin ? "admin" : "user") === filters.role)
+      && (filters.status === "all" || status === filters.status)
+      && (filters.tier === "all" || (user.membershipTier || "unassigned") === filters.tier)
+      && (filters.mentor === "all" || (user.mentorStatus || "none") === filters.mentor)
+      && (filters.visibility === "all" || (user.mentorPublicProfileEnabled === true ? "public" : "hidden") === filters.visibility);
+  });
 
   // Single server-side read. Membership comes from the Polar user-doc model,
   // so there are no per-user client Firestore queries (that was an N+1 request
@@ -133,9 +152,43 @@ export default function UsersPage() {
       </div>
       {message ? <p role="status" className="rounded-md border p-3 text-sm">{message}</p> : null}
 
+      <section aria-label="Filter users" className="space-y-4 rounded-md border border-border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">Filter users</h2>
+          <Button variant="outline" size="sm" onClick={() => setFilters(emptyFilters)}>Clear filters</Button>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[{ key: "name", label: "Name", type: "text" }, { key: "email", label: "Email", type: "text" }, { key: "joinedFrom", label: "Joined from", type: "date" }, { key: "joinedTo", label: "Joined to", type: "date" }].map(({ key, label, type }) => (
+            <label key={key} className="space-y-1 text-sm">
+              <span>{label}</span>
+              <Input type={type} value={filters[key]} onChange={(event) => setFilter(key, event.target.value)} />
+            </label>
+          ))}
+          {[
+            { key: "role", label: "Role", options: [["admin", "Admin"], ["user", "User"]] },
+            { key: "status", label: "Membership status", options: statuses.map((status) => [status, status]) },
+            { key: "tier", label: "Membership tier", options: [["unassigned", "Unassigned"], ["member", "Community Member"], ["mentor", "Mentor Member"], ["company", "Business Creator"]] },
+            { key: "mentor", label: "Mentor status", options: [["none", "Not a mentor"], ["applicant", "Mentor applicant"], ["approved", "Verified after interview"], ["temporarily_unavailable", "Temporarily unavailable"], ["suspended", "Suspended"], ["inactive", "No longer active"], ["rejected", "Rejected"]] },
+            { key: "visibility", label: "Mentor visibility", options: [["public", "Public profile"], ["hidden", "Not public"]] },
+          ].map(({ key, label, options }) => (
+            <div key={key} className="space-y-1 text-sm">
+              <span id={`filter-${key}-label`}>{label}</span>
+              <Select value={filters[key]} onValueChange={(value) => setFilter(key, value)}>
+                <SelectTrigger aria-labelledby={`filter-${key}-label`}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  {options.map(([value, text]) => <SelectItem key={value} value={value}>{text}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+        </div>
+        <p className="text-sm text-muted-foreground" role="status">Showing {filteredUsers.length} of {users.length} users</p>
+      </section>
+
       <div className="rounded-md border border-border">
         <Table>
-          <TableCaption>List of all users in the system</TableCaption>
+          <TableCaption>Users matching the selected filters</TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
@@ -150,7 +203,9 @@ export default function UsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
+            {filteredUsers.length === 0 ? (
+              <TableRow><TableCell colSpan={9} className="py-8 text-center text-muted-foreground">No users match the selected filters.</TableCell></TableRow>
+            ) : filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
