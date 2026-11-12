@@ -1,396 +1,44 @@
-const assert = require("node:assert/strict");
-const test = require("node:test");
-const { loadSourceModule } = require("../helpers/load-source-module.cjs");
-const { NextResponse, createRequest } = require("../helpers/route-test-utils.cjs");
-
-function plain(value) {
-  return JSON.parse(JSON.stringify(value));
+const assert = require('node:assert/strict');
+const test = require('node:test');
+const { loadSourceModule } = require('../helpers/load-source-module.cjs');
+const { NextResponse, createRequest } = require('../helpers/route-test-utils.cjs');
+function loadRoute({ user = { uid: 'go-user', claims: {} }, enabled = true, mentor = true, handler } = {}) {
+  const calls = [];
+  const mod = loadSourceModule('src/app/api/checkout/route.js', ['POST'], { stripImports: true, sandbox: { Response: NextResponse,
+    getRequestUser: async () => user,
+    getProductConfig: () => ({ membershipCheckoutEnabled: enabled, mentorCheckoutEnabled: mentor }),
+    createWhopCheckout: async (...args) => { calls.push(args); return handler ? handler(...args) : { flow: 'checkout', provider: 'whop', url: 'https://whop.com/checkout/ch_valid/' }; },
+  }});
+  return { ...mod, calls };
 }
-
-const envKeys = ["NODE_ENV", "POLAR_ACCESS_TOKEN", "POLAR_SUCCESS_URL"];
-
-async function withEnv(values, fn) {
-  const original = {};
-  for (const key of envKeys) {
-    original[key] = process.env[key];
-    delete process.env[key];
+const req = body => createRequest({ jsonBody: body });
+test('checkout requires a non-anonymous Firebase account', async () => {
+  for (const user of [null, { uid: 'u', claims: { firebase: { sign_in_provider: 'anonymous' } } }]) {
+    const { POST, calls } = loadRoute({ user });
+    assert.equal((await POST(req({ tier: 'member', interval: 'monthly' }))).status, 401); assert.equal(calls.length, 0);
   }
-
-  Object.assign(process.env, values);
-  try {
-    return await fn();
-  } finally {
-    for (const key of envKeys) {
-      if (original[key] === undefined) {
-        delete process.env[key];
-      } else {
-        process.env[key] = original[key];
-      }
-    }
+});
+test('checkout remains paused until enabled', async () => {
+  const { POST, calls } = loadRoute({ enabled: false });
+  assert.equal((await POST(req({ tier: 'member', interval: 'monthly' }))).status, 503); assert.equal(calls.length, 0);
+});
+test('all six Whop selections use verified user and server-owned plan only', async () => {
+  for (const tier of ['member', 'mentor', 'company']) for (const interval of ['monthly', 'annual']) {
+    const { POST, calls } = loadRoute();
+    const response = await POST(req({ tier, interval, productId: 'forged', uid: 'attacker', amount: 1 }));
+    assert.equal(response.status, 200); assert.equal(calls[0][0].uid, 'go-user');
+    assert.equal(calls[0][1], tier); assert.equal(calls[0][2], interval); assert.equal(calls[0].length, 3);
   }
-}
-
-function loadRoute({
-  user,
-  productId = "prod_member_monthly",
-  polarCreate,
-  mentorAvailable = true,
-  checkoutEnabled = true,
-} = {}) {
-  const polarCalls = [];
-  function createPolar(config) {
-    return {
-      checkouts: {
-        create: async (input) => {
-          polarCalls.push({ config, input });
-          if (polarCreate) return polarCreate(input);
-          return { url: "https://checkout.polar.test/session" };
-        },
-      },
-      subscriptions: {
-        get: async (input) => {
-          polarCalls.push({ config, input, operation: "subscription.get" });
-          return { recurringInterval: "month" };
-        },
-        update: async (input) => {
-          polarCalls.push({
-            config,
-            input,
-            operation: "subscription.update",
-          });
-          return { status: "active" };
-        },
-      },
-    };
+});
+test('invalid and disabled Mentor selections never call provider', async () => {
+  for (const body of [{ tier: 'admin', interval: 'monthly' }, { tier: 'member', interval: 'weekly' }]) {
+    const { POST, calls } = loadRoute(); assert.equal((await POST(req(body))).status, 400); assert.equal(calls.length, 0);
   }
-
-  const route = loadSourceModule(
-    "src/app/api/checkout/route.js",
-    ["POST"],
-    {
-      stripImports: true,
-      sandbox: {
-        NextResponse,
-        createPolar,
-        getPolarServer: () => "sandbox",
-        getMentorCheckoutStatus: async () => ({ available: mentorAvailable }),
-        getProductConfig: () => ({ membershipCheckoutEnabled: checkoutEnabled }),
-        getRequestUser: async () => user || null,
-        resolvePolarProductId: () => productId,
-      },
-    }
-  );
-
-  return { ...route, polarCalls };
-}
-
-test("checkout route requires authentication", async () => {
-  const { POST } = loadRoute();
-
-  const response = await POST(createRequest({ jsonBody: {} }));
-
-  assert.equal(response.status, 401);
-  assert.deepEqual(plain(response.body), { error: "Authentication required" });
+  const { POST, calls } = loadRoute({ mentor: false });
+  assert.equal((await POST(req({ tier: 'mentor', interval: 'annual' }))).status, 503); assert.equal(calls.length, 0);
 });
-
-test("checkout route stays closed while the subscription checkout gate is disabled", async () => {
-  const { POST, polarCalls } = loadRoute({
-    checkoutEnabled: false,
-    user: { email: "member@example.com", uid: "user-1" },
-  });
-
-  const response = await POST(createRequest({ jsonBody: { tier: "member" } }));
-
-  assert.equal(response.status, 503);
-  assert.deepEqual(plain(response.body), {
-    code: "membership_checkout_unavailable",
-    error:
-      "New membership checkout is temporarily unavailable while GO updates its payment provider. Existing subscribers can manage their current subscription from Billing.",
-  });
-  assert.deepEqual(polarCalls, []);
-});
-
-test("Community upgrade requires the in-app review flow without mutating checkout or Polar", async () => {
-  await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
-    const { POST, polarCalls } = loadRoute({
-      productId: "configured-business-product",
-      user: {
-        activeMember: true,
-        email: "member@example.com",
-        membershipTier: "member",
-        uid: "user-1",
-        userData: {
-          activeMember: true,
-          membershipTier: "member",
-          polarCustomerId: "customer-1",
-          subscriptionId: "subscription-1",
-          subscriptionStatus: "active",
-          willRenew: true,
-        },
-      },
-    });
-
-    const response = await POST(
-      createRequest({
-        jsonBody: { interval: "monthly", tier: "company" },
-        url: "https://go.test/api/checkout",
-      })
-    );
-
-    assert.equal(response.status, 409);
-    assert.deepEqual(plain(response.body), {
-      code: "upgrade_confirmation_required",
-      error:
-        "Review and confirm this Business upgrade from the membership page.",
-      upgradeUrl: "/membership#plans",
-    });
-    assert.deepEqual(polarCalls, []);
-  });
-});
-
-test("Community upgrade cannot be forced through checkout with a forged product or interval", async () => {
-  await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
-    const { POST, polarCalls } = loadRoute({
-      productId: "configured-business-annual",
-      user: {
-        activeMember: true,
-        membershipTier: "member",
-        uid: "user-1",
-        userData: {
-          activeMember: true,
-          membershipTier: "member",
-          polarCustomerId: "customer/1",
-          subscriptionId: "subscription-1",
-          subscriptionStatus: "active",
-          willRenew: true,
-        },
-      },
-    });
-
-    const response = await POST(
-      createRequest({
-        jsonBody: {
-          interval: "annual",
-          productId: "forged-cheap-product",
-          tier: "company",
-        },
-      })
-    );
-
-    assert.equal(response.status, 409);
-    assert.equal(response.body.code, "upgrade_confirmation_required");
-    assert.deepEqual(polarCalls, []);
-  });
-});
-
-test("Community upgrade scheduled to end is rejected before review", async () => {
-  await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
-    const { POST, polarCalls } = loadRoute({
-      productId: "configured-business-product",
-      user: {
-        activeMember: true,
-        membershipTier: "member",
-        uid: "user-1",
-        userData: {
-          activeMember: true,
-          membershipTier: "member",
-          subscriptionStatus: "canceled",
-          willRenew: false,
-        },
-      },
-    });
-
-    const response = await POST(
-      createRequest({
-        jsonBody: { interval: "monthly", tier: "company" },
-      })
-    );
-
-    assert.equal(response.status, 409);
-    assert.equal(response.body.code, "subscription_ending");
-    assert.deepEqual(polarCalls, []);
-  });
-});
-
-test("checkout route requires a configured product id", async () => {
-  await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
-    const { POST } = loadRoute({
-      productId: null,
-      user: { email: "member@example.com", uid: "user-1" },
-    });
-
-    const response = await POST(
-      createRequest({ jsonBody: { interval: "annual", tier: "company" } })
-    );
-
-    assert.equal(response.status, 400);
-    assert.deepEqual(plain(response.body), {
-      error: "No Polar product configured for the company annual plan.",
-    });
-  });
-});
-
-test("checkout route requires the Polar access token", async () => {
-  await withEnv({}, async () => {
-    const { POST } = loadRoute({
-      user: { email: "member@example.com", uid: "user-1" },
-    });
-
-    const response = await POST(createRequest({ jsonBody: {} }));
-
-    assert.equal(response.status, 500);
-    assert.deepEqual(plain(response.body), {
-      error: "Polar is not configured (missing POLAR_ACCESS_TOKEN).",
-    });
-  });
-});
-
-test("checkout route creates Polar checkout with authenticated identity and buyer IP", async () => {
-  await withEnv(
-    {
-      POLAR_ACCESS_TOKEN: "token",
-      POLAR_SUCCESS_URL: "https://go.test/subscription/success",
-    },
-    async () => {
-      const { POST, polarCalls } = loadRoute({
-        user: { email: "member@example.com", uid: "user-1" },
-      });
-
-      const response = await POST(
-        createRequest({
-          headers: {
-            "x-forwarded-for": "203.0.113.10, 10.0.0.1",
-          },
-          jsonBody: { interval: "annual", tier: "company" },
-          url: "https://go.test/api/checkout",
-        })
-      );
-
-      assert.equal(response.status, 200);
-      assert.deepEqual(plain(response.body), {
-        flow: "checkout",
-        url: "https://checkout.polar.test/session",
-      });
-      assert.deepEqual(plain(polarCalls[0].config), {
-        accessToken: "token",
-        environment: "sandbox",
-      });
-      assert.deepEqual(plain(polarCalls[0].input), {
-        customerEmail: "member@example.com",
-        customerIpAddress: "203.0.113.10",
-        externalCustomerId: "user-1",
-        metadata: {
-          interval: "annual",
-          tier: "company",
-          uid: "user-1",
-        },
-        products: ["prod_member_monthly"],
-        successUrl: "https://go.test/subscription/success",
-      });
-    }
-  );
-});
-
-test("checkout route ignores client-supplied product ids", async () => {
-  await withEnv({ POLAR_ACCESS_TOKEN: "token" }, async () => {
-    const { POST, polarCalls } = loadRoute({
-      productId: "configured-company-product",
-      user: { email: "creator@example.com", uid: "creator-1" },
-    });
-
-    const response = await POST(
-      createRequest({
-        jsonBody: {
-          interval: "monthly",
-          productId: "cheaper-member-product",
-          tier: "company",
-        },
-      })
-    );
-
-    assert.equal(response.status, 200);
-    assert.deepEqual(plain(polarCalls[0].input.products), [
-      "configured-company-product",
-    ]);
-    assert.equal(polarCalls[0].input.metadata.tier, "company");
-  });
-});
-
-test("checkout route surfaces useful Polar config hints in development", async () => {
-  await withEnv(
-    {
-      NODE_ENV: "development",
-      POLAR_ACCESS_TOKEN: "bad-token",
-    },
-    async () => {
-      const originalError = console.error;
-      console.error = () => {};
-      try {
-        const { POST } = loadRoute({
-          polarCreate: async () => {
-            const error = new Error("invalid_token");
-            error.status = 401;
-            throw error;
-          },
-          user: { email: "member@example.com", uid: "user-1" },
-        });
-
-        const response = await POST(createRequest({ jsonBody: {} }));
-
-        assert.equal(response.status, 500);
-        assert.equal(response.body.error, "Failed to create checkout session.");
-        assert.equal(response.body.polarStatus, 401);
-        assert.match(response.body.hint, /Polar rejected the access token/);
-      } finally {
-        console.error = originalError;
-      }
-    }
-  );
-});
-
-test("Mentor checkout uses authenticated identity and server-owned plan metadata for each interval", async () => {
-  await withEnv({ POLAR_ACCESS_TOKEN: "test-token" }, async () => {
-    for (const interval of ["monthly", "annual"]) {
-      const { POST, polarCalls } = loadRoute({
-        user: { uid: "mentor-buyer", email: "mentor@example.com" },
-        productId: `mentor-${interval}`,
-      });
-      const response = await POST(createRequest({
-        url: "https://go.test/api/checkout",
-        jsonBody: { tier: "mentor", interval, productId: "forged-cheap-product", uid: "other-buyer" },
-      }));
-      assert.equal(response.status, 200);
-      assert.deepEqual(plain(polarCalls[0].input.products), [`mentor-${interval}`]);
-      assert.deepEqual(plain(polarCalls[0].input.metadata), { uid: "mentor-buyer", tier: "mentor", interval });
-      assert.equal(polarCalls[0].input.externalCustomerId, "mentor-buyer");
-      assert.equal(polarCalls[0].input.successUrl, "https://go.test/subscription/success");
-    }
-  });
-});
-
-test("unavailable annual Mentor checkout cannot bypass the guard through a direct API call", async () => {
-  await withEnv({ POLAR_ACCESS_TOKEN: "test-token" }, async () => {
-    const { POST, polarCalls } = loadRoute({
-      user: { uid: "mentor-buyer" },
-      mentorAvailable: false,
-    });
-    const response = await POST(createRequest({ jsonBody: { tier: "mentor", interval: "annual" } }));
-    assert.equal(response.status, 503);
-    assert.equal(response.body.code, "mentor_checkout_unavailable");
-    assert.deepEqual(polarCalls, []);
-  });
-});
-
-test("existing members cannot accidentally create a second Mentor subscription", async () => {
-  await withEnv({ POLAR_ACCESS_TOKEN: "test-token" }, async () => {
-    for (const membershipTier of ["member", "mentor", "company"]) {
-      const { POST, polarCalls } = loadRoute({
-        user: { uid: "existing-buyer", activeMember: true, membershipTier },
-      });
-      const response = await POST(createRequest({ jsonBody: { tier: "mentor", interval: "monthly" } }));
-      assert.equal(response.status, 409);
-      assert.equal(response.body.code, "active_membership");
-      assert.deepEqual(polarCalls, []);
-    }
-  });
+test('provider conflict prevents duplicate checkout without exposing provider response', async () => {
+  const { POST } = loadRoute({ handler: () => { throw Object.assign(new Error('secret provider text'), { code: 'active_membership', status: 409 }); } });
+  const response = await POST(req({ tier: 'company', interval: 'monthly' }));
+  assert.equal(response.status, 409); assert.equal(JSON.stringify(response.body).includes('secret provider text'), false);
 });

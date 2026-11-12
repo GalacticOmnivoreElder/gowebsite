@@ -1,119 +1,91 @@
 {
-  "status": "draft_not_importable",
-  "preparedOn": "2026-11-11",
-  "source": "src/constants/membership.js",
-  "sourceCurrency": "MKD",
-  "whopChargeCurrencyVerified": false,
+  "status": "public_catalog_verified_private_settings_pending",
+  "checkedOn": "2026-11-11",
   "whopAccountId": "biz_fXnLxutjLKO8jT",
   "products": [
     {
-      "key": "community",
-      "tier": "member",
-      "name": "GO Community",
-      "description": "Apply to listed projects and use the current Community member resources.",
-      "benefits": [
-        "One unreleased creator project; GO release approval unlocks the next",
-        "Apply to open community projects",
-        "Periodic asset, music, and code resource drops",
-        "Tutorials and learning resources",
-        "Community events and member-only Discord access"
-      ],
-      "whopProductId": null,
-      "plans": [
-        {
-          "key": "member_monthly",
-          "interval": "monthly",
-          "sourceAmountMajor": 500,
-          "sourceCurrency": "MKD",
-          "whopVariantId": null,
-          "approvedChargeCurrency": null,
-          "approvedInitialAmountMajor": null,
-          "approvedRenewalAmountMajor": null
-        },
-        {
-          "key": "member_annual",
-          "interval": "annual",
-          "sourceAmountMajor": 4800,
-          "sourceCurrency": "MKD",
-          "whopVariantId": null,
-          "approvedChargeCurrency": null,
-          "approvedInitialAmountMajor": null,
-          "approvedRenewalAmountMajor": null
-        }
-      ]
+      "name": "GO Business Annual",
+      "productId": "prod_Q3sLI8rJIGEAA",
+      "variantId": "plan_Zg2FUArNdKKm6",
+      "productUrl": "https://whop.com/galacticomnivore-0ec7/go-business-annual/",
+      "currency": "MKD",
+      "renewalAmountMajor": 29999,
+      "initialSetupAmountMajor": 0,
+      "billingPeriodDays": 365,
+      "trialDays": null,
+      "taxType": "exclusive",
+      "collectTax": true,
+      "adaptivePricing": true
     },
     {
-      "key": "mentor",
-      "tier": "mentor",
-      "name": "GO Mentor",
-      "description": "Mentor-focused membership access for educators and experienced creators. Mentor participation still requires separate GO review.",
-      "benefits": [
-        "Member resources and asset packs as they are released",
-        "Educational workshops and learning activities",
-        "Mentor profile and programme tools after approval",
-        "Member collaboration and networking channels",
-        "Separate interview and verification path for mentor participation"
-      ],
-      "verificationNotice": "Mentor applications are reviewed separately from GO subscriptions. An interview and GO verification are required before any approved mentor activity begins; applying does not guarantee approval or a placement.",
-      "whopProductId": null,
-      "plans": [
-        {
-          "key": "mentor_monthly",
-          "interval": "monthly",
-          "sourceAmountMajor": 1499,
-          "sourceCurrency": "MKD",
-          "whopVariantId": null,
-          "approvedChargeCurrency": null,
-          "approvedInitialAmountMajor": null,
-          "approvedRenewalAmountMajor": null
-        },
-        {
-          "key": "mentor_annual",
-          "interval": "annual",
-          "sourceAmountMajor": 14999,
-          "sourceCurrency": "MKD",
-          "whopVariantId": null,
-          "approvedChargeCurrency": null,
-          "approvedInitialAmountMajor": null,
-          "approvedRenewalAmountMajor": null
-        }
-      ]
-    },
-    {
-      "key": "business",
-      "tier": "company",
       "name": "GO Business",
-      "description": "Create project briefs, review applicants, manage teams, and use every Community benefit.",
-      "benefits": [
-        "Everything included in GO Community",
-        "Project capacity negotiated with the GO Business team",
-        "Review applicants and build project teams",
-        "Manage your active project portfolio",
-        "Priority membership support"
-      ],
-      "whopProductId": null,
-      "plans": [
-        {
-          "key": "company_monthly",
-          "interval": "monthly",
-          "sourceAmountMajor": 2999,
-          "sourceCurrency": "MKD",
-          "whopVariantId": null,
-          "approvedChargeCurrency": null,
-          "approvedInitialAmountMajor": null,
-          "approvedRenewalAmountMajor": null
-        },
-        {
-          "key": "company_annual",
-          "interval": "annual",
-          "sourceAmountMajor": 29000,
-          "sourceCurrency": "MKD",
-          "whopVariantId": null,
-          "approvedChargeCurrency": null,
-          "approvedInitialAmountMajor": null,
-          "approvedRenewalAmountMajor": null
-        }
-      ]
+      "productId": "prod_9pdCcuOxvAtis",
+      "variantId": "plan_6JNsFK7cMuJn8",
+      "productUrl": "https://whop.com/galacticomnivore-0ec7/go-business/",
+      "currency": "MKD",
+      "renewalAmountMajor": 2999,
+      "initialSetupAmountMajor": 0,
+      "billingPeriodDays": 30,
+      "trialDays": null,
+      "taxType": "exclusive",
+      "collectTax": true,
+      "adaptivePricing": true
+    },
+    {
+      "name": "GO Mentor Annual",
+      "productId": "prod_DZP3i6nht01yO",
+      "variantId": "plan_znpd9alFPpLXd",
+      "productUrl": "https://whop.com/galacticomnivore-0ec7/go-mentor-annual/",
+      "currency": "MKD",
+      "renewalAmountMajor": 14999,
+      "initialSetupAmountMajor": 0,
+      "billingPeriodDays": 365,
+      "trialDays": null,
+      "taxType": "exclusive",
+      "collectTax": true,
+      "adaptivePricing": true
+    },
+    {
+      "name": "GO Mentor",
+      "productId": "prod_8KFDAPQDsy7QE",
+      "variantId": "plan_zcoU1vTYDT9GG",
+      "productUrl": "https://whop.com/galacticomnivore-0ec7/go-mentor/",
+      "currency": "MKD",
+      "renewalAmountMajor": 1500,
+      "initialSetupAmountMajor": 0,
+      "billingPeriodDays": 30,
+      "trialDays": null,
+      "taxType": "exclusive",
+      "collectTax": true,
+      "adaptivePricing": true
+    },
+    {
+      "name": "GO Community Annual",
+      "productId": "prod_BpBYHZBubPwKg",
+      "variantId": "plan_eAQ712tjBEHhb",
+      "productUrl": "https://whop.com/galacticomnivore-0ec7/go-community-annual/",
+      "currency": "MKD",
+      "renewalAmountMajor": 4800,
+      "initialSetupAmountMajor": 0,
+      "billingPeriodDays": 365,
+      "trialDays": null,
+      "taxType": "exclusive",
+      "collectTax": true,
+      "adaptivePricing": true
+    },
+    {
+      "name": "GO Community",
+      "productId": "prod_D1WqA38JQwuf8",
+      "variantId": "plan_JmVORg4ukobiN",
+      "productUrl": "https://whop.com/galacticomnivore-0ec7/go-community/",
+      "currency": "MKD",
+      "renewalAmountMajor": 500,
+      "initialSetupAmountMajor": 0,
+      "billingPeriodDays": 30,
+      "trialDays": null,
+      "taxType": "exclusive",
+      "collectTax": true,
+      "adaptivePricing": true
     }
   ]
 }

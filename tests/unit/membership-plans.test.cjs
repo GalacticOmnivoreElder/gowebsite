@@ -24,9 +24,9 @@ test("membership catalogue includes the visible Mentor tier without public check
   );
 
   assert.deepEqual(JSON.parse(JSON.stringify(prices)), {
-    company: { annual: 29000, monthly: 2999 },
+    company: { annual: 29999, monthly: 2999 },
     member: { annual: 4800, monthly: 500 },
-    mentor: { annual: 14999, monthly: 1499 },
+    mentor: { annual: 14999, monthly: 1500 },
   });
 
   assert.equal(

@@ -93,3 +93,5 @@ require("./user-projects-route.test.cjs");
 require("./welcome-email-client.test.cjs");
 require("./welcome-email-route.test.cjs");
 require("./discord.test.cjs");
+
+require("./whop-webhook-route.test.cjs");

@@ -147,7 +147,7 @@ export async function syncWhopMembership(id, config = whopConfig()) {
     }
     const record = deriveWhopMembership(membership, evidence, plan, config, new Date(), await disputeStates(evidence, config));
     const userRef = adminDb.collection('users').doc(uid);
-    await adminDb.runTransaction(async tx => {
+    const outcome = await adminDb.runTransaction(async tx => {
       const [userSnap, linkSnap, lockSnap, checkoutSnap] = await Promise.all([
         tx.get(userRef), tx.get(linkRef(config, id)), tx.get(lease.ref), checkoutRef ? tx.get(checkoutRef) : Promise.resolve(null),
       ]);
@@ -156,13 +156,13 @@ export async function syncWhopMembership(id, config = whopConfig()) {
       if (linkSnap.exists && linkSnap.data().uid !== uid) throw whopError('whop_already_claimed', 409);
       if (checkoutSnap?.data()?.consumedMembershipId && checkoutSnap.data().consumedMembershipId !== id) throw whopError('whop_checkout_already_consumed', 409);
       const previous = userSnap.data().whopMembership;
-      const historical = previous?.id && previous.id !== id && linkSnap.exists;
+      const historical = previous?.id && previous.id !== id && linkSnap.exists && linkSnap.data()?.syncedAt;
       const duplicate = previous?.id && previous.id !== id && !historical && !['expired', 'canceled'].includes(previous.status);
       if (duplicate) {
         tx.set(adminDb.collection('whop_unlinked_purchases').doc(scopedId(config, id)), {
           membershipId: id, reason: 'duplicate_membership_requires_support', updatedAt: new Date(), environment: config.environment,
         }, { merge: true });
-        return;
+        return 'duplicate';
       }
       if (previous?.id === id && new Date(previous.providerUpdatedAt) > new Date(record.providerUpdatedAt)) throw whopError('whop_stale_snapshot');
       tx.set(linkRef(config, id), { uid, ...record }, { merge: true });
@@ -171,18 +171,26 @@ export async function syncWhopMembership(id, config = whopConfig()) {
       for (const payment of evidence) {
         tx.set(adminDb.collection('orders').doc(scopedId(config, payment.id)), {
           userId: uid, provider: 'whop', environment: config.environment, whopPaymentId: payment.id,
-          subscriptionId: id, productId: plan.productId, status: payment.refunded_at ? 'refunded' : payment.status,
+          subscriptionId: id, productId: plan.productId,
+          status: Number(payment.refunded_amount?.amount || 0) > 0
+            ? Number(payment.refunded_amount.amount) >= Number(payment.total?.amount || 0) ? 'refunded' : 'partially_refunded'
+            : payment.status,
           amount: Math.round(Number(payment.total?.amount || 0) * 100), currency: payment.total?.currency || payment.currency,
           refundedAmount: Math.round(Number(payment.refunded_amount?.amount || 0) * 100),
           createdAt: accessDate(payment.created_at), paidAt: accessDate(payment.paid_at), updatedAt: new Date(),
         }, { merge: true });
       }
+      return historical ? 'historical' : 'current';
     });
+    if (outcome === 'duplicate') return { unlinked: true, reason: 'duplicate_membership_requires_support' };
     // Prevent reuse of a completed checkout. Failure is retried by reconciliation;
     // association checks above still prevent a second entitlement from being claimed.
     const pendingRef = adminDb.collection('whop_checkout_users').doc(scopedId(config, uid));
     const pending = (await pendingRef.get()).data();
-    if (pending?.checkoutId && record.paymentVerified) {
+    const pendingCheckout = pending?.checkoutId
+      ? (await adminDb.collection('whop_checkouts').doc(scopedId(config, pending.checkoutId)).get()).data()
+      : null;
+    if (outcome === 'current' && pending?.checkoutId && pendingCheckout?.consumedMembershipId === id && record.paymentVerified) {
       try { await whopRequest(`/checkout_configurations/${pending.checkoutId}`, { method: 'DELETE', config }); }
       catch (error) { if (error.providerStatus !== 404) throw error; }
       await pendingRef.delete();
@@ -233,6 +241,34 @@ export async function reconcileWhopUser(uid) {
     if (payment.checkout_configuration_id === pending.checkoutId && payment.membership_id) return syncWhopMembership(payment.membership_id, config);
   }
   return { pending: true };
+}
+
+// For a direct Whop purchase only after an administrator has independently
+// verified control of BOTH accounts. Email address similarity is not proof.
+export async function linkVerifiedWhopPurchase({ uid, membershipId, verifiedBy, evidenceNote }) {
+  const config = whopConfig();
+  if (!/^mem_\w+$/.test(membershipId || '') || !uid || uid.includes('/') ||
+      typeof evidenceNote !== 'string' || evidenceNote.trim().length < 15 || evidenceNote.length > 500) {
+    throw whopError('whop_link_evidence_required', 400);
+  }
+  const membership = await whopRequest(`/memberships/${membershipId}`, { config });
+  const plan = config.catalog.find(p => p.productId === membership.product_id && p.variantId === membership.variant_id);
+  if (!plan || membership.account?.id !== config.accountId || !membership.user_id) throw whopError('whop_membership_mismatch', 400);
+  const ref = linkRef(config, membershipId);
+  const userRef = adminDb.collection('users').doc(uid);
+  const auditRef = adminDb.collection('admin_audit_events').doc();
+  await adminDb.runTransaction(async tx => {
+    const [link, user] = await Promise.all([tx.get(ref), tx.get(userRef)]);
+    if (!user.exists) throw whopError('whop_user_missing', 404);
+    if (link.exists && link.data().uid !== uid) throw whopError('whop_already_claimed', 409);
+    const existing = user.data().whopMembership;
+    if (existing?.id && existing.id !== membershipId && !['canceled', 'expired'].includes(existing.status)) throw whopError('whop_duplicate_membership', 409);
+    tx.set(ref, { uid, environment: config.environment, accountId: config.accountId,
+      id: membershipId, linkedAt: new Date(), linkedBy: verifiedBy }, { merge: true });
+    tx.set(auditRef, { type: 'whop.manual_ownership_link', userId: uid, membershipId,
+      verifiedBy, evidenceNote: evidenceNote.trim(), createdAt: new Date() });
+  });
+  return syncWhopMembership(membershipId, config);
 }
 
 export async function whopBillingAction(uid, action) {

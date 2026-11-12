@@ -3,6 +3,7 @@ import { getTokenFromRequest, verifyToken } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
 import { createPolarCustomerSession, getPolarApiBase } from "@/lib/polar";
 import { whopBillingAction } from "@/lib/whop";
+import { resolveMembershipRecord } from "@/lib/membership-access.mjs";
 import {
   cancelPendingEmailEvents,
   enqueueEmailEvent,
@@ -41,7 +42,7 @@ export async function POST(request) {
     }
 
     const userData = userDoc.data();
-    if (userData.whopMembership && new URL(request.url).searchParams.get("provider") !== "polar") {
+    if (userData.whopMembership && (!userData.subscriptionId || resolveMembershipRecord(userData).provider === "whop") && new URL(request.url).searchParams.get("provider") !== "polar") {
       return NextResponse.json(await whopBillingAction(decodedToken.uid, "cancel"));
     }
 

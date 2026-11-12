@@ -335,6 +335,9 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
                       <Badge variant="outline">{price.savings}</Badge>
                     )}
                   </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Tax may be added at checkout. Whop may show a converted local-currency price. Renews {interval === "annual" ? "annually" : "monthly"} until canceled.
+                  </p>
                 </div>
               </CardHeader>
 

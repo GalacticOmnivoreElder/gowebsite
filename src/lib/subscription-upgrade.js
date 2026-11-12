@@ -4,6 +4,7 @@ import {
   resolvePolarProductId,
   resolvePolarProductTier,
 } from "@/lib/polar";
+import { resolveMembershipRecord } from "@/lib/membership-access.mjs";
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active"]);
 
@@ -96,7 +97,7 @@ function normalizeDate(value) {
 export async function buildBusinessUpgradePreview(user, interval) {
   const normalizedInterval = interval === "annual" ? "annual" : "monthly";
   const userData = user?.userData || {};
-  if (userData.whopMembership) {
+  if (userData.whopMembership && resolveMembershipRecord(userData).provider === "whop") {
     throw new SubscriptionUpgradeError(
       "Whop plan changes at the next renewal are not available yet. Contact GO support to coordinate your Business upgrade without overlapping subscriptions.",
       "whop_scheduled_upgrade_unavailable", 409

@@ -7,7 +7,7 @@ export function accessDate(value) {
 }
 
 export function legacySubscriptionActive(data = {}, now = new Date()) {
-  if (['incomplete', 'incomplete_expired', 'refunded', 'revoked', 'unpaid'].includes(data.subscriptionStatus)) return false;
+  if (['incomplete', 'incomplete_expired', 'refunded', 'revoked', 'unpaid'].includes(String(data.subscriptionStatus || '').trim().toLowerCase())) return false;
   const end = accessDate(data.subscriptionEndsAt);
   return end ? end > now : data.activeMember === true;
 }

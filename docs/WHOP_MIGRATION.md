@@ -1,73 +1,76 @@
-# GO: Polar to Whop migration
+# GO Whop integration and rollout
 
-Prepared 11 November 2026. Status: catalogue and migration preparation only; no Whop products created, payment integration implemented, subscriptions cancelled, customer messages sent, or deployment performed.
+Status: implementation in progress; checkout must stay disabled until the checks below pass. Verified 11 November 2026 against Whop's public Current API. No successful end-to-end Whop transaction, deployed webhook, account payout, or live bank receipt has been verified. The owner chose production configuration without a separate sandbox; that leaves live payment lifecycle testing unverified. No real charge, refund, or withdrawal is authorized by this implementation.
 
-## Confirmed decisions
+## Catalogue
 
-- GO is based in North Macedonia.
-- The owner created the Whop business **Galacticomnivore**, ID `biz_fXnLxutjLKO8jT`. [Products dashboard](https://whop.com/dashboard/biz_fXnLxutjLKO8jT/products/).
-- The authenticated products dashboard was inspected on 11 November 2026 and showed "No products yet" (0 results with Visible and Hidden selected). The product creation form was opened, but browser control/capture failures prevented inspection of paid pricing. No products were submitted. Charge-currency availability and payout verification remain unknown.
-- All three paid tiers migrate: Community, Mentor, and Business, each with monthly and annual billing.
-- Paying Polar customers exist. The owner will inform them and accepts a migration requiring a new checkout rather than automatic payment-method transfer.
-- Mentor purchase and mentor approval remain separate.
-- Whop is the interim provider. Keep GO product and entitlement identifiers independent of the payment provider so a later Stripe integration does not redefine membership access.
+All six variants below belong to `biz_fXnLxutjLKO8jT`. Public responses showed MKD prices below, zero setup charge, no trial, monthly or annual renewal (Whop reports billing-period values of 30 or 365 days), tax exclusive with tax collection enabled, and adaptive pricing enabled. Tax or converted presentment can make the amount shown by Whop differ. Public unauthenticated responses do not reveal every private discount setting. Audit again with the account key before enabling checkout.
 
-## Catalogue to create
+| Tier | Cycle | MKD renewal | Product | Variant |
+| --- | --- | ---: | --- | --- |
+| Community | Monthly (30) | 500 | prod_D1WqA38JQwuf8 | plan_JmVORg4ukobiN |
+| Community | Annual (365) | 4,800 | prod_BpBYHZBubPwKg | plan_eAQ712tjBEHhb |
+| Mentor | Monthly (30) | 1,500 | prod_8KFDAPQDsy7QE | plan_zcoU1vTYDT9GG |
+| Mentor | Annual (365) | 14,999 | prod_DZP3i6nht01yO | plan_znpd9alFPpLXd |
+| Business | Monthly (30) | 2,999 | prod_9pdCcuOxvAtis | plan_6JNsFK7cMuJn8 |
+| Business | Annual (365) | 29,999 | prod_Q3sLI8rJIGEAA | plan_Zg2FUArNdKKm6 |
 
-Source: `src/constants/membership.js`. These are current website prices, not a verified export of the live Polar account and not proof that Whop supports MKD presentment. The attempted live Polar inventory read did not succeed. Reconcile the live account before declaring the full catalogue migrated.
+The production mapping is built into the server configuration. Override IDs using `WHOP_MEMBER_MONTHLY_PRODUCT_ID`, `WHOP_MEMBER_MONTHLY_VARIANT_ID`, and corresponding `MEMBER_ANNUAL`, `MENTOR_MONTHLY`, `MENTOR_ANNUAL`, `COMPANY_MONTHLY`, `COMPANY_ANNUAL` names only after verifying any replacement. Sandbox has no default IDs and must use its own isolated Firebase project, products, key and webhook.
 
-Create three products with two recurring billing options each. Whop supports multiple billing options per product; see [product creation](https://docs.whop.com/manage-your-business/products/create-product) and [pricing setup](https://docs.whop.com/manage-your-business/payment-processing/set-up-pricing).
+## Vercel production environment
 
-| Product | GO tier | Monthly price | Annual price |
-| --- | --- | ---: | ---: |
-| GO Community | `member` | 500 MKD | 4,800 MKD |
-| GO Mentor | `mentor` | 1,499 MKD | 14,999 MKD |
-| GO Business | `company` | 2,999 MKD | 29,000 MKD |
+Put these in Vercel > GO website > Settings > Environment Variables > Production. GitHub Actions repository secrets are available to workflows but do not automatically reach Vercel's server functions. Do not commit values or put them in chat. Redeploy to pick up environment changes.
 
-The machine-readable preparation file is `docs/whop-catalog-draft.json`. It carries current descriptions, benefits, and six stable GO plan keys; Whop identifiers and approved charge amounts remain empty. It is not a Whop API request or import format.
+| Name | Value |
+| --- | --- |
+| `WHOP_API_KEY` | Production Company/Account API key, Vercel Secret |
+| `WHOP_WEBHOOK_SECRET` | Signing secret for this exact production webhook, Vercel Secret |
+| `WHOP_ENVIRONMENT` | `production` |
+| `WHOP_ACCOUNT_ID` | `biz_fXnLxutjLKO8jT` |
+| `WHOP_SITE_URL` | `https://www.galacticomnivore.com` |
+| `WHOP_FIREBASE_PROJECT_ID` | `go-platform-7960b` (must match `FIREBASE_PROJECT_ID`) |
+| `MEMBERSHIP_CHECKOUT_ENABLED` | `false` until release checks pass |
+| `MENTOR_CHECKOUT_ENABLED` | `false` until release checks pass |
+| `CRON_SECRET` | Existing server cron secret, configured as Vercel Secret |
 
-Keep existing amounts as the source of truth until charge currency is verified. If MKD is unavailable, agree explicit replacement prices in a supported currency and update the website and checkout together. Do not silently treat an MKD number as EUR/USD or convert using an assumed exchange rate. Check whether prices include taxes and whether buyer-facing service fees apply before publishing.
+Keep existing Polar secrets for current subscribers and late events. Set a key expiration and calendar rotation owner; create the replacement with the same minimal permissions, update Vercel, deploy, verify, then revoke the old key. Do not set an IP allow-list unless your specific Vercel project's stable outbound IP capability is confirmed and all actual egress addresses are known. A home IP or Whop form examples do not identify server egress.
 
-## Other offers to reconcile
+## Whop API-key scopes
 
-- T-shirts currently use reservations and customer-proposed MKD totals, with single-shirt and two-shirt offers, sizes, fits, and pickup/delivery choices. They are not fixed-price membership subscriptions. A Whop merchandise flow needs an agreed price, inventory, shipping/collection, and reservation-to-payment linkage before implementation.
-- Course code currently records pricing as `coming_soon`; individually paid courses default to disabled. Preserve member access and staff-assigned access rather than inventing standalone paid products.
-- Video bundles have their own content/access model. Reconcile live content and any existing one-time Polar products before deciding which need separate Whop listings.
-- Audit live Polar products, archived products with active subscribers, discounts, outstanding invoices, refunds, and any attached benefits. The repository alone cannot establish completeness.
+Use a custom Company/Account API key, not an App key or broad Admin role. API is pinned to `2026-11-10-1`; direct requests send `Api-Version-Date`, overriding the key pin. The SDK is used only for signature verification and is pinned in package.json. Whop dashboard display labels and whether webhook delivery permissions attach to your key or webhook principal must be verified in your account; the identifiers below come from Whop's current OpenAPI security declarations, not inferred label translations.
 
-## Payout verification
+| Scope | Endpoints | Reason |
+| --- | --- | --- |
+| `checkout_configuration:create` | POST /checkout_configurations | Create a server-owned checkout per GO user |
+| `checkout_configuration:delete` | DELETE /checkout_configurations/{id} | Close a consumed checkout |
+| `plan:basic:read` | GET /variants/{id} | Verify live pricing and private variant fields |
+| `member:basic:read` | GET /memberships, /memberships/{id} | Verify subscription and access state |
+| `member:manage` | GET /memberships/{id}, POST /memberships/{id}/cancel | Expose Whop manage URL and support period-end cancellation |
+| `payment:basic:read` | GET /payments, /payments/{id}, /refunds/{id} | Verify payments, refunds, and account association |
+| `payment:dispute:read` | GET /disputes, /disputes/{id} | Apply the dispute access policy |
 
-North Macedonia appears in [Whop's official supported payout countries](https://docs.whop.com/manage-your-business/manage-payouts/set-up-payouts), checked 11 November 2026. This establishes country support, not approval of GO's specific account.
+GET /products/{id} is public. GET /api_keys/permissions lists permission catalog for an authenticated key without an additional scope in the OpenAPI spec. Do not grant checkout write/delete scopes to the browser. No Whop client token is used.
 
-The business now exists. The owner needs to open Dashboard > Balances > Set up Whop Payments, complete identity/business verification, and link an accepted payout method. Confirm the bank country and incoming currency, account status, available payout method, fees/FX, settlement timing, and any reserve shown for this account. Whop says settlement can use a currency other than the bank country's local currency; actual available options still need verification in GO's account.
+Dashboard webhook creation does not require the website key to manage webhooks. If creating via API instead, `developer:manage_webhook` is a separate setup privilege; do not add it to the runtime key. Whop's webhook schema lists `webhook_receive:memberships`, `webhook_receive:payments`, `webhook_receive:refunds`, and `webhook_receive:disputes` for the chosen events. It also lists the following payload permissions: `member:basic:read`, `member:email:read`, `member:phone:read`, `payment:basic:read`, `payment:dispute:read`, `plan:basic:read`, `access_pass:basic:read`, `promo_code:basic:read`, `shipment:basic:read`, `payment:resolution_center_case:read`, and `company:basic:read` (the precise set differs per event). Verify in Whop whether these are required for delivery or merely optional fields and which principal needs them; don't claim event delivery is working until tested. Request only what the dashboard/provider requires for delivery and fields used, and record any additional scope actually granted.
 
-Record successful receipt of a permitted, genuine sales payout in the bank before calling withdrawals verified. The owner performs the actual withdrawal. Do not promise instant access to all revenue: [Whop describes compliance reviews and possible reserves](https://whop.com/blog/getting-paid-on-whop/).
+## Webhooks and reconciliation
 
-## Website integration still required
+Create a business webhook with URL `https://www.galacticomnivore.com/api/webhooks/whop`, API version date `2026-11-10-1`, account scope (not child-only), and these events: `membership.updated`, `payment.succeeded`, `payment.failed`, `refund.created`, `refund.updated`, `dispute.created`, `dispute.updated`. Pin the endpoint to the same API version. Record its signing secret as `WHOP_WEBHOOK_SECRET`; it is separate from the API key. The route verifies the raw payload and timestamp using the official SDK, requires matching event and header IDs, business and API version, then reads the current provider state before updating access. A redirect or email match never grants access.
 
-1. Create a separate Whop sandbox business and credentials. Production and sandbox do not share keys, products, or webhooks. Use the [current Whop API and quickstart](https://docs.whop.com/developer/quickstart.md), pin its version, and avoid mixing legacy plan examples with the current variants API.
-2. Map each of the six GO plan keys to a validated Whop product/variant and approved price. Validate price, renewal settings, billing cadence, currency, and account ownership on the server.
-3. Add authenticated server-created checkout linked to the verified GO user. Browser input must not select an arbitrary price, tier, or account identity. Store a trusted checkout-to-user association; do not grant access by email matching alone.
-4. Add signed Whop webhooks with duplicate/replay handling and safe out-of-order processing. Reconcile confirmed provider state before granting or removing access. Redirects and client-reported success are not payment evidence.
-5. Track provider and subscription IDs separately. Keep Polar billing management, orders, and webhooks for old subscriptions. A late Polar cancellation/refund must not revoke a separately valid Whop entitlement.
-6. Route subscription status, cancellation, renewal, upgrades, portal links, receipts, and billing history to the correct provider. Preserve the existing next-renewal Business-upgrade policy unless explicitly changed; do not promise "no charge today" without confirmed provider behavior.
-7. Update membership confirmation, analytics provider labels, admin billing views, privacy/payment copy, server-only field protection, and any required browser security policy. Continue deriving Discord access from GO's verified entitlement model; avoid competing role writers.
-8. Test all six plans, renewals, failed payments, cancellation with paid-through access, refunds, disputes, duplicate/invalid/out-of-order webhooks, cross-provider events, and Mentor approval separation. Verify the full checkout-to-GO-to-Discord journey in the sandbox before production setup.
+Enable the GitHub workflow `whop-reconciliation.yml` only after deployment: set repository variable `WHOP_RECONCILE_ENABLED=true` and repository secret `WHOP_CRON_SECRET` equal to Vercel `CRON_SECRET`. This secret is for calling the website's cron route, not a Whop credential. The workflow checks two memberships per run; monitor failures and completed-cycle age in `whop_reconciliation`. At five-minute intervals a full cycle takes approximately five minutes per two memberships and may become too slow at scale. Provider retries and user-triggered recovery provide additional protection but do not replace monitoring and an appropriately sized scheduler.
 
-Keep `MEMBERSHIP_CHECKOUT_ENABLED=false` and `MENTOR_CHECKOUT_ENABLED=false` while this work is incomplete. Merely enabling the existing flags would still invoke the Polar checkout implementation.
+Review `whop_events` for failed/pending notifications and `whop_unlinked_purchases` for direct purchases or duplicates. To recover, check Whop's webhook delivery logs, correct configuration, replay the original event, and run reconciliation. The success page and Billing can request a rate-limited account-specific reconciliation. An admin can call POST `/api/admin/billing/whop` with a Firebase admin bearer token and JSON `{ "uid": "...", "action": "link_verified_purchase", "membershipId": "mem_...", "evidenceNote": "..." }` **only after independently verifying control of both the GO account and Whop membership**. The note should describe verification without passwords, card details, or secrets. Links and admin identity are audited, and a membership cannot be claimed by two GO users. If ownership cannot be established, leave the purchase unlinked and resolve through support. GET of this route runs a read-only authenticated catalogue audit and displays Whop's permission catalog to an administrator.
 
-## Existing-customer migration
+Existing Polar subscriptions and Whop memberships use separate records; active access derives from eligible records without automatically canceling either subscription. Coordinate migration with each customer to avoid double renewal. Separately purchased access, admin grants, and Mentor approval remain independent. A full refund suspends the affected Whop membership; partial refunds retain its paid period. A disputed Whop membership is suspended while a dispute is open or lost and restored after a favourable resolution if still paid and eligible. This is a GO policy choice, not a Whop requirement. Whop plan upgrades at next renewal are unavailable until provider behavior is verified; contact GO support rather than starting a second subscription or promising no charge today.
 
-1. Reconcile each customer's GO account, current Polar tier, renewal status/date, paid-through date, discounts, and pending changes. Store the roster privately, never in this repository.
-2. Agree the individual transition date and new price/currency. The owner sends notices; no customer communication is authorized by this preparation document.
-3. Coordinate ending Polar renewal at the paid-through date and starting Whop billing so customers do not pay twice for overlapping coverage. Preserve paid access and make any grace period explicit.
-4. Require a verified Whop purchase before marking the replacement subscription active. Do not claim existing card mandates transfer automatically.
-5. Reconcile completed transitions, failed checkouts, refunds, and remaining Polar renewals. Retain historical receipts and webhook processing for reconciliation.
+## Release, verification and rollback
 
-## Inputs needed next
+1. Apply Firestore security rules and indexes with the site's established release process. Test that ordinary users cannot edit `whopMembership` or access server-only collections.
+2. Configure values above, audit all six live variants with the restricted API key, private discounts and tax settings, and validate the webhook's event configuration and delivery logs. Verify Google and email/password sign-in.
+3. Verify end to end using real provider-confirmed payment and webhook events for each product, renewals, cancellation, refunds, disputes, duplicates, differing checkout email, direct links, Discord, and Polar coexistence. The owner's production-only choice means such financial tests require separate explicit authorization for any real charge or refund; until then these cases are unverified. Test card data, if used, must never enter production.
+4. Confirm recovery scheduling and alerts, then explicitly enable both checkout flags and redeploy. Keep the Polar webhook and customer portal operational. Never cancel a Polar customer or notify them automatically.
+5. To roll back, set both checkout flags `false` and redeploy. Continue processing Whop and Polar webhooks and cron reconciliation for existing customers, investigate and repair; do not remove Whop entitlements or stop webhooks just because new checkout is disabled.
 
-- Access for product configuration and integration testing (business ID is now recorded above).
-- Bank payout currency and completed account verification status; no bank account numbers or identity documents in chat.
-- Confirmed Whop charge-currency availability and approved prices if MKD cannot be used.
-- Sandbox access and server-side credentials stored securely, never pasted into chat or committed.
-- Live Polar inventory and private subscriber reconciliation before launch.
+Whop lists North Macedonia as payout-supported, but that does not confirm approval of GO's specific bank account, payout currency, fees, or a successful withdrawal. Verify these separately in Whop Balances and with the bank; receipt of a real payout has not been observed.
+
+References: https://docs.whop.com/developer/guides/auth-scoping ; https://docs.whop.com/developer/quickstart ; https://docs.whop.com/developer/api/versioning ; https://docs.whop.com/api-reference/stability ; https://docs.whop.com/manage-your-business/manage-payouts/set-up-payouts

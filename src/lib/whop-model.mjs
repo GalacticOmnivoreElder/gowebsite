@@ -11,6 +11,17 @@ export const WHOP_CATALOG = [
   url: `https://whop.com/galacticomnivore-0ec7/${slug}/`,
   envPrefix: `WHOP_${tier.toUpperCase()}_${interval.toUpperCase()}` }));
 
+// Public identifiers, verified against GO's Whop catalogue. Sandbox requires
+// separate explicit IDs; production defaults never leak into that environment.
+const PRODUCTION_IDS = {
+  member_monthly: ['prod_D1WqA38JQwuf8', 'plan_JmVORg4ukobiN'],
+  member_annual: ['prod_BpBYHZBubPwKg', 'plan_eAQ712tjBEHhb'],
+  mentor_monthly: ['prod_8KFDAPQDsy7QE', 'plan_zcoU1vTYDT9GG'],
+  mentor_annual: ['prod_DZP3i6nht01yO', 'plan_znpd9alFPpLXd'],
+  company_monthly: ['prod_9pdCcuOxvAtis', 'plan_6JNsFK7cMuJn8'],
+  company_annual: ['prod_Q3sLI8rJIGEAA', 'plan_Zg2FUArNdKKm6'],
+};
+
 export function whopError(code, status = 503) {
   return Object.assign(new Error(code), { code, status });
 }
@@ -32,7 +43,12 @@ export function whopConfig(env = process.env) {
   if (origin.hostname === 'invalid.local' || (origin.protocol !== 'https:' && origin.hostname !== 'localhost')) throw whopError('whop_site_url_invalid');
   return { environment, accountId, token: env.WHOP_API_KEY, siteUrl: origin.origin,
     baseUrl: environment === 'sandbox' ? 'https://sandbox-api.whop.com/api/v1' : 'https://api.whop.com/api/v1',
-    catalog: WHOP_CATALOG.map(item => ({ ...item, productId: env[`${item.envPrefix}_PRODUCT_ID`], variantId: env[`${item.envPrefix}_VARIANT_ID`] })) };
+    catalog: WHOP_CATALOG.map(item => {
+      const defaults = environment === 'production' && accountId === 'biz_fXnLxutjLKO8jT'
+        ? PRODUCTION_IDS[`${item.tier}_${item.interval}`] : [];
+      return { ...item, productId: env[`${item.envPrefix}_PRODUCT_ID`] || defaults[0],
+        variantId: env[`${item.envPrefix}_VARIANT_ID`] || defaults[1] };
+    }) };
 }
 
 export function configuredPlan(config, tier, interval) {
@@ -79,7 +95,10 @@ export function deriveWhopMembership(membership, payments, plan, config, now = n
   const periodEnd = new Date(membership.current_period_end);
   // A failed renewal may advance the provider period. Never extend access on
   // the strength of an older payment from a previous period.
-  const currentPayment = payment && Number.isFinite(periodStart.getTime()) && new Date(payment.paid_at) >= periodStart;
+  // Providers can record the charge and period boundary a few seconds apart.
+  // A short tolerance cannot bridge the minimum 30-day renewal period.
+  const currentPayment = payment && Number.isFinite(periodStart.getTime()) &&
+    new Date(payment.paid_at).getTime() >= periodStart.getTime() - 120000;
   const fullRefund = payment && (payment.auto_refunded || (payment.refunded_amount &&
     payment.refunded_amount.currency === payment.total.currency && Number(payment.refunded_amount.amount) >= Number(payment.total.amount)));
   const blockedDispute = disputeStatuses.some(s => !['won', 'prevented', 'warning_closed'].includes(s));

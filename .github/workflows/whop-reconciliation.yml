@@ -1,0 +1,27 @@
+name: Reconcile Whop memberships
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+concurrency:
+  group: production-whop-reconciliation
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    if: vars.WHOP_RECONCILE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Reconcile a page of memberships
+        env:
+          WHOP_CRON_SECRET: ${{ secrets.WHOP_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          test -n "$WHOP_CRON_SECRET"
+          curl --request POST --fail-with-body --silent --show-error \
+            --connect-timeout 10 --max-time 75 \
+            --header "Authorization: Bearer $WHOP_CRON_SECRET" \
+            https://www.galacticomnivore.com/api/cron/whop-reconcile

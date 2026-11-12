@@ -118,6 +118,9 @@ test("members can manage safe fields on their own user document only", async () 
   await assertFails(
     updateDoc(doc(db, "users", "member"), { activeMember: true })
   );
+  await assertFails(updateDoc(doc(db, "users", "member"), { whopMembership: { activeMember: true, tier: "company" } }));
+  await assertFails(setDoc(doc(db, "whop_checkouts", "forged"), { uid: "member" }));
+  await assertFails(getDoc(doc(db, "whop_memberships", "forged")));
   await assertFails(getDoc(doc(db, "users", "owner")));
   await assertFails(deleteDoc(doc(db, "users", "member")));
 });

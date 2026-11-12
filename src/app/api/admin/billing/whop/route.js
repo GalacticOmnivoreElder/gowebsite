@@ -1,5 +1,5 @@
 import { getRequestUser } from '@/lib/auth-utils';
-import { auditWhopPlan, whopRequest, reconcileWhopUser } from '@/lib/whop';
+import { auditWhopPlan, whopRequest, reconcileWhopUser, linkVerifiedWhopPurchase } from '@/lib/whop';
 import { WHOP_CATALOG, WHOP_API_VERSION } from '@/lib/whop-model.mjs';
 
 export async function GET(request) {
@@ -18,8 +18,12 @@ export async function GET(request) {
 export async function POST(request) {
   const user = await getRequestUser(request);
   if (!user?.admin) return Response.json({ error: 'Admin access required' }, { status: 403 });
-  const { uid } = await request.json().catch(() => ({}));
+  const { uid, membershipId, evidenceNote, action } = await request.json().catch(() => ({}));
   if (typeof uid !== 'string' || !uid || uid.includes('/')) return Response.json({ error: 'Valid user ID required' }, { status: 400 });
-  try { return Response.json(await reconcileWhopUser(uid)); }
+  try {
+    return Response.json(action === 'link_verified_purchase'
+      ? await linkVerifiedWhopPurchase({ uid, membershipId, evidenceNote, verifiedBy: user.uid })
+      : await reconcileWhopUser(uid));
+  }
   catch (error) { return Response.json({ error: error.code || 'reconciliation_failed' }, { status: 503 }); }
 }
