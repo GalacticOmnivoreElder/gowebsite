@@ -110,7 +110,7 @@ const SubscribeButton = observer(
       }
 
       if (!canChoosePlan) {
-        router.push("/profile");
+        router.push("/faq#changing-membership");
         return;
       }
 

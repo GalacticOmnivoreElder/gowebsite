@@ -43,7 +43,7 @@ const faqs = [
   {
     question: "Who can create a project or apply to one?",
     answer:
-      "An active GO Business membership is required to create and manage a project. An active membership is required to apply to open roles. Administrators review project listings before they become public, and project owners cannot approve their own status changes.",
+      "Community members can own one unreleased creator project at a time. Business membership is for business project briefs and team management. Membership and individual project rules determine who can apply. Administrators review project listings before they become public.",
   },
   {
     question: "What happens to my profile when I apply?",
@@ -53,7 +53,7 @@ const faqs = [
   {
     question: "What does membership include?",
     answer:
-      "Current Community and Business membership options, prices, billing intervals, and included benefits are listed on the Membership page. That page is the source of truth for what is currently offered.",
+      "Community provides access to most community and creator features. Mentor is intended for people who want to mentor others, subject to a separate interview and approval. Business is for business project briefs and team management and includes Community benefits. See the Membership page for current features and prices; earnings are not guaranteed.",
   },
   {
     question: "How do renewal, cancellation, and access end work?",
@@ -96,6 +96,16 @@ export default function FAQPage() {
       <p className="mx-auto mb-8 max-w-2xl text-center text-muted-foreground">
         Clear answers about using the Galactic Omnivore platform today.
       </p>
+      <section id="changing-membership" className="mb-8 scroll-mt-24 rounded-lg border p-6" aria-labelledby="changing-membership-heading">
+        <h2 id="changing-membership-heading" className="text-xl font-semibold">How do I change my membership or billing interval?</h2>
+        <p className="mt-3 leading-7">GO supports one membership subscription per account. To change tier or switch between monthly and annual billing:</p>
+        <ol className="mt-3 list-decimal space-y-2 pl-5 leading-7">
+          <li>Open <Link href="/billing" className="text-primary underline">Billing</Link> and use your current provider’s portal to cancel renewal of your existing subscription.</li>
+          <li>Check the confirmed end date in the billing portal. You keep access for the remaining paid period, subject to the provider’s terms.</li>
+          <li>After that membership expires, sign in to the same GO account and select your new plan on the <Link href="/membership#paid-plans" className="text-primary underline">Membership page</Link>. Your new subscription starts when you complete checkout.</li>
+        </ol>
+        <p className="mt-3 leading-7">If the status or end date is unclear, <Link href="/contact" className="text-primary underline">contact GO support</Link> before starting another subscription.</p>
+      </section>
       <Accordion type="single" collapsible className="w-full">
         {faqs.map((faq) => (
           <AccordionItem key={faq.question} value={faq.question}>

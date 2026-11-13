@@ -23,7 +23,7 @@ test("membership selection remains available without an active subscription", ()
   );
 });
 
-test("canceled members can select a replacement membership", () => {
+test("canceled members keep one subscription until paid access ends", () => {
   assert.equal(
     isSubscriptionEnding({ subscriptionStatus: "canceled", willRenew: false }),
     true
@@ -36,11 +36,11 @@ test("canceled members can select a replacement membership", () => {
       targetTier: "member",
       willRenew: false,
     }),
-    true
+    false
   );
 });
 
-test("Community members can upgrade to Business without repurchasing Community", () => {
+test("Community members cannot start another membership while active", () => {
   const current = {
     currentTier: "member",
     hasActiveSubscription: true,
@@ -54,7 +54,7 @@ test("Community members can upgrade to Business without repurchasing Community",
   );
   assert.equal(
     canChooseMembershipPlan({ ...current, targetTier: "company" }),
-    true
+    false
   );
 });
 

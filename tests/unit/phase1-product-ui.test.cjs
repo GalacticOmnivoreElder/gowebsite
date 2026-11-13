@@ -29,7 +29,7 @@ test("membership presents separate Mentor applications and the visible Mentor ti
   assert.match(pricing, />\s*Coming soon\s*</);
   const mentorBlock = membership.split('id: "mentor-programme"')[1].split('id: "business"')[0];
   assert.match(mentorBlock, /MentorApplicationButton/);
-  assert.match(mentorBlock, /not a paid subscription/);
+  assert.match(mentorBlock, /paid membership/);
   assert.match(mentorApplicationButton, /if \(!applicationsOpen\) return null/);
   assert.doesNotMatch(mentorApplicationButton, /Applications closed/);
 });

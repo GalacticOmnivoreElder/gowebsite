@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { ArrowRight, Building2, Check, User, Users } from "lucide-react";
@@ -14,7 +15,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import SubscribeButton from "@/components/ui/SubscribeButton";
-import { BusinessUpgradeDialog } from "@/components/pricing/BusinessUpgradeDialog";
 import MobxStore from "@/mobx";
 import { auth } from "@/firebase";
 import { parseCheckoutPlanKey } from "@/lib/checkout-navigation";
@@ -48,10 +48,8 @@ const formatPendingDate = (value) => {
 };
 
 export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
+  const router = useRouter();
   const [interval, setInterval] = useState("monthly");
-  const [upgradeInterval, setUpgradeInterval] = useState("monthly");
-  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
-  const [scheduledUpgrade, setScheduledUpgrade] = useState(null);
   const resumedCheckout = useRef(false);
   const user = MobxStore.user;
   const authLoading = MobxStore.loading || MobxStore.permissionsLoading;
@@ -64,7 +62,6 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
   const hasActiveBusinessMembership =
     hasActiveSubscription && currentTier === "company";
   const pendingBusinessUpgrade =
-    scheduledUpgrade ||
     (user?.pendingMembershipTier === "company" &&
     user?.pendingMembershipStatus === "scheduled"
       ? {
@@ -120,17 +117,7 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
     });
 
     if (!canChoosePlan) {
-      window.location.assign("/profile");
-      return;
-    }
-
-    if (
-      hasActiveSubscription &&
-      currentTier === "member" &&
-      selection.tier === "company"
-    ) {
-      setUpgradeInterval(selection.interval);
-      setUpgradeDialogOpen(true);
+      router.push("/faq#changing-membership");
       return;
     }
 
@@ -172,7 +159,7 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
       console.error("Could not resume membership checkout:", error);
       window.alert(error.message);
     });
-  }, [authLoading, checkoutEnabled, currentTier, hasActiveSubscription, isAnonymous, user]);
+  }, [authLoading, checkoutEnabled, currentTier, hasActiveSubscription, isAnonymous, router, user]);
 
   const displayedPlans = MEMBERSHIP_PLANS;
   const pricingGridClass =
@@ -388,6 +375,14 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
                     <Check className="mr-2 h-4 w-4" />
                     Included with GO Business
                   </Button>
+                ) : isCurrentPlan ? (
+                  <Button variant="outline" size="lg" className="w-full" asChild>
+                    <Link href="/billing">Manage membership</Link>
+                  </Button>
+                ) : hasActiveSubscription ? (
+                  <Button variant="outline" size="lg" className="w-full" asChild>
+                    <Link href="/faq#changing-membership">How to change membership</Link>
+                  </Button>
                 ) : !checkoutEnabled ? (
                   <Button
                     type="button"
@@ -397,31 +392,6 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
                     disabled
                   >
                     Coming soon
-                  </Button>
-                ) : isUpgradeTarget ? (
-                  <Button
-                    type="button"
-                    className="w-full"
-                    variant="default"
-                    size="lg"
-                    onClick={() => {
-                      setUpgradeInterval(interval);
-                      setUpgradeDialogOpen(true);
-                    }}
-                  >
-                    Review Business upgrade
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                ) : hasActiveSubscription && !canChooseMembershipPlan({
-                    hasActiveSubscription,
-                    currentTier,
-                    targetTier: plan.tier,
-                    pendingTier: user?.pendingMembershipTier,
-                    subscriptionStatus: user?.subscriptionStatus,
-                    willRenew: user?.willRenew,
-                  }) ? (
-                  <Button variant="outline" size="lg" className="w-full" asChild>
-                    <Link href="/billing">Manage membership</Link>
                   </Button>
                 ) : (
                   <SubscribeButton
@@ -447,17 +417,11 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
-        Prices are shown in MKD. Membership checkout is coming soon while GO
-        migrates to a new payment provider; existing subscribers can use
-        Billing to manage their current subscription.
+        Prices are shown in MKD. Choose one membership for your needs. {checkoutEnabled
+          ? "Existing members can manage their subscription in Billing."
+          : "New membership checkout is temporarily unavailable; existing members can manage their subscription in Billing."}
+        {" "}<Link className="text-primary underline underline-offset-4" href="/faq#changing-membership">How to change plans or billing interval</Link>.
       </p>
-
-      <BusinessUpgradeDialog
-        interval={upgradeInterval}
-        open={upgradeDialogOpen}
-        onOpenChange={setUpgradeDialogOpen}
-        onScheduled={setScheduledUpgrade}
-      />
     </div>
   );
 });

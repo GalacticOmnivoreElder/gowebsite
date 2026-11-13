@@ -119,7 +119,7 @@ export default async function MembershipPage({ searchParams }) {
       id: "mentor-programme",
       title: "GO Mentor programme",
       icon: Users,
-      description: "A separate application and review route. It is not a paid subscription or a checkout option.",
+      description: "GO Mentor is a paid membership; participating as a mentor also requires a separate application and review.",
       benefits: ["Submit an application for GO review", "Complete an interview and verification process if invited", "Public profile publication is subject to approval", "Any future activity is governed by separate GO terms"],
       footer: <MentorApplicationButton applicationsOpen={mentorApplicationState.open} />,
     },

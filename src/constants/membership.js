@@ -13,7 +13,7 @@ export const MEMBERSHIP_PLANS = [
     name: "GO Community",
     audience: "For individual creators",
     description:
-      "Apply to listed projects and use the current Community member resources.",
+      "Access most GO community and creator features, including project applications and member resources.",
     popular: true,
     benefits: [
       "One unreleased creator project; GO release approval unlocks the next",
@@ -42,7 +42,7 @@ export const MEMBERSHIP_PLANS = [
     name: "GO Mentor",
     audience: "For mentors and educators",
     description:
-      "Mentor-focused membership access for educators and experienced creators. Mentor participation still requires separate GO review.",
+      "For educators and experienced creators who want to mentor others. Mentor participation requires separate GO review.",
     verificationNotice: MENTOR_VERIFICATION_NOTICE,
     benefits: [
       "Member resources and asset packs as they are released",
@@ -71,7 +71,7 @@ export const MEMBERSHIP_PLANS = [
     name: "GO Business",
     audience: "For studios and project creators",
     description:
-      "Create project briefs, review applicants, manage teams, and use every Community benefit.",
+      "Create business project briefs, review applicants, and manage teams, with Community benefits included.",
     benefits: [
       "Everything included in GO Community",
       "Project capacity negotiated with the GO Business team",
