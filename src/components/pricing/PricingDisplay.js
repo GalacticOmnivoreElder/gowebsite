@@ -406,7 +406,7 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
                     }
                     size="lg"
                   >
-                    Choose {plan.name}
+                    Join {plan.name}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </SubscribeButton>
                 )}
