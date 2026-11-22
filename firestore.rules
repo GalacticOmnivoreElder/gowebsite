@@ -36,7 +36,7 @@ service cloud.firestore {
         'admin', 'adminGrantedBy', 'activeMember', 'membershipTier',
         'subscriptionId', 'subscriptionStatus', 'subscriptionEndsAt',
         'willRenew', 'polarCustomerId', 'unlockedPackages',
-        'whopMembership', 'membershipActivationPurchaseKey', 'membershipActivatedAt',
+        'whopMembership', 'manualMembership', 'membershipActivationPurchaseKey', 'membershipActivatedAt',
         'pendingMembershipTier', 'pendingMembershipProductId', 'pendingMembershipEffectiveAt',
         'pendingMembershipInterval', 'pendingMembershipPriceAmount', 'pendingMembershipCurrency',
         'pendingMembershipStatus', 'pendingMembershipUpdateId',
@@ -85,6 +85,8 @@ service cloud.firestore {
 
     // ── Server-only collections (Admin SDK bypasses these; browser is denied) ──
     match /discord_connections/{doc}  { allow read, write: if false; }
+    match /discord_role_grants/{doc} { allow read, write: if false; }
+    match /discord_admin_events/{doc} { allow read, write: if false; }
     match /discord_identities/{doc}   { allow read, write: if false; }
     match /discord_oauth_states/{doc} { allow read, write: if false; }
     match /discord_oauth_limits/{doc} { allow read, write: if false; }

@@ -96,6 +96,7 @@ class Store {
   permissions = null;
   permissionsLoading = false;
   permissionsError = null;
+  permissionsError = null;
   lastPermissionCheck = null;
   permissionCheckInProgress = null;
   authStateVersion = 0;
@@ -188,6 +189,7 @@ class Store {
       this.permissionCheckInProgress = (async () => {
         runInAction(() => {
           this.permissionsLoading = true;
+          this.permissionsError = null;
         });
 
         const idToken = await auth.currentUser.getIdToken();
@@ -197,7 +199,11 @@ class Store {
           },
         });
 
-        if (!response.ok) throw new Error("Failed to verify permissions");
+        if (!response.ok) {
+          throw new Error(response.status >= 500
+            ? "The server cannot verify account permissions. Check the local Firebase Admin credentials, then retry."
+            : "Your session could not be verified. Sign in again, then retry.");
+        }
 
         const data = await response.json();
 
@@ -224,11 +230,12 @@ class Store {
       this.permissionCheckInProgress = null;
       return result;
     } catch (error) {
-      console.error("MobX - Permission check error:", error);
+      console.warn("Permission verification unavailable:", error.message);
       runInAction(() => {
         this.permissionsLoading = false;
         this.permissions = null;
         this.permissionCheckInProgress = null;
+        this.permissionsError = error.message;
       });
     }
   }

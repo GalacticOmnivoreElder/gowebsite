@@ -222,7 +222,8 @@ export default function UsersPage() {
               <TableHead>Joined</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Membership Status</TableHead>
-              <TableHead>Membership Tier</TableHead>
+              <TableHead>Provider / legacy tier</TableHead>
+              <TableHead>Manual access grant</TableHead>
               <TableHead>Mentor Status</TableHead>
               <TableHead>Mentor Visibility</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -230,7 +231,7 @@ export default function UsersPage() {
           </TableHeader>
           <TableBody>
             {filteredUsers.length === 0 ? (
-              <TableRow><TableCell colSpan={9} className="py-8 text-center text-muted-foreground">No users match the selected filters.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={10} className="py-8 text-center text-muted-foreground">No users match the selected filters.</TableCell></TableRow>
             ) : filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.name}</TableCell>
@@ -244,19 +245,21 @@ export default function UsersPage() {
                 <TableCell>
                   <Badge variant={user.isMember ? "success" : "secondary"}>
                     {user.isMember
-                      ? user.willRenew === false
+                      ? !user.hasProviderAccess
+                        ? "Active (manual grant)"
+                        : user.willRenew === false
                         ? "Active until period end"
                         : user.subscriptionStatus || "Active"
                       : "Inactive"}
                   </Badge>
-                  {user.isMember && user.willRenew === false && user.subscriptionEndsAt && (
+                  {user.hasProviderAccess && user.willRenew === false && user.subscriptionEndsAt && (
                     <p className="mt-1 text-xs text-muted-foreground">Ends {formatJoined(user.subscriptionEndsAt)}</p>
                   )}
                   {user.membershipProvider === "whop" && <p className="mt-1 text-xs text-muted-foreground">Managed by Whop</p>}
                 </TableCell>
                 <TableCell className="min-w-52">
                   <Select
-                    value={user.membershipTier || "unassigned"}
+                    value={user.providerMembershipTier || "unassigned"}
                     onValueChange={(membershipTier) =>
                       updateMembershipTier(user.id, membershipTier)
                     }
@@ -279,6 +282,20 @@ export default function UsersPage() {
                       Tier missing; Community permissions currently apply
                     </p>
                   )}
+                </TableCell>
+                <TableCell className="min-w-52">
+                  <Select value={user.manualMembershipTier || "none"}
+                    onValueChange={(tier) => updateMembership(user.id, { manualMembershipTier: tier === "none" ? null : tier }, "manual-grant")}
+                    disabled={actionLoading?.startsWith(user.id + ":") || !reasons[user.id]?.trim()}>
+                    <SelectTrigger aria-label={"Manual access for " + user.name} className="h-9 w-48"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No manual grant</SelectItem>
+                      <SelectItem value="member">Community Member</SelectItem>
+                      <SelectItem value="mentor">Mentor Member</SelectItem>
+                      <SelectItem value="company">Business Creator</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1 max-w-48 text-xs text-muted-foreground">Independent of paid subscriptions. Enter a reason to change.</p>
                 </TableCell>
                 <TableCell className="min-w-56">
                   <Select
@@ -317,23 +334,23 @@ export default function UsersPage() {
                       {actionLoading === `${user.id}:sync` ? "Syncing..." : "Sync Whop"}
                     </Button>
                     <Button
-                      variant={user.isMember ? "destructive" : "success"}
+                      variant={user.hasProviderAccess ? "destructive" : "success"}
                       size="sm"
                       onClick={() =>
                         toggleMembership(
                           user.id,
-                          user.isMember,
-                          user.membershipTier
+                          user.hasProviderAccess,
+                          user.providerMembershipTier
                         )
                       }
                       disabled={user.membershipProvider === "whop" || actionLoading?.startsWith(`${user.id}:`) || !reasons[user.id]?.trim()}
                     >
                       {actionLoading === `${user.id}:status` ? (
                         <span className="animate-pulse">Processing...</span>
-                      ) : user.isMember ? (
-                        "Deactivate"
+                      ) : user.hasProviderAccess ? (
+                        "Deactivate legacy access"
                       ) : (
-                        "Activate"
+                        "Activate legacy access"
                       )}
                     </Button>
                     {user.membershipProvider === "whop" && <p className="max-w-64 text-xs text-muted-foreground">Manage this subscription in Whop or Billing.</p>}

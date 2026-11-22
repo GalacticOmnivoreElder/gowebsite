@@ -1,8 +1,9 @@
 import { createHash, randomBytes } from "node:crypto";
 import { adminDb } from "@/lib/firebase-admin";
-import { hasActiveSubscription } from "@/lib/auth-utils";
+import { getEffectiveMembership } from "@/lib/auth-utils";
 import { discordError, discordRequest, requireDiscordConfig } from "@/lib/discord-api";
 import { appetiteConfigHash, appetiteFromDiscordRoles } from "@/lib/discord-appetite.mjs";
+import { getDiscordRolePolicy, buildDiscordRolePreview, applyDiscordRolePlan } from "@/lib/discord-role-bridge";
 
 export const DISCORD_COOKIE = "go_discord_oauth";
 const hash = (value) => createHash("sha256").update(value).digest("hex");
@@ -17,7 +18,7 @@ export async function startDiscordConnection(uid, returnTo) {
   const config = requireDiscordConfig();
   const user = await adminDb.collection("users").doc(uid).get();
   if (!user.exists) throw discordError("account_missing", 403);
-  if (config.membersOnly && !hasActiveSubscription(user.data())) throw discordError("membership_required", 403);
+  if (config.membersOnly && !getEffectiveMembership(user.data()).activeMember) throw discordError("membership_required", 403);
   const state = randomBytes(32).toString("hex");
   const rateRef = adminDb.collection("discord_oauth_limits").doc(uid);
   await adminDb.runTransaction(async (tx) => {
@@ -90,6 +91,7 @@ export async function claimDiscordIdentity(uid, identity, config) {
   const ownerRef = adminDb.collection("discord_identities").doc(identity.id);
   await adminDb.runTransaction(async (tx) => {
     const [connection, owner] = await Promise.all([tx.get(ref), tx.get(ownerRef)]);
+    if (connection.data()?.disconnectRequested) throw discordError("cleanup_pending", 409);
     if (owner.exists && owner.data().uid !== uid) throw discordError("already_linked", 409);
     if (connection.exists && (connection.data().discordId !== identity.id || connection.data().guildId !== config.guildId)) {
       throw discordError("disconnect_first", 409);
@@ -111,6 +113,7 @@ async function syncConnection(uid, config) {
     return;
   }
   const connection = snap.data();
+  if (connection.disconnectRequested) return cleanupDiscordConnection(uid, config, connection);
   if (millis(connection.retryNotBefore) > Date.now()) {
     throw discordError("rate_limited", 429, Math.ceil((millis(connection.retryNotBefore) - Date.now()) / 1000));
   }
@@ -119,8 +122,25 @@ async function syncConnection(uid, config) {
   const token = `Bot ${config.botToken}`;
   try {
     const member = await discordRequest(path, { token });
+    const policy = await getDiscordRolePolicy();
+    if (policy) {
+      const plan = await buildDiscordRolePreview(uid, config, policy, member, connection);
+      const complete = plan.mode === "apply" ? await applyDiscordRolePlan(uid, config, connection, plan) : true;
+      const actual = plan.mode === "apply" ? await discordRequest(path, { token }) : member;
+      const appetiteStatus = config.appetiteEnabled && !actual.pending ? appetiteFromDiscordRoles(actual.roles || [], config.appetiteRoleIds) : null;
+      await ref.update({ status: actual.pending ? "screening_required" : "joined",
+        memberAccess: actual.roles.includes(config.memberRoleId), roleSyncMode: plan.mode,
+        roleSyncState: plan.mode === "preview" ? "preview" : complete ? "synced" : "pending",
+        rolePreview: { add: plan.add, remove: plan.remove, desired: plan.roles },
+        policyRevision: policy.revision, onboardingComplete: plan.onboardingComplete,
+        appetiteStatus, appetiteRoleMapHash: config.appetiteEnabled ? appetiteConfigHash(config.appetiteRoleIds) : null,
+        lastError: null, retryNotBefore: null, lastSyncedAt: new Date(),
+        nextSyncAt: new Date(Date.now() + (complete ? 300000 : 15000)) });
+      await syncSharedAppetite(uid, appetiteStatus);
+      return;
+    }
     const user = await adminDb.collection("users").doc(uid).get();
-    const eligible = user.exists && hasActiveSubscription(user.data());
+    const eligible = user.exists && getEffectiveMembership(user.data()).activeMember;
     const wantedRole = eligible && !member.pending ? config.memberRoleId : null;
     const appetiteStatus = config.appetiteEnabled
       ? appetiteFromDiscordRoles(member.roles || [], config.appetiteRoleIds)
@@ -144,7 +164,7 @@ async function syncConnection(uid, config) {
     await syncSharedAppetite(uid, member.pending ? null : appetiteStatus);
   } catch (error) {
     await ref.update({ status: error.code === "not_in_server" ? "join_required" : "sync_pending",
-      memberAccess: false, lastError: error.code || "sync_failed",
+      memberAccess: false, roleSyncState: "error", lastError: error.code || "sync_failed",
       retryNotBefore: error.code === "rate_limited" ? new Date(Date.now() + (error.retryAfter || 60) * 1000) : null,
       nextSyncAt: new Date(Date.now() + Math.max(60000, (error.retryAfter || 0) * 1000)) });
     await syncSharedAppetite(uid, null);
@@ -171,7 +191,7 @@ export async function completeDiscordConnection(uid, state) {
     const code = await consumeDiscordCode(uid, state);
     const user = await adminDb.collection("users").doc(uid).get();
     if (!user.exists) throw discordError("account_missing", 403);
-    if (config.membersOnly && !hasActiveSubscription(user.data())) throw discordError("membership_required", 403);
+    if (config.membersOnly && !getEffectiveMembership(user.data()).activeMember) throw discordError("membership_required", 403);
     const tokens = await discordRequest("/oauth2/token", { method: "POST", form: true, body: {
       client_id: config.clientId, client_secret: config.clientSecret, grant_type: "authorization_code",
       code, redirect_uri: config.redirectUri,
@@ -209,13 +229,30 @@ export async function disconnectDiscord(uid) {
       return;
     }
     const data = snap.data();
-    const roles = new Set([data.managedRoleId, data.guildId === config.guildId ? config.memberRoleId : null].filter(Boolean));
+    await ref.update({ disconnectRequested: true, status: "disconnect_pending", nextSyncAt: new Date() });
+    return cleanupDiscordConnection(uid, config, data);
+  });
+}
+
+async function cleanupDiscordConnection(uid, config, data) {
+    const ref = connectionRef(uid);
+    if (millis(data.retryNotBefore) > Date.now()) throw discordError("rate_limited", 429, Math.ceil((millis(data.retryNotBefore) - Date.now()) / 1000));
+    try {
+    const roles = new Set([...(data.managedRoleIds || []), data.managedRoleId, data.guildId === config.guildId ? config.memberRoleId : null].filter(Boolean));
+    const cleanupStarted = Date.now();
+    let cleaned = 0;
     for (const role of roles) {
+      if (cleaned >= 6 || Date.now() - cleanupStarted >= 25000) {
+        throw discordError("cleanup_pending", 409);
+      }
       try {
         await discordRequest(`/guilds/${data.guildId}/members/${data.discordId}/roles/${role}`, {
           token: `Bot ${config.botToken}`, method: "DELETE",
         });
-      } catch (error) { if (error.code !== "not_in_server") throw error; }
+      } catch (error) { if (!["not_in_server", "unknown_role"].includes(error.code)) throw error; }
+      cleaned++;
+      // Persist progress before permitting the identity to be released.
+      await ref.update({ managedRoleIds: [...roles].slice(cleaned), managedRoleId: null });
     }
     // Retain the identity if Discord cleanup fails, so the operation can safely be retried.
     const batch = adminDb.batch();
@@ -223,7 +260,12 @@ export async function disconnectDiscord(uid) {
     batch.delete(adminDb.collection("discord_identities").doc(data.discordId));
     await batch.commit();
     await syncSharedAppetite(uid, null);
-  });
+    } catch (error) {
+      await ref.update({ status: "disconnect_pending", lastError: error.code || "cleanup_failed",
+        retryNotBefore: error.code === "rate_limited" ? new Date(Date.now() + (error.retryAfter || 60) * 1000) : null,
+        nextSyncAt: new Date(Date.now() + Math.max(60000, (error.retryAfter || 0) * 1000)) });
+      throw error;
+    }
 }
 
 export async function discordConnectionStatus(uid) {
@@ -231,6 +273,8 @@ export async function discordConnectionStatus(uid) {
   if (!snap.exists) return null;
   const data = snap.data();
   return { username: data.username, status: data.status, memberAccess: data.memberAccess === true,
+    roleSyncMode: data.roleSyncMode || "legacy", roleSyncState: data.roleSyncState || null,
+    roles: data.rolePreview?.desired || [], onboardingComplete: data.onboardingComplete === true,
     lastError: data.lastError || null, lastSyncedAt: millis(data.lastSyncedAt) > 0 ? new Date(millis(data.lastSyncedAt)).toISOString() : null,
     serverUrl: `https://discord.com/channels/${data.guildId}` };
 }

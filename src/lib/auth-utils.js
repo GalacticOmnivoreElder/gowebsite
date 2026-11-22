@@ -69,12 +69,11 @@ export function getMembershipConfirmationId(userData = {}) {
 
 export function getEffectiveMembership(userData = {}, { admin = false, now = new Date() } = {}) {
   const subscribed = hasActiveSubscription(userData, now);
-  const activeMember = admin || subscribed;
-  const membershipTier = activeMember
-    ? admin
-      ? "company"
-      : (userData.whopMembership ? resolveMembershipRecord(userData, now).tier : userData.membershipTier) || "member"
-    : null;
+  const paidTier = subscribed ? (userData.whopMembership ? resolveMembershipRecord(userData, now).tier : userData.membershipTier) || "member" : null;
+  const manualTier = ["member", "mentor", "company"].includes(userData.manualMembership?.tier) ? userData.manualMembership.tier : null;
+  const ranks = { member: 1, mentor: 2, company: 3 };
+  const activeMember = admin || subscribed || Boolean(manualTier);
+  const membershipTier = admin ? "company" : (ranks[manualTier] || 0) > (ranks[paidTier] || 0) ? manualTier : paidTier;
 
   return {
     activeMember,

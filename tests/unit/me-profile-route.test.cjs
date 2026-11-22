@@ -61,6 +61,7 @@ function loadRoute({ seed = {}, user = { uid: "user-1" } } = {}) {
     {
       stripImports: true,
       sandbox: {
+        notifyDiscordProfileChange: async () => {},
         Date: FixedDate,
         NextResponse,
         adminDb,

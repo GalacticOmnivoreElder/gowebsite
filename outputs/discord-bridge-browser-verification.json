@@ -1,0 +1,12 @@
+{
+  "loginReturn": true,
+  "unauthorizedApiStatuses": [
+    401,
+    401,
+    401
+  ],
+  "adminRedirectsToLogin": true,
+  "mobileOverflow": false,
+  "pageErrors": [],
+  "authenticatedMappingAndOAuth": "requires owner sign-in and application configuration; not simulated as a live test"
+}

@@ -72,6 +72,7 @@ function loadRoute({ decodedToken = null, seed = {}, passportRead = async () => 
   const route = loadSourceModule("src/app/api/user/[id]/route.js", ["GET", "PUT"], {
     stripImports: true,
     sandbox: {
+        notifyDiscordProfileChange: async () => {},
       NextResponse,
       adminAuth: {
         verifyIdToken: async () => decodedToken,

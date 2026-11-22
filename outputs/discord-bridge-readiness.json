@@ -1,0 +1,14 @@
+{
+  "enabled": false,
+  "missing": [
+    "DISCORD_CLIENT_SECRET"
+  ],
+  "live": {
+    "applicationMatchesClientId": true,
+    "botCanManageRoles": true,
+    "roleCount": 57,
+    "proposedMappingCount": 31,
+    "blockedMappings": [],
+    "scope": "Read-only role hierarchy and permissions; channel visibility and role ownership still require review."
+  }
+}

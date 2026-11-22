@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const statusLabels = {
+  disconnect_pending: "Your connection is being removed. GO is cleaning up its roles before releasing the account link.",
   joined: "Your Discord account is connected and you have joined the GO server.",
   screening_required: "You have joined. Open Discord and accept the server rules to finish gaining access.",
   join_required: "Your account is connected. Connect again to authorize joining the GO server.",
@@ -20,6 +21,7 @@ export default function DiscordConnection({ callback = false, returnTo = "/disco
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [appetite, setAppetite] = useState("");
   const callbackPromise = useRef(null);
 
   const request = useCallback(async (action) => {
@@ -58,7 +60,7 @@ export default function DiscordConnection({ callback = false, returnTo = "/disco
       } catch (err) { if (active) setError(err.message); }
       try {
         const result = await request();
-        if (active) setData(result);
+        if (active) { setData(result); setAppetite(result.profileAppetite || ""); }
       } catch (err) { if (active) setError(err.message); }
       finally { if (active) setBusy(false); }
     }
@@ -77,12 +79,26 @@ export default function DiscordConnection({ callback = false, returnTo = "/disco
     finally { setBusy(false); }
   }
 
+  async function saveAppetite() {
+    setBusy(true); setError("");
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch("/api/me/profile", { method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ community_appetite: appetite || null }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to save community status.");
+      setData((current) => ({ ...current, profileAppetite: appetite }));
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  }
+
   const connection = data?.connection;
   return (
     <Card>
       <CardHeader><CardTitle>Discord community</CardTitle></CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">Connect your Discord account and authorize GO to add you to our server. Active GO members receive access to member channels.</p>
+        <p className="text-sm text-muted-foreground">Connect your Discord account and authorize GO to add you to our server. Manage your skills and community profile on GO; mapped Discord roles follow your saved profile and eligibility.</p>
         {account === undefined && <p role="status">Loading your account…</p>}
         {account === null && <Button asChild><Link href="/login?redirect=%2Fdiscord">Sign in to connect Discord</Link></Button>}
         {account && !data && busy && <p role="status">Loading your Discord connection…</p>}
@@ -92,14 +108,28 @@ export default function DiscordConnection({ callback = false, returnTo = "/disco
           <p className="text-sm">{statusLabels[connection.status] || "Your Discord account is connected."}</p>
           {connection.status === "joined" && <p className="text-sm text-muted-foreground">{connection.memberAccess ? "Paid member role confirmed in the GO server." : "Paid member role is not active. It is granted when your GO membership is active."}</p>}
           {connection.lastSyncedAt && <p className="text-xs text-muted-foreground">Last checked: {new Date(connection.lastSyncedAt).toLocaleString()}</p>}
+          {connection.roleSyncState === "preview" && <p className="text-sm">Role synchronization is being previewed by GO. Your Discord roles have not been changed by this preview.</p>}
+          {connection.roleSyncState === "pending" && <p className="text-sm">Your role changes are queued. Refresh access shortly to check progress.</p>}
+          {connection.roleSyncState === "error" && <p className="text-sm">GO could not finish checking your roles. We will retry automatically; contact support if this persists.</p>}
+          {connection.roleSyncMode !== "legacy" && !connection.onboardingComplete && <p className="text-sm"><Link className="underline" href="/onboarding">Complete your GO onboarding</Link> to qualify for community access.</p>}
+          {connection.roleSyncState === "synced" && <p className="text-sm">Synchronized roles: {connection.roles?.map((role) => role.name).join(", ") || "No mapped roles currently apply."}</p>}
+          <p className="text-sm"><Link className="underline" href="/profile">Edit your skills and profile on GO</Link></p>
           <Button asChild variant="outline"><a href={connection.serverUrl} target="_blank" rel="noreferrer">Open GO Discord</a></Button>
+        </div>}
+        {connection && <div className="space-y-2 border-t pt-4">
+          <label className="block text-sm" htmlFor="community-appetite">Community availability (appetite)</label>
+          <select id="community-appetite" className="rounded border bg-background px-3 py-2 text-sm" value={appetite} onChange={(event) => setAppetite(event.target.value)}>
+            <option value="">Not selected / clear status</option><option value="hungry">Hungry — open to opportunities</option><option value="one_more_bite">One more bite — limited capacity</option><option value="full">Full — at capacity</option>
+          </select>
+          <Button variant="outline" className="ml-3" disabled={busy} onClick={saveAppetite}>Save status on GO</Button>
+          <p className="text-xs text-muted-foreground">This status is reflected on Discord when GO has enabled the corresponding role mapping.</p>
         </div>}
         {data?.available && <div className="flex flex-wrap gap-3">
           <Button disabled={busy} onClick={() => act("connect")}>{busy ? "Please wait…" : connection ? "Reconnect Discord" : "Connect Discord & join server"}</Button>
           {connection && <Button variant="outline" disabled={busy} onClick={() => act("sync")}>Refresh access</Button>}
           {connection && <Button variant="ghost" disabled={busy} onClick={() => act("disconnect")}>Disconnect</Button>}
         </div>}
-        {connection && <p className="text-xs text-muted-foreground">Disconnecting removes GO-managed member access. You can remain in the public server channels.</p>}
+        {connection && <p className="text-xs text-muted-foreground">Mapped skills and community status become visible as Discord roles. Disconnecting removes GO-managed roles and access. You can remain in the public server channels.</p>}
         {data?.membersOnly && <p className="text-sm text-muted-foreground">An active GO membership is required to join through the platform.</p>}
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       </CardContent>

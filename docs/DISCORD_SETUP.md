@@ -1,5 +1,10 @@
 # Discord account linking and server access
 
+The platform-owned role bridge now extends this original single-role setup.
+Use [the owner handoff](./DISCORD_BRIDGE_HUMAN_TASKS.md) for current configuration,
+preview/pilot rollout, and [the role mapping review](./DISCORD_ROLE_MAPPING_REVIEW.md)
+before enabling role changes. The administrator interface is `/admin/discord`.
+
 GO users can connect Discord in onboarding, profile settings, or `/discord`.
 OAuth requests `identify guilds.join`. GO verifies the Discord user ID, reserves
 it for one GO account, and adds the user to the configured server using the bot.

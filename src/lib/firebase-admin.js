@@ -34,7 +34,7 @@ export function isFirebaseAdminSetupError(err) {
   const msg = err?.message || String(err || "");
   return (
     code === "app/invalid-credential" ||
-    /Failed to parse private key|Invalid PEM|invalid-credential|ENOENT|EACCES/i.test(
+    /Firebase Admin:|Failed to parse private key|Invalid PEM|invalid-credential|ENOENT|EACCES/i.test(
       msg
     )
   );

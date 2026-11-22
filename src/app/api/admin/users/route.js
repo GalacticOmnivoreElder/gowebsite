@@ -1,5 +1,6 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
+import { notifyDiscordProfileChange } from "@/lib/discord-profile-sync";
 import { MENTOR_STATUSES } from "@/lib/mentor-profiles";
 import { resolveMembershipRecord } from "@/lib/membership-access.mjs";
 
@@ -32,7 +33,10 @@ export async function GET(request) {
       const data = doc.data();
       const membership = resolveMembershipRecord(data);
       const isMember = membership.active;
-      const displayedTier = membership.provider === "whop" ? membership.tier : data.membershipTier;
+      const manualTier = ["member", "mentor", "company"].includes(data.manualMembership?.tier) ? data.manualMembership.tier : null;
+      const paidTier = membership.provider === "whop" ? membership.tier : data.membershipTier;
+      const ranks = { member: 1, mentor: 2, company: 3 };
+      const displayedTier = (ranks[manualTier] || 0) > (isMember ? (ranks[paidTier] || 0) : 0) ? manualTier : paidTier;
       const membershipTier = ["member", "mentor", "company"].includes(
         displayedTier
       )
@@ -44,7 +48,10 @@ export async function GET(request) {
         email: data.email || "N/A",
         joined: toIso(data.createdAt),
         isAdmin: data.admin === true,
-        isMember,
+        isMember: isMember || ["member", "mentor", "company"].includes(data.manualMembership?.tier),
+        hasProviderAccess: isMember,
+        providerMembershipTier: paidTier || null,
+        manualMembershipTier: data.manualMembership?.tier || null,
         membershipTier,
         membershipProvider: membership.provider,
         subscriptionStatus: membership.provider === "whop" && membership.willRenew === false
@@ -73,13 +80,14 @@ export async function PUT(request) {
     const gate = await requireAdmin(request);
     if (gate.error) return Response.json({ error: gate.error }, { status: gate.status });
 
-    const { userId, activeMember, membershipTier, mentorStatus, mentorPublicProfileEnabled, reason: reasonInput } = await request.json();
+    const { userId, activeMember, membershipTier, mentorStatus, mentorPublicProfileEnabled, manualMembershipTier, reason: reasonInput } = await request.json();
+    const hasManualMembership = manualMembershipTier !== undefined;
     const hasActiveMember = typeof activeMember === "boolean";
     const hasMembershipTier = membershipTier !== undefined;
     const hasMentorStatus = mentorStatus !== undefined;
     const hasMentorVisibility = typeof mentorPublicProfileEnabled === "boolean";
 
-    if (!userId || (!hasActiveMember && !hasMembershipTier && !hasMentorStatus && !hasMentorVisibility)) {
+    if (!userId || (!hasActiveMember && !hasMembershipTier && !hasMentorStatus && !hasMentorVisibility && !hasManualMembership)) {
       return Response.json(
         { error: "userId and an account update are required" },
         { status: 400 }
@@ -94,6 +102,9 @@ export async function PUT(request) {
         { error: "membershipTier must be member, mentor or company" },
         { status: 400 }
       );
+    }
+    if (hasManualMembership && manualMembershipTier !== null && !["member", "mentor", "company"].includes(manualMembershipTier)) {
+      return Response.json({ error: "Invalid manual membership tier" }, { status: 400 });
     }
     if (hasMentorStatus && !MENTOR_STATUSES.includes(mentorStatus)) {
       return Response.json({ error: "mentorStatus is not supported" }, { status: 400 });
@@ -117,6 +128,10 @@ export async function PUT(request) {
 
     const now = new Date();
     const update = { updatedAt: now };
+
+    if (hasManualMembership) {
+      update.manualMembership = manualMembershipTier ? { tier: manualMembershipTier, grantedBy: gate.adminUser.uid, grantedAt: now } : null;
+    }
 
     if (hasActiveMember || hasMembershipTier) {
       update.membershipOverrideBy = gate.adminUser.uid;
@@ -145,17 +160,19 @@ export async function PUT(request) {
       { merge: true }
     );
     await adminDb.collection("admin_audit_events").add({
-      action: hasActiveMember || hasMembershipTier ? (hasMentorStatus || hasMentorVisibility ? "account.controls_updated" : "account.entitlement_override_updated") : "mentor.account_controls_updated",
+      action: hasManualMembership ? "account.manual_membership_updated" : hasActiveMember || hasMembershipTier ? (hasMentorStatus || hasMentorVisibility ? "account.controls_updated" : "account.entitlement_override_updated") : "mentor.account_controls_updated",
       actorId: gate.adminUser.uid,
       target: { type: "user", id: userId },
       targetUserId: userId,
       previousValue: {
+        manualMembership: previous.manualMembership || null,
         activeMember: previous.activeMember === true,
         membershipTier: previous.membershipTier || null,
         mentorStatus: previous.mentorStatus || "none",
         mentorPublicProfileEnabled: previous.mentorPublicProfileEnabled === true,
       },
       newValue: {
+        manualMembership: hasManualMembership ? update.manualMembership : previous.manualMembership || null,
         activeMember: hasActiveMember ? activeMember : previous.activeMember === true,
         membershipTier: hasMembershipTier ? membershipTier : previous.membershipTier || null,
         mentorStatus: hasMentorStatus ? mentorStatus : previous.mentorStatus || "none",
@@ -165,9 +182,11 @@ export async function PUT(request) {
       createdAt: now,
     });
 
+    await notifyDiscordProfileChange(userId);
     return Response.json({
       success: true,
       userId,
+      ...(hasManualMembership ? { manualMembershipTier } : {}),
       ...(hasActiveMember ? { activeMember } : {}),
       ...(hasMembershipTier ? { membershipTier } : {}),
       ...(hasMentorStatus ? { mentorStatus } : {}),

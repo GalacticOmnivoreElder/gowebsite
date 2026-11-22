@@ -96,3 +96,4 @@ require("./discord.test.cjs");
 
 require("./whop-webhook-route.test.cjs");
 require("./whop-checkout-switch.test.cjs");
+require("./discord-role-policy.test.cjs");

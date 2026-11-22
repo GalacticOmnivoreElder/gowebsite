@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/auth-utils";
+import { adminDb } from "@/lib/firebase-admin";
 import { getDiscordConfig } from "@/lib/discord-api";
 import { DISCORD_COOKIE, discordCookieOptions, startDiscordConnection, completeDiscordConnection,
   disconnectDiscord, discordConnectionStatus, syncDiscordConnection } from "@/lib/discord";
@@ -10,6 +11,8 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const messages = {
+  unsafe_role_mapping: "A Discord role needs administrator review. Please contact GO support.",
+  cleanup_pending: "Role cleanup is in progress. Click Disconnect again to finish safely.",
   not_configured: "Discord connection is not available yet.",
   membership_required: "An active GO membership is required to join this server.",
   account_missing: "Finish setting up your GO account first.",
@@ -31,7 +34,9 @@ export async function GET(request) {
   if (!user) return json({ error: "Authentication required" }, 401);
   try {
     const config = getDiscordConfig();
+    const profile = await adminDb.collection("user_profiles").doc(user.uid).get();
     return json({ available: config.enabled, membersOnly: config.membersOnly,
+      profileAppetite: profile.data()?.community_appetite || "",
       connection: await discordConnectionStatus(user.uid) });
   } catch { return json({ error: "Unable to load Discord connection." }, 500); }
 }

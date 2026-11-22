@@ -1,0 +1,25 @@
+{
+  "guildId": "893138092263882825",
+  "roles": [
+    {
+      "roleId": "1572309737188499466",
+      "source": "linked",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "roleId": "1050368811578175488",
+      "source": "member",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "roleId": "1572309742070530098",
+      "source": "business",
+      "value": "",
+      "enabled": true
+    }
+  ],
+  "permissions": "none; channel/category permissions are not changed",
+  "notes": "Linked role renamed to 🖖. Existing GO_Community_Member reused for membership. Onboarding is internal only. Former GO Onboarded and GO Paid Member roles remain unused; no existing assignments were removed."
+}

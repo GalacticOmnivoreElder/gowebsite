@@ -86,6 +86,14 @@ test("refunds, revocations, and an ended paid-through period remove benefits", (
   assert.equal(membership.hasActiveSubscription({ activeMember: true, subscriptionStatus: "canceled", subscriptionEndsAt: "2026-10-08T12:00:00.000Z" }, now), false);
 });
 
+test("manual grants coexist with subscriptions and revoke independently", () => {
+  const paid = { activeMember: true, membershipTier: "member", manualMembership: { tier: "company" } };
+  assert.equal(membership.getEffectiveMembership(paid).membershipTier, "company");
+  assert.equal(membership.getEffectiveMembership({ ...paid, manualMembership: null }).membershipTier, "member");
+  assert.equal(membership.getEffectiveMembership({ manualMembership: { tier: "mentor" } }).membershipTier, "mentor");
+  assert.equal(membership.getEffectiveMembership({ manualMembership: { tier: "invalid" } }).activeMember, false);
+});
+
 test("mentor tools require approval and current Mentor membership", () => {
   const now = new Date("2026-09-08T12:00:00.000Z");
   const approvedPaidThrough = { mentorStatus: "approved", membershipTier: "mentor", subscriptionStatus: "canceled", subscriptionEndsAt: "2026-10-08T12:00:00.000Z" };

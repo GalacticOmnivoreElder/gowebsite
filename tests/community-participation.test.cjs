@@ -17,7 +17,7 @@ function fixture() {
     const writes = [];
     try { const result = await fn({ get: async (r) => ({ exists: docs.has(r.path), data: () => docs.get(r.path) }), create: (r, value) => writes.push(() => { if (docs.has(r.path)) throw new Error("duplicate"); docs.set(r.path, value); }), update: (r, value) => writes.push(() => docs.set(r.path, { ...docs.get(r.path), ...value })) }); writes.forEach((write) => write()); return result; } finally { release(); }
   } };
-  const service = loadSourceModule("src/lib/community-participation.js", ["castPriorityVote", "supportSuggestion", "cleanPoll"], { stripImports: true, transform: (source) => source.replace('import "server-only";', ""), sandbox: { createHash, adminDb: db, hasActiveSubscription: (data) => data.activeMember === true } });
+  const service = loadSourceModule("src/lib/community-participation.js", ["castPriorityVote", "supportSuggestion", "cleanPoll"], { stripImports: true, transform: (source) => source.replace('import "server-only";', ""), sandbox: { createHash, adminDb: db, getEffectiveMembership: (data) => ({ activeMember: data.activeMember === true }) } });
   return { docs, service };
 }
 test("concurrent duplicate ballots count only once and eligibility is checked", async () => {
@@ -52,7 +52,7 @@ test("poll results remain hidden until published and closed", async () => {
     { id: "open", data: () => ({ title: "Open", published: true, options: ["A", "B"], counts: [2, 1], startsAt: "2020-01-01", endsAt: "2999-01-02", resultsPublished: true }) },
   ];
   const { GET } = loadSourceModule("src/app/api/community-participation/route.js", ["GET"], { stripImports: true, sandbox: {
-    Response, getRequestUser: async () => ({ uid: "member", userData: { activeMember: true } }), hasActiveSubscription: (user) => user.activeMember,
+    Response, getRequestUser: async () => ({ uid: "member", userData: { activeMember: true } }), getEffectiveMembership: (user) => ({ activeMember: user.activeMember }),
     adminDb: { collection: (name) => ({ limit: () => ({ get: async () => ({ docs: name === "community_priority_polls" ? pollDocs : [] }) }) }) },
   } });
   const result = await (await GET({})).json();

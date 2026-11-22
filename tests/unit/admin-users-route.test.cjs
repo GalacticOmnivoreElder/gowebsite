@@ -64,6 +64,7 @@ function loadRoute({ requestUser = null, seed = {} } = {}) {
     {
       stripImports: true,
       sandbox: {
+        notifyDiscordProfileChange: async () => {},
         Response: NextResponse,
         adminDb,
         getRequestUser: async () => requestUser,
@@ -155,6 +156,19 @@ test("admin users rejects invalid membership tiers", async () => {
 
   assert.equal(response.status, 400);
   assert.equal(response.body.error, "membershipTier must be member, mentor or company");
+});
+
+test("manual grants can be added and removed independently of Whop", async () => {
+  const whop = { id: "mem_test", tier: "member", paymentVerified: true, activeMember: true, status: "active", paidThrough: new Date(Date.now() + 86400000) };
+  const route = loadRoute({ requestUser: { admin: true, uid: "admin-1" }, seed: { users: { paid: { whopMembership: whop } } } });
+  const update = (manualMembershipTier) => route.PUT(createRequest({ jsonBody: { userId: "paid", manualMembershipTier, reason: "Partner access" } }));
+  assert.equal((await update("company")).status, 200);
+  assert.equal(route.adminDb.users.paid.manualMembership.tier, "company");
+  assert.equal(route.adminDb.auditEvents[0].action, "account.manual_membership_updated");
+  assert.equal((await update(null)).status, 200);
+  assert.equal(route.adminDb.users.paid.manualMembership, null);
+  assert.equal(route.adminDb.users.paid.whopMembership, whop);
+  assert.equal((await update("admin")).status, 400);
 });
 
 test("admin controls mentor status and prevents public profiles before approval", async () => {

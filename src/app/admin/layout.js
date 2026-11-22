@@ -9,7 +9,7 @@ import { LoadingSpinner } from "@/reusable-ui/LoadingSpinner";
 
 const AdminLayout = observer(({ children }) => {
   const router = useRouter();
-  const { user, permissions, loading, permissionsLoading } = MobxStore;
+  const { user, permissions, loading, permissionsLoading, permissionsError } = MobxStore;
 
   const uid = user?.uid ?? null;
   const isAdmin = Boolean(permissions?.permissions?.isAdmin);
@@ -35,6 +35,14 @@ const AdminLayout = observer(({ children }) => {
     }
     // Primitives only - `router` and `permissions` objects change identity often and caused effect storms.
   }, [loading, permissionsLoading, permissions, uid, isAdmin]);
+
+  if (uid && !loading && !permissionsLoading && permissionsError) {
+    return <main className="mx-auto max-w-xl space-y-4 px-6 py-16">
+      <h1 className="text-2xl font-semibold">Administrator verification unavailable</h1>
+      <p role="alert">{permissionsError}</p>
+      <button className="rounded border px-4 py-2" onClick={() => MobxStore.checkPermissions(true)}>Retry verification</button>
+    </main>;
+  }
 
   if (loading || permissionsLoading || !permissions) {
     return (

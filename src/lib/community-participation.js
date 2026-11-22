@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { adminDb } from "@/lib/firebase-admin";
-import { hasActiveSubscription } from "@/lib/auth-utils";
+import { getEffectiveMembership } from "@/lib/auth-utils";
 
 const idPattern = /^[A-Za-z0-9_-]{1,100}$/;
 const validId = (id) => idPattern.test(String(id || ""));
@@ -25,7 +25,7 @@ export async function castPriorityVote(uid, pollId, optionIndex, now = new Date(
   const ballotRef = pollRef.collection("ballots").doc(voteId(uid));
   return adminDb.runTransaction(async (tx) => {
     const [poll, ballot, member] = await Promise.all([tx.get(pollRef), tx.get(ballotRef), tx.get(adminDb.collection("users").doc(uid))]);
-    if (!member.exists || !hasActiveSubscription(member.data(), now)) throw fail("An active paid community subscription is required.", 403);
+    if (!member.exists || !getEffectiveMembership(member.data(), { now }).activeMember) throw fail("An active paid community subscription is required.", 403);
     if (!poll.exists) throw fail("Poll not found.", 404);
     const data = poll.data();
     if (!data.published || now.getTime() < dateMs(data.startsAt) || now.getTime() >= dateMs(data.endsAt)) throw fail("Voting is not open.", 409);
@@ -44,7 +44,7 @@ export async function supportSuggestion(uid, id) {
   const supportRef = ref.collection("supporters").doc(voteId(uid));
   return adminDb.runTransaction(async (tx) => {
     const [suggestion, support, member] = await Promise.all([tx.get(ref), tx.get(supportRef), tx.get(adminDb.collection("users").doc(uid))]);
-    if (!member.exists || !hasActiveSubscription(member.data())) throw fail("An active paid community subscription is required.", 403);
+    if (!member.exists || !getEffectiveMembership(member.data()).activeMember) throw fail("An active paid community subscription is required.", 403);
     if (!suggestion.exists || !["open", "accepted", "planned", "completed"].includes(suggestion.data().status)) throw fail("Suggestion is unavailable.", 404);
     if (support.exists) throw fail("You already support this suggestion.", 409);
     tx.create(supportRef, { createdAt: new Date() });

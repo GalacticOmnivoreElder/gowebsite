@@ -75,6 +75,7 @@ function loadRoute(seed) {
     {
       stripImports: true,
       sandbox: {
+        notifyDiscordProfileChange: async () => {},
         Date: FixedDate,
         DEFAULT_PROFILE_VISIBILITY: {
           visibility_job_matching: false,

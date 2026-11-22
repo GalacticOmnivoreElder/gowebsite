@@ -35,8 +35,9 @@ function harness({ seed = {}, request = async () => null, settings = {} } = {}) 
   };
   const api = loadSourceModule("src/lib/discord.js", ["startDiscordConnection", "captureDiscordCode", "consumeDiscordCode", "claimDiscordIdentity", "completeDiscordConnection", "syncDiscordConnection", "disconnectDiscord", "discordConnectionStatus"], {
     stripImports: true,
-    sandbox: { ...crypto, URLSearchParams, adminDb: db, hasActiveSubscription, discordError,
+    sandbox: { ...crypto, URLSearchParams, adminDb: db, getEffectiveMembership: (data) => ({ activeMember: hasActiveSubscription(data) }), discordError,
       requireDiscordConfig: () => ({ ...config, ...settings }),
+      getDiscordRolePolicy: async () => null,
       discordRequest: async (path, options) => { calls.push({ path, ...options }); return request(path, options); },
     },
   });
@@ -180,6 +181,23 @@ test("a worker cannot modify a connection locked for disconnect", async () => {
   const h = harness({ seed: { "discord_locks/u1": { owner: "other-worker", expiresAt: new Date(Date.now() + 60000) } } });
   await assert.rejects(h.syncDiscordConnection("u1"), { code: "sync_busy" });
   assert.equal(h.calls.length, 0);
+});
+
+test("large disconnects resume cleanup without allowing role reconciliation to regrant access", async () => {
+  const roles = Array.from({ length: 9 }, (_, i) => `${100000000000000200n + BigInt(i)}`);
+  const h = harness({ seed: { "discord_connections/u1": linked({ managedRoleIds: roles }),
+    [`discord_identities/${identity.id}`]: { uid: "u1" } } });
+  await assert.rejects(h.disconnectDiscord("u1"), { code: "cleanup_pending" });
+  assert.equal(h.docs.get("discord_connections/u1").disconnectRequested, true);
+  assert.ok(h.docs.has(`discord_identities/${identity.id}`));
+  await h.syncDiscordConnection("u1");
+  assert.equal(h.docs.has("discord_connections/u1"), false);
+  assert.ok(h.calls.every((call) => call.method === "DELETE"));
+});
+
+test("reconnecting cannot bypass a disconnect still cleaning up roles", async () => {
+  const h = harness({ seed: { "discord_connections/u1": linked({ disconnectRequested: true }) } });
+  await assert.rejects(h.claimDiscordIdentity("u1", identity, config), { code: "cleanup_pending" });
 });
 
 test("members-only join gating uses authoritative membership", async () => {

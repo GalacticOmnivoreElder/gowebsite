@@ -1,4 +1,4 @@
-import { getRequestUser, hasActiveSubscription } from "@/lib/auth-utils";
+import { getRequestUser, getEffectiveMembership } from "@/lib/auth-utils";
 import { adminDb } from "@/lib/firebase-admin";
 import { castPriorityVote, supportSuggestion } from "@/lib/community-participation";
 
@@ -6,7 +6,7 @@ function errorResponse(error) { return Response.json({ error: error.status ? err
 async function member(request) {
   const user = await getRequestUser(request);
   if (!user) throw Object.assign(new Error("Sign in to participate."), { status: 401 });
-  if (!hasActiveSubscription(user.userData)) throw Object.assign(new Error("An active paid community subscription is required."), { status: 403 });
+  if (!getEffectiveMembership(user.userData).activeMember) throw Object.assign(new Error("An active paid community subscription is required."), { status: 403 });
   return user;
 }
 export async function GET(request) {
@@ -29,7 +29,7 @@ export async function POST(request) {
     const ref = adminDb.collection("community_suggestions").doc();
     await adminDb.runTransaction(async (tx) => {
       const memberDoc = await tx.get(adminDb.collection("users").doc(user.uid));
-      if (!memberDoc.exists || !hasActiveSubscription(memberDoc.data())) throw Object.assign(new Error("An active paid community subscription is required."), { status: 403 });
+      if (!memberDoc.exists || !getEffectiveMembership(memberDoc.data()).activeMember) throw Object.assign(new Error("An active paid community subscription is required."), { status: 403 });
       tx.create(ref, { title, purpose, benefit, status: "pending", statusNote: "Awaiting moderation.", supportCount: 0, authorId: user.uid, createdAt: new Date() });
     });
     return Response.json({ id: ref.id }, { status: 201 });

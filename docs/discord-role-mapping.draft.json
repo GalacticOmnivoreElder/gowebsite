@@ -1,0 +1,186 @@
+{
+  "mode": "preview",
+  "requireOnboarding": true,
+  "mappings": [
+    {
+      "roleId": "1572309737188499466",
+      "source": "linked",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "roleId": "1050368811578175488",
+      "source": "member",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "roleId": "1572309742070530098",
+      "source": "business",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "roleId": "988493652332527637",
+      "source": "skill",
+      "value": "Game Design|Level Design",
+      "enabled": true
+    },
+    {
+      "roleId": "1285965334335062149",
+      "source": "skill",
+      "value": "Animation",
+      "enabled": true
+    },
+    {
+      "roleId": "1050374127241920514",
+      "source": "skill",
+      "value": "2D Art",
+      "enabled": true
+    },
+    {
+      "roleId": "1069402571954991105",
+      "source": "skill",
+      "value": "3D Modeling",
+      "enabled": true
+    },
+    {
+      "roleId": "1069364478820487209",
+      "source": "skill",
+      "value": "Audio Design|Sound Design",
+      "enabled": true
+    },
+    {
+      "roleId": "1069401868360499210",
+      "source": "skill",
+      "value": "Writing|Narrative Design",
+      "enabled": true
+    },
+    {
+      "roleId": "1069403459285172325",
+      "source": "skill",
+      "value": "UI/UX",
+      "enabled": true
+    },
+    {
+      "roleId": "1137424113200267385",
+      "source": "skill",
+      "value": "Streaming",
+      "enabled": true
+    },
+    {
+      "roleId": "1155174983551692953",
+      "source": "skill",
+      "value": "Voice Acting",
+      "enabled": true
+    },
+    {
+      "roleId": "1069363537283121284",
+      "source": "skill",
+      "value": "Programming|Scripting",
+      "enabled": true
+    },
+    {
+      "roleId": "1069364401624326266",
+      "source": "skill",
+      "value": "QA Testing",
+      "enabled": true
+    },
+    {
+      "roleId": "1069364826058543185",
+      "source": "skill",
+      "value": "Marketing",
+      "enabled": true
+    },
+    {
+      "roleId": "1069394119262212106",
+      "source": "skill",
+      "value": "Publishing",
+      "enabled": true
+    },
+    {
+      "roleId": "1069397521664843817",
+      "source": "skill",
+      "value": "Production",
+      "enabled": true
+    },
+    {
+      "roleId": "1069429769340461106",
+      "source": "skill",
+      "value": "Finance",
+      "enabled": true
+    },
+    {
+      "roleId": "1069364685037645935",
+      "source": "skill",
+      "value": "HR",
+      "enabled": true
+    },
+    {
+      "roleId": "1069393965838778410",
+      "source": "skill",
+      "value": "Project Management",
+      "enabled": true
+    },
+    {
+      "roleId": "1069397446821691433",
+      "source": "skill",
+      "value": "IT Support",
+      "enabled": true
+    },
+    {
+      "roleId": "1136681502185361500",
+      "source": "skill",
+      "value": "Legal",
+      "enabled": true
+    },
+    {
+      "roleId": "1139503148000624681",
+      "source": "skill",
+      "value": "Documentation",
+      "enabled": true
+    },
+    {
+      "roleId": "1198259449819824238",
+      "source": "mentor",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "roleId": "1198254601569308723",
+      "source": "language",
+      "value": "English",
+      "enabled": true
+    },
+    {
+      "roleId": "1198254694213103636",
+      "source": "language",
+      "value": "Macedonian",
+      "enabled": true
+    },
+    {
+      "roleId": "1197632466693914674",
+      "source": "interest",
+      "value": "looking_for_paid_work",
+      "enabled": true
+    },
+    {
+      "roleId": "1092866622651387925",
+      "source": "appetite",
+      "value": "full",
+      "enabled": true
+    },
+    {
+      "roleId": "1092867536594415638",
+      "source": "appetite",
+      "value": "one_more_bite",
+      "enabled": true
+    },
+    {
+      "roleId": "1092866979053977630",
+      "source": "appetite",
+      "value": "hungry",
+      "enabled": true
+    }
+  ]
+}

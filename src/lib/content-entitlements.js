@@ -17,7 +17,7 @@ export function hasResourceAccess(resourceId, userData = {}, options = {}) {
 
 export function hasAssetContributionAccess(userData = {}, options = {}) {
   if (!hasCommunityContentAccess(userData, options)) return false;
-  return options.admin === true || userData.membershipTier !== "mentor" || hasMentorToolAccess(userData, options);
+  return options.admin === true || getEffectiveMembership(userData, options).membershipTier !== "mentor" || hasMentorToolAccess(userData, options);
 }
 
 export function hasMentorToolAccess(userData = {}, { admin = false, now = new Date() } = {}) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
+import { notifyDiscordProfileChange } from "@/lib/discord-profile-sync";
 import { serializeFirestoreDate } from "@/lib/project-utils";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ const EDITABLE_FIELDS = [
   "location",
   "timezone",
   "preferred_language",
+  "community_appetite",
   "discord_username",
   "primary_role",
   "secondary_roles",
@@ -67,6 +69,9 @@ export async function PATCH(request) {
   }
 
   const body = await request.json().catch(() => ({}));
+  if (body.community_appetite !== undefined && ![null, "hungry", "one_more_bite", "full"].includes(body.community_appetite)) {
+    return NextResponse.json({ error: "Invalid community appetite." }, { status: 400 });
+  }
   if (body.bio !== undefined && String(body.bio).length > 150) {
     return NextResponse.json(
       { error: "Short bio must be 150 characters or less." },
@@ -104,5 +109,6 @@ export async function PATCH(request) {
     .doc(user.uid)
     .set({ user_id: user.uid, ...update }, { merge: true });
 
+  await notifyDiscordProfileChange(user.uid);
   return NextResponse.json({ ok: true });
 }

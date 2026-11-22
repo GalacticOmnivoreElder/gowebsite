@@ -59,6 +59,7 @@ export function Sidebar() {
     { name: "Newsletter", href: "/admin/newsletter", icon: Mail },
     { name: "GO Merch", href: "/admin/merch", icon: Package },
     { name: "Skills", href: "/admin/skills", icon: Tags },
+    { name: "Discord roles", href: "/admin/discord", icon: Users },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
 

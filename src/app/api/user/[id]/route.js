@@ -1,3 +1,4 @@
+import { notifyDiscordProfileChange } from "@/lib/discord-profile-sync";
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { serializeFirestoreDate } from "@/lib/project-utils";
@@ -273,6 +274,7 @@ export async function PUT(request, { params }) {
       : [];
 
     await userReference.update(filteredUpdateData);
+    if (filteredUpdateData.skills !== undefined) await notifyDiscordProfileChange(userId);
 
     const structuredProfileUpdate = {};
     if (filteredUpdateData.username !== undefined) {

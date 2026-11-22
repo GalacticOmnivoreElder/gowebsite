@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getRequestUser } from "@/lib/auth-utils";
+import { notifyDiscordProfileChange } from "@/lib/discord-profile-sync";
 import { serializeFirestoreDate } from "@/lib/project-utils";
 import {
   ONBOARDING_STEPS,
@@ -417,6 +418,7 @@ export async function PUT(request) {
     nextSkills: [...profileTags, ...canHelpWith, ...needsHelpWith],
     userId: user.uid,
   });
+  await notifyDiscordProfileChange(user.uid);
   await cancelPendingEmailEvents({
     userId: user.uid,
     eventType: "onboarding.incomplete_reminder",

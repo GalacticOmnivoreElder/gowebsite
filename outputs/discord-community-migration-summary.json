@@ -1,0 +1,11 @@
+{
+  "generatedAt": "2026-11-20T18:07:58.473Z",
+  "policyStatus": "Saved preview policy updated",
+  "roleHolderCountInPage": 53,
+  "scanComplete": true,
+  "eligibleLinked": 0,
+  "ineligibleLinked": 0,
+  "unlinkedNeedsReview": 53,
+  "roleAssignmentsRemoved": 0,
+  "note": "No members culled. Unlinked holders may have valid entitlements that cannot be associated until they link."
+}

@@ -64,6 +64,7 @@ export async function discordRequest(path, { token, method = "GET", body, form =
     if (response.status === 429) throw discordError("rate_limited", 429,
       Math.max(1, Number(data.retry_after) || Number(response.headers.get("retry-after")) || 60));
     if (response.status === 404 && data.code === 10007) throw discordError("not_in_server", 404);
+    if (response.status === 404 && data.code === 10011) throw discordError("unknown_role", 404);
     if (response.status === 403) throw discordError("discord_forbidden", 502);
     throw discordError(response.status === 400 ? "authorization_failed" : "discord_unavailable", 502);
   }
