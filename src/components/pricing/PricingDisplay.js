@@ -47,7 +47,7 @@ const formatPendingDate = (value) => {
   return new Intl.DateTimeFormat("en", { dateStyle: "long" }).format(date);
 };
 
-export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
+export const PricingDisplay = observer(({ checkoutEnabled = false, mentorCheckoutEnabled = false }) => {
   const router = useRouter();
   const [interval, setInterval] = useState("monthly");
   const resumedCheckout = useRef(false);
@@ -84,9 +84,8 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
     const searchParams = new URLSearchParams(window.location.search);
     const selection = parseCheckoutPlanKey(searchParams.get("plan"));
     if (!selection) return;
-    if (!checkoutEnabled) return;
-
     setInterval(selection.interval);
+    if (!checkoutEnabled || (selection.tier === "mentor" && !mentorCheckoutEnabled)) return;
     if (
       resumedCheckout.current ||
       authLoading ||
@@ -159,7 +158,7 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
       console.error("Could not resume membership checkout:", error);
       window.alert(error.message);
     });
-  }, [authLoading, checkoutEnabled, currentTier, hasActiveSubscription, isAnonymous, router, user]);
+  }, [authLoading, checkoutEnabled, mentorCheckoutEnabled, currentTier, hasActiveSubscription, isAnonymous, router, user]);
 
   const displayedPlans = MEMBERSHIP_PLANS;
   const pricingGridClass =
@@ -345,7 +344,7 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
                 )}
               </CardContent>
 
-              <CardFooter className="min-w-0 px-4 pt-6 sm:px-6">
+              <CardFooter className="min-w-0 flex-col items-stretch gap-3 px-4 pt-6 sm:px-6">
                 {pendingBusinessUpgrade && plan.tier === "company" ? (
                   <Button
                     variant="outline"
@@ -383,7 +382,7 @@ export const PricingDisplay = observer(({ checkoutEnabled = false }) => {
                   <Button variant="outline" size="lg" className="w-full" asChild>
                     <Link href="/faq#changing-membership">How to change membership</Link>
                   </Button>
-                ) : !checkoutEnabled ? (
+                ) : !checkoutEnabled || (plan.tier === "mentor" && !mentorCheckoutEnabled) ? (
                   <Button
                     type="button"
                     variant="outline"

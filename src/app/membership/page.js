@@ -95,7 +95,7 @@ export default async function MembershipPage({ searchParams }) {
   const creatorMembershipRequired = params?.reason === "creator";
   const selectedIntent = validGoIntent(params?.intent);
   const selectedPath = selectedIntent ? intentContext[selectedIntent] : null;
-  const { membershipCheckoutEnabled } = getProductConfig();
+  const { membershipCheckoutEnabled, mentorCheckoutEnabled } = getProductConfig();
   const mentorApplicationState = await getMentorApplicationState();
 
   const membershipCategories = [
@@ -204,7 +204,7 @@ export default async function MembershipPage({ searchParams }) {
 
           <div id="paid-plans" className="scroll-mt-24 pt-14">
             <h2 className="mb-7 text-center text-3xl font-bold">Membership plans and pricing</h2>
-            <PricingDisplay checkoutEnabled={membershipCheckoutEnabled} />
+            <PricingDisplay checkoutEnabled={membershipCheckoutEnabled} mentorCheckoutEnabled={mentorCheckoutEnabled} />
           </div>
         </section>
 
