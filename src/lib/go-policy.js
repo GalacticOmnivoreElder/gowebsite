@@ -16,10 +16,7 @@ export function projectAllowance(data = {}, active = false, admin = false) {
   if (admin) return { limit: null, reason: null };
   if (!active) return { limit: 0, reason: 'membership_required' };
   if (data.membershipTier === 'company') {
-    const limit = data.businessProjectLimit;
-    return Number.isInteger(limit) && limit > 0 && limit <= 10000
-      ? { limit, reason: null }
-      : { limit: 0, reason: 'business_capacity_required' };
+    return { limit: null, reason: null };
   }
   return { limit: 1, reason: null };
 }

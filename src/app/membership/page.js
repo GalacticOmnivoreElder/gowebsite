@@ -52,7 +52,7 @@ const accessRows = [
   ["Public learning, FAQ, and project browsing", "Yes", "Yes", "Yes"],
   ["Structured mentorship programme", "Separate application; not a subscription benefit", "Separate application; not a subscription benefit", "Separate application; not a subscription benefit"],
   ["Apply to projects", "Selected public briefs", "Per-project rules", "Per-project rules"],
-  ["Own unreleased creator projects", "—", "1 at a time", "Negotiated capacity"],
+  ["Own unreleased creator projects", "—", "1 at a time", "Unlimited, subject to review"],
   ["Create hiring briefs", "—", "—", "Within capacity"],
   ["GO project workspace and publishing tools", "—", "Included", "Included"],
 ];
@@ -86,7 +86,7 @@ const intentContext = {
   "hire-talent": {
     eyebrow: "Outsource / business",
     title: "Hire talent with GO Business",
-    body: "Business members can create hiring briefs, review applicants, and manage teams within a project capacity agreed with GO. Business access is separate from the included creator project.",
+    body: "Business members can create unlimited projects, review applicants, and manage teams. Projects are subject to GO review.",
   },
 };
 
@@ -128,7 +128,7 @@ export default async function MembershipPage({ searchParams }) {
       title: "GO Business",
       icon: Briefcase,
       description: "Project creation and team management for studios and project owners.",
-      benefits: ["Everything included in GO Community", "Project capacity negotiated with the GO Business team", "Review applicants and manage project teams"],
+      benefits: ["Everything included in GO Community", "Unlimited projects, subject to GO review", "Review applicants and manage project teams"],
       footer: <Button asChild variant="outline" className="w-full"><Link href="#paid-plans">See current pricing</Link></Button>,
     },
   ];
@@ -170,7 +170,7 @@ export default async function MembershipPage({ searchParams }) {
               <Briefcase className="h-4 w-4" />
               <AlertTitle>Choose your project access</AlertTitle>
               <AlertDescription>
-                Community includes one unreleased creator project. GO Business hiring capacity is agreed with the GO team.
+                Community includes one unreleased creator project. GO Business accounts can create unlimited projects, subject to GO review.
               </AlertDescription>
             </Alert>
           )}

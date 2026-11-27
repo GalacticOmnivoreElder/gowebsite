@@ -32,7 +32,7 @@ export default function ProjectEntry() {
   if (state.loading) return <p role="status" className="p-10 text-center">Checking your project access…</p>;
   const eligible = !state.frozen && state.capacity?.canCreate && (!hire || state.tier === 'company' || state.admin);
   if (eligible) return <CreateProjectForm />;
-  const message = state.error || (state.frozen ? 'Your workspace is read-only until your membership is renewed.' : state.capacity?.reason === 'business_capacity_required' ? 'Contact GO to agree your Business project allowance.' : state.capacity && !state.capacity.canCreate && state.activeMember ? 'Your project allowance is in use. GO must approve a release before you can start another project.' : hire ? 'An active GO Business subscription is required for hiring briefs. Your project capacity is agreed with the GO team.' : 'Community and Mentor members can build one creator project at a time. GO release approval unlocks the next.');
+  const message = state.error || (state.frozen ? 'Your workspace is read-only until your membership is renewed.' : state.capacity && !state.capacity.canCreate && state.activeMember ? 'Your project allowance is in use. GO must approve a release before you can start another project.' : hire ? 'An active GO Business subscription is required for hiring briefs. Business accounts can create unlimited projects.' : 'Community and Mentor members can build one creator project at a time. GO release approval unlocks the next.');
   return <main className="mx-auto max-w-3xl px-5 py-14"><h1 className="text-4xl font-bold">{hire ? 'Hire talent with GO Business' : 'Start your creator project'}</h1><p className="my-6 text-lg text-muted-foreground">{message}</p>
     <div className="flex flex-wrap gap-3">
       {state.error ? <Button onClick={() => setVersion(v => v + 1)}>Retry access check</Button> : <>
@@ -44,6 +44,6 @@ export default function ProjectEntry() {
       </>}
     </div>
     {hire && <p className="mt-8">Building your own game? <Link className="text-primary underline" href="/project/create">Use your included creator project.</Link></p>}
-    <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogTitle>Hire talent with GO Business</DialogTitle><DialogDescription>Create hiring briefs, review applicants and build your team. An active Business subscription is required; project capacity is agreed with GO. You can hire community members, mentors, or approved community experts.</DialogDescription><Button asChild><Link href="/membership?intent=hire-talent">Explore GO Business</Link></Button><Button variant="outline" asChild><Link href="/contact">Discuss project capacity</Link></Button><Button variant="ghost" onClick={() => setOpen(false)}>Not now</Button></DialogContent></Dialog>
+    <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogTitle>Hire talent with GO Business</DialogTitle><DialogDescription>Create hiring briefs, review applicants and build your team. An active Business subscription is required. Business accounts can create unlimited projects; each project is reviewed by GO.</DialogDescription><Button asChild><Link href="/membership?intent=hire-talent">Explore GO Business</Link></Button><Button variant="ghost" onClick={() => setOpen(false)}>Not now</Button></DialogContent></Dialog>
   </main>;
 }

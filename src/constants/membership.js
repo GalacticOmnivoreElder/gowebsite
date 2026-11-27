@@ -74,7 +74,7 @@ export const MEMBERSHIP_PLANS = [
       "Create business project briefs, review applicants, and manage teams, with Community benefits included.",
     benefits: [
       "Everything included in GO Community",
-      "Project capacity negotiated with the GO Business team",
+      "Create unlimited projects, subject to GO review",
       "Review applicants and build project teams",
       "Manage your active project portfolio",
       "Priority membership support",

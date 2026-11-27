@@ -4,7 +4,8 @@ import { projectAllowance, isGoReleased } from '@/lib/go-policy';
 
 export async function readProjectCapacity(user, db = adminDb) {
   const data = user.userData || {};
-  const allowance = projectAllowance(data, user.activeMember, user.admin);
+  const membership = getEffectiveMembership(data, { admin: user.admin });
+  const allowance = projectAllowance({ ...data, membershipTier: membership.membershipTier }, membership.activeMember, user.admin);
   const [owned, ledger] = await Promise.all([
     db.collection('projects').where('owner', '==', user.uid).get(),
     db.collection('project_capacity').doc(user.uid).get(),
@@ -32,7 +33,7 @@ export async function commitProjectCreation({ user, projectId, creationRequestRe
     if (replay.exists) return { replayed: true };
     const data = profile.data() || {};
     const membership = getEffectiveMembership(data, { admin: user.admin });
-    const allowance = projectAllowance(data, membership.activeMember, user.admin);
+    const allowance = projectAllowance({ ...data, membershipTier: membership.membershipTier }, membership.activeMember, user.admin);
     if (intent === 'hire-talent' && !user.admin && membership.membershipTier !== 'company') {
       throw Object.assign(new Error('GO Business is required for hiring briefs. You can use your included creator project for your own game.'), { status: 403, code: 'business_required' });
     }
